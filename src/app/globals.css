@@ -1,30 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #0a0a0d;
-  --muted: #63666f;
-  --card: #f4f5f7;
-  --line: #e7e8eb;
-  --blue: #3b71fe;
-  --blue-soft: #eaf0ff;
-  --dark: #0d0f14;
+  --cream: #f3efe4;
+  --dark: #121110;
+  --dark2: #1a1917;
+  --beige: #e7dfc9;
+  --card: #ffffff;
+  --card-alt: #ede8da;
+  --line: #ddd5bf;
+  --line-dark: #2b2a26;
+  --ink: #16150f;
+  --muted: #6e695c;
+  --muted-light: #a39d8c;
 }
 
 @theme inline {
+  --color-cream: var(--cream);
+  --color-dark: var(--dark);
+  --color-dark2: var(--dark2);
+  --color-beige: var(--beige);
+  --color-card: var(--card);
+  --color-card-alt: var(--card-alt);
+  --color-line: var(--line);
+  --color-line-dark: var(--line-dark);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
-  --color-card: var(--card);
-  --color-line: var(--line);
-  --color-blue: var(--blue);
-  --color-blue-soft: var(--blue-soft);
-  --color-dark: var(--dark);
+  --color-muted-light: var(--muted-light);
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
 }
 
 body {
-  background: #ffffff;
+  background: var(--cream);
   color: var(--ink);
 }
 
@@ -37,4 +45,12 @@ h1, h2, h3, h4 {
 .mono {
   font-family: var(--font-mono);
   letter-spacing: -0.01em;
+}
+
+.texture-beige {
+  background-color: var(--beige);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%),
+    radial-gradient(circle at 80% 75%, rgba(18,17,16,0.06) 0%, rgba(18,17,16,0) 50%),
+    repeating-linear-gradient(115deg, rgba(18,17,16,0.035) 0px, rgba(18,17,16,0.035) 1px, transparent 1px, transparent 14px);
 }
