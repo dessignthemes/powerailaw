@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #0a0a0d;
+  --muted: #63666f;
+  --card: #f4f5f7;
+  --line: #e7e8eb;
+  --blue: #3b71fe;
+  --blue-soft: #eaf0ff;
+  --dark: #0d0f14;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-blue: var(--blue);
+  --color-blue-soft: var(--blue-soft);
+  --color-dark: var(--dark);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: #ffffff;
+  color: var(--ink);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+}
