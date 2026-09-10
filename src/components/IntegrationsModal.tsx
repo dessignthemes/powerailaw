@@ -76,9 +76,18 @@ const microsoftSub = [
 ];
 
 const googleSub = [
-  { name: "Gmail", desc: "Read incoming client emails and turn them into matters automatically." },
-  { name: "Google Calendar", desc: "Keep events in sync both ways with your firm's calendar." },
-  { name: "Google Drive", desc: "Import documents directly from Drive into the firm's records." },
+  {
+    name: "Gmail",
+    desc: "Import clients and their context — emails and files from Gmail and Drive into your matters.",
+  },
+  {
+    name: "Google Calendar",
+    desc: "Pull events into PowerAI Law and push task deadlines back to Google Calendar so nothing is missed.",
+  },
+  {
+    name: "Google Drive",
+    desc: "Search and read files from your Google Drive directly inside PowerAI Law so the assistant can reference them.",
+  },
 ];
 
 export default function IntegrationsModal({ onClose }: { onClose: () => void }) {
@@ -205,13 +214,19 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
                     from your inbox
                   </h3>
                   <p className="text-[14px] text-muted mb-6 max-w-[440px]">
-                    Outlook — emails, files, and events automatically turned into clients and
-                    matters.
+                    Gmail or Outlook — emails, files, and events automatically turned into clients
+                    and matters.
                   </p>
                   <div className="flex items-center gap-4 flex-wrap">
                     <Link
                       href="/connect"
                       className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                    >
+                      ↗ Import from Gmail
+                    </Link>
+                    <Link
+                      href="/connect"
+                      className="border border-line bg-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors"
                     >
                       ↗ Import from Outlook
                     </Link>
