@@ -14,8 +14,15 @@ import {
   Trash2,
   ClipboardList,
   ChevronDown,
+  User,
 } from "lucide-react";
-import NewTaskModal, { BoardTask, TaskStatus, statusMeta } from "@/components/NewTaskModal";
+import NewTaskModal, {
+  BoardTask,
+  TaskStatus,
+  statusMeta,
+  priorityMeta,
+} from "@/components/NewTaskModal";
+import TaskDetailModal from "@/components/TaskDetailModal";
 import ColorPicker from "@/components/ColorPicker";
 
 type Column = {
@@ -52,6 +59,7 @@ export default function TaskBoardPage() {
   const [newColumnName, setNewColumnName] = useState("");
 
   const [modalStatus, setModalStatus] = useState<TaskStatus | null>(null);
+  const [selectedTask, setSelectedTask] = useState<BoardTask | null>(null);
 
   function toggleFilter(f: string) {
     setActiveFilters((fs) => (fs.includes(f) ? fs.filter((x) => x !== f) : [...fs, f]));
@@ -190,12 +198,24 @@ export default function TaskBoardPage() {
               {tasks.map((t) => {
                 const Icon = statusMeta[t.status].icon;
                 return (
-                  <div key={t.id} className="flex items-center justify-between px-5 py-4">
+                  <div
+                    key={t.id}
+                    onClick={() => setSelectedTask(t)}
+                    className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-card-alt/40 transition-colors"
+                  >
                     <div className="flex items-center gap-3">
                       <Icon size={15} strokeWidth={2} className={statusMeta[t.status].color} />
                       <span className="text-[14.5px] font-medium">{t.title}</span>
                     </div>
-                    <span className="text-[12.5px] text-muted">{t.priority}</span>
+                    <span
+                      className="text-[12px] font-medium px-2.5 py-1 rounded-full"
+                      style={{
+                        backgroundColor: priorityMeta[t.priority].bg,
+                        color: priorityMeta[t.priority].text,
+                      }}
+                    >
+                      {t.priority}
+                    </span>
                   </div>
                 );
               })}
@@ -305,25 +325,42 @@ export default function TaskBoardPage() {
                       setInlineValue("");
                     }
                   }}
-                  className="px-3 pb-3 flex flex-col gap-2 min-h-[calc(100vh-340px)] cursor-pointer"
+                  className="px-3 pb-3 flex flex-col gap-2 min-h-[calc(100vh-260px)] cursor-pointer"
                 >
-                  {colTasks.map((t) => {
-                    const Icon = statusMeta[t.status].icon;
-                    return (
-                      <div
-                        key={t.id}
-                        onClick={(e) => e.stopPropagation()}
-                        className="bg-white border border-line rounded-xl px-3.5 py-3 cursor-default"
-                      >
-                        <div className="text-[13.5px] font-medium mb-1.5">{t.title}</div>
-                        <div className="flex items-center gap-2 text-[11.5px] text-muted">
-                          <Icon size={12} strokeWidth={2} className={statusMeta[t.status].color} />
-                          {t.priority}
-                          {t.dueDate && <span>· {t.dueDate}</span>}
-                        </div>
+                  {colTasks.map((t) => (
+                    <div
+                      key={t.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTask(t);
+                      }}
+                      className="bg-white border border-line rounded-xl px-3.5 py-3 cursor-pointer hover:shadow-sm transition-shadow"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2.5">
+                        <div className="text-[14px] font-semibold leading-snug">{t.title}</div>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-muted hover:text-ink flex-shrink-0 -mt-0.5"
+                        >
+                          <MoreHorizontal size={15} strokeWidth={1.75} />
+                        </button>
                       </div>
-                    );
-                  })}
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-card-alt border border-line flex items-center justify-center flex-shrink-0">
+                          <User size={12} strokeWidth={1.75} className="text-muted" />
+                        </span>
+                        <span
+                          className="text-[12px] font-medium px-2.5 py-1 rounded-full"
+                          style={{
+                            backgroundColor: priorityMeta[t.priority].bg,
+                            color: priorityMeta[t.priority].text,
+                          }}
+                        >
+                          {t.priority}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
 
                   {inlineAddFor === col.id ? (
                     <input
@@ -383,6 +420,17 @@ export default function TaskBoardPage() {
           onCreate={(task) => {
             setTasks((ts) => [...ts, task]);
             setModalStatus(null);
+          }}
+        />
+      )}
+
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onUpdate={(updated) => {
+            setTasks((ts) => ts.map((t) => (t.id === updated.id ? updated : t)));
+            setSelectedTask(updated);
           }}
         />
       )}

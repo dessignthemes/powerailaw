@@ -29,6 +29,12 @@ export type BoardTask = {
   dueDate: string | null;
 };
 
+export const priorityMeta: Record<TaskPriority, { bg: string; text: string }> = {
+  Low: { bg: "#EAE8E0", text: "#6B675F" },
+  Medium: { bg: "#F5E3B3", text: "#8A6D1D" },
+  High: { bg: "#F6C9C0", text: "#9C3A24" },
+};
+
 export const statusMeta: Record<TaskStatus, { label: string; icon: typeof Circle; color: string }> = {
   todo: { label: "To do", icon: Circle, color: "text-muted" },
   inprogress: { label: "In progress", icon: CircleDot, color: "text-amber-500" },
@@ -36,7 +42,7 @@ export const statusMeta: Record<TaskStatus, { label: string; icon: typeof Circle
   done: { label: "Done", icon: CheckCircle2, color: "text-green-600" },
 };
 
-function GenericDropdown({
+export function GenericDropdown({
   trigger,
   children,
   open,
