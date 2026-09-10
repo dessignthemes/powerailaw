@@ -69,9 +69,9 @@ export default function ClientIntakePage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
-        <div>
-          <div className="border border-line rounded-2xl px-5 py-4 flex items-center justify-between mb-6 bg-card-alt flex-wrap gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-5">
+        <div className="border border-line rounded-2xl overflow-hidden bg-white min-h-[560px] flex flex-col">
+          <div className="px-5 py-4 flex items-center justify-between border-b border-line bg-card-alt flex-wrap gap-3">
             <div className="flex items-center gap-2.5">
               <Ban size={16} strokeWidth={1.75} className="text-muted" />
               <span className="text-[14px] font-semibold">Intake form is not published</span>
@@ -85,14 +85,14 @@ export default function ClientIntakePage() {
               </button>
               <button
                 onClick={copyLink}
-                className="flex items-center gap-1.5 border border-line rounded-full px-4 py-2 text-[13.5px] font-medium hover:bg-white transition-colors bg-white"
+                className="flex items-center gap-1.5 border border-line rounded-full px-4 py-2 text-[13.5px] font-medium hover:bg-cream transition-colors bg-white"
               >
                 <Copy size={13} strokeWidth={1.75} /> {copied ? "Copied" : "Copy link"}
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
             <div className="w-14 h-14 rounded-2xl bg-card-alt flex items-center justify-center mb-5">
               <Inbox size={22} strokeWidth={1.5} className="text-muted" />
             </div>
@@ -101,8 +101,8 @@ export default function ClientIntakePage() {
           </div>
         </div>
 
-        <div className="hidden lg:flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-card-alt flex items-center justify-center mb-5">
+        <div className="hidden lg:flex flex-col border border-line rounded-2xl bg-card-alt min-h-[560px] items-center justify-center text-center px-6">
+          <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center mb-5">
             <Inbox size={22} strokeWidth={1.5} className="text-muted" />
           </div>
           <div className="text-[15px] font-medium text-muted">Select an intake submission</div>
