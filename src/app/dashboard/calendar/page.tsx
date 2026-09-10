@@ -133,7 +133,7 @@ export default function CalendarPage() {
               <button
                 key={i}
                 onClick={() => setModalDate(iso)}
-                className={`min-h-[100px] border-r border-b border-line px-2.5 py-2 text-left hover:bg-card-alt/60 transition-colors ${
+                className={`min-h-[140px] border-r border-b border-line px-2.5 py-2 text-left hover:bg-card-alt/60 transition-colors ${
                   !inMonth ? "text-muted/40" : ""
                 } ${(i + 1) % 7 === 0 ? "border-r-0" : ""}`}
               >

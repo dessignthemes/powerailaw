@@ -10,6 +10,7 @@ import {
   Timer,
   X,
   ChevronRight,
+  Link2,
 } from "lucide-react";
 
 const navItems = [
@@ -20,39 +21,72 @@ const navItems = [
   { key: "time", label: "Time tracking", icon: Timer },
 ] as const;
 
-const connectors = [
+type ConnectorKey = "google" | "microsoft" | "imap" | "telegram";
+
+const connectors: {
+  key: ConnectorKey;
+  name: string;
+  desc: string;
+  icon: string;
+  drillDown: boolean;
+}[] = [
   {
     key: "google",
     name: "Google Workspace",
     desc: "Gmail, Drive, and Calendar",
     icon: "G",
-    href: null,
+    drillDown: true,
   },
   {
     key: "microsoft",
     name: "Microsoft 365",
     desc: "Outlook, OneDrive, and Calendar",
     icon: "◫",
-    href: "/connect",
+    drillDown: true,
   },
   {
     key: "imap",
     name: "Email (IMAP)",
     desc: "Connect any other mailbox with an app password.",
     icon: "@",
-    href: null,
+    drillDown: false,
   },
   {
     key: "telegram",
     name: "Telegram",
     desc: "Run your workspace from Telegram — manage tasks, create matters, and more.",
     icon: "✈",
-    href: null,
+    drillDown: false,
   },
+];
+
+const microsoftSub = [
+  {
+    name: "Outlook",
+    desc: "Connect Outlook so recent correspondence is read and turned into clients, matters and documents.",
+  },
+  {
+    name: "Outlook Calendar",
+    desc: "Connect your Outlook Calendar to keep events in sync both ways — events created here appear there too.",
+  },
+  {
+    name: "OneDrive",
+    desc: "Import documents from your OneDrive directly inside PowerAI Law so the assistant can reference them.",
+  },
+];
+
+const googleSub = [
+  { name: "Gmail", desc: "Read incoming client emails and turn them into matters automatically." },
+  { name: "Google Calendar", desc: "Keep events in sync both ways with your firm's calendar." },
+  { name: "Google Drive", desc: "Import documents directly from Drive into the firm's records." },
 ];
 
 export default function IntegrationsModal({ onClose }: { onClose: () => void }) {
   const [active, setActive] = useState<(typeof navItems)[number]["key"]>("integrations");
+  const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
+
+  const drilledConnector = connectors.find((c) => c.key === drilled);
+  const subRows = drilled === "microsoft" ? microsoftSub : drilled === "google" ? googleSub : [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8">
@@ -65,7 +99,10 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
               return (
                 <button
                   key={item.key}
-                  onClick={() => setActive(item.key)}
+                  onClick={() => {
+                    setActive(item.key);
+                    setDrilled(null);
+                  }}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-left transition-colors ${
                     active === item.key
                       ? "bg-card-alt text-ink"
@@ -82,8 +119,22 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
 
         <div className="flex-1 overflow-y-auto">
           <div className="flex items-center justify-between px-9 pt-8 pb-2">
-            <div className="flex items-center gap-2 text-[14px] font-medium">
-              <Grid3x3 size={15} strokeWidth={1.75} /> Integrations
+            <div className="flex items-center gap-2 text-[14px] font-medium text-muted">
+              {drilledConnector ? (
+                <>
+                  <span className="text-[13px]">{drilledConnector.icon}</span>
+                  <button onClick={() => setDrilled(null)} className="hover:text-ink transition-colors">
+                    Integrations
+                  </button>
+                  <span>/</span>
+                  <span className="text-ink font-semibold">{drilledConnector.name}</span>
+                </>
+              ) : (
+                <>
+                  <Grid3x3 size={15} strokeWidth={1.75} className="text-ink" />
+                  <span className="text-ink">Integrations</span>
+                </>
+              )}
             </div>
             <button onClick={onClose} className="text-muted hover:text-ink">
               <X size={20} strokeWidth={1.75} />
@@ -97,6 +148,43 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
                   {navItems.find((n) => n.key === active)?.label} settings coming soon.
                 </div>
               </div>
+            ) : drilledConnector ? (
+              <>
+                <h2 className="text-[26px] font-semibold mt-3 mb-1.5">{drilledConnector.name}</h2>
+                <p className="text-[14px] text-muted mb-7">{drilledConnector.desc}.</p>
+
+                <div className="border-t border-dashed border-line pt-5 mb-2 flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <div className="text-[15px] font-semibold mb-1">Connect everything at once</div>
+                    <p className="text-[13.5px] text-muted">
+                      One consent for mail, calendar and drive instead of three.
+                    </p>
+                  </div>
+                  <Link
+                    href="/connect"
+                    className="flex items-center gap-1.5 bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
+                  >
+                    <Link2 size={13} strokeWidth={1.75} /> Connect all
+                  </Link>
+                </div>
+
+                <div className="flex flex-col divide-y divide-line border-t border-line mt-4">
+                  {subRows.map((row) => (
+                    <div key={row.name} className="flex items-center justify-between gap-4 py-4">
+                      <div>
+                        <div className="text-[14.5px] font-semibold mb-0.5">{row.name}</div>
+                        <div className="text-[12.5px] text-muted max-w-[520px]">{row.desc}</div>
+                      </div>
+                      <Link
+                        href="/connect"
+                        className="flex items-center gap-1.5 bg-dark text-white px-4 py-2 rounded-full text-[13px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
+                      >
+                        <Link2 size={12} strokeWidth={1.75} /> Connect
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <>
                 <h2 className="text-[26px] font-semibold mt-3 mb-1.5">Integrations</h2>
@@ -135,11 +223,11 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
 
                 <div className="flex flex-col divide-y divide-line border-t border-line">
                   {connectors.map((c) =>
-                    c.href ? (
-                      <Link
+                    c.drillDown ? (
+                      <button
                         key={c.key}
-                        href={c.href}
-                        className="flex items-center justify-between py-4 hover:bg-card-alt transition-colors -mx-2 px-2 rounded-lg"
+                        onClick={() => setDrilled(c.key)}
+                        className="flex items-center justify-between py-4 hover:bg-card-alt transition-colors -mx-2 px-2 rounded-lg text-left"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-card-alt flex items-center justify-center text-[15px]">
@@ -151,11 +239,11 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
                           </div>
                         </div>
                         <ChevronRight size={16} strokeWidth={1.75} className="text-muted" />
-                      </Link>
+                      </button>
                     ) : (
-                      <div key={c.key} className="flex items-center justify-between py-4">
+                      <div key={c.key} className="flex items-center justify-between py-4 gap-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-card-alt flex items-center justify-center text-[15px]">
+                          <div className="w-9 h-9 rounded-lg bg-card-alt flex items-center justify-center text-[15px] flex-shrink-0">
                             {c.icon}
                           </div>
                           <div>
