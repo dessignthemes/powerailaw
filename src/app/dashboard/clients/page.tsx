@@ -24,6 +24,7 @@ import NewClientModal, {
   formatUpdatedAt,
 } from "@/components/NewClientModal";
 import { GenericDropdown } from "@/components/NewTaskModal";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 
 const statusOrder: ClientStatus[] = ["Active", "Archived"];
 
@@ -80,7 +81,15 @@ function RowStatusPicker({
 }
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([]);
+  const {
+    clients,
+    addClient,
+    updateClient,
+    deleteClients,
+    bulkSetClientStatus,
+    matters,
+  } = useWorkspaceData();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [collapsed, setCollapsed] = useState<Set<ClientStatus>>(new Set());
@@ -106,14 +115,12 @@ export default function ClientsPage() {
     });
   }
 
-  function updateClientStatus(id: string, status: ClientStatus) {
-    setClients((cs) =>
-      cs.map((c) => (c.id === id ? { ...c, status, updatedAt: new Date().toISOString() } : c))
-    );
+  function updateClientStatus(client: Client, status: ClientStatus) {
+    updateClient({ ...client, status, updatedAt: new Date().toISOString() });
   }
 
-  function deleteClients(ids: string[]) {
-    setClients((cs) => cs.filter((c) => !ids.includes(c.id)));
+  function handleDelete(ids: string[]) {
+    deleteClients(ids);
     setSelected((prev) => {
       const next = new Set(prev);
       ids.forEach((id) => next.delete(id));
@@ -122,12 +129,12 @@ export default function ClientsPage() {
   }
 
   function bulkSetStatus(status: ClientStatus) {
-    setClients((cs) =>
-      cs.map((c) =>
-        selected.has(c.id) ? { ...c, status, updatedAt: new Date().toISOString() } : c
-      )
-    );
+    bulkSetClientStatus(Array.from(selected), status);
     setBulkStatusOpen(false);
+  }
+
+  function matterCountFor(clientId: string) {
+    return matters.filter((m) => m.clientId === clientId).length;
   }
 
   const groups = statusOrder
@@ -209,7 +216,7 @@ export default function ClientsPage() {
                           <div onClick={(e) => e.stopPropagation()}>
                             <RowStatusPicker
                               status={c.status}
-                              onChange={(s) => updateClientStatus(c.id, s)}
+                              onChange={(s) => updateClientStatus(c, s)}
                             />
                           </div>
 
@@ -232,7 +239,7 @@ export default function ClientsPage() {
                           </span>
                           <span className="hidden md:flex items-center gap-1.5 text-muted text-[13px]">
                             <Folder size={13} strokeWidth={1.75} />
-                            {c.matterCount}
+                            {matterCountFor(c.id)}
                           </span>
                           <span className="hidden lg:inline text-muted text-[13px]">
                             Updated: {formatUpdatedAt(c.updatedAt)}
@@ -260,7 +267,7 @@ export default function ClientsPage() {
                                   </button>
                                   <button
                                     onClick={() => {
-                                      updateClientStatus(c.id, c.status === "Active" ? "Archived" : "Active");
+                                      updateClientStatus(c, c.status === "Active" ? "Archived" : "Active");
                                       setRowMenuFor(null);
                                     }}
                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
@@ -278,7 +285,7 @@ export default function ClientsPage() {
                                   <div className="border-t border-line my-1" />
                                   <button
                                     onClick={() => {
-                                      deleteClients([c.id]);
+                                      handleDelete([c.id]);
                                       setRowMenuFor(null);
                                     }}
                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-red-500 hover:bg-red-50 transition-colors"
@@ -324,7 +331,7 @@ export default function ClientsPage() {
             })}
           </GenericDropdown>
           <button
-            onClick={() => deleteClients(Array.from(selected))}
+            onClick={() => handleDelete(Array.from(selected))}
             className="w-9 h-9 rounded-full hover:bg-red-50 flex items-center justify-center text-red-500 transition-colors"
           >
             <Trash2 size={16} strokeWidth={1.75} />
@@ -342,7 +349,7 @@ export default function ClientsPage() {
         <NewClientModal
           onClose={() => setModalOpen(false)}
           onSubmit={(client) => {
-            setClients((cs) => [...cs, client]);
+            addClient(client);
             setModalOpen(false);
           }}
         />
@@ -353,7 +360,7 @@ export default function ClientsPage() {
           client={editingClient}
           onClose={() => setEditingClient(null)}
           onSubmit={(updated) => {
-            setClients((cs) => cs.map((c) => (c.id === updated.id ? updated : c)));
+            updateClient(updated);
             setEditingClient(null);
           }}
         />
