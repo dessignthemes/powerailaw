@@ -83,6 +83,9 @@ export default function NewEventModal({
   const [color, setColor] = useState("#3B82F6");
   const [asTask, setAsTask] = useState(false);
   const [attendees, setAttendees] = useState<string[]>(["marios@dessign.co"]);
+  const [matter, setMatter] = useState<string | null>(null);
+  const [matterOpen, setMatterOpen] = useState(false);
+  const [matterSearch, setMatterSearch] = useState("");
 
   function shiftTime(which: "start" | "end", delta: number) {
     if (which === "start") {
@@ -205,10 +208,47 @@ export default function NewEventModal({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 relative">
             <span className="text-[14px] font-medium text-muted flex-shrink-0">Matter</span>
-            <div className="flex-1 border border-line rounded-xl px-3.5 py-2.5 text-[13.5px] bg-card-alt text-muted flex items-center gap-2">
-              <Folder size={13} strokeWidth={1.75} /> Matter
+            <div className="flex-1 relative">
+              <button
+                onClick={() => setMatterOpen((o) => !o)}
+                className="w-full flex items-center gap-2 border border-line rounded-xl px-3.5 py-2.5 text-[13.5px] bg-card-alt hover:bg-line/50 transition-colors text-left"
+              >
+                <Folder size={13} strokeWidth={1.75} className="text-muted flex-shrink-0" />
+                <span className={matter ? "text-ink" : "text-muted"}>{matter ?? "Matter"}</span>
+              </button>
+              {matterOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMatterOpen(false)} />
+                  <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-2.5 w-full min-w-[260px]">
+                    <div className="relative mb-2">
+                      <Search
+                        size={13}
+                        strokeWidth={1.75}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                      />
+                      <input
+                        autoFocus
+                        value={matterSearch}
+                        onChange={(e) => setMatterSearch(e.target.value)}
+                        placeholder="Search matter, client, email..."
+                        className="w-full bg-card-alt rounded-lg pl-8 pr-3 py-2 text-[13.5px] outline-none placeholder:text-muted"
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        setMatter(null);
+                        setMatterOpen(false);
+                        setMatterSearch("");
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors text-muted"
+                    >
+                      <Folder size={14} strokeWidth={1.75} /> No matter
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
