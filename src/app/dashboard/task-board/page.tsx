@@ -298,13 +298,22 @@ export default function TaskBoardPage() {
                   </div>
                 </div>
 
-                <div className="px-3 pb-3 flex flex-col gap-2 min-h-[420px]">
+                <div
+                  onClick={() => {
+                    if (inlineAddFor !== col.id) {
+                      setInlineAddFor(col.id);
+                      setInlineValue("");
+                    }
+                  }}
+                  className="px-3 pb-3 flex flex-col gap-2 min-h-[calc(100vh-340px)] cursor-pointer"
+                >
                   {colTasks.map((t) => {
                     const Icon = statusMeta[t.status].icon;
                     return (
                       <div
                         key={t.id}
-                        className="bg-white border border-line rounded-xl px-3.5 py-3"
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white border border-line rounded-xl px-3.5 py-3 cursor-default"
                       >
                         <div className="text-[13.5px] font-medium mb-1.5">{t.title}</div>
                         <div className="flex items-center gap-2 text-[11.5px] text-muted">
@@ -319,6 +328,7 @@ export default function TaskBoardPage() {
                   {inlineAddFor === col.id ? (
                     <input
                       autoFocus
+                      onClick={(e) => e.stopPropagation()}
                       value={inlineValue}
                       onChange={(e) => setInlineValue(e.target.value)}
                       onBlur={() => addInlineTask(col.status)}
@@ -330,16 +340,10 @@ export default function TaskBoardPage() {
                       className="w-full bg-white border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted"
                     />
                   ) : (
-                    <button
-                      onClick={() => {
-                        setInlineAddFor(col.id);
-                        setInlineValue("");
-                      }}
-                      className="flex flex-col items-center justify-center gap-1.5 py-6 text-muted hover:text-ink transition-colors"
-                    >
+                    <div className="flex flex-col items-center justify-center gap-1.5 py-6 text-muted hover:text-ink transition-colors">
                       <Plus size={16} strokeWidth={1.75} />
                       <span className="text-[13px]">Add a task</span>
-                    </button>
+                    </div>
                   )}
                 </div>
               </div>
