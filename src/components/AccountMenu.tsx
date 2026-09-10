@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Settings, Shield, Headphones, Box, LogOut, ChevronsUpDown } from "lucide-react";
+import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown } from "lucide-react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 
 export default function AccountMenu({
@@ -75,7 +75,7 @@ export default function AccountMenu({
                 }}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-card-alt transition-colors text-left"
               >
-                <Box size={16} strokeWidth={1.75} />
+                <Grid3x3 size={16} strokeWidth={1.75} />
                 Integrations
               </button>
             </div>
