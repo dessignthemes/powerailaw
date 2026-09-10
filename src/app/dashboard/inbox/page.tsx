@@ -17,7 +17,7 @@ export default function InboxPage() {
         clients and matters.
       </p>
       <button
-        onClick={openIntegrations}
+        onClick={() => openIntegrations()}
         className="bg-dark text-white px-5 py-2.5 rounded-full text-[14.5px] font-medium hover:bg-dark2 transition-colors"
       >
         Go to Integrations

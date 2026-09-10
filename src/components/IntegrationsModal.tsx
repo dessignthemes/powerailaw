@@ -297,8 +297,16 @@ function MailCategoryRow({
   );
 }
 
-export default function IntegrationsModal({ onClose }: { onClose: () => void }) {
-  const [active, setActive] = useState<(typeof navItems)[number]["key"]>("integrations");
+export type SettingsTabKey = (typeof navItems)[number]["key"];
+
+export default function IntegrationsModal({
+  onClose,
+  initialTab = "integrations",
+}: {
+  onClose: () => void;
+  initialTab?: SettingsTabKey;
+}) {
+  const [active, setActive] = useState<SettingsTabKey>(initialTab);
   const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
 
   const [logoUrl, setLogoUrl] = useState<string | null>(null);

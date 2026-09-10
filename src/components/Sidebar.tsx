@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
+import { useState } from "react";
 import {
   Home,
   Sparkles,
@@ -16,9 +16,11 @@ import {
   Copy,
   CircleUser,
   Folder,
-  Settings,
   type LucideIcon,
 } from "lucide-react";
+import AccountMenu from "@/components/AccountMenu";
+import AdminModal from "@/components/AdminModal";
+import ContactSupportModal from "@/components/ContactSupportModal";
 
 const toolLinks: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Time tracking", href: "/dashboard/time-tracking", icon: Timer },
@@ -35,6 +37,9 @@ const workspaceLinks: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Clients", href: "/dashboard/clients", icon: CircleUser },
   { label: "Matters", href: "/dashboard/matters", icon: Folder },
 ];
+
+const ACCOUNT_EMAIL = "marios@dessign.co";
+const ORG_NAME = "Dessign";
 
 function NavItem({
   href,
@@ -62,7 +67,8 @@ function NavItem({
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { openIntegrations } = useIntegrationsModal();
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   return (
     <aside className="w-[260px] flex-shrink-0 bg-cream border-r border-line h-screen sticky top-0 flex flex-col px-4 py-6">
@@ -109,20 +115,18 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t border-line pt-4 mt-4">
-        <button
-          onClick={openIntegrations}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-muted hover:bg-card-alt hover:text-ink transition-colors mb-2 text-left"
-        >
-          <Settings size={16} strokeWidth={1.75} className="flex-shrink-0" />
-          Integrations
-        </button>
-        <div className="flex items-center gap-2.5 px-3 py-2">
-          <div className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-medium">
-            P
-          </div>
-          <span className="text-[13px] text-muted truncate">you@yourfirm.com</span>
-        </div>
+        <AccountMenu
+          email={ACCOUNT_EMAIL}
+          orgName={ORG_NAME}
+          onOpenAdmin={() => setAdminOpen(true)}
+          onOpenSupport={() => setSupportOpen(true)}
+        />
       </div>
+
+      {adminOpen && <AdminModal ownerEmail={ACCOUNT_EMAIL} onClose={() => setAdminOpen(false)} />}
+      {supportOpen && (
+        <ContactSupportModal email={ACCOUNT_EMAIL} onClose={() => setSupportOpen(false)} />
+      )}
     </aside>
   );
 }

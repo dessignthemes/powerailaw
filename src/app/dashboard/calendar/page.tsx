@@ -200,7 +200,7 @@ export default function CalendarPage() {
         <span className="text-[13.5px] text-muted">
           Sync from Google or Outlook Calendar to see your events here.
         </span>
-        <button onClick={openIntegrations} className="text-[13.5px] font-medium text-ink underline">
+        <button onClick={() => openIntegrations()} className="text-[13.5px] font-medium text-ink underline">
           Connect a calendar
         </button>
       </div>
