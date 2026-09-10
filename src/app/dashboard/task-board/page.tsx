@@ -318,68 +318,92 @@ export default function TaskBoardPage() {
                   </div>
                 </div>
 
-                <div
-                  onClick={() => {
-                    if (inlineAddFor !== col.id) {
-                      setInlineAddFor(col.id);
-                      setInlineValue("");
-                    }
-                  }}
-                  className="px-3 pb-3 flex flex-col gap-2 min-h-[calc(100vh-260px)] cursor-pointer"
-                >
-                  {colTasks.map((t) => (
-                    <div
-                      key={t.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedTask(t);
+                <div className="px-3 pb-3 min-h-[calc(100vh-260px)] flex flex-col">
+                  {colTasks.length === 0 && inlineAddFor !== col.id ? (
+                    <button
+                      onClick={() => {
+                        setInlineAddFor(col.id);
+                        setInlineValue("");
                       }}
-                      className="bg-white border border-line rounded-xl px-3.5 py-3 cursor-pointer hover:shadow-sm transition-shadow"
+                      className="flex-1 bg-cream rounded-xl flex flex-col items-center justify-center gap-1.5 text-muted hover:text-ink transition-colors"
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="text-[14px] font-semibold leading-snug">{t.title}</div>
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-muted hover:text-ink flex-shrink-0 -mt-0.5"
-                        >
-                          <MoreHorizontal size={15} strokeWidth={1.75} />
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-card-alt border border-line flex items-center justify-center flex-shrink-0">
-                          <User size={12} strokeWidth={1.75} className="text-muted" />
-                        </span>
-                        <span
-                          className="text-[12px] font-medium px-2.5 py-1 rounded-full"
-                          style={{
-                            backgroundColor: priorityMeta[t.priority].bg,
-                            color: priorityMeta[t.priority].text,
-                          }}
-                        >
-                          {t.priority}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-
-                  {inlineAddFor === col.id ? (
-                    <input
-                      autoFocus
-                      onClick={(e) => e.stopPropagation()}
-                      value={inlineValue}
-                      onChange={(e) => setInlineValue(e.target.value)}
-                      onBlur={() => addInlineTask(col.status)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") addInlineTask(col.status);
-                        if (e.key === "Escape") setInlineAddFor(null);
-                      }}
-                      placeholder="Task title (Enter to add, Esc to cancel)"
-                      className="w-full bg-white border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-1.5 py-6 text-muted hover:text-ink transition-colors">
                       <Plus size={16} strokeWidth={1.75} />
                       <span className="text-[13px]">Add a task</span>
+                    </button>
+                  ) : colTasks.length === 0 && inlineAddFor === col.id ? (
+                    <div className="flex-1 bg-cream rounded-xl flex items-center justify-center px-4">
+                      <input
+                        autoFocus
+                        value={inlineValue}
+                        onChange={(e) => setInlineValue(e.target.value)}
+                        onBlur={() => addInlineTask(col.status)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") addInlineTask(col.status);
+                          if (e.key === "Escape") setInlineAddFor(null);
+                        }}
+                        placeholder="Task title (Enter to add, Esc to cancel)"
+                        className="w-full bg-white border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted text-center"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {colTasks.map((t) => (
+                        <div
+                          key={t.id}
+                          onClick={() => setSelectedTask(t)}
+                          className="bg-white border border-line rounded-xl px-3.5 py-3 cursor-pointer hover:shadow-sm transition-shadow"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2.5">
+                            <div className="text-[14px] font-semibold leading-snug">{t.title}</div>
+                            <button
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-muted hover:text-ink flex-shrink-0 -mt-0.5"
+                            >
+                              <MoreHorizontal size={15} strokeWidth={1.75} />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-card-alt border border-line flex items-center justify-center flex-shrink-0">
+                              <User size={12} strokeWidth={1.75} className="text-muted" />
+                            </span>
+                            <span
+                              className="text-[12px] font-medium px-2.5 py-1 rounded-full"
+                              style={{
+                                backgroundColor: priorityMeta[t.priority].bg,
+                                color: priorityMeta[t.priority].text,
+                              }}
+                            >
+                              {t.priority}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+
+                      {inlineAddFor === col.id ? (
+                        <input
+                          autoFocus
+                          value={inlineValue}
+                          onChange={(e) => setInlineValue(e.target.value)}
+                          onBlur={() => addInlineTask(col.status)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") addInlineTask(col.status);
+                            if (e.key === "Escape") setInlineAddFor(null);
+                          }}
+                          placeholder="Task title (Enter to add, Esc to cancel)"
+                          className="w-full bg-white border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted"
+                        />
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setInlineAddFor(col.id);
+                            setInlineValue("");
+                          }}
+                          className="flex items-center justify-center gap-1.5 py-3 text-muted hover:text-ink transition-colors"
+                        >
+                          <Plus size={15} strokeWidth={1.75} />
+                          <span className="text-[13px]">Add a task</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
