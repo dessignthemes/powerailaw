@@ -61,8 +61,21 @@ export default function DashboardHome() {
             <span>▦</span> Events
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="text-[15px] font-medium mb-1">Nothing due today</div>
+        <div className="bg-cream rounded-xl flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-8 h-8 rounded-md border border-line flex items-center justify-center text-muted text-[15px] mb-3">
+            ▦
+          </div>
+          <div className="text-[15px] font-medium">Nothing due today</div>
+        </div>
+      </div>
+
+      <div className="bg-card-alt rounded-2xl p-6 mt-5">
+        <div className="text-[14px] font-medium text-ink mb-6 flex items-center gap-1.5">
+          <span>∿</span> Recent activity
+        </div>
+        <div className="bg-cream rounded-xl flex flex-col items-center justify-center py-20 text-center">
+          <div className="text-muted text-[18px] mb-3">∿</div>
+          <div className="text-[15px] font-medium text-muted">No activity yet</div>
         </div>
       </div>
     </div>
