@@ -331,7 +331,7 @@ export default function TaskBoardPage() {
                       <span className="text-[13px]">Add a task</span>
                     </button>
                   ) : colTasks.length === 0 && inlineAddFor === col.id ? (
-                    <div className="flex-1 bg-cream rounded-xl flex items-center justify-center px-4">
+                    <div className="flex-1 bg-cream rounded-xl px-4 pt-3">
                       <input
                         autoFocus
                         value={inlineValue}
@@ -342,16 +342,31 @@ export default function TaskBoardPage() {
                           if (e.key === "Escape") setInlineAddFor(null);
                         }}
                         placeholder="Task title (Enter to add, Esc to cancel)"
-                        className="w-full bg-white border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted text-center"
+                        className="w-full bg-cream border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted"
                       />
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2">
+                      {inlineAddFor === col.id && (
+                        <input
+                          autoFocus
+                          value={inlineValue}
+                          onChange={(e) => setInlineValue(e.target.value)}
+                          onBlur={() => addInlineTask(col.status)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") addInlineTask(col.status);
+                            if (e.key === "Escape") setInlineAddFor(null);
+                          }}
+                          placeholder="Task title (Enter to add, Esc to cancel)"
+                          className="w-full bg-cream border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted"
+                        />
+                      )}
+
                       {colTasks.map((t) => (
                         <div
                           key={t.id}
                           onClick={() => setSelectedTask(t)}
-                          className="bg-white border border-line rounded-xl px-3.5 py-3 cursor-pointer hover:shadow-sm transition-shadow"
+                          className="bg-cream border border-line rounded-xl px-3.5 py-3 cursor-pointer hover:shadow-sm transition-shadow"
                         >
                           <div className="flex items-start justify-between gap-2 mb-2.5">
                             <div className="text-[14px] font-semibold leading-snug">{t.title}</div>
@@ -379,20 +394,7 @@ export default function TaskBoardPage() {
                         </div>
                       ))}
 
-                      {inlineAddFor === col.id ? (
-                        <input
-                          autoFocus
-                          value={inlineValue}
-                          onChange={(e) => setInlineValue(e.target.value)}
-                          onBlur={() => addInlineTask(col.status)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") addInlineTask(col.status);
-                            if (e.key === "Escape") setInlineAddFor(null);
-                          }}
-                          placeholder="Task title (Enter to add, Esc to cancel)"
-                          className="w-full bg-white border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted"
-                        />
-                      ) : (
+                      {inlineAddFor !== col.id && (
                         <button
                           onClick={() => {
                             setInlineAddFor(col.id);
