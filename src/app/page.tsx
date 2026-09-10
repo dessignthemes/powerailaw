@@ -152,7 +152,7 @@ export default function Home() {
         {/* RIGHT: beige textured panel with floating trail card */}
         <div className="texture-beige relative min-h-[420px] md:min-h-full flex items-center justify-center px-6 py-10 md:py-0">
           <a
-            href="/dashboard/connect"
+            href="/connect"
             className="absolute top-8 right-8 bg-dark text-white px-5 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
           >
             Get Started
@@ -357,7 +357,7 @@ export default function Home() {
                 ))}
               </div>
               <a
-                href="/dashboard/connect"
+                href="/connect"
                 className="bg-dark text-white py-3.5 rounded-full text-[15px] font-semibold text-center hover:bg-dark2 transition-colors mt-auto"
               >
                 Start 7-day free trial
@@ -389,7 +389,7 @@ export default function Home() {
                 ))}
               </div>
               <a
-                href="/dashboard/connect"
+                href="/connect"
                 className="bg-white text-ink py-3.5 rounded-full text-[15px] font-semibold text-center hover:bg-cream transition-colors mt-auto"
               >
                 Start free trial
@@ -424,7 +424,7 @@ export default function Home() {
                 ))}
               </div>
               <a
-                href="/dashboard/connect"
+                href="/connect"
                 className="bg-dark text-white py-3.5 rounded-full text-[15px] font-semibold text-center hover:bg-dark2 transition-colors mt-auto"
               >
                 Start free trial

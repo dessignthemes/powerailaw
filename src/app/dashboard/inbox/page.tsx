@@ -16,7 +16,7 @@ export default function InboxPage() {
           <div className="text-[13px] text-muted">Not connected yet</div>
         </div>
         <a
-          href="/dashboard/connect"
+          href="/connect"
           className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
         >
           Connect Outlook

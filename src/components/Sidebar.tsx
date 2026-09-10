@@ -2,30 +2,47 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Home,
+  Sparkles,
+  Timer,
+  UserPlus,
+  ListChecks,
+  Inbox,
+  Calendar,
+  Bookmark,
+  BarChart3,
+  Copy,
+  CircleUser,
+  Folder,
+  Settings,
+  type LucideIcon,
+} from "lucide-react";
 
-const toolLinks = [
-  { label: "Client Intake", href: "/dashboard/clients", icon: "◎" },
-  { label: "Triage", href: "/dashboard/inbox", icon: "☰" },
+const toolLinks: { label: string; href: string; icon: LucideIcon }[] = [
+  { label: "Time tracking", href: "/dashboard/time-tracking", icon: Timer },
+  { label: "Client Intake", href: "/dashboard/clients", icon: UserPlus },
+  { label: "Triage", href: "/dashboard/inbox", icon: ListChecks },
 ];
 
-const workspaceLinks = [
-  { label: "Inbox", href: "/dashboard/inbox", icon: "✉" },
-  { label: "Calendar", href: "/dashboard/calendar", icon: "▦" },
-  { label: "Records", href: "/dashboard/records", icon: "▤" },
-  { label: "Task Board", href: "/dashboard/task-board", icon: "▥" },
-  { label: "Documents", href: "/dashboard/documents", icon: "▧" },
-  { label: "Clients", href: "/dashboard/clients", icon: "◐" },
-  { label: "Matters", href: "/dashboard/matters", icon: "⚖" },
+const workspaceLinks: { label: string; href: string; icon: LucideIcon }[] = [
+  { label: "Inbox", href: "/dashboard/inbox", icon: Inbox },
+  { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
+  { label: "Records", href: "/dashboard/records", icon: Bookmark },
+  { label: "Task Board", href: "/dashboard/task-board", icon: BarChart3 },
+  { label: "Documents", href: "/dashboard/documents", icon: Copy },
+  { label: "Clients", href: "/dashboard/clients", icon: CircleUser },
+  { label: "Matters", href: "/dashboard/matters", icon: Folder },
 ];
 
 function NavItem({
   href,
-  icon,
+  icon: Icon,
   label,
   active,
 }: {
   href: string;
-  icon: string;
+  icon: LucideIcon;
   label: string;
   active: boolean;
 }) {
@@ -36,7 +53,7 @@ function NavItem({
         active ? "bg-card-alt text-ink" : "text-muted hover:bg-card-alt hover:text-ink"
       }`}
     >
-      <span className="w-4 text-center text-[13px]">{icon}</span>
+      <Icon size={16} strokeWidth={1.75} className="flex-shrink-0" />
       {label}
     </Link>
   );
@@ -58,13 +75,13 @@ export default function Sidebar() {
         <div className="mb-1">
           <NavItem
             href="/dashboard"
-            icon="⌂"
+            icon={Home}
             label="Dashboard"
             active={pathname === "/dashboard"}
           />
           <NavItem
             href="/dashboard/agent"
-            icon="✦"
+            icon={Sparkles}
             label="AI Agent"
             active={pathname === "/dashboard/agent"}
           />
@@ -91,10 +108,10 @@ export default function Sidebar() {
 
       <div className="border-t border-line pt-4 mt-4">
         <Link
-          href="/dashboard/connect"
+          href="/connect"
           className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-muted hover:bg-card-alt hover:text-ink transition-colors mb-2"
         >
-          <span className="w-4 text-center text-[13px]">⚙</span>
+          <Settings size={16} strokeWidth={1.75} className="flex-shrink-0" />
           Integrations
         </Link>
         <div className="flex items-center gap-2.5 px-3 py-2">

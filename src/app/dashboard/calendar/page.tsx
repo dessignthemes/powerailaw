@@ -14,7 +14,7 @@ export default function CalendarPage() {
         <span className="text-[13.5px] text-muted">
           Sync from Outlook Calendar to see your events here.
         </span>
-        <a href="/dashboard/connect" className="text-[13.5px] font-medium text-ink underline">
+        <a href="/connect" className="text-[13.5px] font-medium text-ink underline">
           Connect a calendar
         </a>
       </div>
