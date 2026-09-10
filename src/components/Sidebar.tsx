@@ -21,7 +21,7 @@ import {
 
 const toolLinks: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Time tracking", href: "/dashboard/time-tracking", icon: Timer },
-  { label: "Client Intake", href: "/dashboard/clients", icon: UserPlus },
+  { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Triage", href: "/dashboard/inbox", icon: ListChecks },
 ];
 
