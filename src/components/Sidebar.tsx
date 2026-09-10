@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 import {
   Home,
   Sparkles,
@@ -61,6 +62,7 @@ function NavItem({
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { openIntegrations } = useIntegrationsModal();
 
   return (
     <aside className="w-[260px] flex-shrink-0 bg-cream border-r border-line h-screen sticky top-0 flex flex-col px-4 py-6">
@@ -107,13 +109,13 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t border-line pt-4 mt-4">
-        <Link
-          href="/connect"
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-muted hover:bg-card-alt hover:text-ink transition-colors mb-2"
+        <button
+          onClick={openIntegrations}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-muted hover:bg-card-alt hover:text-ink transition-colors mb-2 text-left"
         >
           <Settings size={16} strokeWidth={1.75} className="flex-shrink-0" />
           Integrations
-        </Link>
+        </button>
         <div className="flex items-center gap-2.5 px-3 py-2">
           <div className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-medium">
             P

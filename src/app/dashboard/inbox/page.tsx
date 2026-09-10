@@ -1,6 +1,11 @@
+"use client";
+
 import EmptyState from "@/components/EmptyState";
+import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 
 export default function InboxPage() {
+  const { openIntegrations } = useIntegrationsModal();
+
   return (
     <div className="px-10 py-10 max-w-[1200px]">
       <h1 className="text-[28px] font-semibold mb-1">Inbox</h1>
@@ -15,12 +20,12 @@ export default function InboxPage() {
           <div className="text-[14.5px] font-semibold mb-1">To-Do Bucket folder</div>
           <div className="text-[13px] text-muted">Not connected yet</div>
         </div>
-        <a
-          href="/connect"
+        <button
+          onClick={openIntegrations}
           className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
         >
           Connect Outlook
-        </a>
+        </button>
       </div>
 
       <EmptyState

@@ -11,7 +11,7 @@ import {
   Plus,
 } from "lucide-react";
 import NewEventModal, { CalendarEvent } from "@/components/NewEventModal";
-import IntegrationsModal from "@/components/IntegrationsModal";
+import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -37,7 +37,7 @@ export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [modalDate, setModalDate] = useState<string | null>(null);
-  const [integrationsOpen, setIntegrationsOpen] = useState(false);
+  const { openIntegrations } = useIntegrationsModal();
 
   const days = useMemo(
     () => buildMonthGrid(cursor.getFullYear(), cursor.getMonth()),
@@ -108,7 +108,7 @@ export default function CalendarPage() {
           Sync from Outlook Calendar to see your events here.
         </span>
         <button
-          onClick={() => setIntegrationsOpen(true)}
+          onClick={openIntegrations}
           className="text-[13.5px] font-medium text-ink underline"
         >
           Connect a calendar
@@ -170,8 +170,6 @@ export default function CalendarPage() {
           }}
         />
       )}
-
-      {integrationsOpen && <IntegrationsModal onClose={() => setIntegrationsOpen(false)} />}
     </div>
   );
 }
