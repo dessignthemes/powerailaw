@@ -19,7 +19,7 @@ export default function CalendarPage() {
         </a>
       </div>
 
-      <div className="grid grid-cols-7 border border-line rounded-xl overflow-hidden">
+      <div className="grid grid-cols-7 bg-white/60 border border-line rounded-xl overflow-hidden">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
           <div
             key={d}

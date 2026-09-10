@@ -12,7 +12,7 @@ export default function DocumentsPage() {
         className="border border-line rounded-full px-4 py-2.5 text-[13.5px] w-full max-w-[420px] mb-8 placeholder:text-muted"
       />
 
-      <div className="border border-line rounded-2xl overflow-hidden">
+      <div className="bg-white/60 border border-line rounded-2xl overflow-hidden">
         <div className="grid grid-cols-4 bg-card-alt text-[13px] font-medium text-muted px-5 py-3">
           <div>File</div>
           <div>Type</div>

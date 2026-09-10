@@ -17,23 +17,23 @@ export default function DashboardHome() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
-        <div className="border border-line rounded-2xl p-6">
+        <div className="bg-white/60 border border-line rounded-2xl p-6">
           <div className="text-[13px] font-medium text-muted mb-6">Due today</div>
           <div className="text-3xl font-display font-semibold mb-1">0 tasks</div>
         </div>
-        <div className="border border-line rounded-2xl p-6">
+        <div className="bg-white/60 border border-line rounded-2xl p-6">
           <div className="text-[13px] font-medium text-muted mb-6">Calendar</div>
           <div className="text-3xl font-display font-semibold mb-1">0 events</div>
           <div className="text-[13px] text-muted">Nothing scheduled today</div>
         </div>
-        <div className="border border-line rounded-2xl p-6">
+        <div className="bg-white/60 border border-line rounded-2xl p-6">
           <div className="text-[13px] font-medium text-muted mb-6">Tracked</div>
           <div className="text-3xl font-display font-semibold mb-1">0m</div>
           <div className="text-[13px] text-muted">0m this week</div>
         </div>
       </div>
 
-      <div className="border border-line rounded-2xl p-6 mt-5">
+      <div className="bg-white/60 border border-line rounded-2xl p-6 mt-5">
         <div className="flex gap-6 text-[14px] font-medium text-muted mb-6">
           <div className="text-ink border-b-2 border-ink pb-2">Tasks</div>
           <div className="pb-2">Events</div>
