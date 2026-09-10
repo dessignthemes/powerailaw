@@ -53,7 +53,7 @@ const connectors: {
     key: "microsoft",
     name: "Microsoft 365",
     desc: "Outlook, OneDrive, and Calendar",
-    icon: "◫",
+    icon: "M",
     drillDown: true,
   },
   {
@@ -1244,12 +1244,6 @@ export default function IntegrationsModal({
                 </p>
 
                 <div className="texture-beige rounded-3xl p-8 mb-8">
-                  <div className="flex items-center gap-1.5 mb-5 text-[15px] font-semibold">
-                    <span>@</span>
-                    <span className="w-4 h-4 rounded-sm bg-dark text-white flex items-center justify-center text-[9px]">
-                      P
-                    </span>
-                  </div>
                   <h3 className="text-[26px] font-semibold mb-3 leading-tight">
                     Import your entire client base
                     <br />
@@ -1272,9 +1266,6 @@ export default function IntegrationsModal({
                     >
                       ↗ Import from Outlook
                     </Link>
-                    <span className="text-[13.5px] font-medium text-ink underline cursor-pointer">
-                      Learn more
-                    </span>
                   </div>
                 </div>
 
