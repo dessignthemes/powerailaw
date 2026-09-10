@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     "PowerAI Law watches your firm's inbox, assigns incoming documents to the right team member, and keeps Microsoft Planner and LEAP in sync.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"

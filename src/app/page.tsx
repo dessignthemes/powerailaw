@@ -24,17 +24,17 @@ const trailSteps = [
   },
   {
     icon: "⚖",
-    title: "Linked to LEAP matter",
+    title: "Linked to Law Software matter",
     meta: "Matter #4471 · Whitfield, R.",
   },
 ];
 
-const integrations = ["Microsoft 365", "Outlook Mail", "Microsoft Planner", "LEAP"];
+const integrations = ["Microsoft 365", "Outlook Mail", "Microsoft Planner", "Law Software"];
 
 const opsLabels = [
   { title: "Intake & Routing", desc: "Every new document assigned the moment it lands." },
   { title: "Visibility", desc: "Anyone on the team can see where a client's file stands." },
-  { title: "Matter Sync", desc: "Documents and tasks stay linked to the right LEAP matter." },
+  { title: "Matter Sync", desc: "Documents and tasks stay linked to the right matter in your law software." },
 ];
 
 const howSteps = [
@@ -45,8 +45,8 @@ const howSteps = [
   },
   {
     num: "02",
-    title: "Connect LEAP",
-    desc: "Link your LEAP account so matters and documents stay in sync automatically.",
+    title: "Connect your law software",
+    desc: "Link your firm's law software so matters and documents stay in sync automatically.",
   },
   {
     num: "03",
@@ -56,14 +56,22 @@ const howSteps = [
   {
     num: "04",
     title: "Watch it work",
-    desc: "New documents get assigned, tasked in Planner, and linked in LEAP — no manual forwarding.",
+    desc: "New documents get assigned, tasked in Planner, and linked in your law software — no manual forwarding.",
   },
+];
+
+const pricingTrial = [
+  "Unlimited team members",
+  "Microsoft 365 & Planner integration",
+  "Law software matter sync",
+  "Automatic document routing",
+  "Full audit trail",
 ];
 
 const pricingMonthly = [
   "Unlimited team members",
   "Microsoft 365 & Planner integration",
-  "LEAP matter sync",
+  "Law software matter sync",
   "Automatic document routing",
   "Full audit trail",
 ];
@@ -119,8 +127,8 @@ export default function Home() {
             <p className="text-[16.5px] text-muted-light leading-relaxed mb-9">
               PowerAI Law watches your firm&rsquo;s inbox, assigns incoming
               documents to the right team member, and keeps Microsoft Planner
-              and LEAP in sync — so nothing sits unclaimed and nobody has to
-              ask &ldquo;who has this file?&rdquo;
+              and your law software in sync — so nothing sits unclaimed and
+              nobody has to ask &ldquo;who has this file?&rdquo;
             </p>
             <a
               href="#pricing"
@@ -262,10 +270,10 @@ export default function Home() {
               {/* Card 3 — light */}
               <div className="bg-card-alt border border-line rounded-[20px] p-6 flex flex-col justify-between min-h-[280px]">
                 <div>
-                  <h3 className="text-[17px] font-semibold mb-2">LEAP matter sync</h3>
+                  <h3 className="text-[17px] font-semibold mb-2">Law software matter sync</h3>
                   <p className="text-[13.5px] text-muted leading-relaxed">
-                    Keeps documents and tasks linked to the correct LEAP matter
-                    number, so records stay connected end to end.
+                    Keeps documents and tasks linked to the correct matter
+                    number in your law software, so records stay connected end to end.
                   </p>
                 </div>
                 <div className="bg-white border border-line rounded-xl p-4 mt-6">
@@ -321,7 +329,41 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[860px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[1160px]">
+            {/* 7-Day Free Trial */}
+            <div className="bg-cream text-ink border border-line rounded-3xl p-10 flex flex-col gap-6 relative">
+              <div className="absolute -top-3 left-8 bg-dark text-white text-[11.5px] font-semibold px-3 py-1.5 rounded-full">
+                No card charged for 7 days
+              </div>
+              <div>
+                <div className="text-[13px] font-semibold text-muted uppercase tracking-wide mb-4">
+                  Free Trial
+                </div>
+                <div className="flex items-baseline gap-2.5">
+                  <div className="font-display text-5xl font-semibold text-ink">7 days</div>
+                </div>
+                <div className="text-muted text-[14.5px] leading-relaxed mt-2.5">
+                  Try everything in the Monthly plan, free for a week. Cancel anytime before it ends.
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                {pricingTrial.map((item) => (
+                  <div key={item} className="flex items-center gap-2.5 text-ink text-[14.5px]">
+                    <span className="w-[18px] h-[18px] rounded-full bg-dark flex items-center justify-center flex-shrink-0 text-[11px] text-white">
+                      ✓
+                    </span>
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <a
+                href="#"
+                className="bg-dark text-white py-3.5 rounded-full text-[15px] font-semibold text-center hover:bg-dark2 transition-colors mt-auto"
+              >
+                Start 7-day free trial
+              </a>
+            </div>
+
             {/* Monthly */}
             <div className="bg-dark2 border border-line-dark rounded-3xl p-10 flex flex-col gap-6">
               <div>
