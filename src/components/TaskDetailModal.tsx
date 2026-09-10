@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   Maximize2,
@@ -75,7 +75,30 @@ export default function TaskDetailModal({
   const [dateOpen, setDateOpen] = useState(false);
   const [tab, setTab] = useState("Comments");
   const [comment, setComment] = useState("");
+  const [comments, setComments] = useState<string[]>([]);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timerRunning]);
+
+  function formatElapsed(totalSeconds: number) {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    if (m === 0) return `${s}s`;
+    return `${m}m ${String(s).padStart(2, "0")}s`;
+  }
+
+  function submitComment() {
+    if (!comment.trim()) return;
+    setComments((c) => [...c, comment.trim()]);
+    setComment("");
+  }
 
   const StatusIcon = statusMeta[status].icon;
 
@@ -282,9 +305,22 @@ export default function TaskDetailModal({
 
           <div className="min-h-[140px] mb-4">
             {tab === "Comments" && (
-              <div className="text-[14px] text-muted text-center py-6">
-                No comments yet — start the conversation.
-              </div>
+              comments.length === 0 ? (
+                <div className="text-[14px] text-muted text-center py-6">
+                  No comments yet — start the conversation.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {comments.map((c, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <span className="w-7 h-7 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-medium flex-shrink-0">
+                        M
+                      </span>
+                      <div className="bg-card-alt rounded-2xl px-3.5 py-2.5 text-[14px]">{c}</div>
+                    </div>
+                  ))}
+                </div>
+              )
             )}
             {tab !== "Comments" && (
               <div className="text-[14px] text-muted text-center py-6">
@@ -303,10 +339,16 @@ export default function TaskDetailModal({
               <input
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitComment();
+                }}
                 placeholder="Write a comment..."
                 className="flex-1 outline-none text-[14px] placeholder:text-muted bg-transparent"
               />
-              <button className="w-8 h-8 rounded-full bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors">
+              <button
+                onClick={submitComment}
+                className="w-8 h-8 rounded-full bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+              >
                 <ArrowUp size={14} strokeWidth={1.75} />
               </button>
             </div>
@@ -321,7 +363,7 @@ export default function TaskDetailModal({
             <Play size={14} strokeWidth={1.75} fill={timerRunning ? "currentColor" : "none"} />
             {timerRunning ? "Timer running" : "Start timer"}
           </button>
-          <span className="text-[13px] text-muted mono">0m</span>
+          <span className="text-[13px] text-muted mono">{formatElapsed(elapsedSeconds)}</span>
         </div>
       </div>
     </div>
