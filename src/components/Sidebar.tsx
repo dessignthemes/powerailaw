@@ -17,7 +17,7 @@ import {
   Copy,
   CircleUser,
   Folder,
-  Box,
+  Grid3x3,
   ArrowUpRight,
   type LucideIcon,
 } from "lucide-react";
@@ -123,7 +123,7 @@ export default function Sidebar() {
           onClick={() => openIntegrations("integrations")}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-muted hover:bg-card-alt hover:text-ink transition-colors mb-2 text-left"
         >
-          <Box size={16} strokeWidth={1.75} className="flex-shrink-0" />
+          <Grid3x3 size={16} strokeWidth={1.75} className="flex-shrink-0" />
           <span className="flex-1">Integrations</span>
           <ArrowUpRight size={14} strokeWidth={1.75} className="flex-shrink-0" />
         </button>
