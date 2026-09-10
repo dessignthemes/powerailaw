@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Link2,
   Trash2,
+  Fingerprint,
 } from "lucide-react";
 
 const navItems = [
@@ -167,6 +168,26 @@ function PracticeAreaRow({
   );
 }
 
+function SecurityCard({
+  title,
+  badge,
+  children,
+}: {
+  title: string;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border border-line rounded-2xl p-5 mb-4">
+      <div className="flex items-center justify-between gap-4 mb-2">
+        <div className="text-[15px] font-semibold">{title}</div>
+        {badge}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export default function IntegrationsModal({ onClose }: { onClose: () => void }) {
   const [active, setActive] = useState<(typeof navItems)[number]["key"]>("integrations");
   const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
@@ -199,6 +220,8 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
     setPracticeSaved(true);
     setTimeout(() => setPracticeSaved(false), 1800);
   }
+
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
   function handleDeleteAccount() {
     if (
@@ -413,6 +436,69 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
                     <Trash2 size={13} strokeWidth={1.75} /> Delete account
                   </button>
                 </div>
+              </>
+            ) : active === "security" ? (
+              <>
+                <h2 className="text-[26px] font-semibold mt-3 mb-1.5">Security</h2>
+                <p className="text-[14px] text-muted mb-8">
+                  Manage two-factor authentication and passkeys for your account
+                </p>
+
+                <SecurityCard title="Password">
+                  <p className="text-[13.5px] text-muted mb-4 max-w-[520px]">
+                    Change your password and optionally sign out every other active device.
+                  </p>
+                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors">
+                    Change password
+                  </button>
+                </SecurityCard>
+
+                <SecurityCard
+                  title="Authenticator app"
+                  badge={
+                    <span className="text-[13px] text-muted flex-shrink-0">
+                      {twoFactorEnabled ? "Enabled" : "Disabled"}
+                    </span>
+                  }
+                >
+                  <p className="text-[13.5px] text-muted mb-4 max-w-[520px]">
+                    Protect your account with one-time codes from Google Authenticator or any
+                    other authenticator app.
+                  </p>
+                  <button
+                    onClick={() => setTwoFactorEnabled((v) => !v)}
+                    className={`px-4 py-2.5 rounded-full text-[13.5px] font-medium transition-colors ${
+                      twoFactorEnabled
+                        ? "bg-white border border-line hover:bg-card-alt"
+                        : "bg-dark text-white hover:bg-dark2"
+                    }`}
+                  >
+                    {twoFactorEnabled ? "Disable two-factor authentication" : "Enable two-factor authentication"}
+                  </button>
+                </SecurityCard>
+
+                <SecurityCard
+                  title="Passkeys"
+                  badge={
+                    <button className="flex items-center gap-1.5 bg-white border border-line px-3.5 py-2 rounded-full text-[13px] font-medium hover:bg-card-alt transition-colors flex-shrink-0">
+                      <Fingerprint size={14} strokeWidth={1.75} /> Add passkey
+                    </button>
+                  }
+                >
+                  <p className="text-[13.5px] text-muted max-w-[520px]">
+                    Sign in with Face ID, Touch ID, Windows Hello, or a hardware security key
+                    instead of your password.
+                  </p>
+                </SecurityCard>
+
+                <SecurityCard title="Connected applications">
+                  <p className="text-[13.5px] text-muted mb-4 max-w-[520px]">
+                    Review or revoke AI tools connected through Sign in with PowerAI Law.
+                  </p>
+                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors">
+                    Manage connected applications
+                  </button>
+                </SecurityCard>
               </>
             ) : active !== "integrations" ? (
               <div className="flex flex-col items-center justify-center py-24 text-center">
