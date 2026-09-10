@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --cream: #f3efe4;
+  --cream: #faf6ef;
   --dark: #121110;
   --dark2: #1a1917;
   --beige: #e7dfc9;
   --card: #ffffff;
-  --card-alt: #ede8da;
+  --card-alt: #f1eae2;
   --line: #ddd5bf;
   --line-dark: #2b2a26;
   --ink: #16150f;
