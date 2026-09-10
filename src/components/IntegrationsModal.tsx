@@ -14,6 +14,7 @@ import {
   Trash2,
   Fingerprint,
   ChevronsUpDown,
+  Lock,
 } from "lucide-react";
 
 const navItems = [
@@ -235,6 +236,67 @@ function SettingsToggle({
   );
 }
 
+type MailPolicy = "Always ask" | "One tap" | "Allow auto";
+
+const mailCategories: { key: string; label: string; locked: boolean }[] = [
+  { key: "court", label: "Court / tribunal", locked: true },
+  { key: "service", label: "Service of process", locked: true },
+  { key: "deadline", label: "Deadline-bearing", locked: true },
+  { key: "government", label: "Government / regulatory", locked: false },
+  { key: "opposing", label: "Opposing counsel", locked: false },
+  { key: "client", label: "Client instructions", locked: false },
+  { key: "payment", label: "Payment / wire", locked: false },
+  { key: "bar", label: "Bar / malpractice", locked: false },
+  { key: "prospect", label: "Prospect inquiry", locked: false },
+  { key: "sensitivity", label: "Sensitivity-flagged", locked: false },
+];
+
+const protectedKinds = ["Court", "Client", "Opposing counsel", "Regulator", "Other"];
+
+function MailCategoryRow({
+  label,
+  locked,
+  value,
+  onChange,
+}: {
+  label: string;
+  locked: boolean;
+  value: MailPolicy;
+  onChange: (v: MailPolicy) => void;
+}) {
+  const options: MailPolicy[] = ["Always ask", "One tap", "Allow auto"];
+  return (
+    <div className="flex items-center justify-between gap-4 py-3.5 border-b border-line last:border-b-0">
+      <span className="flex items-center gap-1.5 text-[14.5px] font-medium">
+        {label}
+        {locked && <Lock size={12} strokeWidth={1.75} className="text-muted" />}
+      </span>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {options.map((opt) => {
+          const disabled = locked && opt !== "Always ask";
+          const selected = locked ? opt === "Always ask" : value === opt;
+          return (
+            <button
+              key={opt}
+              disabled={disabled}
+              onClick={() => !disabled && onChange(opt)}
+              className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
+                selected
+                  ? "bg-dark text-white"
+                  : disabled
+                  ? "bg-white border border-line text-muted-light cursor-not-allowed"
+                  : "bg-white border border-line hover:bg-card-alt"
+              }`}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function IntegrationsModal({ onClose }: { onClose: () => void }) {
   const [active, setActive] = useState<(typeof navItems)[number]["key"]>("integrations");
   const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
@@ -278,6 +340,39 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
   const [warnLongTimer, setWarnLongTimer] = useState(true);
   const [roundDurations, setRoundDurations] = useState(true);
   const [requireNonBillableReason, setRequireNonBillableReason] = useState(true);
+
+  const [startWithSignature, setStartWithSignature] = useState(true);
+  const [signatureText, setSignatureText] = useState("");
+  const [signatureSaved, setSignatureSaved] = useState(false);
+
+  const [categoryPolicy, setCategoryPolicy] = useState<Record<string, MailPolicy>>(
+    Object.fromEntries(mailCategories.map((c) => [c.key, "Always ask" as MailPolicy]))
+  );
+  const [autoFileEnabled, setAutoFileEnabled] = useState(true);
+  const [autoFileThreshold, setAutoFileThreshold] = useState("0.9");
+  const [autoScreenThreshold, setAutoScreenThreshold] = useState("0.95");
+  const [autoScreenEnabled, setAutoScreenEnabled] = useState(true);
+  const [policySaved, setPolicySaved] = useState(false);
+
+  const [protectedEntries, setProtectedEntries] = useState<{ address: string; kind: string }[]>([]);
+  const [newProtectedAddress, setNewProtectedAddress] = useState("");
+  const [newProtectedKind, setNewProtectedKind] = useState("Court");
+
+  function handleSaveSignature() {
+    setSignatureSaved(true);
+    setTimeout(() => setSignatureSaved(false), 1800);
+  }
+
+  function handleSavePolicy() {
+    setPolicySaved(true);
+    setTimeout(() => setPolicySaved(false), 1800);
+  }
+
+  function handleAddProtectedEntry() {
+    if (!newProtectedAddress.trim()) return;
+    setProtectedEntries((prev) => [...prev, { address: newProtectedAddress.trim(), kind: newProtectedKind }]);
+    setNewProtectedAddress("");
+  }
 
   function handleDeleteAccount() {
     if (
@@ -651,6 +746,213 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
                       onChange={setRequireNonBillableReason}
                     />
                   </div>
+                </div>
+              </>
+            ) : active === "mail" ? (
+              <>
+                <h2 className="text-[26px] font-semibold mt-3 mb-1.5">Mail automation</h2>
+                <p className="text-[14px] text-muted mb-8 max-w-[720px]">
+                  Every rule that touches your mail lives here — the category policy, sender
+                  rules, muted senders, and protected lists. Nothing acts from a hidden heuristic.
+                </p>
+
+                <div className="mb-2">
+                  <div className="text-[15px] font-semibold mb-1.5">Your email signature</div>
+                  <p className="text-[13.5px] text-muted mb-4 max-w-[720px]">
+                    Added to the bottom of a reply when you open it, so you can edit or delete it
+                    before sending. It survives a draft written by PowerAI Law.
+                  </p>
+
+                  <div className="flex items-center justify-between gap-4 mb-5">
+                    <div>
+                      <div className="text-[14px] font-medium mb-0.5">Start replies with my signature</div>
+                      <p className="text-[12.5px] text-muted">
+                        Off leaves the editor empty — useful if you sign off differently per matter.
+                      </p>
+                    </div>
+                    <SettingsToggle checked={startWithSignature} onChange={setStartWithSignature} />
+                  </div>
+
+                  <div className="text-[14.5px] font-semibold mb-2">Signature</div>
+                  <textarea
+                    value={signatureText}
+                    onChange={(e) => setSignatureText(e.target.value.slice(0, 4000))}
+                    placeholder={
+                      "Saul Goodman\nPartner, Tax & Drugs Law Firm\n+1 505 503 4455 · saul@example.com\n\nThis message is confidential and may be privileged. If you received it in error, please delete it and notify the sender."
+                    }
+                    rows={7}
+                    className="w-full bg-white border border-line rounded-xl px-4 py-3.5 text-[13.5px] font-mono outline-none resize-y placeholder:text-muted-light"
+                  />
+                  <div className="text-[12.5px] text-muted-light mt-1.5">{signatureText.length} / 4000</div>
+
+                  <div className="flex items-center gap-3 mt-3 mb-9">
+                    <button
+                      onClick={handleSaveSignature}
+                      className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                    >
+                      Save signature
+                    </button>
+                    {signatureSaved && <span className="text-[13px] text-green-600 font-medium">Saved</span>}
+                  </div>
+                </div>
+
+                <div className="border-t border-line pt-8 mb-2">
+                  <div className="text-[15px] font-semibold mb-1.5">Category policy</div>
+                  <p className="text-[13.5px] text-muted mb-4">
+                    How automation may treat each protected mail category.
+                  </p>
+
+                  <div className="flex flex-col">
+                    {mailCategories.map((cat) => (
+                      <MailCategoryRow
+                        key={cat.key}
+                        label={cat.label}
+                        locked={cat.locked}
+                        value={categoryPolicy[cat.key]}
+                        onChange={(v) => setCategoryPolicy((prev) => ({ ...prev, [cat.key]: v }))}
+                      />
+                    ))}
+                  </div>
+
+                  <p className="text-[13px] text-muted mt-5 max-w-[820px]">
+                    Locked categories are floor-locked to &quot;Always ask&quot;: missing a court
+                    order, service of process, or a deadline is catastrophic, so no setting can
+                    loosen them.
+                  </p>
+                  <p className="text-[13px] text-muted mt-3 mb-7 max-w-[820px]">
+                    With auto-file on, a filing suggestion at or above the threshold is filed for
+                    you and listed in Handled, where it can be undone for seven days. Locked
+                    categories are never auto-filed.
+                  </p>
+
+                  <div className="flex items-center gap-8 flex-wrap mb-2 text-[12.5px] text-muted font-medium">
+                    <span className="w-[200px] flex-shrink-0" />
+                    <span>Auto-file confidence threshold</span>
+                    <span>Auto-screen confidence threshold</span>
+                  </div>
+                  <div className="flex items-center gap-8 flex-wrap mb-4">
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-[14px] font-medium w-[200px]">Auto-file high-confidence mail</span>
+                      <SettingsToggle checked={autoFileEnabled} onChange={setAutoFileEnabled} />
+                    </div>
+                    <RateStepperField
+                      value={autoFileThreshold}
+                      onChange={(v) => setAutoFileThreshold(v ?? "0.9")}
+                      placeholder="0.9"
+                      className="w-[110px]"
+                    />
+                    <RateStepperField
+                      value={autoScreenThreshold}
+                      onChange={(v) => setAutoScreenThreshold(v ?? "0.95")}
+                      placeholder="0.95"
+                      className="w-[110px]"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-[14px] font-medium w-[200px]">Auto-screen enabled</span>
+                    <SettingsToggle checked={autoScreenEnabled} onChange={setAutoScreenEnabled} />
+                  </div>
+
+                  <div className="flex items-center gap-3 mb-9">
+                    <button
+                      onClick={handleSavePolicy}
+                      className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                    >
+                      Save policy
+                    </button>
+                    {policySaved && <span className="text-[13px] text-green-600 font-medium">Saved</span>}
+                  </div>
+                </div>
+
+                <div className="border-t border-line pt-8 mb-8">
+                  <div className="text-[15px] font-semibold mb-1.5">Sender rules</div>
+                  <p className="text-[13.5px] text-muted mb-3">
+                    Rules minted from your inbox decisions. A paused rule stays listed but never fires.
+                  </p>
+                  <p className="text-[13.5px] text-muted-light">
+                    No sender rules yet. Accepting or dismissing suggestions in the inbox can create them.
+                  </p>
+                </div>
+
+                <div className="border-t border-line pt-8 mb-8">
+                  <div className="text-[15px] font-semibold mb-1.5">Muted senders</div>
+                  <p className="text-[13.5px] text-muted mb-3">
+                    Mail from these senders is screened out automatically.
+                  </p>
+                  <p className="text-[13.5px] text-muted-light">No muted senders.</p>
+                </div>
+
+                <div className="border-t border-line pt-8 mb-8">
+                  <div className="text-[15px] font-semibold mb-1.5">Protected senders and domains</div>
+                  <p className="text-[13.5px] text-muted mb-4 max-w-[720px]">
+                    Mail from these addresses or domains is always protected from automation, no
+                    matter what the heuristics say.
+                  </p>
+
+                  {protectedEntries.length === 0 ? (
+                    <p className="text-[13.5px] text-muted-light mb-5">No protected entries yet.</p>
+                  ) : (
+                    <div className="flex flex-col divide-y divide-line border-t border-b border-line mb-5">
+                      {protectedEntries.map((entry, i) => (
+                        <div key={i} className="flex items-center justify-between gap-4 py-3">
+                          <span className="text-[13.5px] font-medium">{entry.address}</span>
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <span className="bg-card-alt px-3 py-1 rounded-full text-[12.5px] font-medium">
+                              {entry.kind}
+                            </span>
+                            <button
+                              onClick={() =>
+                                setProtectedEntries((prev) => prev.filter((_, idx) => idx !== i))
+                              }
+                              className="text-muted hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 size={14} strokeWidth={1.75} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-end gap-3 flex-wrap">
+                    <div className="flex-1 min-w-[240px]">
+                      <div className="text-[13px] text-muted mb-1.5">Address or domain</div>
+                      <input
+                        value={newProtectedAddress}
+                        onChange={(e) => setNewProtectedAddress(e.target.value)}
+                        placeholder="clerk@nysd.uscourts.gov or uscourts.gov"
+                        className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[13px] text-muted mb-1.5">Kind</div>
+                      <select
+                        value={newProtectedKind}
+                        onChange={(e) => setNewProtectedKind(e.target.value)}
+                        className="bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none appearance-none"
+                      >
+                        {protectedKinds.map((k) => (
+                          <option key={k} value={k}>
+                            {k}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      onClick={handleAddProtectedEntry}
+                      className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-line pt-6">
+                  <p className="text-[13px] text-muted">
+                    Every automated action is recorded and reviewable (and undoable) in the{" "}
+                    <span className="underline">Handled feed</span>.
+                  </p>
                 </div>
               </>
             ) : active !== "integrations" ? (
