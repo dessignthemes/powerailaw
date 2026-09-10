@@ -24,7 +24,7 @@ const pages: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
   { label: "Time tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Client intake", href: "/dashboard/client-intake", icon: UserPlus },
-  { label: "Triage", href: "/dashboard/inbox", icon: ListChecks },
+  { label: "Triage", href: "/dashboard/triage", icon: ListChecks },
   { label: "Records", href: "/dashboard/records", icon: Bookmark },
   { label: "Task board", href: "/dashboard/task-board", icon: BarChart3 },
   { label: "Documents", href: "/dashboard/documents", icon: Copy },
