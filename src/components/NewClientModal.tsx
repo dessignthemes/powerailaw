@@ -26,17 +26,45 @@ export type Client = {
   email: string | null;
   phone: string | null;
   address: string | null;
+  matterCount: number;
+  updatedAt: string;
 };
 
-const statusMeta: Record<ClientStatus, { icon: typeof CheckCircle2; color: string }> = {
+export const statusMeta: Record<ClientStatus, { icon: typeof CheckCircle2; color: string }> = {
   Active: { icon: CheckCircle2, color: "text-green-600" },
   Archived: { icon: CircleDashed, color: "text-muted" },
 };
 
-const typeMeta: Record<ClientType, { icon: typeof User }> = {
+export const typeMeta: Record<ClientType, { icon: typeof User }> = {
   Individual: { icon: User },
   "Legal entity": { icon: Building2 },
 };
+
+const avatarPalette = ["#B03A6B", "#3B6BA5", "#8A6D1D", "#4E7C59", "#7B4EA6", "#A5522C"];
+
+export function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+export function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarPalette[Math.abs(hash) % avatarPalette.length];
+}
+
+export function formatUpdatedAt(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  if (isToday) return "Today";
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
 function InlineField({
   icon,
@@ -94,19 +122,22 @@ function InlineField({
 }
 
 export default function NewClientModal({
+  client,
   onClose,
-  onCreate,
+  onSubmit,
 }: {
+  client?: Client;
   onClose: () => void;
-  onCreate: (client: Client) => void;
+  onSubmit: (client: Client) => void;
 }) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<ClientStatus>("Active");
-  const [type, setType] = useState<ClientType>("Individual");
-  const [email, setEmail] = useState<string | null>(null);
-  const [phone, setPhone] = useState<string | null>(null);
-  const [address, setAddress] = useState<string | null>(null);
+  const isEdit = !!client;
+  const [name, setName] = useState(client?.name ?? "");
+  const [description, setDescription] = useState(client?.description ?? "");
+  const [status, setStatus] = useState<ClientStatus>(client?.status ?? "Active");
+  const [type, setType] = useState<ClientType>(client?.type ?? "Individual");
+  const [email, setEmail] = useState<string | null>(client?.email ?? null);
+  const [phone, setPhone] = useState<string | null>(client?.phone ?? null);
+  const [address, setAddress] = useState<string | null>(client?.address ?? null);
 
   const [statusOpen, setStatusOpen] = useState(false);
   const [typeOpen, setTypeOpen] = useState(false);
@@ -114,10 +145,10 @@ export default function NewClientModal({
   const StatusIcon = statusMeta[status].icon;
   const TypeIcon = typeMeta[type].icon;
 
-  function handleCreate() {
+  function handleSubmit() {
     if (!name.trim()) return;
-    onCreate({
-      id: crypto.randomUUID(),
+    onSubmit({
+      id: client?.id ?? crypto.randomUUID(),
       name: name.trim(),
       description,
       status,
@@ -125,6 +156,8 @@ export default function NewClientModal({
       email,
       phone,
       address,
+      matterCount: client?.matterCount ?? 0,
+      updatedAt: new Date().toISOString(),
     });
   }
 
@@ -135,7 +168,7 @@ export default function NewClientModal({
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
             <span className="bg-card-alt px-2.5 py-1 rounded-full">Clients</span>
             <span>›</span>
-            <span className="text-ink font-semibold">New client</span>
+            <span className="text-ink font-semibold">{isEdit ? "Edit client" : "New client"}</span>
           </div>
           <button onClick={onClose} className="text-muted hover:text-ink">
             <X size={18} strokeWidth={1.75} />
@@ -143,8 +176,15 @@ export default function NewClientModal({
         </div>
 
         <div className="px-7 pt-4 pb-2">
-          <div className="w-16 h-16 rounded-full bg-line flex items-center justify-center text-[20px] font-medium text-muted mb-5">
-            ?
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center text-[20px] font-medium mb-5"
+            style={
+              name.trim()
+                ? { backgroundColor: getAvatarColor(name), color: "#fff" }
+                : { backgroundColor: "var(--line)", color: "var(--muted)" }
+            }
+          >
+            {name.trim() ? getInitials(name) : "?"}
           </div>
 
           <div className="relative mb-2">
@@ -257,11 +297,11 @@ export default function NewClientModal({
 
         <div className="flex items-center justify-end px-7 py-5 border-t border-line">
           <button
-            onClick={handleCreate}
+            onClick={handleSubmit}
             disabled={!name.trim()}
             className="bg-dark text-white px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-dark2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Create
+            {isEdit ? "Save" : "Create"}
           </button>
         </div>
       </div>

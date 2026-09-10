@@ -1,22 +1,138 @@
 "use client";
 
 import { useState } from "react";
-import { CircleUser, CheckCircle2, CircleDashed, User, Building2, Mail, Phone, MapPin } from "lucide-react";
-import NewClientModal, { Client, ClientStatus, ClientType } from "@/components/NewClientModal";
+import {
+  CircleUser,
+  ChevronDown,
+  ChevronRight,
+  Check,
+  Folder,
+  Pencil,
+  Archive,
+  ArchiveRestore,
+  Trash2,
+  MoreHorizontal,
+  X,
+} from "lucide-react";
+import NewClientModal, {
+  Client,
+  ClientStatus,
+  statusMeta,
+  typeMeta,
+  getInitials,
+  getAvatarColor,
+  formatUpdatedAt,
+} from "@/components/NewClientModal";
+import { GenericDropdown } from "@/components/NewTaskModal";
 
-const statusMeta: Record<ClientStatus, { icon: typeof CheckCircle2; color: string }> = {
-  Active: { icon: CheckCircle2, color: "text-green-600" },
-  Archived: { icon: CircleDashed, color: "text-muted" },
-};
+const statusOrder: ClientStatus[] = ["Active", "Archived"];
 
-const typeMeta: Record<ClientType, { icon: typeof User }> = {
-  Individual: { icon: User },
-  "Legal entity": { icon: Building2 },
-};
+function RowStatusPicker({
+  status,
+  onChange,
+}: {
+  status: ClientStatus;
+  onChange: (s: ClientStatus) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const Icon = statusMeta[status].icon;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((o) => !o);
+        }}
+        className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-card-alt transition-colors flex-shrink-0"
+      >
+        <Icon size={16} strokeWidth={2} className={statusMeta[status].color} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[160px]">
+            {statusOrder.map((s) => {
+              const OptIcon = statusMeta[s].icon;
+              return (
+                <button
+                  key={s}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(s);
+                    setOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <OptIcon size={15} strokeWidth={2} className={statusMeta[s].color} />
+                    {s}
+                  </span>
+                  {s === status && <Check size={14} strokeWidth={2} />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<ClientStatus>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [rowMenuFor, setRowMenuFor] = useState<string | null>(null);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+
+  function toggleCollapsed(status: ClientStatus) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
+      return next;
+    });
+  }
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function updateClientStatus(id: string, status: ClientStatus) {
+    setClients((cs) =>
+      cs.map((c) => (c.id === id ? { ...c, status, updatedAt: new Date().toISOString() } : c))
+    );
+  }
+
+  function deleteClients(ids: string[]) {
+    setClients((cs) => cs.filter((c) => !ids.includes(c.id)));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+  }
+
+  function bulkSetStatus(status: ClientStatus) {
+    setClients((cs) =>
+      cs.map((c) =>
+        selected.has(c.id) ? { ...c, status, updatedAt: new Date().toISOString() } : c
+      )
+    );
+    setBulkStatusOpen(false);
+  }
+
+  const groups = statusOrder
+    .map((status) => ({ status, items: clients.filter((c) => c.status === status) }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <div className="px-10 py-10">
@@ -45,64 +161,199 @@ export default function ClientsPage() {
           </button>
         </div>
       ) : (
-        <div className="border border-line rounded-2xl divide-y divide-line overflow-hidden">
-          {clients.map((c) => {
-            const StatusIcon = statusMeta[c.status].icon;
-            const TypeIcon = typeMeta[c.type].icon;
+        <div className="flex flex-col gap-4 pb-20">
+          {groups.map((group) => {
+            const GroupIcon = statusMeta[group.status].icon;
+            const isCollapsed = collapsed.has(group.status);
             return (
-              <div key={c.id} className="flex items-center justify-between px-5 py-4 hover:bg-card-alt/40 transition-colors">
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-line flex items-center justify-center text-[14px] font-medium text-muted flex-shrink-0">
-                    {c.name.charAt(0).toUpperCase() || "?"}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[14.5px] font-semibold truncate">{c.name}</div>
-                    {c.description && (
-                      <div className="text-[13px] text-muted truncate">{c.description}</div>
-                    )}
-                  </div>
-                </div>
+              <div key={group.status}>
+                <button
+                  onClick={() => toggleCollapsed(group.status)}
+                  className="w-full flex items-center gap-2.5 bg-card-alt hover:bg-line/50 transition-colors px-4 py-3 rounded-xl text-left"
+                >
+                  {isCollapsed ? (
+                    <ChevronRight size={15} strokeWidth={1.75} className="text-muted" />
+                  ) : (
+                    <ChevronDown size={15} strokeWidth={1.75} className="text-muted" />
+                  )}
+                  <GroupIcon size={15} strokeWidth={2} className={statusMeta[group.status].color} />
+                  <span className="text-[14.5px] font-semibold">{group.status}</span>
+                  <span className="text-[12px] text-muted bg-white rounded-full px-2 py-0.5">
+                    {group.items.length}
+                  </span>
+                </button>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="flex items-center gap-1.5 bg-card-alt px-3 py-1.5 rounded-full text-[12.5px] font-medium">
-                    <TypeIcon size={12} strokeWidth={1.75} />
-                    {c.type}
-                  </span>
-                  {c.email && (
-                    <span className="hidden md:flex items-center gap-1.5 text-muted text-[12.5px]">
-                      <Mail size={12} strokeWidth={1.75} />
-                      {c.email}
-                    </span>
-                  )}
-                  {c.phone && (
-                    <span className="hidden lg:flex items-center gap-1.5 text-muted text-[12.5px]">
-                      <Phone size={12} strokeWidth={1.75} />
-                      {c.phone}
-                    </span>
-                  )}
-                  {c.address && (
-                    <span className="hidden xl:flex items-center gap-1.5 text-muted text-[12.5px]">
-                      <MapPin size={12} strokeWidth={1.75} />
-                      {c.address}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1.5 bg-card-alt px-3 py-1.5 rounded-full text-[12.5px] font-medium">
-                    <StatusIcon size={12} strokeWidth={2} className={statusMeta[c.status].color} />
-                    {c.status}
-                  </span>
-                </div>
+                {!isCollapsed && (
+                  <div className="border border-t-0 border-line rounded-b-xl overflow-visible divide-y divide-line">
+                    {group.items.map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => setEditingClient(c)}
+                        className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-card-alt/40 transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSelected(c.id);
+                            }}
+                            className={`w-[18px] h-[18px] rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${
+                              selected.has(c.id)
+                                ? "bg-dark border-dark"
+                                : "border-line hover:border-muted"
+                            }`}
+                          >
+                            {selected.has(c.id) && <Check size={12} strokeWidth={2.5} className="text-white" />}
+                          </button>
+
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <RowStatusPicker
+                              status={c.status}
+                              onChange={(s) => updateClientStatus(c.id, s)}
+                            />
+                          </div>
+
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold flex-shrink-0"
+                            style={{ backgroundColor: getAvatarColor(c.name), color: "#fff" }}
+                          >
+                            {getInitials(c.name)}
+                          </div>
+                          <span className="text-[14.5px] font-medium truncate">{c.name}</span>
+                        </div>
+
+                        <div className="flex items-center gap-4 flex-shrink-0">
+                          <span className="hidden sm:flex items-center gap-1.5 text-muted text-[13px]">
+                            {(() => {
+                              const TypeIcon = typeMeta[c.type].icon;
+                              return <TypeIcon size={13} strokeWidth={1.75} />;
+                            })()}
+                            {c.type}
+                          </span>
+                          <span className="hidden md:flex items-center gap-1.5 text-muted text-[13px]">
+                            <Folder size={13} strokeWidth={1.75} />
+                            {c.matterCount}
+                          </span>
+                          <span className="hidden lg:inline text-muted text-[13px]">
+                            Updated: {formatUpdatedAt(c.updatedAt)}
+                          </span>
+
+                          <div className="relative" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => setRowMenuFor(rowMenuFor === c.id ? null : c.id)}
+                              className="w-7 h-7 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+                            >
+                              <MoreHorizontal size={16} strokeWidth={1.75} />
+                            </button>
+                            {rowMenuFor === c.id && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setRowMenuFor(null)} />
+                                <div className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[180px]">
+                                  <button
+                                    onClick={() => {
+                                      setEditingClient(c);
+                                      setRowMenuFor(null);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                                  >
+                                    <Pencil size={14} strokeWidth={1.75} /> Edit
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      updateClientStatus(c.id, c.status === "Active" ? "Archived" : "Active");
+                                      setRowMenuFor(null);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                                  >
+                                    {c.status === "Active" ? (
+                                      <>
+                                        <Archive size={14} strokeWidth={1.75} /> Archive
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ArchiveRestore size={14} strokeWidth={1.75} /> Restore
+                                      </>
+                                    )}
+                                  </button>
+                                  <div className="border-t border-line my-1" />
+                                  <button
+                                    onClick={() => {
+                                      deleteClients([c.id]);
+                                      setRowMenuFor(null);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-red-500 hover:bg-red-50 transition-colors"
+                                  >
+                                    <Trash2 size={14} strokeWidth={1.75} /> Delete
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
 
+      {selected.size > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-white border border-line rounded-full shadow-[0_20px_50px_-15px_rgba(18,17,16,0.35)] px-2 py-2">
+          <span className="px-3 text-[13.5px] font-medium">{selected.size} selected</span>
+          <GenericDropdown
+            open={bulkStatusOpen}
+            setOpen={setBulkStatusOpen}
+            trigger={<>Status</>}
+          >
+            {statusOrder.map((s) => {
+              const Icon = statusMeta[s].icon;
+              return (
+                <button
+                  key={s}
+                  onClick={() => bulkSetStatus(s)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                >
+                  <Icon size={15} strokeWidth={2} className={statusMeta[s].color} />
+                  {s}
+                </button>
+              );
+            })}
+          </GenericDropdown>
+          <button
+            onClick={() => deleteClients(Array.from(selected))}
+            className="w-9 h-9 rounded-full hover:bg-red-50 flex items-center justify-center text-red-500 transition-colors"
+          >
+            <Trash2 size={16} strokeWidth={1.75} />
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="w-9 h-9 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+          >
+            <X size={16} strokeWidth={1.75} />
+          </button>
+        </div>
+      )}
+
       {modalOpen && (
         <NewClientModal
           onClose={() => setModalOpen(false)}
-          onCreate={(client) => {
+          onSubmit={(client) => {
             setClients((cs) => [...cs, client]);
             setModalOpen(false);
+          }}
+        />
+      )}
+
+      {editingClient && (
+        <NewClientModal
+          client={editingClient}
+          onClose={() => setEditingClient(null)}
+          onSubmit={(updated) => {
+            setClients((cs) => cs.map((c) => (c.id === updated.id ? updated : c)));
+            setEditingClient(null);
           }}
         />
       )}
