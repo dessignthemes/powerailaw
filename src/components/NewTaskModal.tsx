@@ -48,12 +48,14 @@ export function GenericDropdown({
   open,
   setOpen,
   align = "left",
+  direction = "down",
 }: {
   trigger: React.ReactNode;
   children: React.ReactNode;
   open: boolean;
   setOpen: (v: boolean) => void;
   align?: "left" | "right";
+  direction?: "down" | "up";
 }) {
   return (
     <div className="relative">
@@ -68,7 +70,9 @@ export function GenericDropdown({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
-            className={`absolute top-[calc(100%+6px)] ${
+            className={`absolute ${
+              direction === "up" ? "bottom-[calc(100%+6px)]" : "top-[calc(100%+6px)]"
+            } ${
               align === "left" ? "left-0" : "right-0"
             } z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 min-w-[180px]`}
           >

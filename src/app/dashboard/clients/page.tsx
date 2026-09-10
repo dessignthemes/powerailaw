@@ -306,6 +306,7 @@ export default function ClientsPage() {
           <GenericDropdown
             open={bulkStatusOpen}
             setOpen={setBulkStatusOpen}
+            direction="up"
             trigger={<>Status</>}
           >
             {statusOrder.map((s) => {
