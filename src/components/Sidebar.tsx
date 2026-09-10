@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 import {
   Home,
   Sparkles,
@@ -16,6 +17,8 @@ import {
   Copy,
   CircleUser,
   Folder,
+  Box,
+  ArrowUpRight,
   type LucideIcon,
 } from "lucide-react";
 import AccountMenu from "@/components/AccountMenu";
@@ -67,6 +70,7 @@ function NavItem({
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { openIntegrations } = useIntegrationsModal();
   const [adminOpen, setAdminOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
 
@@ -115,6 +119,14 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t border-line pt-4 mt-4">
+        <button
+          onClick={() => openIntegrations("integrations")}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-muted hover:bg-card-alt hover:text-ink transition-colors mb-2 text-left"
+        >
+          <Box size={16} strokeWidth={1.75} className="flex-shrink-0" />
+          <span className="flex-1">Integrations</span>
+          <ArrowUpRight size={14} strokeWidth={1.75} className="flex-shrink-0" />
+        </button>
         <AccountMenu
           email={ACCOUNT_EMAIL}
           orgName={ORG_NAME}
