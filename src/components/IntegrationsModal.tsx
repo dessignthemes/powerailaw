@@ -25,7 +25,7 @@ const navItems = [
   { key: "time", label: "Time tracking", icon: Timer },
 ] as const;
 
-type ConnectorKey = "google" | "microsoft" | "imap" | "telegram";
+type ConnectorKey = "google" | "microsoft";
 
 const connectors: {
   key: ConnectorKey;
@@ -47,20 +47,6 @@ const connectors: {
     desc: "Outlook, OneDrive, and Calendar",
     icon: "◫",
     drillDown: true,
-  },
-  {
-    key: "imap",
-    name: "Email (IMAP)",
-    desc: "Connect any other mailbox with an app password.",
-    icon: "@",
-    drillDown: false,
-  },
-  {
-    key: "telegram",
-    name: "Telegram",
-    desc: "Run your workspace from Telegram — manage tasks, create matters, and more.",
-    icon: "✈",
-    drillDown: false,
   },
 ];
 
