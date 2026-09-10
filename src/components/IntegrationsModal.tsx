@@ -15,6 +15,12 @@ import {
   Fingerprint,
   ChevronsUpDown,
   Lock,
+  Plug,
+  Copy,
+  ShieldCheck,
+  ListChecks,
+  Zap,
+  Info,
 } from "lucide-react";
 
 const navItems = [
@@ -25,13 +31,15 @@ const navItems = [
   { key: "time", label: "Time tracking", icon: Timer },
 ] as const;
 
-type ConnectorKey = "google" | "microsoft";
+type ConnectorKey = "google" | "microsoft" | "ai";
+
+const MCP_SERVER_URL = "https://mcp.powerailaw.com/mcp";
 
 const connectors: {
   key: ConnectorKey;
   name: string;
   desc: string;
-  icon: string;
+  icon: React.ReactNode;
   drillDown: boolean;
 }[] = [
   {
@@ -46,6 +54,13 @@ const connectors: {
     name: "Microsoft 365",
     desc: "Outlook, OneDrive, and Calendar",
     icon: "◫",
+    drillDown: true,
+  },
+  {
+    key: "ai",
+    name: "AI assistants",
+    desc: "Connect Claude, ChatGPT, or any MCP client to your workspace.",
+    icon: <Plug size={16} strokeWidth={1.75} />,
     drillDown: true,
   },
 ];
@@ -351,6 +366,18 @@ export default function IntegrationsModal({
   const [protectedEntries, setProtectedEntries] = useState<{ address: string; kind: string }[]>([]);
   const [newProtectedAddress, setNewProtectedAddress] = useState("");
   const [newProtectedKind, setNewProtectedKind] = useState("Court");
+
+  const [mcpClientTab, setMcpClientTab] = useState<"Claude" | "Claude Code" | "ChatGPT" | "Other clients">(
+    "Claude"
+  );
+  const [urlCopied, setUrlCopied] = useState(false);
+  const [cliCopied, setCliCopied] = useState(false);
+
+  function copyText(text: string, setFlag: (v: boolean) => void) {
+    navigator.clipboard?.writeText(text);
+    setFlag(true);
+    setTimeout(() => setFlag(false), 1600);
+  }
 
   function handleSaveSignature() {
     setSignatureSaved(true);
@@ -955,6 +982,223 @@ export default function IntegrationsModal({
                   {navItems.find((n) => n.key === active)?.label} settings coming soon.
                 </div>
               </div>
+            ) : drilled === "ai" ? (
+              <>
+                <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-card-alt flex items-center justify-center flex-shrink-0">
+                      <Plug size={22} strokeWidth={1.75} />
+                    </div>
+                    <div>
+                      <h2 className="text-[26px] font-semibold leading-tight">AI assistants</h2>
+                      <div className="flex items-center gap-1.5 text-[13px] text-muted mt-0.5">
+                        <Zap size={12} strokeWidth={1.75} />
+                        Model Context Protocol
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => copyText(MCP_SERVER_URL, setUrlCopied)}
+                    className="flex items-center gap-1.5 bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
+                  >
+                    <Copy size={13} strokeWidth={1.75} />
+                    {urlCopied ? "Copied!" : "Copy server URL"}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 mb-4">
+                  {["Claude", "ChatGPT", "MCP"].map((tag) => (
+                    <span key={tag} className="bg-card-alt px-3 py-1.5 rounded-full text-[13px] font-medium">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <p className="text-[14px] text-muted mb-7 max-w-[720px]">
+                  Work your practice from the assistant you already use. Claude, ChatGPT, and
+                  other MCP clients connect with &quot;Sign in with PowerAI Law&quot; — then read
+                  matters, manage tasks, and draft from chat.
+                </p>
+
+                <div className="border-t border-line pt-7 mb-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="border border-line rounded-2xl p-6 flex flex-col items-center text-center gap-3">
+                    <ShieldCheck size={26} strokeWidth={1.5} />
+                    <p className="text-[14.5px] font-medium">
+                      You approve access in the browser before an assistant reads anything
+                    </p>
+                    <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                      <ShieldCheck size={13} strokeWidth={1.75} /> OAuth 2.1
+                    </span>
+                  </div>
+                  <div className="border border-line rounded-2xl p-6 flex flex-col items-center text-center gap-3">
+                    <ListChecks size={26} strokeWidth={1.5} />
+                    <p className="text-[14.5px] font-medium">
+                      Every connection is listed in Connected apps and can be revoked
+                    </p>
+                    <span className="flex items-center gap-1.5 text-[12.5px] text-muted">
+                      <ListChecks size={13} strokeWidth={1.75} /> Revocable
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-[16px] font-semibold mb-1.5">Connect an assistant</div>
+                <p className="text-[13.5px] text-muted mb-4">
+                  Give your assistant the server URL below, then approve access when it asks you
+                  to sign in.
+                </p>
+
+                <div className="text-[13px] text-muted mb-1.5">Server URL</div>
+                <div className="flex items-center justify-between gap-3 bg-white border border-line rounded-xl px-4 py-3 mb-5">
+                  <code className="text-[13.5px] font-mono">{MCP_SERVER_URL}</code>
+                  <button
+                    onClick={() => copyText(MCP_SERVER_URL, setUrlCopied)}
+                    className="flex items-center gap-1.5 bg-white border border-line px-3 py-1.5 rounded-lg text-[13px] font-medium hover:bg-card-alt transition-colors flex-shrink-0"
+                  >
+                    <Copy size={13} strokeWidth={1.75} />
+                    {urlCopied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 mb-5 flex-wrap">
+                  {(["Claude", "Claude Code", "ChatGPT", "Other clients"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setMcpClientTab(tab)}
+                      className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${
+                        mcpClientTab === tab
+                          ? "bg-white border-ink"
+                          : "bg-white border-line text-muted hover:bg-card-alt"
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {mcpClientTab === "Claude" && (
+                  <>
+                    <ol className="flex flex-col gap-3 mb-5">
+                      {[
+                        <>
+                          In Claude, open Settings → Connectors and choose &quot;Add custom
+                          connector&quot;.
+                        </>,
+                        <>Name it PowerAI Law, paste the server URL, and add it.</>,
+                        <>
+                          Choose Connect, sign in with PowerAI Law, and approve access for your
+                          organization.
+                        </>,
+                        <>In a chat, open &quot;Search and tools&quot; and enable PowerAI Law.</>,
+                      ].map((step, i) => (
+                        <li key={i} className="flex items-start gap-3 text-[14px]">
+                          <span className="text-muted flex-shrink-0">{i + 1}</span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                    <p className="text-[13px] text-muted mb-6">
+                      Works on all Claude plans; Free is limited to one custom connector. On Team
+                      and Enterprise, an owner adds the connector for the organization first.
+                    </p>
+                  </>
+                )}
+
+                {mcpClientTab === "Claude Code" && (
+                  <>
+                    <ol className="flex flex-col gap-3 mb-6">
+                      <li className="flex flex-col gap-2 text-[14px]">
+                        <span className="flex items-start gap-3">
+                          <span className="text-muted flex-shrink-0">1</span>
+                          <span>Add the server from your terminal:</span>
+                        </span>
+                        <div className="flex items-center justify-between gap-3 bg-white border border-line rounded-xl px-4 py-3 ml-6">
+                          <code className="text-[13px] font-mono break-all">
+                            claude mcp add --scope user --transport http powerailaw {MCP_SERVER_URL}
+                          </code>
+                          <button
+                            onClick={() =>
+                              copyText(
+                                `claude mcp add --scope user --transport http powerailaw ${MCP_SERVER_URL}`,
+                                setCliCopied
+                              )
+                            }
+                            className="text-muted hover:text-ink transition-colors flex-shrink-0"
+                          >
+                            <Copy size={14} strokeWidth={1.75} />
+                          </button>
+                        </div>
+                        {cliCopied && <span className="text-[12px] text-green-600 ml-6">Copied</span>}
+                      </li>
+                      <li className="flex items-start gap-3 text-[14px]">
+                        <span className="text-muted flex-shrink-0">2</span>
+                        <span>Run /mcp, select powerailaw, and choose Authenticate.</span>
+                      </li>
+                      <li className="flex items-start gap-3 text-[14px]">
+                        <span className="text-muted flex-shrink-0">3</span>
+                        <span>
+                          Your browser opens PowerAI Law sign-in. Approve access and return to the
+                          terminal.
+                        </span>
+                      </li>
+                    </ol>
+                  </>
+                )}
+
+                {mcpClientTab === "ChatGPT" && (
+                  <>
+                    <ol className="flex flex-col gap-3 mb-5">
+                      {[
+                        <>
+                          Ask a workspace admin to enable developer mode under Settings → Apps →
+                          Advanced settings.
+                        </>,
+                        <>Open Settings → Apps → Create and paste the server URL.</>,
+                        <>Select OAuth authentication and choose &quot;Scan tools&quot;.</>,
+                        <>Sign in with PowerAI Law, approve access, then create the app.</>,
+                        <>In a new chat, pick PowerAI Law from the tools menu.</>,
+                      ].map((step, i) => (
+                        <li key={i} className="flex items-start gap-3 text-[14px]">
+                          <span className="text-muted flex-shrink-0">{i + 1}</span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                    <p className="text-[13px] text-muted mb-6">
+                      Reading works on ChatGPT Pro; write actions require a Business or Enterprise
+                      workspace.
+                    </p>
+                  </>
+                )}
+
+                {mcpClientTab === "Other clients" && (
+                  <ol className="flex flex-col gap-3 mb-6">
+                    {[
+                      <>Point any MCP client that supports Streamable HTTP at the server URL.</>,
+                      <>
+                        The client discovers &quot;Sign in with PowerAI Law&quot; automatically —
+                        approve access in the browser window it opens.
+                      </>,
+                      <>
+                        On terminals and servers without a browser, the client shows a code and a
+                        link instead — open the link, sign in, and approve the device.
+                      </>,
+                    ].map((step, i) => (
+                      <li key={i} className="flex items-start gap-3 text-[14px]">
+                        <span className="text-muted flex-shrink-0">{i + 1}</span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+
+                <div className="flex items-center justify-between gap-4 flex-wrap bg-card-alt rounded-xl px-4 py-3">
+                  <span className="flex items-center gap-2 text-[13.5px] text-muted">
+                    <Info size={14} strokeWidth={1.75} />
+                    Approved assistants appear in Connected apps, where access can be revoked.
+                  </span>
+                  <span className="text-[13.5px] font-medium underline">Connected apps</span>
+                </div>
+              </>
             ) : drilledConnector ? (
               <>
                 <h2 className="text-[26px] font-semibold mt-3 mb-1.5">{drilledConnector.name}</h2>
