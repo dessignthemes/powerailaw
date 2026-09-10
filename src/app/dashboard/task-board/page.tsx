@@ -203,12 +203,15 @@ export default function TaskBoardPage() {
           )}
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-5 w-full items-start">
           {columns.map((col) => {
             const colTasks = tasks.filter((t) => t.status === col.status);
             return (
-              <div key={col.id} className="w-[260px] flex-shrink-0">
-                <div className="flex items-center justify-between mb-3 px-1">
+              <div
+                key={col.id}
+                className="flex-1 min-w-0 border-2 border-[#c9c0a6] rounded-2xl bg-card-alt overflow-visible"
+              >
+                <div className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span
                       className="w-2 h-2 rounded-full flex-shrink-0"
@@ -295,7 +298,7 @@ export default function TaskBoardPage() {
                   </div>
                 </div>
 
-                <div className="bg-card-alt rounded-2xl p-2 min-h-[420px] flex flex-col gap-2">
+                <div className="px-3 pb-3 flex flex-col gap-2 min-h-[420px]">
                   {colTasks.map((t) => {
                     const Icon = statusMeta[t.status].icon;
                     return (
