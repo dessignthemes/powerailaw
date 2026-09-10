@@ -109,7 +109,7 @@ export default function DashboardHome() {
             <Calendar size={15} strokeWidth={bottomTab === "events" ? 2 : 1.75} /> Events
           </button>
         </div>
-        <div className="bg-cream rounded-xl flex flex-col items-center justify-center py-16 text-center">
+        <div className="bg-cream rounded-xl flex flex-col items-center justify-center min-h-[520px] text-center">
           <div className="w-8 h-8 rounded-md border border-line flex items-center justify-center text-muted mb-3">
             <CalendarCheck size={16} strokeWidth={1.75} />
           </div>
@@ -124,7 +124,7 @@ export default function DashboardHome() {
         <div className="text-[14px] font-medium text-ink mb-6 flex items-center gap-1.5">
           <Activity size={15} strokeWidth={1.75} /> Recent activity
         </div>
-        <div className="bg-cream rounded-xl flex flex-col items-center justify-center py-20 text-center">
+        <div className="bg-cream rounded-xl flex flex-col items-center justify-center min-h-[420px] text-center">
           <Activity size={20} strokeWidth={1.5} className="text-muted mb-3" />
           <div className="text-[15px] font-medium text-muted">No activity yet</div>
         </div>
