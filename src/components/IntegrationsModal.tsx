@@ -13,6 +13,7 @@ import {
   Link2,
   Trash2,
   Fingerprint,
+  ChevronsUpDown,
 } from "lucide-react";
 
 const navItems = [
@@ -188,6 +189,52 @@ function SecurityCard({
   );
 }
 
+function RateStepperField({
+  value,
+  onChange,
+  placeholder,
+  className = "",
+}: {
+  value: string | null;
+  onChange: (v: string | null) => void;
+  placeholder: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`relative flex items-center bg-white border border-line rounded-xl px-3.5 py-2.5 ${className}`}
+    >
+      <input
+        type="number"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-transparent outline-none text-[14px] pr-6 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      />
+      <ChevronsUpDown size={14} strokeWidth={1.75} className="text-muted absolute right-3.5 pointer-events-none" />
+    </div>
+  );
+}
+
+function SettingsToggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className={`w-10 h-6 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0 ${
+        checked ? "bg-dark justify-end" : "bg-line justify-start"
+      }`}
+    >
+      <span className="w-5 h-5 rounded-full bg-white shadow-sm" />
+    </button>
+  );
+}
+
 export default function IntegrationsModal({ onClose }: { onClose: () => void }) {
   const [active, setActive] = useState<(typeof navItems)[number]["key"]>("integrations");
   const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
@@ -222,6 +269,15 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
   }
 
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+
+  const [standardRate, setStandardRate] = useState<string | null>(null);
+  const [currency, setCurrency] = useState("USD");
+  const [billAt, setBillAt] = useState("The firm default rate");
+  const [lawyerRate, setLawyerRate] = useState<string | null>(null);
+  const [promptIdleTimer, setPromptIdleTimer] = useState(true);
+  const [warnLongTimer, setWarnLongTimer] = useState(true);
+  const [roundDurations, setRoundDurations] = useState(true);
+  const [requireNonBillableReason, setRequireNonBillableReason] = useState(true);
 
   function handleDeleteAccount() {
     if (
@@ -499,6 +555,103 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
                     Manage connected applications
                   </button>
                 </SecurityCard>
+              </>
+            ) : active === "time" ? (
+              <>
+                <h2 className="text-[26px] font-semibold mt-3 mb-1.5">Time tracking</h2>
+                <p className="text-[14px] text-muted mb-8">
+                  Idle detection, rounding, and non-billable defaults for everyone in this org.
+                </p>
+
+                <div className="mb-2">
+                  <div className="text-[14.5px] font-semibold mb-2">Standard hourly rate</div>
+                  <div className="flex items-center gap-3">
+                    <RateStepperField
+                      value={standardRate}
+                      onChange={setStandardRate}
+                      placeholder="No default"
+                      className="flex-1 max-w-[420px]"
+                    />
+                    <div className="relative">
+                      <select
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        className="bg-white border border-line rounded-xl pl-3.5 pr-8 py-2.5 text-[14px] outline-none appearance-none"
+                      >
+                        {["USD", "CAD", "GBP", "EUR", "AUD"].map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <p className="text-[12.5px] text-muted mt-2.5">
+                    Applied when a matter has no custom rate. Leave empty for no default.
+                  </p>
+                </div>
+
+                <div className="mt-7 mb-2">
+                  <div className="text-[14.5px] font-semibold mb-2">Bill at</div>
+                  <select
+                    value={billAt}
+                    onChange={(e) => setBillAt(e.target.value)}
+                    className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none appearance-none"
+                  >
+                    <option>The firm default rate</option>
+                    <option>Each lawyer&apos;s individual rate</option>
+                  </select>
+                  <p className="text-[12.5px] text-muted mt-2.5">
+                    A rate set on a matter always wins, in either mode. Switching this does not
+                    reprice time that has already been logged.
+                  </p>
+                </div>
+
+                <div className="mt-7 mb-2">
+                  <div className="text-[14.5px] font-semibold mb-1.5">Rates by lawyer</div>
+                  <p className="text-[13.5px] text-muted mb-4 max-w-[640px]">
+                    {billAt === "The firm default rate"
+                      ? "The firm currently bills at its default rate, so these are kept on file but not applied. Switch the billing mode above to use them."
+                      : "The firm bills at each lawyer's individual rate. Set a custom rate below, or leave it on firm default."}
+                  </p>
+                  <div className="flex items-center justify-between gap-4 py-1">
+                    <span className="text-[13.5px] text-muted">
+                      {lawyerRate ? "marios@dessign.co" : "No rate set — bills at no rate"}
+                    </span>
+                    <RateStepperField
+                      value={lawyerRate}
+                      onChange={setLawyerRate}
+                      placeholder="Firm default"
+                      className="w-[170px] flex-shrink-0"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-8 flex flex-col divide-y divide-line border-t border-line">
+                  <div className="flex items-center justify-between gap-4 py-4">
+                    <span className="text-[14px] font-medium">Prompt when timer has been idle</span>
+                    <SettingsToggle checked={promptIdleTimer} onChange={setPromptIdleTimer} />
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-4">
+                    <span className="text-[14px] font-medium">
+                      Warn when a timer has been running for a long time
+                    </span>
+                    <SettingsToggle checked={warnLongTimer} onChange={setWarnLongTimer} />
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-4">
+                    <span className="text-[14px] font-medium">Round durations on save</span>
+                    <SettingsToggle checked={roundDurations} onChange={setRoundDurations} />
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-4">
+                    <span className="text-[14px] font-medium">
+                      Require a non-billable reason when an entry is marked non-billable
+                    </span>
+                    <SettingsToggle
+                      checked={requireNonBillableReason}
+                      onChange={setRequireNonBillableReason}
+                    />
+                  </div>
+                </div>
               </>
             ) : active !== "integrations" ? (
               <div className="flex flex-col items-center justify-center py-24 text-center">
