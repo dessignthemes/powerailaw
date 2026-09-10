@@ -11,6 +11,7 @@ import {
   X,
   ChevronRight,
   Link2,
+  Trash2,
 } from "lucide-react";
 
 const navItems = [
@@ -90,9 +91,124 @@ const googleSub = [
   },
 ];
 
+const timezones = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "America/Toronto",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+  "UTC",
+];
+
+const practiceAreas = [
+  "Family Law",
+  "Immigration",
+  "Personal Injury",
+  "Criminal Defense",
+  "Estate Planning",
+  "Probate",
+  "Real Estate",
+  "Business / Corporate",
+  "Contracts",
+  "Employment",
+  "Litigation",
+  "Civil Disputes",
+  "Bankruptcy",
+  "Intellectual Property",
+  "Tax",
+  "Landlord / Tenant",
+  "Debt Collection",
+  "Insurance",
+  "Consumer Protection",
+  "Other",
+];
+
+type PracticeAreaStatus = "We handle" | "Don't handle" | "Not set";
+
+function PracticeAreaRow({
+  label,
+  status,
+  onChange,
+}: {
+  label: string;
+  status: PracticeAreaStatus;
+  onChange: (s: PracticeAreaStatus) => void;
+}) {
+  const options: PracticeAreaStatus[] = ["We handle", "Don't handle", "Not set"];
+  return (
+    <div className="flex items-center justify-between gap-4 py-3.5 border-b border-line last:border-b-0">
+      <span className="text-[14.5px] font-medium">{label}</span>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            onClick={() => onChange(opt)}
+            className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
+              status === opt
+                ? "bg-dark text-white"
+                : "bg-white border border-line hover:bg-card-alt"
+            }`}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function IntegrationsModal({ onClose }: { onClose: () => void }) {
   const [active, setActive] = useState<(typeof navItems)[number]["key"]>("integrations");
   const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
+
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [orgName, setOrgName] = useState("Dessign");
+  const [urlSlug, setUrlSlug] = useState("dessign");
+  const [timezone, setTimezone] = useState("America/New_York");
+  const [generalSaved, setGeneralSaved] = useState(false);
+
+  const [practiceStatus, setPracticeStatus] = useState<Record<string, PracticeAreaStatus>>(
+    Object.fromEntries(practiceAreas.map((a) => [a, "Not set" as PracticeAreaStatus]))
+  );
+  const [scopeNotes, setScopeNotes] = useState("");
+  const [practiceSaved, setPracticeSaved] = useState(false);
+
+  const allPracticeAreasUnset = practiceAreas.every((a) => practiceStatus[a] === "Not set");
+
+  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) setLogoUrl(URL.createObjectURL(file));
+  }
+
+  function handleSaveGeneral() {
+    setGeneralSaved(true);
+    setTimeout(() => setGeneralSaved(false), 1800);
+  }
+
+  function handleSavePracticeAreas() {
+    setPracticeSaved(true);
+    setTimeout(() => setPracticeSaved(false), 1800);
+  }
+
+  function handleDeleteAccount() {
+    if (
+      window.confirm(
+        "Deletes your account and this workspace with it, for everyone in the firm. This cannot be undone. Continue?"
+      )
+    ) {
+      onClose();
+    }
+  }
 
   const drilledConnector = connectors.find((c) => c.key === drilled);
   const subRows = drilled === "microsoft" ? microsoftSub : drilled === "google" ? googleSub : [];
@@ -139,10 +255,16 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
                   <span className="text-ink font-semibold">{drilledConnector.name}</span>
                 </>
               ) : (
-                <>
-                  <Grid3x3 size={15} strokeWidth={1.75} className="text-ink" />
-                  <span className="text-ink">Integrations</span>
-                </>
+                (() => {
+                  const current = navItems.find((n) => n.key === active)!;
+                  const Icon = current.icon;
+                  return (
+                    <>
+                      <Icon size={15} strokeWidth={1.75} className="text-ink" />
+                      <span className="text-ink">{current.label}</span>
+                    </>
+                  );
+                })()
               )}
             </div>
             <button onClick={onClose} className="text-muted hover:text-ink">
@@ -151,7 +273,148 @@ export default function IntegrationsModal({ onClose }: { onClose: () => void }) 
           </div>
 
           <div className="px-9 pb-9">
-            {active !== "integrations" ? (
+            {active === "general" ? (
+              <>
+                <h2 className="text-[26px] font-semibold mt-3 mb-1.5">General</h2>
+                <p className="text-[14px] text-muted mb-8">Manage your organization details</p>
+
+                <div className="mb-7">
+                  <div className="text-[14.5px] font-semibold mb-3">Workspace logo</div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-card-alt flex items-center justify-center text-[18px] font-semibold text-ink overflow-hidden flex-shrink-0">
+                      {logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={logoUrl} alt="Workspace logo" className="w-full h-full object-cover" />
+                      ) : (
+                        orgName.charAt(0).toUpperCase() || "?"
+                      )}
+                    </div>
+                    <label className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors cursor-pointer">
+                      Upload
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-[12.5px] text-muted mt-2.5">PNG, JPEG or WebP, up to 2 MB.</p>
+                </div>
+
+                <div className="mb-6">
+                  <div className="text-[14.5px] font-semibold mb-2">Organization Name</div>
+                  <input
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none"
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <div className="text-[14.5px] font-semibold mb-2">URL Slug</div>
+                  <input
+                    value={urlSlug}
+                    onChange={(e) => setUrlSlug(e.target.value)}
+                    className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <div className="text-[14.5px] font-semibold mb-2">Firm time zone</div>
+                  <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none appearance-none"
+                  >
+                    {timezones.map((tz) => (
+                      <option key={tz} value={tz}>
+                        {tz}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[12.5px] text-muted mt-2.5">
+                    Your firm&apos;s saved operating time zone. Existing calendar event times stay unchanged.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 mb-9">
+                  <button
+                    onClick={handleSaveGeneral}
+                    className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                  >
+                    Save Changes
+                  </button>
+                  {generalSaved && <span className="text-[13px] text-green-600 font-medium">Saved</span>}
+                </div>
+
+                <div className="border-t border-line pt-8 mb-8">
+                  <div className="text-[15px] font-semibold mb-1.5">Practice areas</div>
+                  <p className="text-[13.5px] text-muted max-w-[640px]">
+                    Tell the intake assistant what your firm does. It uses this to answer prospects
+                    asking whether you can help — and never guesses beyond it.
+                  </p>
+                  {allPracticeAreasUnset && (
+                    <p className="text-[13.5px] text-muted italic mt-4 max-w-[640px]">
+                      Nothing is set yet, so the intake chat will not confirm or rule out any area of
+                      law. It will keep collecting details and leave the decision to you.
+                    </p>
+                  )}
+                </div>
+
+                <div className="mb-8">
+                  {practiceAreas.map((area) => (
+                    <PracticeAreaRow
+                      key={area}
+                      label={area}
+                      status={practiceStatus[area]}
+                      onChange={(s) => setPracticeStatus((prev) => ({ ...prev, [area]: s }))}
+                    />
+                  ))}
+                </div>
+
+                <div className="mb-8">
+                  <div className="text-[14.5px] font-semibold mb-2">Scope notes</div>
+                  <textarea
+                    value={scopeNotes}
+                    onChange={(e) => setScopeNotes(e.target.value)}
+                    placeholder="e.g. we only take cases in Ontario, and injury claims above $10,000"
+                    rows={3}
+                    className="w-full bg-white border border-line rounded-xl px-3.5 py-3 text-[14px] outline-none resize-none"
+                  />
+                  <p className="text-[12.5px] text-muted mt-2.5">
+                    Anything the list above cannot capture — jurisdictions, minimum claim sizes,
+                    matters you refer out. Prospects never see this text.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 mb-10">
+                  <button
+                    onClick={handleSavePracticeAreas}
+                    className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                  >
+                    Save practice areas
+                  </button>
+                  {practiceSaved && <span className="text-[13px] text-green-600 font-medium">Saved</span>}
+                </div>
+
+                <div className="border border-red-200 bg-red-50/40 rounded-2xl p-5 flex items-center justify-between gap-6 flex-wrap">
+                  <div>
+                    <div className="text-[14.5px] font-semibold mb-1">Delete account</div>
+                    <p className="text-[13px] text-muted max-w-[520px]">
+                      Deletes your account and this workspace with it, for everyone in the firm. An
+                      active subscription is cancelled automatically.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleDeleteAccount}
+                    className="flex items-center gap-1.5 bg-red-100 text-red-600 px-4 py-2 rounded-full text-[13px] font-medium hover:bg-red-200 transition-colors flex-shrink-0"
+                  >
+                    <Trash2 size={13} strokeWidth={1.75} /> Delete account
+                  </button>
+                </div>
+              </>
+            ) : active !== "integrations" ? (
               <div className="flex flex-col items-center justify-center py-24 text-center">
                 <div className="text-[15px] font-medium text-muted">
                   {navItems.find((n) => n.key === active)?.label} settings coming soon.
