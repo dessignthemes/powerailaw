@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import TimeSlider from "@/components/TimeSlider";
+import TaskFilterDropdown from "@/components/TaskFilterDropdown";
 import {
   ListChecks,
   Calendar,
@@ -32,8 +33,13 @@ export default function DashboardHome() {
 
   return (
     <div className="px-10 py-10">
-      <h1 className="text-[32px] font-semibold mb-1">Good afternoon</h1>
-      <div className="text-[14.5px] text-muted mb-10">{today}</div>
+      <div className="flex items-start justify-between mb-10">
+        <div>
+          <h1 className="text-[32px] font-semibold mb-1">Good afternoon</h1>
+          <div className="text-[14.5px] text-muted">{today}</div>
+        </div>
+        <TaskFilterDropdown />
+      </div>
 
       <div className="flex gap-6 mb-8 text-[14px] font-medium text-muted border-b border-line">
         {rangeTabs.map((r) => (
