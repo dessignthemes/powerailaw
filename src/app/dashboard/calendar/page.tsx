@@ -198,7 +198,7 @@ export default function CalendarPage() {
 
       <div className="bg-card-alt border border-line rounded-xl px-5 py-3 flex items-center justify-between mb-6 flex-wrap gap-3">
         <span className="text-[13.5px] text-muted">
-          Sync from Outlook Calendar to see your events here.
+          Sync from Google or Outlook Calendar to see your events here.
         </span>
         <button onClick={openIntegrations} className="text-[13.5px] font-medium text-ink underline">
           Connect a calendar
