@@ -83,6 +83,7 @@ function RowStatusPicker({
 export default function ClientsPage() {
   const {
     clients,
+    clientsLoaded,
     addClient,
     updateClient,
     deleteClients,
@@ -155,7 +156,11 @@ export default function ClientsPage() {
         </button>
       </div>
 
-      {clients.length === 0 ? (
+      {!clientsLoaded ? (
+        <div className="border border-line rounded-2xl min-h-[320px] flex items-center justify-center text-[14px] text-muted">
+          Loading clients…
+        </div>
+      ) : clients.length === 0 ? (
         <div className="border border-line rounded-2xl min-h-[320px] flex flex-col items-center justify-center text-center">
           <CircleUser size={26} strokeWidth={1.5} className="text-muted mb-4" />
           <div className="text-[16px] font-semibold mb-1">No clients yet</div>

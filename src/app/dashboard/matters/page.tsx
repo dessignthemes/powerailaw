@@ -80,6 +80,7 @@ export default function MattersPage() {
   const router = useRouter();
   const {
     matters,
+    mattersLoaded,
     addMatter,
     updateMatter,
     deleteMatters,
@@ -152,7 +153,11 @@ export default function MattersPage() {
         </button>
       </div>
 
-      {matters.length === 0 ? (
+      {!mattersLoaded ? (
+        <div className="border border-line rounded-2xl min-h-[320px] flex items-center justify-center text-[14px] text-muted">
+          Loading matters…
+        </div>
+      ) : matters.length === 0 ? (
         <div className="border border-line rounded-2xl min-h-[320px] flex flex-col items-center justify-center text-center">
           <Briefcase size={26} strokeWidth={1.5} className="text-muted mb-4" />
           <div className="text-[16px] font-semibold mb-1">No matters yet</div>

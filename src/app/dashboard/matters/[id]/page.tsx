@@ -52,7 +52,7 @@ type TabKey = (typeof tabs)[number]["key"];
 export default function MatterDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { matters, clients, updateMatter, deleteMatters } = useWorkspaceData();
+  const { matters, mattersLoaded, clients, updateMatter, deleteMatters } = useWorkspaceData();
 
   const matter = matters.find((m) => m.id === params.id) ?? null;
 
@@ -66,6 +66,13 @@ export default function MatterDetailPage() {
   const [assignedOpen, setAssignedOpen] = useState(false);
 
   if (!matter) {
+    if (!mattersLoaded) {
+      return (
+        <div className="px-10 py-10">
+          <div className="text-[14px] text-muted">Loading matter…</div>
+        </div>
+      );
+    }
     return (
       <div className="px-10 py-10">
         <div className="text-[16px] font-semibold mb-2">Matter not found</div>
