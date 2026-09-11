@@ -90,24 +90,29 @@ alter table clients enable row level security;
 alter table matters enable row level security;
 alter table oauth_connections enable row level security;
 
+drop policy if exists "Members can view their own organization" on organizations;
 create policy "Members can view their own organization"
   on organizations for select
   using (id = auth_org_id());
 
+drop policy if exists "Members can view profiles in their organization" on profiles;
 create policy "Members can view profiles in their organization"
   on profiles for select
   using (org_id = auth_org_id());
 
+drop policy if exists "Members can manage clients in their organization" on clients;
 create policy "Members can manage clients in their organization"
   on clients for all
   using (org_id = auth_org_id())
   with check (org_id = auth_org_id());
 
+drop policy if exists "Members can manage matters in their organization" on matters;
 create policy "Members can manage matters in their organization"
   on matters for all
   using (org_id = auth_org_id())
   with check (org_id = auth_org_id());
 
+drop policy if exists "Members can manage oauth connections in their organization" on oauth_connections;
 create policy "Members can manage oauth connections in their organization"
   on oauth_connections for all
   using (org_id = auth_org_id())
