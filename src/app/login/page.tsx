@@ -2,26 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-
-const GOOGLE_SCOPES = [
-  "openid",
-  "email",
-  "profile",
-  "https://www.googleapis.com/auth/gmail.readonly",
-  "https://www.googleapis.com/auth/calendar",
-  "https://www.googleapis.com/auth/drive.readonly",
-].join(" ");
-
-const MICROSOFT_SCOPES = [
-  "openid",
-  "email",
-  "profile",
-  "offline_access",
-  "User.Read",
-  "Mail.Read",
-  "Calendars.ReadWrite",
-  "Files.Read",
-].join(" ");
+import { GOOGLE_FULL_SCOPES, MICROSOFT_FULL_SCOPES } from "@/lib/oauthScopes";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState<"google" | "microsoft" | null>(null);
@@ -37,7 +18,7 @@ export default function LoginPage() {
       provider: provider === "microsoft" ? "azure" : "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: provider === "google" ? GOOGLE_SCOPES : MICROSOFT_SCOPES,
+        scopes: provider === "google" ? GOOGLE_FULL_SCOPES : MICROSOFT_FULL_SCOPES,
         queryParams:
           provider === "google" ? { access_type: "offline", prompt: "consent" } : undefined,
       },

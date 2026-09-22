@@ -1218,7 +1218,7 @@ export default function IntegrationsModal({
                     </p>
                   </div>
                   <Link
-                    href="/connect"
+                    href={`/connect?provider=${drilled}`}
                     className="flex items-center gap-1.5 bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
                   >
                     <Link2 size={13} strokeWidth={1.75} /> Connect all
@@ -1233,7 +1233,7 @@ export default function IntegrationsModal({
                         <div className="text-[12.5px] text-muted max-w-[520px]">{row.desc}</div>
                       </div>
                       <Link
-                        href="/connect"
+                        href={`/connect?provider=${drilled}`}
                         className="flex items-center gap-1.5 bg-dark text-white px-4 py-2 rounded-full text-[13px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
                       >
                         <Link2 size={12} strokeWidth={1.75} /> Connect
@@ -1261,13 +1261,13 @@ export default function IntegrationsModal({
                   </p>
                   <div className="flex items-center gap-4 flex-wrap">
                     <Link
-                      href="/connect"
+                      href="/connect?provider=google"
                       className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
                     >
                       ↗ Import from Gmail
                     </Link>
                     <Link
-                      href="/connect"
+                      href="/connect?provider=microsoft"
                       className="border border-line bg-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors"
                     >
                       ↗ Import from Outlook
