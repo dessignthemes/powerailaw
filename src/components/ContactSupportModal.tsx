@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Paperclip } from "lucide-react";
 
 const topics = [
@@ -38,7 +39,7 @@ export default function ContactSupportModal({
     setTimeout(onClose, 1400);
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
       <div className="bg-cream rounded-3xl w-full max-w-[620px] max-h-[90vh] overflow-y-auto p-7">
         {sent ? (
@@ -147,6 +148,7 @@ export default function ContactSupportModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

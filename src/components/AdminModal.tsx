@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Users,
@@ -113,7 +114,7 @@ export default function AdminModal({
 
   const monthLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8">
       <div className="bg-cream rounded-3xl w-full max-w-[980px] max-h-[88vh] overflow-hidden flex">
         <div className="w-[240px] flex-shrink-0 border-r border-line px-4 py-6 overflow-y-auto">
@@ -554,6 +555,7 @@ export default function AdminModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

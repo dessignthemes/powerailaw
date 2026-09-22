@@ -145,8 +145,14 @@ export default function Sidebar() {
         <AccountMenu
           email={email ?? "…"}
           orgName={ORG_NAME}
-          onOpenAdmin={() => setAdminOpen(true)}
-          onOpenSupport={() => setSupportOpen(true)}
+          onOpenAdmin={() => {
+            setSupportOpen(false);
+            setAdminOpen(true);
+          }}
+          onOpenSupport={() => {
+            setAdminOpen(false);
+            setSupportOpen(true);
+          }}
           onLogout={handleLogout}
         />
       </div>
