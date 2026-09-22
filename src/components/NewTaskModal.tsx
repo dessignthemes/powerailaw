@@ -27,6 +27,15 @@ export type BoardTask = {
   priority: TaskPriority;
   assignee: string | null;
   dueDate: string | null;
+  comments?: TaskComment[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type TaskComment = {
+  id: string;
+  body: string;
+  createdAt: string;
 };
 
 export const priorityMeta: Record<TaskPriority, { bg: string; text: string }> = {

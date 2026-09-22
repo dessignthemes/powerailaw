@@ -15,6 +15,7 @@ import {
   ClipboardList,
   ChevronDown,
   User,
+  X,
 } from "lucide-react";
 import NewTaskModal, {
   BoardTask,
@@ -24,6 +25,7 @@ import NewTaskModal, {
 } from "@/components/NewTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import ColorPicker from "@/components/ColorPicker";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 
 type Column = {
   id: string;
@@ -44,7 +46,9 @@ const filterPills = ["Me", "Overdue", "Due this week", "Waiting on client"];
 export default function TaskBoardPage() {
   const [view, setView] = useState<"board" | "list">("board");
   const [columns, setColumns] = useState<Column[]>(initialColumns);
-  const [tasks, setTasks] = useState<BoardTask[]>([]);
+  const { tasks, tasksLoaded, tasksError, clearTasksError, addTask, updateTask, deleteTasks } =
+    useWorkspaceData();
+  const [cardMenuFor, setCardMenuFor] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
@@ -85,18 +89,16 @@ export default function TaskBoardPage() {
       setInlineAddFor(null);
       return;
     }
-    setTasks((ts) => [
-      ...ts,
-      {
-        id: crypto.randomUUID(),
-        title: inlineValue,
-        description: "",
-        status,
-        priority: "Medium",
-        assignee: null,
-        dueDate: null,
-      },
-    ]);
+    addTask({
+      id: crypto.randomUUID(),
+      title: inlineValue.trim(),
+      description: "",
+      status,
+      priority: "Medium",
+      assignee: null,
+      dueDate: null,
+      comments: [],
+    });
     setInlineValue("");
     setInlineAddFor(null);
   }
@@ -160,6 +162,15 @@ export default function TaskBoardPage() {
         </div>
       </div>
 
+      {tasksError && (
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">
+          <span>{tasksError}</span>
+          <button onClick={clearTasksError} className="text-red-500 hover:text-red-700">
+            <X size={15} strokeWidth={1.75} />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 mb-6 flex-wrap">
         <div className="w-7 h-7 rounded-full bg-card-alt flex items-center justify-center text-muted text-[12px] font-medium">
           ?
@@ -182,7 +193,9 @@ export default function TaskBoardPage() {
 
       {view === "list" ? (
         <div className="border border-line rounded-2xl min-h-[420px] flex flex-col items-center justify-center text-center">
-          {tasks.length === 0 ? (
+          {!tasksLoaded ? (
+            <div className="text-[14px] text-muted">Loading tasks…</div>
+          ) : tasks.length === 0 ? (
             <>
               <ClipboardList size={26} strokeWidth={1.5} className="text-muted mb-4" />
               <div className="text-[16px] font-semibold mb-4">No tasks yet</div>
@@ -370,12 +383,51 @@ export default function TaskBoardPage() {
                         >
                           <div className="flex items-start justify-between gap-2 mb-2.5">
                             <div className="text-[14px] font-semibold leading-snug">{t.title}</div>
-                            <button
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-muted hover:text-ink flex-shrink-0 -mt-0.5"
-                            >
-                              <MoreHorizontal size={15} strokeWidth={1.75} />
-                            </button>
+                            <div className="relative flex-shrink-0 -mt-0.5">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCardMenuFor(cardMenuFor === t.id ? null : t.id);
+                                }}
+                                className="text-muted hover:text-ink"
+                              >
+                                <MoreHorizontal size={15} strokeWidth={1.75} />
+                              </button>
+                              {cardMenuFor === t.id && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setCardMenuFor(null);
+                                    }}
+                                  />
+                                  <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[160px]"
+                                  >
+                                    <button
+                                      onClick={() => {
+                                        setCardMenuFor(null);
+                                        setSelectedTask(t);
+                                      }}
+                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                                    >
+                                      <Pencil size={14} strokeWidth={1.75} /> Open
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setCardMenuFor(null);
+                                        deleteTasks([t.id]);
+                                      }}
+                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-red-500 hover:bg-red-50 transition-colors"
+                                    >
+                                      <Trash2 size={14} strokeWidth={1.75} /> Delete
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="w-6 h-6 rounded-full bg-card-alt border border-line flex items-center justify-center flex-shrink-0">
@@ -444,7 +496,7 @@ export default function TaskBoardPage() {
           defaultStatus={modalStatus}
           onClose={() => setModalStatus(null)}
           onCreate={(task) => {
-            setTasks((ts) => [...ts, task]);
+            addTask({ ...task, comments: [] });
             setModalStatus(null);
           }}
         />
@@ -455,7 +507,7 @@ export default function TaskBoardPage() {
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           onUpdate={(updated) => {
-            setTasks((ts) => ts.map((t) => (t.id === updated.id ? updated : t)));
+            updateTask(updated);
             setSelectedTask(updated);
           }}
         />

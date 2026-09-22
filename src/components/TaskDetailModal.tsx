@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import {
   BoardTask,
+  TaskComment,
   TaskStatus,
   TaskPriority,
   statusMeta,
@@ -75,7 +76,7 @@ export default function TaskDetailModal({
   const [dateOpen, setDateOpen] = useState(false);
   const [tab, setTab] = useState("Comments");
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState<string[]>([]);
+  const [comments, setComments] = useState<TaskComment[]>(task.comments ?? []);
   const [timerRunning, setTimerRunning] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
@@ -96,14 +97,20 @@ export default function TaskDetailModal({
 
   function submitComment() {
     if (!comment.trim()) return;
-    setComments((c) => [...c, comment.trim()]);
+    const next = [
+      ...comments,
+      { id: crypto.randomUUID(), body: comment.trim(), createdAt: new Date().toISOString() },
+    ];
+    setComments(next);
     setComment("");
+    commit({ comments: next });
   }
 
   const StatusIcon = statusMeta[status].icon;
 
   function commit(patch: Partial<BoardTask>) {
-    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, ...patch });
+    if (!(patch.title ?? title).trim()) return;
+    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, ...patch });
   }
 
   return (
@@ -317,12 +324,12 @@ export default function TaskDetailModal({
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  {comments.map((c, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
+                  {comments.map((c) => (
+                    <div key={c.id} className="flex items-start gap-2.5">
                       <span className="w-7 h-7 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-medium flex-shrink-0">
                         M
                       </span>
-                      <div className="bg-card-alt rounded-2xl px-3.5 py-2.5 text-[14px]">{c}</div>
+                      <div className="bg-card-alt rounded-2xl px-3.5 py-2.5 text-[14px]">{c.body}</div>
                     </div>
                   ))}
                 </div>

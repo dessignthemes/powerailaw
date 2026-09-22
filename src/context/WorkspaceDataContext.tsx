@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import type { Client, ClientStatus } from "@/components/NewClientModal";
 import type { Matter, MatterStatus } from "@/components/NewMatterModal";
+import type { BoardTask } from "@/components/NewTaskModal";
 
 type WorkspaceDataContextValue = {
   clients: Client[];
@@ -18,7 +19,21 @@ type WorkspaceDataContextValue = {
   updateMatter: (matter: Matter) => void;
   deleteMatters: (ids: string[]) => void;
   bulkSetMatterStatus: (ids: string[], status: MatterStatus) => void;
+
+  tasks: BoardTask[];
+  tasksLoaded: boolean;
+  tasksError: string | null;
+  clearTasksError: () => void;
+  addTask: (task: BoardTask) => void;
+  updateTask: (task: BoardTask) => void;
+  deleteTasks: (ids: string[]) => void;
 };
+
+async function readJson(res: Response) {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error ?? `Request failed (${res.status})`);
+  return data;
+}
 
 const WorkspaceDataContext = createContext<WorkspaceDataContextValue | null>(null);
 
@@ -27,6 +42,9 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const [clientsLoaded, setClientsLoaded] = useState(false);
   const [matters, setMatters] = useState<Matter[]>([]);
   const [mattersLoaded, setMattersLoaded] = useState(false);
+  const [tasks, setTasks] = useState<BoardTask[]>([]);
+  const [tasksLoaded, setTasksLoaded] = useState(false);
+  const [tasksError, setTasksError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/clients")
@@ -40,7 +58,78 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       .then((data) => setMatters(data.matters ?? []))
       .catch((err) => console.error("Failed to load matters:", err))
       .finally(() => setMattersLoaded(true));
+
+    fetch("/api/tasks")
+      .then(readJson)
+      .then((data) => setTasks(data.tasks ?? []))
+      .catch((err) => {
+        console.error("Failed to load tasks:", err);
+        setTasksError("Couldn't load tasks from the database.");
+      })
+      .finally(() => setTasksLoaded(true));
   }, []);
+
+  const clearTasksError = useCallback(() => setTasksError(null), []);
+
+  const addTask = useCallback((task: BoardTask) => {
+    const optimistic = { ...task, createdAt: task.createdAt ?? new Date().toISOString() };
+    setTasks((ts) => [...ts, optimistic]);
+    fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(task),
+    })
+      .then(readJson)
+      .then((data) => {
+        if (data.task) setTasks((ts) => ts.map((t) => (t.id === task.id ? data.task : t)));
+      })
+      .catch((err) => {
+        console.error("Failed to save task:", err);
+        setTasks((ts) => ts.filter((t) => t.id !== task.id)); // roll back
+        setTasksError(`"${task.title}" wasn't saved. Please try again.`);
+      });
+  }, []);
+
+  const updateTask = useCallback(
+    (task: BoardTask) => {
+      const previous = tasks.find((t) => t.id === task.id);
+      setTasks((ts) => ts.map((t) => (t.id === task.id ? task : t))); // optimistic
+      fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(task),
+      })
+        .then(readJson)
+        .then((data) => {
+          if (data.task) setTasks((ts) => ts.map((t) => (t.id === task.id ? data.task : t)));
+        })
+        .catch((err) => {
+          console.error("Failed to update task:", err);
+          if (previous) setTasks((ts) => ts.map((t) => (t.id === task.id ? previous : t)));
+          setTasksError("Your change to a task wasn't saved. Please try again.");
+        });
+    },
+    [tasks]
+  );
+
+  const deleteTasks = useCallback(
+    (ids: string[]) => {
+      const removed = tasks.filter((t) => ids.includes(t.id));
+      setTasks((ts) => ts.filter((t) => !ids.includes(t.id))); // optimistic
+      fetch("/api/tasks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      })
+        .then(readJson)
+        .catch((err) => {
+          console.error("Failed to delete tasks:", err);
+          setTasks((ts) => [...ts, ...removed]);
+          setTasksError("Couldn't delete the task. Please try again.");
+        });
+    },
+    [tasks]
+  );
 
   const addClient = useCallback((client: Client) => {
     setClients((cs) => [...cs, client]); // optimistic
@@ -173,6 +262,13 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         updateMatter,
         deleteMatters,
         bulkSetMatterStatus,
+        tasks,
+        tasksLoaded,
+        tasksError,
+        clearTasksError,
+        addTask,
+        updateTask,
+        deleteTasks,
       }}
     >
       {children}

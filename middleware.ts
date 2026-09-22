@@ -35,6 +35,12 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // API routes use the service-role client, so they must never be reachable
+  // without a signed-in session.
+  if (!user && pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!user && pathname.startsWith("/dashboard")) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
