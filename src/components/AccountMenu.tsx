@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown } from "lucide-react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 
@@ -10,15 +9,16 @@ export default function AccountMenu({
   orgName,
   onOpenAdmin,
   onOpenSupport,
+  onLogout,
 }: {
   email: string;
   orgName: string;
   onOpenAdmin: () => void;
   onOpenSupport: () => void;
+  onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const { openIntegrations } = useIntegrationsModal();
-  const router = useRouter();
 
   return (
     <div className="relative">
@@ -84,7 +84,7 @@ export default function AccountMenu({
               <button
                 onClick={() => {
                   setOpen(false);
-                  router.push("/");
+                  onLogout();
                 }}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium text-red-500 hover:bg-red-50 transition-colors text-left"
               >

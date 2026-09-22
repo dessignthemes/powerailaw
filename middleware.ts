@@ -29,7 +29,21 @@ export async function middleware(request: NextRequest) {
   });
 
   // Touching getUser() refreshes the session cookie if it's close to expiring.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+
+  if (!user && pathname.startsWith("/dashboard")) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (user && pathname === "/login") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
   return response;
 }

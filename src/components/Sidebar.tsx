@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
+import { createClient } from "@/lib/supabase/client";
 import {
   Home,
   Sparkles,
@@ -41,8 +42,7 @@ const workspaceLinks: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Matters", href: "/dashboard/matters", icon: Folder },
 ];
 
-const ACCOUNT_EMAIL = "marios@dessign.co";
-const ORG_NAME = "Dessign";
+const ORG_NAME = "PowerAI Law";
 
 function NavItem({
   href,
@@ -70,9 +70,24 @@ function NavItem({
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { openIntegrations } = useIntegrationsModal();
   const [adminOpen, setAdminOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? null);
+    });
+  }, []);
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
   return (
     <aside className="w-[260px] flex-shrink-0 bg-cream border-r border-line h-screen sticky top-0 flex flex-col px-4 py-6">
@@ -128,16 +143,19 @@ export default function Sidebar() {
           <ArrowUpRight size={14} strokeWidth={1.75} className="flex-shrink-0" />
         </button>
         <AccountMenu
-          email={ACCOUNT_EMAIL}
+          email={email ?? "…"}
           orgName={ORG_NAME}
           onOpenAdmin={() => setAdminOpen(true)}
           onOpenSupport={() => setSupportOpen(true)}
+          onLogout={handleLogout}
         />
       </div>
 
-      {adminOpen && <AdminModal ownerEmail={ACCOUNT_EMAIL} onClose={() => setAdminOpen(false)} />}
+      {adminOpen && (
+        <AdminModal ownerEmail={email ?? ""} onClose={() => setAdminOpen(false)} />
+      )}
       {supportOpen && (
-        <ContactSupportModal email={ACCOUNT_EMAIL} onClose={() => setSupportOpen(false)} />
+        <ContactSupportModal email={email ?? ""} onClose={() => setSupportOpen(false)} />
       )}
     </aside>
   );
