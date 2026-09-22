@@ -115,8 +115,21 @@ export default function AdminModal({
   const monthLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8">
-      <div className="bg-cream rounded-3xl w-full max-w-[980px] max-h-[88vh] overflow-hidden flex">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-cream rounded-3xl w-full max-w-[980px] max-h-[88vh] overflow-hidden flex relative"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 z-10 w-8 h-8 rounded-full bg-cream/80 hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+        >
+          <X size={18} strokeWidth={1.75} />
+        </button>
+
         <div className="w-[240px] flex-shrink-0 border-r border-line px-4 py-6 overflow-y-auto">
           <div className="text-[15px] font-semibold px-2 mb-5">Administration</div>
 
@@ -152,13 +165,7 @@ export default function AdminModal({
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="flex justify-end px-9 pt-6">
-            <button onClick={onClose} className="text-muted hover:text-ink">
-              <X size={20} strokeWidth={1.75} />
-            </button>
-          </div>
-
-          <div className="px-9 pb-9 -mt-4">
+          <div className="px-9 pt-14 pb-9">
             {page === "members" && (
               <>
                 <div className="flex items-start justify-between mb-1.5">

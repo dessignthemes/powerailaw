@@ -256,8 +256,14 @@ export default function TimeTrackingPage() {
       )}
 
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-          <div className="bg-cream rounded-3xl w-full max-w-[440px] max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+          onClick={() => setModalOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-cream rounded-3xl w-full max-w-[440px] max-h-[90vh] overflow-y-auto"
+          >
             <div className="flex items-center justify-between px-7 pt-6 pb-5">
               <h3 className="text-[20px] font-semibold">Add time entry</h3>
               <button onClick={() => setModalOpen(false)} className="text-muted hover:text-ink">

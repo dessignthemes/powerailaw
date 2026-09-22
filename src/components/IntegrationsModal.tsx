@@ -409,8 +409,14 @@ export default function IntegrationsModal({
   const subRows = drilled === "microsoft" ? microsoftSub : drilled === "google" ? googleSub : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8">
-      <div className="bg-cream rounded-3xl w-full max-w-[980px] max-h-[88vh] overflow-hidden flex">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-cream rounded-3xl w-full max-w-[980px] max-h-[88vh] overflow-hidden flex"
+      >
         <div className="w-[220px] flex-shrink-0 border-r border-line px-4 py-6">
           <div className="text-[15px] font-semibold px-2 mb-5">Settings</div>
           <nav className="flex flex-col gap-0.5">

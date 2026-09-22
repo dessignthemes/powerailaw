@@ -40,8 +40,14 @@ export default function ContactSupportModal({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="bg-cream rounded-3xl w-full max-w-[620px] max-h-[90vh] overflow-y-auto p-7">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-cream rounded-3xl w-full max-w-[620px] max-h-[90vh] overflow-y-auto p-7"
+      >
         {sent ? (
           <div className="flex flex-col items-center justify-center text-center py-14">
             <div className="text-[18px] font-semibold mb-1.5">Sent to support</div>

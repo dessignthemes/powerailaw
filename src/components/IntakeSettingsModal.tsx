@@ -60,8 +60,14 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8">
-      <div className="bg-cream rounded-3xl w-full max-w-[1080px] max-h-[92vh] overflow-hidden flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-cream rounded-3xl w-full max-w-[1080px] max-h-[92vh] overflow-hidden flex flex-col"
+      >
         <div className="flex items-start justify-between px-9 pt-8">
           <div>
             <h2 className="text-[26px] font-semibold mb-1.5">Intake</h2>

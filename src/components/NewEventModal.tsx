@@ -120,8 +120,14 @@ export default function NewEventModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="bg-cream rounded-3xl w-full max-w-[560px] max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-cream rounded-3xl w-full max-w-[560px] max-h-[90vh] overflow-y-auto"
+      >
         <div className="flex items-center justify-between px-7 pt-6 pb-2">
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
             <CalendarIcon size={14} strokeWidth={1.75} /> Calendar

@@ -107,8 +107,14 @@ export default function TaskDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8">
-      <div className="bg-cream rounded-3xl w-full max-w-[860px] max-h-[92vh] overflow-y-auto flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-cream rounded-3xl w-full max-w-[860px] max-h-[92vh] overflow-y-auto flex flex-col"
+      >
         <div className="flex items-center justify-between px-7 pt-6 pb-2">
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
             <span className="bg-card-alt px-2.5 py-1 rounded-full">Task board</span>

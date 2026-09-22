@@ -121,8 +121,14 @@ export default function NewTaskModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="bg-cream rounded-3xl w-full max-w-[620px] max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-cream rounded-3xl w-full max-w-[620px] max-h-[90vh] overflow-y-auto"
+      >
         <div className="flex items-center justify-between px-7 pt-6 pb-2">
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
             <span className="bg-card-alt px-2.5 py-1 rounded-full">Tasks</span>
