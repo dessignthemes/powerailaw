@@ -7,6 +7,7 @@ import TaskFilterDropdown from "@/components/TaskFilterDropdown";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { BoardTask, priorityMeta, statusMeta } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import { isDueIn, ymd } from "@/lib/taskDates";
 import {
   ListChecks,
   Calendar,
@@ -25,33 +26,6 @@ const rangeTabs = [
 ] as const;
 
 type RangeKey = (typeof rangeTabs)[number]["key"];
-
-// Due dates are stored as "YYYY-MM-DD" (from <input type="date">), so compare
-// them against local calendar dates in the same format.
-function ymd(d: Date) {
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
-}
-
-function rangeBounds(range: RangeKey) {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const dow = (today.getDay() + 6) % 7; // Monday = 0
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - dow);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-
-  if (range === "today") return { start: ymd(today), end: ymd(today), includeOverdue: true, today: ymd(today) };
-  if (range === "week") return { start: ymd(today), end: ymd(weekEnd), includeOverdue: true, today: ymd(today) };
-
-  const nextStart = new Date(weekStart);
-  nextStart.setDate(weekStart.getDate() + 7);
-  const nextEnd = new Date(nextStart);
-  nextEnd.setDate(nextStart.getDate() + 6);
-  return { start: ymd(nextStart), end: ymd(nextEnd), includeOverdue: false, today: ymd(today) };
-}
 
 function formatDue(dueDate: string) {
   const [y, m, d] = dueDate.split("-").map(Number);
@@ -84,14 +58,9 @@ export default function DashboardHome() {
   const [selectedTask, setSelectedTask] = useState<BoardTask | null>(null);
 
   const { dueTasks, undatedTasks, openCount, recent } = useMemo(() => {
-    const b = rangeBounds(range);
     const open = tasks.filter((t) => t.status !== "done");
-    const due = open
-      .filter(
-        (t) =>
-          t.dueDate &&
-          ((t.dueDate >= b.start && t.dueDate <= b.end) || (b.includeOverdue && t.dueDate < b.today))
-      )
+    const due = tasks
+      .filter((t) => isDueIn(t, range))
       .sort((a, z) => (a.dueDate! < z.dueDate! ? -1 : 1));
     const undated = open.filter((t) => !t.dueDate);
     const rec = [...tasks]
@@ -182,18 +151,26 @@ export default function DashboardHome() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-card-alt rounded-2xl p-6 relative">
+        <Link
+          href={`/dashboard/task-board?due=${range}`}
+          className="group bg-card-alt rounded-2xl p-6 relative block hover:bg-line/40 transition-colors"
+        >
           <div className="text-[13.5px] font-medium text-muted mb-8 flex items-center gap-1.5">
             <ListChecks size={15} strokeWidth={1.75} /> {activeRange.due}
           </div>
-          <div className="absolute top-6 right-6 w-6 h-6 rounded-full border-2 border-line" />
+          <div className="absolute top-6 right-6 w-6 h-6 rounded-full border-2 border-line flex items-center justify-center text-muted group-hover:text-ink group-hover:border-ink transition-colors">
+            <ArrowUpRight size={12} strokeWidth={2} />
+          </div>
           <div className="text-[32px] font-display font-semibold mb-1">
             {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"}
           </div>
           <div className="text-[13px] text-muted">
             {openCount} open · {undatedTasks.length} with no due date
           </div>
-        </div>
+          <div className="text-[12.5px] font-medium text-muted group-hover:text-ink mt-4 transition-colors">
+            View on task board →
+          </div>
+        </Link>
 
         <div className="bg-card-alt rounded-2xl p-6">
           <div className="text-[13.5px] font-medium text-muted mb-8 flex items-center gap-1.5">
@@ -241,8 +218,14 @@ export default function DashboardHome() {
           <div className="bg-cream rounded-xl min-h-[520px] py-2">
             {dueTasks.length > 0 && (
               <>
-                <div className="px-5 pt-3 pb-1 mono text-[11px] uppercase tracking-wider text-muted">
-                  {activeRange.due}
+                <div className="px-5 pt-3 pb-1 flex items-center justify-between">
+                  <span className="mono text-[11px] uppercase tracking-wider text-muted">{activeRange.due}</span>
+                  <Link
+                    href={`/dashboard/task-board?due=${range}`}
+                    className="text-[12.5px] font-medium text-muted hover:text-ink transition-colors"
+                  >
+                    View all {dueTasks.length} →
+                  </Link>
                 </div>
                 <div className="divide-y divide-line">
                   {dueTasks.map(renderTaskRow)}

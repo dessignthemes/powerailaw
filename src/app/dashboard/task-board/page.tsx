@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Kanban,
   List,
@@ -27,6 +28,7 @@ import NewTaskModal, {
 import TaskDetailModal from "@/components/TaskDetailModal";
 import ColorPicker from "@/components/ColorPicker";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import { isDueIn, isOverdue } from "@/lib/taskDates";
 
 type Column = {
   id: string;
@@ -42,15 +44,50 @@ const initialColumns: Column[] = [
   { id: "done", title: "Done", color: "#22C55E", status: "done" },
 ];
 
-const filterPills = ["Me", "Overdue", "Due this week", "Waiting on client"];
+const filterPills = ["Me", "Overdue", "Due today", "Due this week", "Next week", "Waiting on client"];
+
+// Pills that actually narrow the task list. A task is shown if it matches
+// any active one. ("Me" needs per-user assignees, which aren't wired up yet.)
+const filterTests: Record<string, (t: BoardTask) => boolean> = {
+  Overdue: isOverdue,
+  "Due today": (t) => isDueIn(t, "today"),
+  "Due this week": (t) => isDueIn(t, "week"),
+  "Next week": (t) => isDueIn(t, "nextweek"),
+  "Waiting on client": (t) => t.status === "waiting",
+};
+
+const dueParamToPill: Record<string, string> = {
+  today: "Due today",
+  week: "Due this week",
+  nextweek: "Next week",
+};
 
 export default function TaskBoardPage() {
+  return (
+    <Suspense fallback={null}>
+      <TaskBoardFromUrl />
+    </Suspense>
+  );
+}
+
+// Reads ?due=today|week|nextweek (used by the Dashboard's "Due today" card)
+// and opens the board with that filter already on.
+function TaskBoardFromUrl() {
+  const due = useSearchParams().get("due") ?? "";
+  const pill = dueParamToPill[due];
+  return <TaskBoard key={due} initialFilters={pill ? [pill] : []} />;
+}
+
+function TaskBoard({ initialFilters }: { initialFilters: string[] }) {
   const [view, setView] = useState<"board" | "list">("board");
   const [columns, setColumns] = useState<Column[]>(initialColumns);
-  const { tasks, tasksLoaded, tasksError, clearTasksError, addTask, updateTask, deleteTasks } =
+  const { tasks: allTasks, tasksLoaded, tasksError, clearTasksError, addTask, updateTask, deleteTasks } =
     useWorkspaceData();
   const [cardMenuFor, setCardMenuFor] = useState<string | null>(null);
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>(initialFilters);
+  const activeTests = activeFilters.map((f) => filterTests[f]).filter(Boolean);
+  const tasks =
+    activeTests.length === 0 ? allTasks : allTasks.filter((t) => activeTests.some((test) => test(t)));
 
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [colorPickerFor, setColorPickerFor] = useState<string | null>(null);
@@ -192,6 +229,23 @@ export default function TaskBoardPage() {
         </button>
       </div>
 
+      {activeTests.length > 0 && (
+        <div className="-mt-3 mb-5 flex items-center gap-3 text-[13px] text-muted">
+          <span>
+            Showing {tasks.length} {tasks.length === 1 ? "task" : "tasks"}:{" "}
+            <span className="text-ink font-medium">
+              {activeFilters.filter((f) => filterTests[f]).join(", ")}
+            </span>
+          </span>
+          <button
+            onClick={() => setActiveFilters([])}
+            className="font-medium underline underline-offset-2 hover:text-ink transition-colors"
+          >
+            Show all tasks
+          </button>
+        </div>
+      )}
+
       {view === "list" ? (
         <div className="border border-line rounded-2xl min-h-[420px] flex flex-col items-center justify-center text-center">
           {!tasksLoaded ? (
@@ -199,7 +253,9 @@ export default function TaskBoardPage() {
           ) : tasks.length === 0 ? (
             <>
               <ClipboardList size={26} strokeWidth={1.5} className="text-muted mb-4" />
-              <div className="text-[16px] font-semibold mb-4">No tasks yet</div>
+              <div className="text-[16px] font-semibold mb-4">
+                {allTasks.length > 0 ? "No tasks match these filters" : "No tasks yet"}
+              </div>
               <button
                 onClick={() => setModalStatus("todo")}
                 className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
