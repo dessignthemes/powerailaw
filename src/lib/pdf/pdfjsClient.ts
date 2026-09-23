@@ -4,6 +4,8 @@
 // runs during server rendering, and its worker/fonts/cmaps are served from
 // /public/pdfjs (copied from node_modules by scripts/copy-pdfjs-assets.mjs).
 
+import { installStreamAsyncIterator } from "@/lib/pdf/streamPolyfill";
+
 type PdfjsModule = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
 export type PdfDoc = Awaited<ReturnType<PdfjsModule["getDocument"]>["promise"]>;
 export type PdfPage = Awaited<ReturnType<PdfDoc["getPage"]>>;
@@ -12,8 +14,11 @@ let modPromise: Promise<PdfjsModule> | null = null;
 
 export function loadPdfjs(): Promise<PdfjsModule> {
   if (!modPromise) {
+    installStreamAsyncIterator();
     modPromise = import("pdfjs-dist/legacy/build/pdf.mjs").then((m) => {
-      m.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
+      // The entry module installs the same stream fix inside the worker,
+      // then loads the real pdf.js worker.
+      m.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.entry.mjs";
       return m;
     });
   }

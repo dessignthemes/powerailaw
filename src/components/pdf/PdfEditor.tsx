@@ -152,10 +152,17 @@ export default function PdfEditor({
         }
 
         // Scanned check: no extractable text on the first few pages.
-        let textFound = false;
-        for (let i = 1; i <= Math.min(3, opened.doc.numPages) && !textFound; i++) {
-          const tc = await (await opened.doc.getPage(i)).getTextContent();
-          textFound = tc.items.some((it) => "str" in it && it.str.trim().length > 0);
+        // Best effort: if text can't be read, assume it's not scanned rather than fail.
+        let textFound = true;
+        try {
+          textFound = false;
+          for (let i = 1; i <= Math.min(3, opened.doc.numPages) && !textFound; i++) {
+            const tc = await (await opened.doc.getPage(i)).getTextContent();
+            textFound = tc.items.some((it) => "str" in it && it.str.trim().length > 0);
+          }
+        } catch (err) {
+          console.warn("Text check failed:", err);
+          textFound = true;
         }
 
         if (cancelled) return;
@@ -171,7 +178,16 @@ export default function PdfEditor({
         const avail = (scrollRef.current?.clientWidth ?? 900) - 64;
         setZoom(ZOOMS.reduce((best, z) => (gs[0].width * z <= avail && z <= 1.5 ? z : best), 0.5));
       } catch (e) {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : "Couldn't open this document.");
+        console.error("Power PDF failed to open document:", e);
+        if (cancelled) return;
+        // Our own messages are written for people; anything else is a browser/library error.
+        const msg = e instanceof Error ? e.message : "";
+        const ours = msg && !/is not a function|undefined|null|TypeError|ReferenceError|Cannot read/i.test(msg);
+        setLoadError(
+          ours
+            ? msg
+            : "This PDF couldn't be opened in your browser. Try refreshing the page; if it keeps happening, try Chrome and let us know which browser failed."
+        );
       }
     })();
     return () => {
@@ -210,7 +226,14 @@ export default function PdfEditor({
     let cancelled = false;
     (async () => {
       const page = await pdf.getPage(pageIndex + 1);
-      const tc = await page.getTextContent();
+      let tc;
+      try {
+        tc = await page.getTextContent();
+      } catch (err) {
+        console.warn("Couldn't read page text:", err);
+        if (!cancelled) setRuns([]);
+        return;
+      }
       const out: TextRun[] = [];
       for (const it of tc.items) {
         if (!("str" in it) || !it.str.trim()) continue;
