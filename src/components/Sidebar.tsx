@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   Home,
   Sparkles,
+  Users,
   Timer,
   UserPlus,
   ListChecks,
@@ -111,6 +112,12 @@ export default function Sidebar() {
             icon={Sparkles}
             label="AI Agent"
             active={pathname === "/dashboard/agent"}
+          />
+          <NavItem
+            href="/dashboard/community"
+            icon={Users}
+            label="Community"
+            active={pathname === "/dashboard/community"}
           />
         </div>
 

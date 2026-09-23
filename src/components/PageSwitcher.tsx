@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   Home,
+  Users,
   Timer,
   UserPlus,
   ListChecks,
@@ -22,6 +23,7 @@ import {
 
 const pages: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
+  { label: "Community", href: "/dashboard/community", icon: Users },
   { label: "Time tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Client intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Triage", href: "/dashboard/triage", icon: ListChecks },
