@@ -52,15 +52,31 @@ export async function GET(request: NextRequest) {
         rawProvider === "google" ? "google" : rawProvider === "azure" ? "microsoft" : null;
 
       if (provider) {
+        // Provider access tokens last about an hour. For Google, ask the
+        // token itself for its real expiry and the scopes actually granted
+        // (the person can untick Gmail on the consent screen).
+        let expiresAt = new Date(Date.now() + 55 * 60 * 1000).toISOString();
+        let scopes: string[] = [];
+        if (provider === "google") {
+          try {
+            const info = await fetch(
+              `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(session.provider_token)}`
+            ).then((r) => (r.ok ? r.json() : null));
+            if (info?.expires_in) expiresAt = new Date(Date.now() + Number(info.expires_in) * 1000).toISOString();
+            if (typeof info?.scope === "string") scopes = info.scope.split(" ");
+          } catch {
+            // Non-fatal: keep the defaults.
+          }
+        }
+
         await saveOAuthConnection({
           provider,
           accessToken: session.provider_token,
           refreshToken: session.provider_refresh_token ?? null,
-          expiresAt: session.expires_at
-            ? new Date(session.expires_at * 1000).toISOString()
-            : null,
-          scopes: [], // Supabase doesn't return granted scopes directly; recorded for future use
+          expiresAt,
+          scopes,
           connectedBy: user.id,
+          accountEmail: user.email ?? null,
         });
       }
     }
@@ -70,5 +86,13 @@ export async function GET(request: NextRequest) {
     console.error("Post-login bookkeeping failed:", err);
   }
 
-  return NextResponse.redirect(new URL(next, requestUrl.origin));
+  // Pages like the Inbox set a short-lived cookie so people land back where
+  // they started. Only same-site paths are accepted.
+  const fromCookie = cookieStore.get("post_auth_next")?.value;
+  const target = [fromCookie ? decodeURIComponent(fromCookie) : null, next].find(
+    (p): p is string => !!p && p.startsWith("/") && !p.startsWith("//")
+  ) ?? "/dashboard";
+  const response = NextResponse.redirect(new URL(target, requestUrl.origin));
+  if (fromCookie) response.cookies.delete("post_auth_next");
+  return response;
 }

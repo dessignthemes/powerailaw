@@ -39,6 +39,12 @@ function ConnectPageInner() {
     const chosenScopes = items.filter((i) => currentSelected[i.key]).map((i) => i.scope);
     const scopes = [...baseScopes, ...chosenScopes].join(" ");
 
+    // Return to the page that sent us here (e.g. the Inbox) after connecting.
+    const back = searchParams.get("next");
+    if (back && back.startsWith("/") && !back.startsWith("//")) {
+      document.cookie = `post_auth_next=${encodeURIComponent(back)}; path=/; max-age=600; samesite=lax`;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: provider === "microsoft" ? "azure" : "google",
       options: {
