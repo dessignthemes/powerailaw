@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   Home,
   Users,
+  FilePen,
   Timer,
   UserPlus,
   ListChecks,
@@ -27,6 +28,7 @@ const pages: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Time tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Client intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Triage", href: "/dashboard/triage", icon: ListChecks },
+  { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
   { label: "Records", href: "/dashboard/records", icon: Bookmark },
   { label: "Task board", href: "/dashboard/task-board", icon: BarChart3 },
   { label: "Documents", href: "/dashboard/documents", icon: Copy },

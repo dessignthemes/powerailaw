@@ -20,6 +20,7 @@ import {
   CircleUser,
   Folder,
   Grid3x3,
+  FilePen,
   ArrowUpRight,
   type LucideIcon,
 } from "lucide-react";
@@ -31,6 +32,7 @@ const toolLinks: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Time tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Triage", href: "/dashboard/triage", icon: ListChecks },
+  { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
 ];
 
 const workspaceLinks: { label: string; href: string; icon: LucideIcon }[] = [
@@ -126,7 +128,7 @@ export default function Sidebar() {
             Tools
           </div>
           {toolLinks.map((l) => (
-            <NavItem key={l.label} {...l} active={pathname === l.href} />
+            <NavItem key={l.label} {...l} active={pathname === l.href || pathname.startsWith(l.href + "/")} />
           ))}
         </div>
 
@@ -135,7 +137,7 @@ export default function Sidebar() {
             Workspace
           </div>
           {workspaceLinks.map((l) => (
-            <NavItem key={l.label} {...l} active={pathname === l.href} />
+            <NavItem key={l.label} {...l} active={pathname === l.href || pathname.startsWith(l.href + "/")} />
           ))}
         </div>
       </nav>
