@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { FileText, Upload, ChevronDown, ChevronRight, Download, PenLine, Loader2, X } from "lucide-react";
+import { FileText, Upload, ChevronDown, ChevronRight, Download, PenLine, Loader2, X, Folder, Check, Search, Layers } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { uploadNewDocument, versionDownloadUrl, UploadError } from "@/lib/pdf/upload";
 
@@ -128,22 +128,15 @@ export default function DocumentList({
     <div>
       <div className="flex items-center gap-3 mb-5 flex-wrap">
         {!fixedMatterId && (
-          <select
+          <MatterPicker
+            matters={matters}
             value={selectedMatter}
-            onChange={(e) => {
+            onChange={(id) => {
+              if (id === selectedMatter) return;
               setLoading(true);
-              setSelectedMatter(e.target.value);
+              setSelectedMatter(id);
             }}
-            className="bg-white border border-line rounded-full px-4 py-2 text-[13.5px] outline-none min-w-[240px]"
-            aria-label="Matter"
-          >
-            <option value="">All matters</option>
-            {matters.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.title}
-              </option>
-            ))}
-          </select>
+          />
         )}
         <input
           ref={fileInput}
@@ -259,6 +252,109 @@ export default function DocumentList({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Pill-style matter picker matching the app's dropdowns (replaces the native <select>).
+function MatterPicker({
+  matters,
+  value,
+  onChange,
+}: {
+  matters: { id: string; title: string }[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const current = matters.find((m) => m.id === value);
+  const q = query.trim().toLowerCase();
+  const filtered = q ? matters.filter((m) => m.title.toLowerCase().includes(q)) : matters;
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  function pick(id: string) {
+    onChange(id);
+    setOpen(false);
+    setQuery("");
+  }
+
+  const row = (id: string, label: string, icon: React.ReactNode) => {
+    const active = id === value;
+    return (
+      <button
+        key={id || "all"}
+        onClick={() => pick(id)}
+        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left transition-colors ${
+          active ? "bg-card-alt font-medium" : "hover:bg-card-alt/70"
+        }`}
+      >
+        <span className="text-muted flex-shrink-0">{icon}</span>
+        <span className="flex-1 truncate">{label}</span>
+        {active && <Check size={14} strokeWidth={2} className="flex-shrink-0" />}
+      </button>
+    );
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="flex items-center gap-2 bg-card-alt hover:bg-line/50 transition-colors pl-3.5 pr-3 py-2 rounded-full text-[13.5px] font-medium max-w-[320px]"
+      >
+        {current ? (
+          <Folder size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
+        ) : (
+          <Layers size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
+        )}
+        <span className="truncate">{current?.title ?? "All matters"}</span>
+        <ChevronDown
+          size={13}
+          strokeWidth={1.75}
+          className={`text-muted flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div
+            role="listbox"
+            className="absolute left-0 top-[calc(100%+6px)] z-50 w-[300px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5"
+          >
+            {matters.length > 6 && (
+              <div className="flex items-center gap-2 px-3 py-2 mb-1 border-b border-line">
+                <Search size={14} strokeWidth={1.75} className="text-muted" />
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Find a matter"
+                  className="flex-1 bg-transparent outline-none text-[13.5px] placeholder:text-muted"
+                />
+              </div>
+            )}
+            <div className="max-h-[300px] overflow-y-auto">
+              {!q && row("", "All matters", <Layers size={14} strokeWidth={1.75} />)}
+              {!q && matters.length > 0 && <div className="h-px bg-line my-1 mx-2" />}
+              {filtered.map((m) => row(m.id, m.title, <Folder size={14} strokeWidth={1.75} />))}
+              {filtered.length === 0 && (
+                <div className="px-3 py-3 text-[13px] text-muted">
+                  {matters.length === 0 ? "No matters yet" : "No matching matters"}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
