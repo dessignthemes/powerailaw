@@ -15,6 +15,7 @@ function EditorRoute() {
       documentId={documentId}
       versionId={version}
       justSaved={search.get("saved") === "1"}
+      initialPage={Number(search.get("page")) || 1}
     />
   );
 }

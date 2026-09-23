@@ -65,10 +65,12 @@ export default function PdfEditor({
   documentId,
   versionId,
   justSaved = false,
+  initialPage = 1,
 }: {
   documentId: string;
   versionId: string | null;
   justSaved?: boolean;
+  initialPage?: number;
 }) {
   const router = useRouter();
 
@@ -85,7 +87,7 @@ export default function PdfEditor({
   const [scanned, setScanned] = useState(false);
 
   // ── Editing ────────────────────────────────────────────────────────────
-  const [pageIndex, setPageIndex] = useState(0);
+  const [pageIndex, setPageIndex] = useState(Math.max(0, Math.floor(initialPage) - 1));
   const [zoom, setZoom] = useState(1);
   const [tool, setTool] = useState<Tool>("select");
   const [items, setItems] = useState<OverlayItem[]>([]);
@@ -171,6 +173,7 @@ export default function PdfEditor({
         setBytes(b);
         setPdf(opened.doc);
         setGeos(gs);
+        setPageIndex((p) => Math.min(p, gs.length - 1)); // ?page= may exceed the page count
         setFont(helv);
         setFields(form.fields);
         setWidgets(form.widgets);

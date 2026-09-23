@@ -73,12 +73,13 @@ export default function TaskBoardPage() {
 // Reads ?due=today|week|nextweek (used by the Dashboard's "Due today" card)
 // and opens the board with that filter already on.
 function TaskBoardFromUrl() {
-  const due = useSearchParams().get("due") ?? "";
+  const params = useSearchParams();
+  const due = params.get("due") ?? "";
   const pill = dueParamToPill[due];
-  return <TaskBoard key={due} initialFilters={pill ? [pill] : []} />;
+  return <TaskBoard key={due} initialFilters={pill ? [pill] : []} initialTaskId={params.get("task")} />;
 }
 
-function TaskBoard({ initialFilters }: { initialFilters: string[] }) {
+function TaskBoard({ initialFilters, initialTaskId }: { initialFilters: string[]; initialTaskId: string | null }) {
   const [view, setView] = useState<"board" | "list">("board");
   const [columns, setColumns] = useState<Column[]>(initialColumns);
   const { tasks: allTasks, tasksLoaded, tasksError, clearTasksError, addTask, updateTask, deleteTasks } =
@@ -102,6 +103,9 @@ function TaskBoard({ initialFilters }: { initialFilters: string[] }) {
 
   const [modalStatus, setModalStatus] = useState<TaskStatus | null>(null);
   const [selectedTask, setSelectedTask] = useState<BoardTask | null>(null);
+  const [linkDismissed, setLinkDismissed] = useState(false);
+  const linkedTask = !linkDismissed && initialTaskId ? allTasks.find((t) => t.id === initialTaskId) ?? null : null;
+  const openTask = selectedTask ?? linkedTask;
 
   function toggleFilter(f: string) {
     setActiveFilters((fs) => (fs.includes(f) ? fs.filter((x) => x !== f) : [...fs, f]));
@@ -559,10 +563,13 @@ function TaskBoard({ initialFilters }: { initialFilters: string[] }) {
         />
       )}
 
-      {selectedTask && (
+      {openTask && (
         <TaskDetailModal
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
+          task={openTask}
+          onClose={() => {
+            setSelectedTask(null);
+            setLinkDismissed(true);
+          }}
           onUpdate={(updated) => {
             updateTask(updated);
             setSelectedTask(updated);

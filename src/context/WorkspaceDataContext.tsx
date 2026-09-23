@@ -27,6 +27,7 @@ type WorkspaceDataContextValue = {
   addTask: (task: BoardTask) => void;
   updateTask: (task: BoardTask) => void;
   deleteTasks: (ids: string[]) => void;
+  refreshAll: () => void;
 };
 
 async function readJson(res: Response) {
@@ -45,6 +46,13 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<BoardTask[]>([]);
   const [tasksLoaded, setTasksLoaded] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
+
+  // Re-fetch shared data (e.g. after the AI Agent creates a client or task).
+  const refreshAll = useCallback(() => {
+    fetch("/api/clients").then((r) => r.json()).then((d) => d.clients && setClients(d.clients)).catch(() => {});
+    fetch("/api/matters").then((r) => r.json()).then((d) => d.matters && setMatters(d.matters)).catch(() => {});
+    fetch("/api/tasks").then(readJson).then((d) => d.tasks && setTasks(d.tasks)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/clients")
@@ -269,6 +277,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         addTask,
         updateTask,
         deleteTasks,
+        refreshAll,
       }}
     >
       {children}

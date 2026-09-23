@@ -42,3 +42,5 @@ next-env.d.ts
 
 # pdf.js assets (copied from node_modules on install)
 /public/pdfjs/
+/.testtmp/
+!.env.example

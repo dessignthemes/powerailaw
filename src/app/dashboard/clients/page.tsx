@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   CircleUser,
   ChevronDown,
@@ -81,6 +82,17 @@ function RowStatusPicker({
 }
 
 export default function ClientsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ClientsPageInner />
+    </Suspense>
+  );
+}
+
+function ClientsPageInner() {
+  // ?open=<clientId> (used by links from the AI Agent) opens that client.
+  const openId = useSearchParams().get("open");
+  const [linkDismissed, setLinkDismissed] = useState(false);
   const {
     clients,
     clientsLoaded,
@@ -93,6 +105,7 @@ export default function ClientsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const linkedClient = !linkDismissed && openId ? clients.find((c) => c.id === openId) ?? null : null;
   const [collapsed, setCollapsed] = useState<Set<ClientStatus>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [rowMenuFor, setRowMenuFor] = useState<string | null>(null);
@@ -360,13 +373,17 @@ export default function ClientsPage() {
         />
       )}
 
-      {editingClient && (
+      {(editingClient ?? linkedClient) && (
         <NewClientModal
-          client={editingClient}
-          onClose={() => setEditingClient(null)}
+          client={(editingClient ?? linkedClient)!}
+          onClose={() => {
+            setEditingClient(null);
+            setLinkDismissed(true);
+          }}
           onSubmit={(updated) => {
             updateClient(updated);
             setEditingClient(null);
+            setLinkDismissed(true);
           }}
         />
       )}
