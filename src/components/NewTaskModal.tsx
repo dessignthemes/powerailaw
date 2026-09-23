@@ -38,6 +38,15 @@ export type TaskComment = {
   createdAt: string;
 };
 
+// Today's date in the user's local timezone as "YYYY-MM-DD" (the format
+// <input type="date"> uses). New tasks default to this unless a date is picked.
+export function todayYmd() {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
 export const priorityMeta: Record<TaskPriority, { bg: string; text: string }> = {
   Low: { bg: "#EAE8E0", text: "#6B675F" },
   Medium: { bg: "#F5E3B3", text: "#8A6D1D" },
@@ -107,7 +116,7 @@ export default function NewTaskModal({
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
   const [priority, setPriority] = useState<TaskPriority>("Medium");
   const [assignee, setAssignee] = useState<string | null>(null);
-  const [dueDate, setDueDate] = useState<string | null>(null);
+  const [dueDate, setDueDate] = useState<string | null>(() => todayYmd());
 
   const [statusOpen, setStatusOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);

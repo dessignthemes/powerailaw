@@ -22,6 +22,7 @@ import NewTaskModal, {
   TaskStatus,
   statusMeta,
   priorityMeta,
+  todayYmd,
 } from "@/components/NewTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import ColorPicker from "@/components/ColorPicker";
@@ -96,7 +97,7 @@ export default function TaskBoardPage() {
       status,
       priority: "Medium",
       assignee: null,
-      dueDate: null,
+      dueDate: todayYmd(),
       comments: [],
     });
     setInlineValue("");
