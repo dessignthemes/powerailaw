@@ -78,11 +78,15 @@ export default function Sidebar() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       setEmail(data.user?.email ?? null);
+      // Name from the Google / Microsoft profile, when the provider shares it.
+      const meta = data.user?.user_metadata ?? {};
+      setFullName((meta.full_name || meta.name || null) as string | null);
     });
   }, []);
 
@@ -153,6 +157,7 @@ export default function Sidebar() {
         </button>
         <AccountMenu
           email={email ?? "…"}
+          userName={fullName}
           orgName={ORG_NAME}
           onOpenAdmin={() => {
             setSupportOpen(false);

@@ -4,14 +4,24 @@ import { useState } from "react";
 import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown } from "lucide-react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 
+// The signed-in person's initial: first letter of their name, or of their
+// email address if the provider didn't share a name.
+function userInitial(name: string | null | undefined, email: string) {
+  const source = (name || email || "").trim();
+  const ch = source.match(/[\p{L}\p{N}]/u)?.[0];
+  return ch ? ch.toUpperCase() : "?";
+}
+
 export default function AccountMenu({
   email,
+  userName,
   orgName,
   onOpenAdmin,
   onOpenSupport,
   onLogout,
 }: {
   email: string;
+  userName?: string | null;
   orgName: string;
   onOpenAdmin: () => void;
   onOpenSupport: () => void;
@@ -101,7 +111,7 @@ export default function AccountMenu({
         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-card-alt transition-colors text-left"
       >
         <div className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-medium flex-shrink-0">
-          {orgName.charAt(0).toUpperCase()}
+          {userInitial(userName, email)}
         </div>
         <span className="text-[13px] text-muted truncate flex-1">{email}</span>
       </button>
