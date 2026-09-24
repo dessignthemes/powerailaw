@@ -13,7 +13,7 @@ export default function ClientIntakePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const directLink = "https://app.powerailaw.com/i/yourfirm";
+  const directLink = "https://app.lawpower.ai/i/yourfirm";
 
   function copyLink() {
     navigator.clipboard?.writeText(directLink).catch(() => {});

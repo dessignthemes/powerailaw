@@ -33,7 +33,7 @@ const navItems = [
 
 type ConnectorKey = "google" | "microsoft" | "ai";
 
-const MCP_SERVER_URL = "https://mcp.powerailaw.com/mcp";
+const MCP_SERVER_URL = "https://mcp.lawpower.ai/mcp";
 
 const connectors: {
   key: ConnectorKey;

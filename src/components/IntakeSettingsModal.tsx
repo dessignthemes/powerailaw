@@ -46,8 +46,8 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState(false);
 
-  const directLink = "https://app.powerailaw.com/i/yourfirm";
-  const embedSnippet = `<div data-powerailaw-slug="yourfirm"></div>\n<script src="https://app.powerailaw.com/embed.js" async></script>`;
+  const directLink = "https://app.lawpower.ai/i/yourfirm";
+  const embedSnippet = `<div data-powerailaw-slug="yourfirm"></div>\n<script src="https://app.lawpower.ai/embed.js" async></script>`;
 
   const missing: string[] = [];
   if (!fitCriteria.trim()) missing.push("Fit criteria is required before activation");
