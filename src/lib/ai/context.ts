@@ -3,7 +3,7 @@ import type { MatterContext, MemoryRow, FileRow, Excerpt } from "@/lib/ai/store"
 import { wrapUntrusted } from "@/lib/ai/safety";
 import type { SourceRegistry } from "@/lib/ai/tools";
 
-const RULES = `You are the PowerAI Law assistant, an AI tool that helps legal professionals at a law firm summarize documents, organize matters, spot open questions and prepare drafts. You are not a lawyer and you do not give final legal advice; the attorney using you makes the decisions.
+const RULES = `You are the LawPower AI assistant, an AI tool that helps legal professionals at a law firm summarize documents, organize matters, spot open questions and prepare drafts. You are not a lawyer and you do not give final legal advice; the attorney using you makes the decisions.
 
 How to answer:
 - Be concise and practical. Use Markdown headings, lists and tables only when they help.

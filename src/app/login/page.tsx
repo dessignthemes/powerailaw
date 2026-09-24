@@ -35,9 +35,9 @@ export default function LoginPage() {
       <div className="w-full max-w-[400px] bg-card-alt rounded-3xl p-8">
         <div className="flex items-center gap-2.5 mb-8 justify-center">
           <div className="w-8 h-8 rounded-md bg-dark text-white flex items-center justify-center text-[14px] font-bold font-display">
-            P
-          </div>
-          <span className="font-display font-semibold text-[18px]">PowerAI Law</span>
+          L
+        </div>
+          <span className="font-display font-semibold text-[18px]">LawPower AI</span>
         </div>
 
         <h1 className="text-[22px] font-semibold text-center mb-1.5">Sign in</h1>
@@ -65,7 +65,7 @@ export default function LoginPage() {
         {error && <p className="text-[13px] text-red-500 text-center mt-5">{error}</p>}
 
         <p className="text-[12.5px] text-muted text-center mt-7">
-          Signing in also connects your mailbox and calendar so PowerAI Law can read matters and
+          Signing in also connects your mailbox and calendar so LawPower AI can read matters and
           drafts from your inbox.
         </p>
       </div>

@@ -127,7 +127,7 @@ async function extractPdf(bytes: Uint8Array): Promise<Extraction> {
       kind: "pdf",
       pageCount,
       chunks: [],
-      detail: "No readable text was found. This looks like a scanned PDF, which needs OCR (text recognition). OCR isn't set up in PowerAI Law yet, so the assistant can't read this file.",
+      detail: "No readable text was found. This looks like a scanned PDF, which needs OCR (text recognition). OCR isn't set up in LawPower AI yet, so the assistant can't read this file.",
     };
   }
   const detail =

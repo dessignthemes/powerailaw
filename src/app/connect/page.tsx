@@ -67,7 +67,7 @@ function ConnectPageInner() {
           Connect your practice
         </h1>
         <p className="text-[15px] text-muted leading-relaxed mb-10">
-          Connect your mail, calendar and files. PowerAI Law sets up your
+          Connect your mail, calendar and files. LawPower AI sets up your
           intake routing from them in minutes.
         </p>
 

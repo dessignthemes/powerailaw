@@ -76,7 +76,7 @@ const microsoftSub = [
   },
   {
     name: "OneDrive",
-    desc: "Import documents from your OneDrive directly inside PowerAI Law so the assistant can reference them.",
+    desc: "Import documents from your OneDrive directly inside LawPower AI so the assistant can reference them.",
   },
 ];
 
@@ -87,11 +87,11 @@ const googleSub = [
   },
   {
     name: "Google Calendar",
-    desc: "Pull events into PowerAI Law and push task deadlines back to Google Calendar so nothing is missed.",
+    desc: "Pull events into LawPower AI and push task deadlines back to Google Calendar so nothing is missed.",
   },
   {
     name: "Google Drive",
-    desc: "Search and read files from your Google Drive directly inside PowerAI Law so the assistant can reference them.",
+    desc: "Search and read files from your Google Drive directly inside LawPower AI so the assistant can reference them.",
   },
 ];
 
@@ -671,7 +671,7 @@ export default function IntegrationsModal({
 
                 <SecurityCard title="Connected applications">
                   <p className="text-[13.5px] text-muted mb-4 max-w-[520px]">
-                    Review or revoke AI tools connected through Sign in with PowerAI Law.
+                    Review or revoke AI tools connected through Sign in with LawPower AI.
                   </p>
                   <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors">
                     Manage connected applications
@@ -787,7 +787,7 @@ export default function IntegrationsModal({
                   <div className="text-[15px] font-semibold mb-1.5">Your email signature</div>
                   <p className="text-[13.5px] text-muted mb-4 max-w-[720px]">
                     Added to the bottom of a reply when you open it, so you can edit or delete it
-                    before sending. It survives a draft written by PowerAI Law.
+                    before sending. It survives a draft written by LawPower AI.
                   </p>
 
                   <div className="flex items-center justify-between gap-4 mb-5">
@@ -1022,7 +1022,7 @@ export default function IntegrationsModal({
 
                 <p className="text-[14px] text-muted mb-7 max-w-[720px]">
                   Work your practice from the assistant you already use. Claude, ChatGPT, and
-                  other MCP clients connect with &quot;Sign in with PowerAI Law&quot; — then read
+                  other MCP clients connect with &quot;Sign in with LawPower AI&quot; — then read
                   matters, manage tasks, and draft from chat.
                 </p>
 
@@ -1089,12 +1089,12 @@ export default function IntegrationsModal({
                           In Claude, open Settings → Connectors and choose &quot;Add custom
                           connector&quot;.
                         </>,
-                        <>Name it PowerAI Law, paste the server URL, and add it.</>,
+                        <>Name it LawPower AI, paste the server URL, and add it.</>,
                         <>
-                          Choose Connect, sign in with PowerAI Law, and approve access for your
+                          Choose Connect, sign in with LawPower AI, and approve access for your
                           organization.
                         </>,
-                        <>In a chat, open &quot;Search and tools&quot; and enable PowerAI Law.</>,
+                        <>In a chat, open &quot;Search and tools&quot; and enable LawPower AI.</>,
                       ].map((step, i) => (
                         <li key={i} className="flex items-start gap-3 text-[14px]">
                           <span className="text-muted flex-shrink-0">{i + 1}</span>
@@ -1119,12 +1119,12 @@ export default function IntegrationsModal({
                         </span>
                         <div className="flex items-center justify-between gap-3 bg-white border border-line rounded-xl px-4 py-3 ml-6">
                           <code className="text-[13px] font-mono break-all">
-                            claude mcp add --scope user --transport http powerailaw {MCP_SERVER_URL}
+                            claude mcp add --scope user --transport http lawpower {MCP_SERVER_URL}
                           </code>
                           <button
                             onClick={() =>
                               copyText(
-                                `claude mcp add --scope user --transport http powerailaw ${MCP_SERVER_URL}`,
+                                `claude mcp add --scope user --transport http lawpower ${MCP_SERVER_URL}`,
                                 setCliCopied
                               )
                             }
@@ -1137,12 +1137,12 @@ export default function IntegrationsModal({
                       </li>
                       <li className="flex items-start gap-3 text-[14px]">
                         <span className="text-muted flex-shrink-0">2</span>
-                        <span>Run /mcp, select powerailaw, and choose Authenticate.</span>
+                        <span>Run /mcp, select lawpower, and choose Authenticate.</span>
                       </li>
                       <li className="flex items-start gap-3 text-[14px]">
                         <span className="text-muted flex-shrink-0">3</span>
                         <span>
-                          Your browser opens PowerAI Law sign-in. Approve access and return to the
+                          Your browser opens LawPower AI sign-in. Approve access and return to the
                           terminal.
                         </span>
                       </li>
@@ -1160,8 +1160,8 @@ export default function IntegrationsModal({
                         </>,
                         <>Open Settings → Apps → Create and paste the server URL.</>,
                         <>Select OAuth authentication and choose &quot;Scan tools&quot;.</>,
-                        <>Sign in with PowerAI Law, approve access, then create the app.</>,
-                        <>In a new chat, pick PowerAI Law from the tools menu.</>,
+                        <>Sign in with LawPower AI, approve access, then create the app.</>,
+                        <>In a new chat, pick LawPower AI from the tools menu.</>,
                       ].map((step, i) => (
                         <li key={i} className="flex items-start gap-3 text-[14px]">
                           <span className="text-muted flex-shrink-0">{i + 1}</span>
@@ -1181,7 +1181,7 @@ export default function IntegrationsModal({
                     {[
                       <>Point any MCP client that supports Streamable HTTP at the server URL.</>,
                       <>
-                        The client discovers &quot;Sign in with PowerAI Law&quot; automatically —
+                        The client discovers &quot;Sign in with LawPower AI&quot; automatically —
                         approve access in the browser window it opens.
                       </>,
                       <>

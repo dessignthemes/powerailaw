@@ -21,9 +21,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PowerAI Law — Automated intake, routing & matter tracking for law firms",
+  title: "LawPower AI — Automated intake, routing & matter tracking for law firms",
   description:
-    "PowerAI Law watches your firm's inbox, assigns incoming documents to the right team member, and keeps Microsoft Planner and LEAP in sync.",
+    "LawPower AI watches your firm's inbox, assigns incoming documents to the right team member, and keeps Microsoft Planner and LEAP in sync.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

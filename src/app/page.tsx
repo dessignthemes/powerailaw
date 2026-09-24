@@ -51,7 +51,7 @@ const howSteps = [
   {
     num: "03",
     title: "Set your routing rules",
-    desc: "Tell PowerAI Law how you want work distributed — by practice area, matter, or team member.",
+    desc: "Tell LawPower AI how you want work distributed — by practice area, matter, or team member.",
   },
   {
     num: "04",
@@ -95,9 +95,9 @@ function Logo({ light = false }: { light?: boolean }) {
           light ? "bg-white text-dark" : "bg-dark text-white"
         }`}
       >
-        P
+        L
       </div>
-      PowerAI Law
+      LawPower AI
     </div>
   );
 }
@@ -125,7 +125,7 @@ export default function Home() {
               Legal ops automation, built for law firms.
             </h1>
             <p className="text-[16.5px] text-muted-light leading-relaxed mb-9">
-              PowerAI Law watches your firm&rsquo;s inbox, assigns incoming
+              LawPower AI watches your firm&rsquo;s inbox, assigns incoming
               documents to the right team member, and keeps Microsoft Planner
               and your law software in sync — so nothing sits unclaimed and
               nobody has to ask &ldquo;who has this file?&rdquo;
@@ -445,7 +445,7 @@ export default function Home() {
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
             <a href="#" className="hover:text-white transition-colors">Terms</a>
           </div>
-          <div className="text-[13px] text-muted-light">© 2026 PowerAI Law</div>
+          <div className="text-[13px] text-muted-light">© 2026 LawPower AI</div>
         </div>
       </footer>
     </>

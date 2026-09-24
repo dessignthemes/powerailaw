@@ -47,7 +47,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
   const [previewing, setPreviewing] = useState(false);
 
   const directLink = "https://app.lawpower.ai/i/yourfirm";
-  const embedSnippet = `<div data-powerailaw-slug="yourfirm"></div>\n<script src="https://app.lawpower.ai/embed.js" async></script>`;
+  const embedSnippet = `<div data-lawpower-slug="yourfirm"></div>\n<script src="https://app.lawpower.ai/embed.js" async></script>`;
 
   const missing: string[] = [];
   if (!fitCriteria.trim()) missing.push("Fit criteria is required before activation");
@@ -261,11 +261,11 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                   <input
                     value={firmName}
                     onChange={(e) => setFirmName(e.target.value)}
-                    placeholder="PowerAI Law"
+                    placeholder="LawPower AI"
                     className="w-full border border-line rounded-xl px-3.5 py-2.5 text-[14px] bg-white outline-none mb-2 placeholder:text-muted"
                   />
                   <p className="text-[12.5px] text-muted mb-5">
-                    Shown at the top of your intake form. Leave blank to use PowerAI Law.
+                    Shown at the top of your intake form. Leave blank to use LawPower AI.
                   </p>
 
                   <label className="text-[14.5px] font-semibold block mb-2">Headline</label>
@@ -410,7 +410,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                   <h3 className="text-[17px] font-semibold mb-1">Appearance</h3>
                   <p className="text-[13.5px] text-muted mb-4">
                     Applies where the intake is embedded in your own site. Your public link keeps
-                    PowerAI Law&rsquo;s own look.
+                    LawPower AI&rsquo;s own look.
                   </p>
 
                   <div className="inline-flex bg-card-alt rounded-full p-1 mb-5">
@@ -503,7 +503,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
 
                   <div className="flex items-center justify-between">
                     <span className="text-[14px] font-medium">
-                      Show &ldquo;Powered by PowerAI Law&rdquo; in the widget
+                      Show &ldquo;Powered by LawPower AI&rdquo; in the widget
                     </span>
                     <button
                       onClick={() => setShowPoweredBy((s) => !s)}

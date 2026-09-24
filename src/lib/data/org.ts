@@ -27,7 +27,7 @@ export async function getDefaultOrgId(): Promise<string> {
 
   const { data: created, error: insertError } = await supabase
     .from("organizations")
-    .insert({ name: "PowerAI Law" })
+    .insert({ name: "LawPower AI" })
     .select("id")
     .single();
 

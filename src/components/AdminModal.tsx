@@ -252,7 +252,7 @@ export default function AdminModal({
                 <div className="mb-3">
                   <div className="text-[15px] font-semibold mb-1.5">Firm identities</div>
                   <p className="text-[13.5px] text-muted mb-4 max-w-[680px]">
-                    Confirm coworkers and their alternate addresses. PowerAI Law excludes them
+                    Confirm coworkers and their alternate addresses. LawPower AI excludes them
                     from client suggestions and recognizes them as your firm in future mail.
                   </p>
 

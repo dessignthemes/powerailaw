@@ -45,7 +45,7 @@ const workspaceLinks: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Matters", href: "/dashboard/matters", icon: Folder },
 ];
 
-const ORG_NAME = "PowerAI Law";
+const ORG_NAME = "LawPower AI";
 
 function NavItem({
   href,
@@ -96,9 +96,9 @@ export default function Sidebar() {
     <aside className="w-[260px] flex-shrink-0 bg-cream border-r border-line h-screen sticky top-0 flex flex-col px-4 py-6">
       <div className="flex items-center gap-2.5 px-2 mb-8">
         <div className="w-7 h-7 rounded-md bg-dark text-white flex items-center justify-center text-[13px] font-bold font-display">
-          P
+          L
         </div>
-        <span className="font-display font-semibold text-[16px]">PowerAI Law</span>
+        <span className="font-display font-semibold text-[16px]">LawPower AI</span>
       </div>
 
       <nav className="flex-1 overflow-y-auto">
