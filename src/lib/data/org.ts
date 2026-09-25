@@ -1,38 +1,24 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getSessionUser } from "@/lib/auth";
 
-// There's no login/multi-org support yet, so every request operates against
-// a single seeded organization. Once real auth lands, replace this with
-// "look up org_id from the authenticated user's profile" instead.
-let cachedOrgId: string | null = null;
-
-export async function getDefaultOrgId(): Promise<string> {
-  if (cachedOrgId) return cachedOrgId;
-
-  const supabase = createAdminClient();
-
-  const { data: existing, error: selectError } = await supabase
-    .from("organizations")
-    .select("id")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (selectError) throw selectError;
-
-  if (existing) {
-    cachedOrgId = existing.id;
-    return existing.id;
+export class NoWorkspaceError extends Error {
+  constructor(public status: 401 | 403, message: string) {
+    super(message);
   }
+}
 
-  const { data: created, error: insertError } = await supabase
-    .from("organizations")
-    .insert({ name: "LawPower AI" })
-    .select("id")
-    .single();
+// The workspace (organization) of the signed-in user, from their profile.
+// Every data read and write is scoped to this — never to a shared default.
+export async function getCurrentOrgId(): Promise<string> {
+  const user = await getSessionUser();
+  if (!user) throw new NoWorkspaceError(401, "Please sign in again.");
+  const orgId = await getOrgIdForUser(user.id);
+  if (!orgId) throw new NoWorkspaceError(403, "Your account isn't set up yet. Please sign out and sign in again.");
+  return orgId;
+}
 
-  if (insertError) throw insertError;
-
-  cachedOrgId = created.id;
-  return created.id;
+export async function getOrgIdForUser(userId: string): Promise<string | null> {
+  const { data } = await createAdminClient().from("profiles").select("org_id").eq("id", userId).maybeSingle();
+  return (data?.org_id as string | undefined) ?? null;
 }

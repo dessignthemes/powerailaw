@@ -1,3 +1,4 @@
+import { NoWorkspaceError } from "@/lib/data/org";
 import { NextResponse } from "next/server";
 import { updateMatterRow } from "@/lib/data/matters";
 import type { Matter } from "@/components/NewMatterModal";
@@ -11,6 +12,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const updated = await updateMatterRow(id, matter);
     return NextResponse.json({ matter: updated });
   } catch (error) {
+    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("PATCH /api/matters/[id] failed:", error);
     return NextResponse.json({ error: "Failed to update matter" }, { status: 500 });
   }

@@ -1,3 +1,4 @@
+import { NoWorkspaceError } from "@/lib/data/org";
 import { NextResponse } from "next/server";
 import { listTasks, createTaskRow, deleteTaskRows } from "@/lib/data/tasks";
 import { getSessionUserId } from "@/lib/auth";
@@ -10,6 +11,7 @@ export async function GET() {
     const tasks = await listTasks();
     return NextResponse.json({ tasks });
   } catch (error) {
+    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("GET /api/tasks failed:", error);
     return NextResponse.json({ error: "Failed to load tasks" }, { status: 500 });
   }
@@ -25,6 +27,7 @@ export async function POST(request: Request) {
     const created = await createTaskRow(task, userId);
     return NextResponse.json({ task: created }, { status: 201 });
   } catch (error) {
+    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("POST /api/tasks failed:", error);
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
   }
@@ -36,6 +39,7 @@ export async function DELETE(request: Request) {
     await deleteTaskRows(ids);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("DELETE /api/tasks failed:", error);
     return NextResponse.json({ error: "Failed to delete tasks" }, { status: 500 });
   }

@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getDefaultOrgId } from "@/lib/data/org";
+import { getCurrentOrgId } from "@/lib/data/org";
 import type { Client } from "@/components/NewClientModal";
 
 type ClientRow = {
@@ -32,7 +32,7 @@ function toClient(row: ClientRow): Client {
 
 export async function listClients(): Promise<Client[]> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { data, error } = await supabase
     .from("clients")
@@ -46,7 +46,7 @@ export async function listClients(): Promise<Client[]> {
 
 export async function createClientRow(client: Client): Promise<Client> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { data, error } = await supabase
     .from("clients")
@@ -70,7 +70,7 @@ export async function createClientRow(client: Client): Promise<Client> {
 
 export async function updateClientRow(id: string, client: Client): Promise<Client> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { data, error } = await supabase
     .from("clients")
@@ -95,7 +95,7 @@ export async function updateClientRow(id: string, client: Client): Promise<Clien
 
 export async function deleteClientRows(ids: string[]): Promise<void> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { error } = await supabase.from("clients").delete().eq("org_id", orgId).in("id", ids);
   if (error) throw error;

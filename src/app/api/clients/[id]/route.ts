@@ -1,3 +1,4 @@
+import { NoWorkspaceError } from "@/lib/data/org";
 import { NextResponse } from "next/server";
 import { updateClientRow } from "@/lib/data/clients";
 import type { Client } from "@/components/NewClientModal";
@@ -11,6 +12,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const updated = await updateClientRow(id, client);
     return NextResponse.json({ client: updated });
   } catch (error) {
+    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("PATCH /api/clients/[id] failed:", error);
     return NextResponse.json({ error: "Failed to update client" }, { status: 500 });
   }

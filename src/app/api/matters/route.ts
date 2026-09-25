@@ -1,3 +1,4 @@
+import { NoWorkspaceError } from "@/lib/data/org";
 import { NextResponse } from "next/server";
 import { listMatters, createMatterRow, deleteMatterRows } from "@/lib/data/matters";
 import type { Matter } from "@/components/NewMatterModal";
@@ -9,6 +10,7 @@ export async function GET() {
     const matters = await listMatters();
     return NextResponse.json({ matters });
   } catch (error) {
+    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("GET /api/matters failed:", error);
     return NextResponse.json({ error: "Failed to load matters" }, { status: 500 });
   }
@@ -20,6 +22,7 @@ export async function POST(request: Request) {
     const created = await createMatterRow(matter);
     return NextResponse.json({ matter: created }, { status: 201 });
   } catch (error) {
+    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("POST /api/matters failed:", error);
     return NextResponse.json({ error: "Failed to create matter" }, { status: 500 });
   }
@@ -31,6 +34,7 @@ export async function DELETE(request: Request) {
     await deleteMatterRows(ids);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("DELETE /api/matters failed:", error);
     return NextResponse.json({ error: "Failed to delete matters" }, { status: 500 });
   }

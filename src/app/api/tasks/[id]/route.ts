@@ -1,3 +1,4 @@
+import { NoWorkspaceError } from "@/lib/data/org";
 import { NextResponse } from "next/server";
 import { updateTaskRow } from "@/lib/data/tasks";
 import type { BoardTask } from "@/components/NewTaskModal";
@@ -11,6 +12,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const updated = await updateTaskRow(id, task);
     return NextResponse.json({ task: updated });
   } catch (error) {
+    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("PATCH /api/tasks/[id] failed:", error);
     return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
   }

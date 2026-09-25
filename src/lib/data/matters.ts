@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getDefaultOrgId } from "@/lib/data/org";
+import { getCurrentOrgId } from "@/lib/data/org";
 import type { Matter } from "@/components/NewMatterModal";
 
 type MatterRow = {
@@ -46,7 +46,7 @@ function toMatter(row: MatterRow): Matter {
 
 export async function listMatters(): Promise<Matter[]> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { data, error } = await supabase
     .from("matters")
@@ -60,7 +60,7 @@ export async function listMatters(): Promise<Matter[]> {
 
 export async function createMatterRow(matter: Matter): Promise<Matter> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { data, error } = await supabase
     .from("matters")
@@ -89,7 +89,7 @@ export async function createMatterRow(matter: Matter): Promise<Matter> {
 
 export async function updateMatterRow(id: string, matter: Matter): Promise<Matter> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { data, error } = await supabase
     .from("matters")
@@ -119,7 +119,7 @@ export async function updateMatterRow(id: string, matter: Matter): Promise<Matte
 
 export async function deleteMatterRows(ids: string[]): Promise<void> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { error } = await supabase.from("matters").delete().eq("org_id", orgId).in("id", ids);
   if (error) throw error;

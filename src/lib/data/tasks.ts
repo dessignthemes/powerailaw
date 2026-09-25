@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getDefaultOrgId } from "@/lib/data/org";
+import { getCurrentOrgId } from "@/lib/data/org";
 import type { BoardTask, TaskComment } from "@/components/NewTaskModal";
 
 type TaskRow = {
@@ -45,7 +45,7 @@ function toColumns(task: BoardTask) {
 
 export async function listTasks(): Promise<BoardTask[]> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { data, error } = await supabase
     .from("tasks")
@@ -59,7 +59,7 @@ export async function listTasks(): Promise<BoardTask[]> {
 
 export async function createTaskRow(task: BoardTask, userId: string | null): Promise<BoardTask> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { data, error } = await supabase
     .from("tasks")
@@ -73,7 +73,7 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
 
 export async function updateTaskRow(id: string, task: BoardTask): Promise<BoardTask> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { data, error } = await supabase
     .from("tasks")
@@ -89,7 +89,7 @@ export async function updateTaskRow(id: string, task: BoardTask): Promise<BoardT
 
 export async function deleteTaskRows(ids: string[]): Promise<void> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getCurrentOrgId();
 
   const { error } = await supabase.from("tasks").delete().eq("org_id", orgId).in("id", ids);
   if (error) throw error;

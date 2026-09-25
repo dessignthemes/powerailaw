@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getDefaultOrgId } from "@/lib/data/org";
+import { getOrgIdForUser } from "@/lib/data/org";
 
 export type MailProvider = "google" | "microsoft";
 
@@ -15,7 +15,8 @@ export async function saveOAuthConnection(params: {
   accountEmail: string | null;
 }): Promise<void> {
   const supabase = createAdminClient();
-  const orgId = await getDefaultOrgId();
+  const orgId = await getOrgIdForUser(params.connectedBy);
+  if (!orgId) throw new Error("No workspace for this user");
 
   const row: Record<string, unknown> = {
     org_id: orgId,
