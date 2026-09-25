@@ -47,7 +47,7 @@ const initialColumns: Column[] = [
 const filterPills = ["Me", "Overdue", "Due today", "Due this week", "Next week", "Waiting on client"];
 
 // Pills that actually narrow the task list. A task is shown if it matches
-// any active one. ("Me" needs per-user assignees, which aren't wired up yet.)
+// any active one. "Me" (tasks assigned to the signed-in person) is added in TaskBoard.
 const filterTests: Record<string, (t: BoardTask) => boolean> = {
   Overdue: isOverdue,
   "Due today": (t) => isDueIn(t, "today"),
@@ -86,7 +86,12 @@ function TaskBoard({ initialFilters, initialTaskId }: { initialFilters: string[]
     useWorkspaceData();
   const [cardMenuFor, setCardMenuFor] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>(initialFilters);
-  const activeTests = activeFilters.map((f) => filterTests[f]).filter(Boolean);
+  const { meEmail } = useWorkspaceData();
+  const tests: Record<string, (t: BoardTask) => boolean> = {
+    ...filterTests,
+    Me: (t) => !!meEmail && (t.assignee ?? "").toLowerCase() === meEmail.toLowerCase(),
+  };
+  const activeTests = activeFilters.map((f) => tests[f]).filter(Boolean);
   const tasks =
     activeTests.length === 0 ? allTasks : allTasks.filter((t) => activeTests.some((test) => test(t)));
 
@@ -238,7 +243,7 @@ function TaskBoard({ initialFilters, initialTaskId }: { initialFilters: string[]
           <span>
             Showing {tasks.length} {tasks.length === 1 ? "task" : "tasks"}:{" "}
             <span className="text-ink font-medium">
-              {activeFilters.filter((f) => filterTests[f]).join(", ")}
+              {activeFilters.filter((f) => tests[f]).join(", ")}
             </span>
           </span>
           <button

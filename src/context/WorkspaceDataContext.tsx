@@ -28,6 +28,10 @@ type WorkspaceDataContextValue = {
   updateTask: (task: BoardTask) => void;
   deleteTasks: (ids: string[]) => void;
   refreshAll: () => void;
+
+  // People in this workspace (for assignees) and the signed-in user.
+  teamMembers: { id: string; email: string; role: string }[];
+  meEmail: string | null;
 };
 
 async function readJson(res: Response) {
@@ -46,6 +50,8 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<BoardTask[]>([]);
   const [tasksLoaded, setTasksLoaded] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<{ id: string; email: string; role: string }[]>([]);
+  const [meEmail, setMeEmail] = useState<string | null>(null);
 
   // Re-fetch shared data (e.g. after the AI Agent creates a client or task).
   const refreshAll = useCallback(() => {
@@ -66,6 +72,14 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       .then((data) => setMatters(data.matters ?? []))
       .catch((err) => console.error("Failed to load matters:", err))
       .finally(() => setMattersLoaded(true));
+
+    fetch("/api/team")
+      .then(readJson)
+      .then((d) => {
+        setTeamMembers(d.members ?? []);
+        setMeEmail(d.me?.email ?? null);
+      })
+      .catch(() => {}); // non-fatal: assignee menus just stay empty
 
     fetch("/api/tasks")
       .then(readJson)
@@ -278,6 +292,8 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         updateTask,
         deleteTasks,
         refreshAll,
+        teamMembers,
+        meEmail,
       }}
     >
       {children}

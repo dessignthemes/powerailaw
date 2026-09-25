@@ -1,5 +1,6 @@
 "use client";
 
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useState } from "react";
 import { Calendar as CalendarIcon, X, Folder, Search } from "lucide-react";
 import DropdownField from "@/components/DropdownField";
@@ -82,7 +83,8 @@ export default function NewEventModal({
   const [type, setType] = useState("Meeting");
   const [color, setColor] = useState("#3B82F6");
   const [asTask, setAsTask] = useState(false);
-  const [attendees, setAttendees] = useState<string[]>(["marios@dessign.co"]);
+  const { meEmail } = useWorkspaceData();
+  const [attendees, setAttendees] = useState<string[]>(meEmail ? [meEmail] : []);
   const [matter, setMatter] = useState<string | null>(null);
   const [matterOpen, setMatterOpen] = useState(false);
   const [matterSearch, setMatterSearch] = useState("");

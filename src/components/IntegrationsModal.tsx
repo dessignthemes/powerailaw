@@ -1,5 +1,6 @@
 "use client";
 
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -307,6 +308,7 @@ export default function IntegrationsModal({
   onClose: () => void;
   initialTab?: SettingsTabKey;
 }) {
+  const { meEmail } = useWorkspaceData();
   const [active, setActive] = useState<SettingsTabKey>(initialTab);
   const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
 
@@ -738,7 +740,7 @@ export default function IntegrationsModal({
                   </p>
                   <div className="flex items-center justify-between gap-4 py-1">
                     <span className="text-[13.5px] text-muted">
-                      {lawyerRate ? "marios@dessign.co" : "No rate set — bills at no rate"}
+                      {lawyerRate ? meEmail ?? "Your rate" : "No rate set — bills at no rate"}
                     </span>
                     <RateStepperField
                       value={lawyerRate}

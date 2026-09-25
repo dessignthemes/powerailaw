@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import TeamMembers from "@/components/TeamMembers";
 import { createPortal } from "react-dom";
 import {
   X,
@@ -9,7 +10,6 @@ import {
   CreditCard,
   Gauge,
   ClipboardList,
-  MoreHorizontal,
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -70,10 +70,6 @@ export default function AdminModal({
 }) {
   const [page, setPage] = useState<PageKey>("members");
 
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [pendingInvites, setPendingInvites] = useState<string[]>([]);
-  const [memberMenuOpen, setMemberMenuOpen] = useState<string | null>(null);
 
   const [addPersonOpen, setAddPersonOpen] = useState(false);
   const [newPerson, setNewPerson] = useState("");
@@ -85,13 +81,6 @@ export default function AdminModal({
 
   const [licenceCount, setLicenceCount] = useState(1);
   const [reviewedNotice, setReviewedNotice] = useState(false);
-
-  function handleInvite() {
-    if (!inviteEmail.trim()) return;
-    setPendingInvites((prev) => [...prev, inviteEmail.trim()]);
-    setInviteEmail("");
-    setInviteOpen(false);
-  }
 
   function handleAddPerson() {
     if (!newPerson.trim()) return;
@@ -168,86 +157,7 @@ export default function AdminModal({
           <div className="px-9 pt-14 pb-9">
             {page === "members" && (
               <>
-                <div className="flex items-start justify-between mb-1.5">
-                  <h2 className="text-[26px] font-semibold mt-1">
-                    Members ({1 + pendingInvites.length})
-                  </h2>
-                  <button
-                    onClick={() => setInviteOpen((o) => !o)}
-                    className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
-                  >
-                    Invite Member
-                  </button>
-                </div>
-                <p className="text-[14px] text-muted mb-6">Manage your team members and their roles</p>
-
-                {inviteOpen && (
-                  <div className="flex items-center gap-2 mb-5">
-                    <input
-                      autoFocus
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-                      placeholder="colleague@yourfirm.com"
-                      className="flex-1 bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none"
-                    />
-                    <button
-                      onClick={handleInvite}
-                      className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
-                    >
-                      Send invite
-                    </button>
-                  </div>
-                )}
-
-                <div className="border border-line rounded-2xl divide-y divide-line mb-9">
-                  <div className="flex items-center justify-between gap-4 px-5 py-4">
-                    <span className="text-[14.5px] font-medium">{ownerEmail}</span>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="bg-dark text-white px-3 py-1 rounded-full text-[12.5px] font-medium">
-                        Owner
-                      </span>
-                      <div className="relative">
-                        <button
-                          onClick={() =>
-                            setMemberMenuOpen(memberMenuOpen === ownerEmail ? null : ownerEmail)
-                          }
-                          className="w-7 h-7 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
-                        >
-                          <MoreHorizontal size={16} strokeWidth={1.75} />
-                        </button>
-                        {memberMenuOpen === ownerEmail && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setMemberMenuOpen(null)} />
-                            <div className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[190px]">
-                              <div className="px-3 py-2.5 text-[13px] text-muted">
-                                The firm owner can&apos;t be removed.
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {pendingInvites.map((email) => (
-                    <div key={email} className="flex items-center justify-between gap-4 px-5 py-4">
-                      <span className="text-[14.5px] font-medium">{email}</span>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="bg-card-alt px-3 py-1 rounded-full text-[12.5px] font-medium text-muted">
-                          Pending
-                        </span>
-                        <button
-                          onClick={() =>
-                            setPendingInvites((prev) => prev.filter((e) => e !== email))
-                          }
-                          className="w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center text-muted hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 size={14} strokeWidth={1.75} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <TeamMembers />
 
                 <div className="mb-3">
                   <div className="text-[15px] font-semibold mb-1.5">Firm identities</div>

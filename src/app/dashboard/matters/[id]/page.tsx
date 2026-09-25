@@ -36,6 +36,7 @@ import { getInitials, getAvatarColor } from "@/components/NewClientModal";
 import { GenericDropdown } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import DocumentList from "@/components/pdf/DocumentList";
+import AssigneeOptions from "@/components/AssigneeOptions";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutGrid },
@@ -257,27 +258,13 @@ export default function MatterDetailPage() {
             setOpen={setAssignedOpen}
             trigger={<>{matter.assignedTo ?? "Unassigned"}</>}
           >
-            <button
-              onClick={() => {
-                patch({ assignedTo: null });
+            <AssigneeOptions
+              value={matter.assignedTo}
+              onPick={(email) => {
+                patch({ assignedTo: email });
                 setAssignedOpen(false);
               }}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors text-muted"
-            >
-              Unassigned
-            </button>
-            <button
-              onClick={() => {
-                patch({ assignedTo: "marios@dessign.co" });
-                setAssignedOpen(false);
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
-            >
-              <span className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px]">
-                M
-              </span>
-              marios@dessign.co
-            </button>
+            />
           </GenericDropdown>
         </div>
 

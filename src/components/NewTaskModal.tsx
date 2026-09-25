@@ -1,5 +1,6 @@
 "use client";
 
+import AssigneeOptions from "@/components/AssigneeOptions";
 import { useState } from "react";
 import {
   X,
@@ -13,7 +14,6 @@ import {
   User,
   Folder,
   CalendarDays,
-  Search,
 } from "lucide-react";
 
 export type TaskStatus = "todo" | "inprogress" | "waiting" | "done";
@@ -246,43 +246,13 @@ export default function NewTaskModal({
               </>
             }
           >
-            <div className="p-1.5">
-              <div className="relative mb-1.5">
-                <Search
-                  size={13}
-                  strokeWidth={1.75}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted"
-                />
-                <input
-                  placeholder="Search people..."
-                  className="w-full bg-card-alt rounded-lg pl-8 pr-3 py-2 text-[13.5px] outline-none placeholder:text-muted"
-                />
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setAssignee(null);
+            <AssigneeOptions
+              value={assignee}
+              onPick={(email) => {
+                setAssignee(email);
                 setAssigneeOpen(false);
               }}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors text-muted"
-            >
-              Unassigned
-            </button>
-            <div className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
-              Members
-            </div>
-            <button
-              onClick={() => {
-                setAssignee("marios@dessign.co");
-                setAssigneeOpen(false);
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
-            >
-              <span className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px]">
-                M
-              </span>
-              marios@dessign.co
-            </button>
+            />
           </GenericDropdown>
 
           <GenericDropdown
