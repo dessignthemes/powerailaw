@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Kanban,
   List,
@@ -76,14 +76,65 @@ function TaskBoardFromUrl() {
   const params = useSearchParams();
   const due = params.get("due") ?? "";
   const pill = dueParamToPill[due];
-  return <TaskBoard key={due} initialFilters={pill ? [pill] : []} initialTaskId={params.get("task")} />;
+  const board = params.get("board");
+  return <TaskBoard key={`${board ?? "main"}:${due}`} boardId={board} initialFilters={pill ? [pill] : []} initialTaskId={params.get("task")} />;
 }
 
-function TaskBoard({ initialFilters, initialTaskId }: { initialFilters: string[]; initialTaskId: string | null }) {
+function TaskBoard({
+  boardId,
+  initialFilters,
+  initialTaskId,
+}: {
+  boardId: string | null; // null = main Task Board
+  initialFilters: string[];
+  initialTaskId: string | null;
+}) {
+  const router = useRouter();
+  const { boards, createBoard, renameBoard, deleteBoard } = useWorkspaceData();
+  const board = boardId ? boards.find((b) => b.id === boardId) ?? null : null;
+  const [boardMenu, setBoardMenu] = useState(false);
+  const [boardDialog, setBoardDialog] = useState<null | { mode: "new" | "rename"; name: string }>(null);
+  const [boardBusy, setBoardBusy] = useState(false);
+  const [boardError, setBoardError] = useState<string | null>(null);
   const [view, setView] = useState<"board" | "list">("board");
   const [columns, setColumns] = useState<Column[]>(initialColumns);
-  const { tasks: allTasks, tasksLoaded, tasksError, clearTasksError, addTask, updateTask, deleteTasks } =
+  const { tasks: workspaceTasks, tasksLoaded, tasksError, clearTasksError, addTask: addWorkspaceTask, updateTask, deleteTasks } =
     useWorkspaceData();
+  // Only this board's tasks; new tasks land on this board.
+  const allTasks = workspaceTasks.filter((t) => (t.boardId ?? null) === boardId);
+  const addTask = (t: BoardTask) => addWorkspaceTask({ ...t, boardId });
+
+  async function saveBoard() {
+    if (!boardDialog) return;
+    setBoardBusy(true);
+    setBoardError(null);
+    try {
+      if (boardDialog.mode === "new") {
+        const b = await createBoard(boardDialog.name);
+        setBoardDialog(null);
+        router.push(`/dashboard/task-board?board=${b.id}`);
+      } else if (boardId) {
+        await renameBoard(boardId, boardDialog.name);
+        setBoardDialog(null);
+      }
+    } catch (e) {
+      setBoardError((e as Error).message);
+    } finally {
+      setBoardBusy(false);
+    }
+  }
+
+  async function removeBoard() {
+    if (!boardId || !board) return;
+    const n = allTasks.length;
+    if (!confirm(`Delete the "${board.name}" board?${n ? ` Its ${n} ${n === 1 ? "task moves" : "tasks move"} to the main Task Board.` : ""}`)) return;
+    try {
+      await deleteBoard(boardId);
+      router.push("/dashboard/task-board");
+    } catch (e) {
+      setBoardError((e as Error).message);
+    }
+  }
   const [cardMenuFor, setCardMenuFor] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>(initialFilters);
   const { meEmail } = useWorkspaceData();
@@ -170,6 +221,93 @@ function TaskBoard({ initialFilters, initialTaskId }: { initialFilters: string[]
 
   return (
     <div className="px-10 py-10">
+      <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="font-display text-[24px] font-semibold truncate">
+            {boardId ? board?.name ?? "Board" : "Task Board"}
+          </h1>
+          {boardId && board && (
+            <div className="relative">
+              <button
+                onClick={() => setBoardMenu((o) => !o)}
+                className="w-8 h-8 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink"
+                aria-label="Board options"
+              >
+                <MoreHorizontal size={16} strokeWidth={1.75} />
+              </button>
+              {boardMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setBoardMenu(false)} />
+                  <div className="absolute left-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[190px]">
+                    <button
+                      onClick={() => {
+                        setBoardMenu(false);
+                        setBoardError(null);
+                        setBoardDialog({ mode: "rename", name: board.name });
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt"
+                    >
+                      <Pencil size={14} strokeWidth={1.75} /> Rename board
+                    </button>
+                    <button
+                      onClick={() => {
+                        setBoardMenu(false);
+                        removeBoard();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-red-500 hover:bg-red-50"
+                    >
+                      <Trash2 size={14} strokeWidth={1.75} /> Delete board
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        {boardId && !board && boards.length > 0 && (
+          <span className="text-[13px] text-muted">This board no longer exists. Pick another board in the sidebar.</span>
+        )}
+      </div>
+
+      {boardError && (
+        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{boardError}</div>
+      )}
+
+      {boardDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={() => !boardBusy && setBoardDialog(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-cream rounded-3xl w-full max-w-[420px] p-6">
+            <h2 className="text-[19px] font-semibold mb-1">{boardDialog.mode === "new" ? "New sub board" : "Rename board"}</h2>
+            <p className="text-[13px] text-muted mb-4">
+              {boardDialog.mode === "new"
+                ? "Sub boards appear under Task Board in the sidebar, for example “Email Tasks” or “Real Estate”."
+                : "Everyone in your workspace sees the new name."}
+            </p>
+            <input
+              autoFocus
+              value={boardDialog.name}
+              maxLength={80}
+              onChange={(e) => setBoardDialog({ ...boardDialog, name: e.target.value })}
+              onKeyDown={(e) => e.key === "Enter" && saveBoard()}
+              placeholder="Board name"
+              className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-ink mb-3"
+            />
+            {boardError && <div className="text-[12.5px] text-red-600 mb-3">{boardError}</div>}
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setBoardDialog(null)} disabled={boardBusy} className="px-4 py-2 rounded-full text-[13.5px] font-medium text-muted hover:text-ink">
+                Cancel
+              </button>
+              <button
+                onClick={saveBoard}
+                disabled={boardBusy || !boardDialog.name.trim()}
+                className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 disabled:opacity-40"
+              >
+                {boardBusy ? "Saving…" : boardDialog.mode === "new" ? "Create board" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center bg-card-alt rounded-full p-1">
           <button
@@ -199,6 +337,15 @@ function TaskBoard({ initialFilters, initialTaskId }: { initialFilters: string[]
           </button>
           <button className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center">
             <SlidersHorizontal size={15} strokeWidth={1.75} />
+          </button>
+          <button
+            onClick={() => {
+              setBoardError(null);
+              setBoardDialog({ mode: "new", name: "" });
+            }}
+            className="bg-card-alt px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-line/60 transition-colors"
+          >
+            <Plus size={14} strokeWidth={2} /> Add sub board
           </button>
           <button
             onClick={() => setModalStatus("todo")}

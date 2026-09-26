@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
+import { boardInOrg } from "@/lib/data/boards";
 import type { BoardTask, TaskComment } from "@/components/NewTaskModal";
 
 type TaskRow = {
@@ -12,6 +13,7 @@ type TaskRow = {
   assignee: string | null;
   due_date: string | null;
   comments: TaskComment[] | null;
+  board_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -26,6 +28,7 @@ function toTask(row: TaskRow): BoardTask {
     assignee: row.assignee,
     dueDate: row.due_date,
     comments: Array.isArray(row.comments) ? row.comments : [],
+    boardId: row.board_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -63,7 +66,7 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
 
   const { data, error } = await supabase
     .from("tasks")
-    .insert({ id: task.id, org_id: orgId, created_by: userId, ...toColumns(task) })
+    .insert({ id: task.id, org_id: orgId, created_by: userId, ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId) })
     .select("*")
     .single();
 
@@ -77,7 +80,7 @@ export async function updateTaskRow(id: string, task: BoardTask): Promise<BoardT
 
   const { data, error } = await supabase
     .from("tasks")
-    .update({ ...toColumns(task), updated_at: new Date().toISOString() })
+    .update({ ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId), updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("org_id", orgId)
     .select("*")

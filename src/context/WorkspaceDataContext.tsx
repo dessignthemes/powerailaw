@@ -32,6 +32,13 @@ type WorkspaceDataContextValue = {
   // People in this workspace (for assignees) and the signed-in user.
   teamMembers: { id: string; email: string; role: string }[];
   meEmail: string | null;
+
+  // Sub boards under the Task Board.
+  boards: { id: string; name: string }[];
+  boardsError: string | null;
+  createBoard: (name: string) => Promise<{ id: string; name: string }>;
+  renameBoard: (id: string, name: string) => Promise<void>;
+  deleteBoard: (id: string) => Promise<void>;
 };
 
 async function readJson(res: Response) {
@@ -52,6 +59,8 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const [tasksError, setTasksError] = useState<string | null>(null);
   const [teamMembers, setTeamMembers] = useState<{ id: string; email: string; role: string }[]>([]);
   const [meEmail, setMeEmail] = useState<string | null>(null);
+  const [boards, setBoards] = useState<{ id: string; name: string }[]>([]);
+  const [boardsError, setBoardsError] = useState<string | null>(null);
 
   // Re-fetch shared data (e.g. after the AI Agent creates a client or task).
   const refreshAll = useCallback(() => {
@@ -73,6 +82,11 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       .catch((err) => console.error("Failed to load matters:", err))
       .finally(() => setMattersLoaded(true));
 
+    fetch("/api/boards")
+      .then(readJson)
+      .then((d) => setBoards(d.boards ?? []))
+      .catch((e: Error) => setBoardsError(e.message));
+
     fetch("/api/team")
       .then(readJson)
       .then((d) => {
@@ -92,6 +106,29 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearTasksError = useCallback(() => setTasksError(null), []);
+
+  const createBoard = useCallback(async (name: string) => {
+    const d = await readJson(
+      await fetch("/api/boards", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) })
+    );
+    setBoards((bs) => [...bs, d.board]);
+    setBoardsError(null);
+    return d.board as { id: string; name: string };
+  }, []);
+
+  const renameBoard = useCallback(async (id: string, name: string) => {
+    const d = await readJson(
+      await fetch(`/api/boards/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) })
+    );
+    setBoards((bs) => bs.map((b) => (b.id === id ? d.board : b)));
+  }, []);
+
+  // Its tasks move back to the main Task Board (same as the database does).
+  const deleteBoard = useCallback(async (id: string) => {
+    await readJson(await fetch(`/api/boards/${id}`, { method: "DELETE" }));
+    setBoards((bs) => bs.filter((b) => b.id !== id));
+    setTasks((ts) => ts.map((t) => (t.boardId === id ? { ...t, boardId: null } : t)));
+  }, []);
 
   const addTask = useCallback((task: BoardTask) => {
     const optimistic = { ...task, createdAt: task.createdAt ?? new Date().toISOString() };
@@ -294,6 +331,11 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         refreshAll,
         teamMembers,
         meEmail,
+        boards,
+        boardsError,
+        createBoard,
+        renameBoard,
+        deleteBoard,
       }}
     >
       {children}

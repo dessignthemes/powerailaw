@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import AccountMenu from "@/components/AccountMenu";
+import TaskBoardNav from "@/components/TaskBoardNav";
 import AdminModal from "@/components/AdminModal";
 import ContactSupportModal from "@/components/ContactSupportModal";
 
@@ -140,9 +141,16 @@ export default function Sidebar() {
           <div className="px-3 text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">
             Workspace
           </div>
-          {workspaceLinks.map((l) => (
-            <NavItem key={l.label} {...l} active={pathname === l.href || pathname.startsWith(l.href + "/")} />
-          ))}
+          {workspaceLinks.map((l) =>
+            l.href === "/dashboard/task-board" ? (
+              // Reads ?board=, so it needs its own Suspense boundary.
+              <Suspense key={l.label} fallback={<NavItem {...l} active={pathname === l.href} />}>
+                <TaskBoardNav />
+              </Suspense>
+            ) : (
+              <NavItem key={l.label} {...l} active={pathname === l.href || pathname.startsWith(l.href + "/")} />
+            )
+          )}
         </div>
       </nav>
 

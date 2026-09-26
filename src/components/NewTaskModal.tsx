@@ -28,6 +28,7 @@ export type BoardTask = {
   assignee: string | null;
   dueDate: string | null;
   comments?: TaskComment[];
+  boardId?: string | null; // null/undefined = main Task Board
   createdAt?: string;
   updatedAt?: string;
 };
