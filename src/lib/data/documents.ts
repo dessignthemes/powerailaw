@@ -300,3 +300,23 @@ export async function signedDownloadUrl(orgId: string, versionId: string) {
   if (error || !data) throw error ?? new Error("Could not create download URL");
   return data.signedUrl;
 }
+
+// Permanently deletes a document: every version's stored file, the version
+// rows, and (via cascades) the AI Agent's search index for those versions.
+export async function deleteDocument(orgId: string, documentId: string): Promise<{ versions: number }> {
+  const supabase = createAdminClient();
+  const { data: versions, error } = await supabase
+    .from("document_versions")
+    .select("storage_path")
+    .eq("document_id", documentId)
+    .eq("org_id", orgId);
+  if (error) throw error;
+  const paths = (versions ?? []).map((v) => v.storage_path as string).filter(Boolean);
+  if (paths.length) {
+    const { error: rmErr } = await supabase.storage.from(DOCUMENTS_BUCKET).remove(paths);
+    if (rmErr) throw rmErr;
+  }
+  const { error: delErr } = await supabase.from("documents").delete().eq("id", documentId).eq("org_id", orgId);
+  if (delErr) throw delErr;
+  return { versions: paths.length };
+}

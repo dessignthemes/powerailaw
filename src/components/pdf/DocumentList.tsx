@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { FileText, Upload, ChevronDown, ChevronRight, Download, PenLine, Loader2, X, Folder, Check, Search, Layers } from "lucide-react";
+import { FileText, Upload, ChevronDown, ChevronRight, Download, PenLine, Loader2, X, Folder, Check, Search, Layers, Trash2 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { uploadNewDocument, versionDownloadUrl, UploadError } from "@/lib/pdf/upload";
 
@@ -114,6 +114,29 @@ export default function DocumentList({
     }
   }
 
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function remove(d: Doc) {
+    const n = d.versions.length;
+    const ok = confirm(
+      `Delete "${d.title}"?\n\nThis permanently deletes the PDF${n > 1 ? ` and all ${n} versions` : ""} for everyone in your workspace. It can't be undone.`
+    );
+    if (!ok) return;
+    setDeleting(d.id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/documents/${d.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error ?? "Couldn't delete the PDF.");
+      setDocs((list) => list.filter((x) => x.id !== d.id));
+      if (expanded === d.id) setExpanded(null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   async function download(versionId: string) {
     try {
       window.open(await versionDownloadUrl(versionId), "_blank", "noopener");
@@ -216,6 +239,15 @@ export default function DocumentList({
                         <PenLine size={13} strokeWidth={2} /> Open in Power PDF
                       </Link>
                     )}
+                    <button
+                      onClick={() => remove(d)}
+                      disabled={deleting === d.id}
+                      title="Delete PDF"
+                      aria-label={`Delete ${d.title}`}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      {deleting === d.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={15} strokeWidth={1.75} />}
+                    </button>
                   </div>
                   {open && (
                     <div className="px-5 pb-4 pl-[68px]">
