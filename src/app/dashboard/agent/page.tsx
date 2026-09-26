@@ -60,7 +60,7 @@ const TOOL_ACTIVITY: Record<string, string> = {
   suggestMemory: "Suggesting a memory",
 };
 
-type Status = { configured: boolean; model: string; usage: { requests: number; tokens: number; requestLimit: number; tokenLimit: number } };
+type Status = { configured: boolean; model: string; providerLabel?: string; keyName?: string; usage: { requests: number; tokens: number; requestLimit: number; tokenLimit: number } };
 type Problem = { message: string; code?: string };
 
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -481,7 +481,8 @@ function Agent() {
                 <>
                   <div className="font-semibold mb-0.5">Connect the AI provider</div>
                   <div className="text-muted">
-                    Add <span className="mono text-ink">ANTHROPIC_API_KEY</span> to the server environment (Vercel → Settings → Environment Variables), then redeploy. Chat is off
+                    Add <span className="mono text-ink">{status?.keyName ?? "ANTHROPIC_API_KEY"}</span> (or{" "}
+                    <span className="mono text-ink">{status?.keyName === "OPENAI_API_KEY" ? "ANTHROPIC_API_KEY" : "OPENAI_API_KEY"}</span>) to the server environment (Vercel → Settings → Environment Variables), then redeploy. Chat is off
                     until then. No placeholder answers are shown.
                   </div>
                 </>
@@ -613,7 +614,7 @@ function IconBtn({ label, onClick, active, children }: { label: string; onClick:
 function Footnote({ status }: { status: Status | null }) {
   return (
     <p className="text-[11.5px] text-muted text-center mt-2 leading-snug">
-      Your messages, relevant document excerpts and the selected matter&apos;s details are sent to Anthropic&apos;s API to generate answers. AI can be wrong. Check
+      Your messages, relevant document excerpts and the selected matter&apos;s details are sent to {status?.providerLabel ?? "the AI provider"}&apos;s API to generate answers. AI can be wrong. Check
       important details, and treat drafts as drafts for attorney review.
       {status && status.usage.requestLimit > 0 && (
         <span className="block mt-0.5">

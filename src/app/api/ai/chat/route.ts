@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   const cfg = aiConfig();
   if (!provider) {
     return NextResponse.json(
-      { error: "The AI Agent isn't connected yet. Add ANTHROPIC_API_KEY to the server environment and redeploy.", code: "not_configured" },
+      { error: `The AI Agent isn't connected yet. Add ${cfg.keyName} to the server environment and redeploy.`, code: "not_configured" },
       { status: 503 }
     );
   }

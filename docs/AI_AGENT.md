@@ -4,14 +4,15 @@
 1. Run `supabase/migrations/0005_ai_agent.sql` in the Supabase SQL editor (after 0001–0004).
    It creates the AI tables with row-level security, the `ai_search_chunks` search function
    (callable only by the server), and the private `ai-attachments` storage bucket.
-2. In Vercel → Settings → Environment Variables, add `ANTHROPIC_API_KEY` (create one at
-   console.anthropic.com). Optionally set `AI_MODEL` and the limits listed in `.env.example`.
+2. In Vercel → Settings → Environment Variables, add `ANTHROPIC_API_KEY` (console.anthropic.com)
+   or `OPENAI_API_KEY` (platform.openai.com). With both set, `AI_PROVIDER` chooses; otherwise the
+   app uses whichever key exists. Optionally set `AI_MODEL` and the limits in `.env.example`.
 3. Redeploy. Until the key is set the AI Agent page shows a setup notice and chat is disabled.
 
 ## How it works
-- **Provider**: Anthropic Claude via the official `@anthropic-ai/sdk`, server-side only
-  (`src/lib/ai/provider`). `ChatProvider` is provider-neutral so Amazon Bedrock can be added as a
-  second implementation without changing chat, memory or tools.
+- **Provider**: Anthropic Claude (`@anthropic-ai/sdk`) or OpenAI (`openai`, Chat Completions with
+  function calling), server-side only (`src/lib/ai/provider`). Both implement the provider-neutral
+  `ChatProvider`, so Amazon Bedrock can be added the same way without changing chat, memory or tools.
 - **Conversations** are private to the user who created them and fixed to one matter (or none).
   The matter always comes from the stored conversation, never from the browser.
 - **Retrieval**: Postgres full-text search over text chunks (`ai_chunks`). No embedding provider.
@@ -32,8 +33,9 @@
   executed by the user's confirmation, so instructions in documents can't create records.
 
 ## Data handling and retention
-- Messages, relevant excerpts and the selected matter's details are sent to Anthropic's API.
-  See Anthropic's commercial terms for their retention; nothing in the app promises zero retention.
+- Messages, relevant excerpts and the selected matter's details are sent to the configured
+  provider's API (Anthropic or OpenAI). See that provider's API terms for retention; nothing in the
+  app promises zero retention.
 - Deleting a conversation deletes its messages, attachments (storage objects), their text chunks
   and any pending proposals. Usage counts (`ai_usage`) and audit events (`ai_audit_events`, no
   content) are kept.

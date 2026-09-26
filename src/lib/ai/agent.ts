@@ -37,7 +37,7 @@ export async function runAgent(opts: {
   for (let round = 0; round < MAX_ROUNDS; round++) {
     const roundText: string[] = [];
     const uses: ToolUseBlock[] = [];
-    let separated = false;
+    let firstDelta = true;
 
     for await (const ev of opts.provider.stream({
       system: opts.system,
@@ -47,11 +47,13 @@ export async function runAgent(opts: {
       signal: opts.signal,
     })) {
       if (ev.type === "text") {
-        if (!separated && text && round > 0) {
+        // One paragraph break between text from an earlier round and this
+        // round's text, decided on this round's first fragment only.
+        if (firstDelta && text && round > 0) {
           text += "\n\n";
           opts.onText("\n\n");
-          separated = true;
         }
+        firstDelta = false;
         roundText.push(ev.delta);
         text += ev.delta;
         opts.onText(ev.delta);

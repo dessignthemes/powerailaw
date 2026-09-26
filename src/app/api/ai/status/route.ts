@@ -11,8 +11,10 @@ export async function GET() {
     const cfg = aiConfig();
     const usage = await usageToday(ctx);
     return NextResponse.json({
-      configured: cfg.configured && cfg.provider === "anthropic",
+      configured: cfg.configured,
       provider: cfg.provider,
+      providerLabel: cfg.providerLabel,
+      keyName: cfg.keyName,
       model: cfg.model,
       usage: { ...usage, tokenLimit: cfg.dailyTokenLimit, requestLimit: cfg.dailyRequestLimit },
     });
