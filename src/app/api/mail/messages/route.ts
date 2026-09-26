@@ -6,7 +6,7 @@ import { requireUserId, parseProvider, mailErrorResponse } from "@/lib/mail/api"
 
 export const dynamic = "force-dynamic";
 
-// GET /api/mail/messages?provider=google&q=…&pageToken=…
+// GET /api/mail/messages?provider=google&folder=…&q=…&pageToken=…
 export async function GET(request: Request) {
   try {
     const userId = await requireUserId();
@@ -17,8 +17,10 @@ export async function GET(request: Request) {
 
     const q = url.searchParams.get("q")?.slice(0, 200) ?? undefined;
     const pageToken = url.searchParams.get("pageToken") ?? undefined;
+    const folder = url.searchParams.get("folder")?.slice(0, 400) ?? undefined;
     const { token } = await getAccessToken(userId, provider);
-    const page = provider === "google" ? await listGmail(token, { q, pageToken }) : await listOutlook(token, { q, pageToken });
+    const page =
+      provider === "google" ? await listGmail(token, { q, pageToken, folder }) : await listOutlook(token, { q, pageToken, folder });
     return NextResponse.json(page);
   } catch (error) {
     return mailErrorResponse("GET /api/mail/messages", error);

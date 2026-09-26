@@ -13,8 +13,28 @@ import {
   Image as ImageIcon,
   Inbox as InboxIcon,
   X,
+  PanelLeftOpen,
 } from "lucide-react";
-import type { MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
+import type { MailFolder, MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
+import FolderPanel from "@/components/mail/FolderPanel";
+
+// Folder panel preferences live in this browser (they're just layout choices).
+const PANEL_KEY = "lawpower.inbox.foldersHidden";
+const favKey = (p: MailProvider) => `lawpower.inbox.favorites.${p}`;
+function readPref(key: string): string | null {
+  try {
+    return typeof window === "undefined" ? null : window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function writePref(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // private mode etc.: preference just won't persist
+  }
+}
 
 type Conn = { provider: MailProvider; email: string | null; status: "ok" | "reconnect" | "missing_scope"; autoRefresh: boolean };
 type Problem = { message: string; code?: string };
@@ -65,6 +85,29 @@ export default function InboxPage() {
   const [nextPage, setNextPage] = useState<string | null>(null);
   const [listLoading, setListLoading] = useState(false);
   const [listError, setListError] = useState<Problem | null>(null);
+  const [folders, setFolders] = useState<MailFolder[]>([]);
+  const [foldersLoading, setFoldersLoading] = useState(true);
+  const [foldersError, setFoldersError] = useState<string | null>(null);
+  const [folderId, setFolderId] = useState<string | null>(null); // null = Inbox
+  const [panelHidden, setPanelHidden] = useState<boolean>(() => {
+    const saved = readPref(PANEL_KEY);
+    if (saved !== null) return saved === "1";
+    return typeof window !== "undefined" && window.innerWidth < 900; // start hidden on small screens
+  });
+  const [favorites, setFavorites] = useState<Partial<Record<MailProvider, string[]>>>(() => {
+    const out: Partial<Record<MailProvider, string[]>> = {};
+    for (const p of ["google", "microsoft"] as MailProvider[]) {
+      const raw = readPref(favKey(p));
+      if (raw) {
+        try {
+          out[p] = JSON.parse(raw);
+        } catch {
+          // ignore bad value
+        }
+      }
+    }
+    return out;
+  });
   const [query, setQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
 
@@ -102,9 +145,10 @@ export default function InboxPage() {
   }, []);
 
   const fetchPage = useCallback(
-    (p: MailProvider, q: string, pageToken?: string) => {
+    (p: MailProvider, q: string, pageToken?: string, folder?: string | null) => {
       const params = new URLSearchParams({ provider: p });
       if (q) params.set("q", q);
+      if (folder) params.set("folder", folder);
       if (pageToken) params.set("pageToken", pageToken);
       return getJson<{ messages: MailSummary[]; nextPageToken: string | null }>(`/api/mail/messages?${params}`);
     },
@@ -115,7 +159,7 @@ export default function InboxPage() {
   useEffect(() => {
     if (!provider) return;
     let cancelled = false;
-    fetchPage(provider, activeQuery)
+    fetchPage(provider, activeQuery, undefined, folderId)
       .then((d) => {
         if (cancelled) return;
         setMessages(d.messages);
@@ -127,12 +171,29 @@ export default function InboxPage() {
     return () => {
       cancelled = true;
     };
-  }, [provider, activeQuery, fetchPage]);
+  }, [provider, activeQuery, folderId, fetchPage]);
+
+  // Folders for the current mailbox
+  useEffect(() => {
+    if (!provider) return;
+    let cancelled = false;
+    getJson<{ folders: MailFolder[] }>(`/api/mail/folders?provider=${provider}`)
+      .then((d) => {
+        if (cancelled) return;
+        setFolders(d.folders);
+        setFoldersError(null);
+      })
+      .catch((e: Error) => !cancelled && setFoldersError(e.message))
+      .finally(() => !cancelled && setFoldersLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [provider]);
 
   function reload() {
     if (!provider) return;
     setListLoading(true);
-    fetchPage(provider, activeQuery)
+    fetchPage(provider, activeQuery, undefined, folderId)
       .then((d) => {
         setMessages(d.messages);
         setNextPage(d.nextPageToken);
@@ -145,7 +206,7 @@ export default function InboxPage() {
   function loadMore() {
     if (!provider || !nextPage) return;
     setListLoading(true);
-    fetchPage(provider, activeQuery, nextPage)
+    fetchPage(provider, activeQuery, nextPage, folderId)
       .then((d) => {
         setMessages((m) => [...m, ...d.messages.filter((x) => !m.some((y) => y.id === x.id))]);
         setNextPage(d.nextPageToken);
@@ -165,6 +226,11 @@ export default function InboxPage() {
       .then((d) => {
         setMessage(d.message);
         setMessages((list) => list.map((x) => (x.id === m.id ? { ...x, unread: false } : x)));
+        // Opening an unread message lowers the folder's unread count here too.
+        if (m.unread) {
+          const current = folderId ?? folders.find((f) => f.kind === "inbox")?.id;
+          setFolders((fs) => fs.map((f) => (f.id === current ? { ...f, unread: Math.max(0, f.unread - 1) } : f)));
+        }
       })
       .catch((e: Error) => setMsgError(e.message))
       .finally(() => setMsgLoading(false));
@@ -176,7 +242,40 @@ export default function InboxPage() {
     setMessages([]);
     setSelectedId(null);
     setMessage(null);
+    setFolders([]);
+    setFoldersLoading(true);
+    setFolderId(null);
     setProvider(p);
+  }
+
+  function selectFolder(f: MailFolder) {
+    const id = f.kind === "inbox" ? null : f.id;
+    if (id === folderId && !activeQuery) return;
+    setListLoading(true);
+    setMessages([]);
+    setSelectedId(null);
+    setMessage(null);
+    setQuery("");
+    setActiveQuery("");
+    setFolderId(id);
+    if (typeof window !== "undefined" && window.innerWidth < 900) setPanelHidden(true);
+  }
+
+  function togglePanel(hidden: boolean) {
+    setPanelHidden(hidden);
+    writePref(PANEL_KEY, hidden ? "1" : "0");
+  }
+
+  function currentFavorites(p: MailProvider) {
+    return favorites[p] ?? folders.filter((f) => ["inbox", "sent", "drafts"].includes(f.kind)).map((f) => f.id);
+  }
+
+  function toggleFavorite(f: MailFolder) {
+    if (!provider) return;
+    const cur = currentFavorites(provider);
+    const next = cur.includes(f.id) ? cur.filter((id) => id !== f.id) : [...cur, f.id];
+    setFavorites((m) => ({ ...m, [provider]: next }));
+    writePref(favKey(provider), JSON.stringify(next));
   }
 
   function submitSearch(e: React.FormEvent) {
@@ -241,6 +340,16 @@ export default function InboxPage() {
       <div className="flex flex-col h-full border border-line rounded-2xl overflow-hidden bg-cream">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-line flex-wrap">
+          {panelHidden && (
+            <button
+              onClick={() => togglePanel(false)}
+              title="Show folders"
+              aria-label="Show folders"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-card-alt text-[13px] font-medium text-muted hover:text-ink"
+            >
+              <PanelLeftOpen size={15} strokeWidth={1.75} /> Folders
+            </button>
+          )}
           {conns.length > 1 ? (
             <div className="flex bg-card-alt rounded-full p-1">
               {conns.map((c) => (
@@ -262,13 +371,23 @@ export default function InboxPage() {
             </div>
           )}
           {conn?.email && <span className="text-[12.5px] text-muted truncate">{conn.email}</span>}
+          {(() => {
+            const f = folderId ? folders.find((x) => x.id === folderId) : folders.find((x) => x.kind === "inbox");
+            return f ? <span className="text-[13px] font-semibold truncate">· {f.name}</span> : null;
+          })()}
 
           <form onSubmit={submitSearch} className="flex items-center gap-2 bg-white border border-line rounded-full px-3.5 py-1.5 ml-auto w-full sm:w-[320px]">
             <Search size={14} strokeWidth={1.75} className="text-muted" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={provider === "google" ? "Search mail (e.g. from:client@x.com)" : "Search mail"}
+              placeholder={
+                folderId
+                  ? `Search ${folders.find((x) => x.id === folderId)?.name ?? "this folder"}`
+                  : provider === "google"
+                    ? "Search mail (e.g. from:client@x.com)"
+                    : "Search mail"
+              }
               className="flex-1 bg-transparent outline-none text-[13.5px] placeholder:text-muted"
             />
             {activeQuery && (
@@ -312,7 +431,26 @@ export default function InboxPage() {
           </div>
         )}
 
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0 relative">
+          {/* Folders */}
+          {!panelHidden && (
+            <>
+              <div className="fixed inset-0 bg-black/20 z-30 min-[900px]:hidden" onClick={() => togglePanel(true)} />
+              <div className="absolute min-[900px]:static inset-y-0 left-0 z-40 w-[250px] flex-shrink-0 border-r border-line bg-cream shadow-lg min-[900px]:shadow-none">
+                <FolderPanel
+                  folders={folders}
+                  loading={foldersLoading}
+                  error={foldersError}
+                  accountEmail={conn?.email ?? null}
+                  selectedId={folderId ?? folders.find((f) => f.kind === "inbox")?.id ?? null}
+                  favorites={provider ? currentFavorites(provider) : []}
+                  onSelect={selectFolder}
+                  onToggleFavorite={toggleFavorite}
+                  onHide={() => togglePanel(true)}
+                />
+              </div>
+            </>
+          )}
           {/* List */}
           <div className={`w-full md:w-[380px] md:flex-shrink-0 border-r border-line overflow-y-auto ${selectedId ? "hidden md:block" : ""}`}>
             {listError && !needsReconnect && (
@@ -324,7 +462,7 @@ export default function InboxPage() {
               </div>
             ) : messages.length === 0 && !listError ? (
               <div className="py-16 text-center text-[13.5px] text-muted">
-                {activeQuery ? "No messages match that search." : "Your inbox is empty."}
+                {activeQuery ? "No messages match that search." : folderId ? "This folder is empty." : "Your inbox is empty."}
               </div>
             ) : (
               <>

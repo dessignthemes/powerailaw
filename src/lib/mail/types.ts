@@ -22,3 +22,14 @@ export type MailMessage = MailSummary & {
 };
 
 export type MailPage = { messages: MailSummary[]; nextPageToken: string | null };
+
+export type FolderKind = "inbox" | "drafts" | "sent" | "trash" | "junk" | "archive" | "starred" | "important" | "custom";
+
+export type MailFolder = {
+  id: string;
+  name: string;
+  kind: FolderKind;
+  parentId: string | null;
+  unread: number;
+  total: number | null;
+};

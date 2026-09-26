@@ -1,6 +1,6 @@
 import "server-only";
 import { MailError } from "@/lib/mail/tokens";
-import type { MailMessage, MailPage, MailSummary } from "@/lib/mail/types";
+import type { FolderKind, MailFolder, MailMessage, MailPage, MailSummary } from "@/lib/mail/types";
 
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -89,10 +89,14 @@ function decodeEntities(s: string) {
     .replace(/&gt;/g, ">");
 }
 
-export async function listGmail(token: string, opts: { q?: string; pageToken?: string }): Promise<MailPage> {
+export async function listGmail(token: string, opts: { q?: string; pageToken?: string; folder?: string }): Promise<MailPage> {
   const params = new URLSearchParams({ maxResults: "25" });
+  const folder = opts.folder && /^[A-Za-z0-9_-]+$/.test(opts.folder) ? opts.folder : null;
   if (opts.q?.trim()) params.set("q", opts.q.trim());
-  else params.set("labelIds", "INBOX");
+  // A folder (label) narrows the list; with no folder, search covers all mail.
+  if (folder) params.set("labelIds", folder);
+  else if (!opts.q?.trim()) params.set("labelIds", "INBOX");
+  if (folder === "SPAM" || folder === "TRASH") params.set("includeSpamTrash", "true");
   if (opts.pageToken) params.set("pageToken", opts.pageToken);
 
   const list = await gmail<{ messages?: { id: string }[]; nextPageToken?: string }>(token, `/messages?${params}`);
@@ -134,4 +138,40 @@ export async function getGmail(token: string, id: string, accountEmail: string |
     attachments,
     webLink: `https://mail.google.com/mail/u/0/${authuser}#all/${m.threadId}`,
   };
+}
+
+// Gmail labels presented as folders. System labels get fixed names/order;
+// user labels keep their "Parent/Child" nesting.
+const GMAIL_SYSTEM: Record<string, { name: string; kind: FolderKind }> = {
+  INBOX: { name: "Inbox", kind: "inbox" },
+  STARRED: { name: "Starred", kind: "starred" },
+  IMPORTANT: { name: "Important", kind: "important" },
+  DRAFT: { name: "Drafts", kind: "drafts" },
+  SENT: { name: "Sent", kind: "sent" },
+  SPAM: { name: "Spam", kind: "junk" },
+  TRASH: { name: "Trash", kind: "trash" },
+};
+
+export async function listGmailFolders(token: string): Promise<MailFolder[]> {
+  const { labels = [] } = await gmail<{ labels?: { id: string; name: string; type: string }[] }>(token, "/labels");
+  const system = labels.filter((l) => GMAIL_SYSTEM[l.id]);
+  const user = labels.filter((l) => l.type === "user").sort((a, b) => a.name.localeCompare(b.name)).slice(0, 60);
+  const withCounts = await Promise.all(
+    [...system, ...user].map(async (l) => {
+      try {
+        const d = await gmail<{ messagesUnread?: number; messagesTotal?: number }>(token, `/labels/${encodeURIComponent(l.id)}`);
+        return { l, unread: d.messagesUnread ?? 0, total: d.messagesTotal ?? null };
+      } catch {
+        return { l, unread: 0, total: null };
+      }
+    })
+  );
+  const byName = new Map(user.map((l) => [l.name, l.id]));
+  return withCounts.map(({ l, unread, total }) => {
+    const sys = GMAIL_SYSTEM[l.id];
+    if (sys) return { id: l.id, name: sys.name, kind: sys.kind, parentId: null, unread, total };
+    const slash = l.name.lastIndexOf("/");
+    const parentId = slash > 0 ? byName.get(l.name.slice(0, slash)) ?? null : null;
+    return { id: l.id, name: slash > 0 ? l.name.slice(slash + 1) : l.name, kind: "custom" as const, parentId, unread, total };
+  });
 }
