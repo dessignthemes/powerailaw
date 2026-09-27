@@ -30,7 +30,7 @@ type WorkspaceDataContextValue = {
   refreshAll: () => void;
 
   // People in this workspace (for assignees) and the signed-in user.
-  teamMembers: { id: string; email: string; role: string }[];
+  teamMembers: { id: string; email: string; fullName?: string | null; role: string }[];
   meEmail: string | null;
 
   // Sub boards under the Task Board.
@@ -57,7 +57,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<BoardTask[]>([]);
   const [tasksLoaded, setTasksLoaded] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
-  const [teamMembers, setTeamMembers] = useState<{ id: string; email: string; role: string }[]>([]);
+  const [teamMembers, setTeamMembers] = useState<{ id: string; email: string; fullName?: string | null; role: string }[]>([]);
   const [meEmail, setMeEmail] = useState<string | null>(null);
   const [boards, setBoards] = useState<{ id: string; name: string }[]>([]);
   const [boardsError, setBoardsError] = useState<string | null>(null);

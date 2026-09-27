@@ -1,6 +1,7 @@
 import { NoWorkspaceError } from "@/lib/data/org";
 import { NextResponse } from "next/server";
 import { updateTaskRow } from "@/lib/data/tasks";
+import { getSessionUserId } from "@/lib/auth";
 import type { BoardTask } from "@/components/NewTaskModal";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +10,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const task = (await request.json()) as BoardTask;
-    const updated = await updateTaskRow(id, task);
+    const updated = await updateTaskRow(id, task, await getSessionUserId());
     return NextResponse.json({ task: updated });
   } catch (error) {
     if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });

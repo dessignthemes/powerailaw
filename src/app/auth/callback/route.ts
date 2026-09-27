@@ -41,7 +41,8 @@ export async function GET(request: NextRequest) {
   const { session, user } = data;
 
   try {
-    await ensureProfile(user.id, user.email ?? "");
+    const meta = (user.user_metadata ?? {}) as { full_name?: string; name?: string };
+    await ensureProfile(user.id, user.email ?? "", meta.full_name || meta.name || null);
 
     // provider_token / provider_refresh_token are only present right after
     // the OAuth handshake — capture them now so mail/calendar sync has

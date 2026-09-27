@@ -7,6 +7,7 @@ import TaskFilterDropdown from "@/components/TaskFilterDropdown";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { BoardTask, priorityMeta, statusMeta } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import MemberAvatar from "@/components/MemberAvatar";
 import { isDueIn, ymd } from "@/lib/taskDates";
 import {
   ListChecks,
@@ -118,6 +119,7 @@ export default function DashboardHome() {
           >
             {t.priority}
           </span>
+          <MemberAvatar userId={t.createdBy} />
         </div>
       </div>
     );
@@ -297,8 +299,9 @@ export default function DashboardHome() {
                     <span className="text-muted">{verb} task</span>{" "}
                     <span className="font-medium">{t.title}</span>
                   </div>
-                  <span className="mono text-[12px] text-muted flex-shrink-0">
-                    {timeAgo((t.updatedAt ?? t.createdAt)!)}
+                  <span className="flex items-center gap-3 flex-shrink-0">
+                    <span className="mono text-[12px] text-muted">{timeAgo((t.updatedAt ?? t.createdAt)!)}</span>
+                    <MemberAvatar userId={created ? t.createdBy : t.updatedBy ?? t.createdBy} label={created ? "Created by" : `${verb} by`} />
                   </span>
                 </div>
               );

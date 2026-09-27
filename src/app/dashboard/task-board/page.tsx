@@ -28,6 +28,9 @@ import NewTaskModal, {
 import TaskDetailModal from "@/components/TaskDetailModal";
 import ColorPicker from "@/components/ColorPicker";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import MemberAvatar from "@/components/MemberAvatar";
+import { displayName } from "@/lib/initials";
+import Link from "next/link";
 import { isDueIn, isOverdue } from "@/lib/taskDates";
 
 type Column = {
@@ -77,15 +80,26 @@ function TaskBoardFromUrl() {
   const due = params.get("due") ?? "";
   const pill = dueParamToPill[due];
   const board = params.get("board");
-  return <TaskBoard key={`${board ?? "main"}:${due}`} boardId={board} initialFilters={pill ? [pill] : []} initialTaskId={params.get("task")} />;
+  const by = params.get("by");
+  return (
+    <TaskBoard
+      key={`${board ?? "main"}:${by ?? ""}:${due}`}
+      boardId={by ? null : board}
+      createdBy={by}
+      initialFilters={pill ? [pill] : []}
+      initialTaskId={params.get("task")}
+    />
+  );
 }
 
 function TaskBoard({
   boardId,
+  createdBy,
   initialFilters,
   initialTaskId,
 }: {
   boardId: string | null; // null = main Task Board
+  createdBy: string | null; // show every task this person created, on any board
   initialFilters: string[];
   initialTaskId: string | null;
 }) {
@@ -101,7 +115,11 @@ function TaskBoard({
   const { tasks: workspaceTasks, tasksLoaded, tasksError, clearTasksError, addTask: addWorkspaceTask, updateTask, deleteTasks } =
     useWorkspaceData();
   // Only this board's tasks; new tasks land on this board.
-  const allTasks = workspaceTasks.filter((t) => (t.boardId ?? null) === boardId);
+  const { teamMembers } = useWorkspaceData();
+  const creator = createdBy ? teamMembers.find((m) => m.id === createdBy) ?? null : null;
+  const allTasks = createdBy
+    ? workspaceTasks.filter((t) => t.createdBy === createdBy)
+    : workspaceTasks.filter((t) => (t.boardId ?? null) === boardId);
   const addTask = (t: BoardTask) => addWorkspaceTask({ ...t, boardId });
 
   async function saveBoard() {
@@ -223,9 +241,19 @@ function TaskBoard({
     <div className="px-10 py-10">
       <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
         <div className="flex items-center gap-2 min-w-0">
+          {createdBy && <MemberAvatar userId={createdBy} size={32} />}
           <h1 className="font-display text-[24px] font-semibold truncate">
-            {boardId ? board?.name ?? "Board" : "Task Board"}
+            {createdBy
+              ? `Tasks created by ${creator ? displayName(creator.fullName, creator.email) : "a former member"}`
+              : boardId
+                ? board?.name ?? "Board"
+                : "Task Board"}
           </h1>
+          {createdBy && (
+            <Link href="/dashboard/task-board" className="text-[13px] text-muted hover:text-ink underline underline-offset-2 ml-1 flex-shrink-0">
+              Show all tasks
+            </Link>
+          )}
           {boardId && board && (
             <div className="relative">
               <button

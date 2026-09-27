@@ -49,7 +49,12 @@ export async function getTeam(actor?: Me) {
   const m = actor ?? (await me());
   const db = createAdminClient();
   const [members, invites] = await Promise.all([
-    db.from("profiles").select("id, email, role, created_at").eq("org_id", m.orgId).order("created_at"),
+    db
+      .from("profiles")
+      .select("id, email, role, created_at, full_name")
+      .eq("org_id", m.orgId)
+      .order("created_at")
+      .then((r) => (r.error && /full_name/.test(r.error.message) ? db.from("profiles").select("id, email, role, created_at").eq("org_id", m.orgId).order("created_at") : r)),
     db
       .from("workspace_invites")
       .select("id, email, role, invited_by_email, created_at, expires_at")
@@ -62,7 +67,13 @@ export async function getTeam(actor?: Me) {
   const canManage = m.role === "owner" || m.role === "admin";
   return {
     me: { id: m.id, email: m.email, role: m.role },
-    members: (members.data ?? []).map((p) => ({ id: p.id as string, email: p.email as string, role: p.role as string, joinedAt: p.created_at as string })),
+    members: (members.data ?? []).map((p) => ({
+      id: p.id as string,
+      email: p.email as string,
+      fullName: ((p as { full_name?: string | null }).full_name ?? null) as string | null,
+      role: p.role as string,
+      joinedAt: p.created_at as string,
+    })),
     invites: canManage
       ? (invites.data ?? []).map((i) => ({ ...i, expired: new Date(i.expires_at as string).getTime() < Date.now() }))
       : [],
