@@ -345,8 +345,24 @@ export default function DashboardHome() {
             </span>
           </Link>
           <div className="text-[32px] font-display font-semibold mb-1">{tracked.loaded ? formatMinutes(tracked.range) : "–"}</div>
-          <div className="text-[13px] text-muted mb-2">
-            {tracked.loaded ? `${formatMinutes(tracked.week)} this week${tracked.billable ? ` · ${formatMinutes(tracked.billable)} billable` : ""}` : "Loading…"}
+          <div className="text-[13px] text-muted mb-2 flex flex-col gap-0.5">
+            {tracked.loaded ? (
+              <>
+                {range !== "week" && (
+                  <span>
+                    <span className="text-ink font-medium">{formatMinutes(tracked.week)}</span> this week
+                  </span>
+                )}
+                <span>
+                  <span className="text-ink font-medium">{formatMinutes(tracked.billable)}</span> billable
+                </span>
+                <span>
+                  <span className="text-ink font-medium">{formatMinutes(Math.max(0, tracked.range - tracked.billable))}</span> non-billable
+                </span>
+              </>
+            ) : (
+              "Loading…"
+            )}
           </div>
           <TimeSlider />
         </div>

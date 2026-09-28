@@ -174,7 +174,7 @@ export default function TimeTrackingPage() {
               Billable{rate ? ` · ${money((rate * e.minutes) / 60)}` : ""}
             </span>
           ) : (
-            <span className="text-[11.5px] text-muted px-2 py-1">Non-billable</span>
+            <span className="text-[11.5px] bg-card-alt text-muted px-2 py-1 rounded-full font-medium">Non-billable</span>
           )}
           <span className="mono text-[13.5px] font-medium w-[60px] text-right">{formatMinutes(e.minutes)}</span>
           {mine && (
