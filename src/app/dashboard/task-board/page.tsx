@@ -29,6 +29,28 @@ import TaskDetailModal from "@/components/TaskDetailModal";
 import ColorPicker from "@/components/ColorPicker";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MemberAvatar from "@/components/MemberAvatar";
+import {
+  FilterMenu,
+  DisplayMenu,
+  NO_FILTERS,
+  DEFAULT_DISPLAY,
+  countFilters,
+  matchesFilters,
+  matchesSearch,
+  sortTasks,
+  type AdvancedFilters,
+  type DisplayOptions,
+} from "@/components/TaskBoardControls";
+
+const DISPLAY_KEY = "lawpower.taskboard.display";
+function readDisplay(): DisplayOptions {
+  try {
+    const raw = typeof window === "undefined" ? null : window.localStorage.getItem(DISPLAY_KEY);
+    return raw ? { ...DEFAULT_DISPLAY, ...JSON.parse(raw) } : DEFAULT_DISPLAY;
+  } catch {
+    return DEFAULT_DISPLAY;
+  }
+}
 import { displayName } from "@/lib/initials";
 import Link from "next/link";
 import { isDueIn, isOverdue } from "@/lib/taskDates";
@@ -172,8 +194,32 @@ function TaskBoard({
     Me: (t) => !!meEmail && (t.assignee ?? "").toLowerCase() === meEmail.toLowerCase(),
   };
   const activeTests = activeFilters.map((f) => tests[f]).filter(Boolean);
-  const tasks =
-    activeTests.length === 0 ? allTasks : allTasks.filter((t) => activeTests.some((test) => test(t)));
+
+  // Search, the filter menu and display options (toolbar icons).
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [adv, setAdv] = useState<AdvancedFilters>(NO_FILTERS);
+  const [displayOpen, setDisplayOpen] = useState(false);
+  const [display, setDisplayState] = useState<DisplayOptions>(readDisplay);
+  const setDisplay = (d: DisplayOptions) => {
+    setDisplayState(d);
+    try {
+      window.localStorage.setItem(DISPLAY_KEY, JSON.stringify(d));
+    } catch {
+      // not persisted
+    }
+  };
+  const advCount = countFilters(adv);
+
+  const tasks = sortTasks(
+    allTasks
+      .filter((t) => activeTests.length === 0 || activeTests.some((test) => test(t)))
+      .filter((t) => matchesSearch(t, query))
+      .filter((t) => matchesFilters(t, adv)),
+    display.sort
+  );
+  const narrowing = activeTests.length > 0 || !!query.trim() || advCount > 0;
 
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [colorPickerFor, setColorPickerFor] = useState<string | null>(null);
@@ -427,15 +473,72 @@ function TaskBoard({
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center">
-            <Search size={15} strokeWidth={1.75} />
-          </button>
-          <button className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center">
-            <Filter size={15} strokeWidth={1.75} />
-          </button>
-          <button className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center">
-            <SlidersHorizontal size={15} strokeWidth={1.75} />
-          </button>
+          {searchOpen ? (
+            <div className="flex items-center gap-2 bg-white border border-line rounded-full pl-3 pr-1.5 h-9 w-[240px] focus-within:border-ink">
+              <Search size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setQuery("");
+                    setSearchOpen(false);
+                  }
+                }}
+                placeholder="Search tasks"
+                className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] placeholder:text-muted"
+              />
+              <button
+                onClick={() => {
+                  setQuery("");
+                  setSearchOpen(false);
+                }}
+                className="w-6 h-6 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink"
+                aria-label="Close search"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSearchOpen(true)}
+              title="Search tasks"
+              aria-label="Search tasks"
+              className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center"
+            >
+              <Search size={15} strokeWidth={1.75} />
+            </button>
+          )}
+          <div className="relative">
+            <button
+              onClick={() => setFilterOpen((o) => !o)}
+              title="Filter tasks"
+              aria-label="Filter tasks"
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-dark text-white" : "bg-card-alt hover:bg-line/60"}`}
+            >
+              <Filter size={15} strokeWidth={1.75} />
+              {advCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-[#1F3A93] text-white text-[10.5px] font-semibold flex items-center justify-center">
+                  {advCount}
+                </span>
+              )}
+            </button>
+            {filterOpen && <FilterMenu value={adv} onChange={setAdv} members={teamMembers} onClose={() => setFilterOpen(false)} />}
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setDisplayOpen((o) => !o)}
+              title="Display options"
+              aria-label="Display options"
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
+                display.sort !== "manual" || display.hideDone ? "bg-dark text-white" : "bg-card-alt hover:bg-line/60"
+              }`}
+            >
+              <SlidersHorizontal size={15} strokeWidth={1.75} />
+            </button>
+            {displayOpen && <DisplayMenu value={display} onChange={setDisplay} onClose={() => setDisplayOpen(false)} />}
+          </div>
           <button
             onClick={() => setModalStatus("todo")}
             className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
@@ -518,16 +621,30 @@ function TaskBoard({
         </button>
       </div>
 
-      {activeTests.length > 0 && (
-        <div className="-mt-3 mb-5 flex items-center gap-3 text-[13px] text-muted">
+      {narrowing && (
+        <div className="-mt-3 mb-5 flex items-center gap-3 text-[13px] text-muted flex-wrap">
           <span>
-            Showing {tasks.length} {tasks.length === 1 ? "task" : "tasks"}:{" "}
-            <span className="text-ink font-medium">
-              {activeFilters.filter((f) => tests[f]).join(", ")}
-            </span>
+            Showing {tasks.length} of {allTasks.length} {allTasks.length === 1 ? "task" : "tasks"}
+            {(() => {
+              const parts = [
+                ...activeFilters.filter((f) => tests[f]),
+                ...(query.trim() ? [`“${query.trim()}”`] : []),
+                ...(advCount ? [`${advCount} ${advCount === 1 ? "filter" : "filters"}`] : []),
+              ];
+              return parts.length ? (
+                <>
+                  : <span className="text-ink font-medium">{parts.join(", ")}</span>
+                </>
+              ) : null;
+            })()}
           </span>
           <button
-            onClick={() => setActiveFilters([])}
+            onClick={() => {
+              setActiveFilters([]);
+              setQuery("");
+              setSearchOpen(false);
+              setAdv(NO_FILTERS);
+            }}
             className="font-medium underline underline-offset-2 hover:text-ink transition-colors"
           >
             Show all tasks
@@ -588,7 +705,7 @@ function TaskBoard({
         </div>
       ) : (
         <div className="flex gap-5 w-full items-start">
-          {columns.map((col) => {
+          {columns.filter((c) => !(display.hideDone && !c.custom && c.status === "done")).map((col) => {
             const customIds = new Set(columns.filter((c) => c.custom).map((c) => c.id));
             const colTasks = col.custom
               ? tasks.filter((t) => t.columnId === col.id)
