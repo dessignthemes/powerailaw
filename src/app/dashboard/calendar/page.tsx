@@ -738,6 +738,11 @@ export default function CalendarPage() {
             setSynced((list) => list.filter((x) => x.id !== id));
             setSaveNotice({ kind: "ok", text: `“${selected.title}” was deleted.` });
           }}
+          onUpdated={(ev) => {
+            setSynced((list) => list.map((x) => (x.id === ev.id ? { ...x, ...ev } : x)));
+            setSelected((cur) => (cur && cur.id === ev.id ? { ...cur, ...ev } : cur));
+            setSaveNotice({ kind: "ok", text: `Changes to “${ev.title}” were saved to ${providerName[ev.provider]}.` });
+          }}
         />
       )}
 

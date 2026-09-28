@@ -315,3 +315,48 @@ export async function deleteSyncedEvent(userId: string, provider: MailProvider, 
     provider === "google" ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}` : `https://graph.microsoft.com/v1.0/me/events/${id}`;
   await calFetch(url, token, { method: "DELETE" });
 }
+
+export type EventChanges = {
+  title: string;
+  allDay: boolean;
+  start: string; // ISO (timed) or YYYY-MM-DD (all-day)
+  end: string; // ISO (timed) or YYYY-MM-DD exclusive (all-day)
+  location: string | null;
+  notes?: string | null; // only sent when changed, so formatted notes aren't flattened
+};
+
+// Saves changes to an event in the person's own Outlook / Google calendar.
+export async function updateSyncedEvent(userId: string, provider: MailProvider, rawId: string, c: EventChanges): Promise<EventDetail> {
+  if (!EVENT_ID.test(rawId)) throw new MailError("provider_error", "This event no longer exists in the calendar.");
+  const { token } = await getAccessToken(userId, provider, "calendar");
+  const id = encodeURIComponent(rawId);
+  const json = { "Content-Type": "application/json" };
+  if (provider === "google") {
+    await calFetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`, token, {
+      method: "PATCH",
+      headers: json,
+      body: JSON.stringify({
+        summary: c.title,
+        location: c.location ?? "",
+        ...(c.notes !== undefined ? { description: c.notes ?? "" } : {}),
+        start: c.allDay ? { date: c.start, dateTime: null } : { dateTime: c.start, timeZone: "UTC", date: null },
+        end: c.allDay ? { date: c.end, dateTime: null } : { dateTime: c.end, timeZone: "UTC", date: null },
+      }),
+    });
+  } else {
+    const iso = (v: string) => v.replace(/Z$/, "").replace(/\.\d+$/, "");
+    await calFetch(`https://graph.microsoft.com/v1.0/me/events/${id}`, token, {
+      method: "PATCH",
+      headers: json,
+      body: JSON.stringify({
+        subject: c.title,
+        isAllDay: c.allDay,
+        start: { dateTime: c.allDay ? `${c.start}T00:00:00` : iso(c.start), timeZone: "UTC" },
+        end: { dateTime: c.allDay ? `${c.end}T00:00:00` : iso(c.end), timeZone: "UTC" },
+        location: { displayName: c.location ?? "" },
+        ...(c.notes !== undefined ? { body: { contentType: "text", content: c.notes ?? "" } } : {}),
+      }),
+    });
+  }
+  return getEventDetail(userId, provider, rawId);
+}

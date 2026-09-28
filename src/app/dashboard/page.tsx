@@ -465,6 +465,7 @@ export default function DashboardHome() {
           event={openEvent}
           onClose={() => setOpenEvent(null)}
           onDeleted={(id) => setCal((c) => ({ ...c, events: c.events.filter((x) => x.id !== id) }))}
+          onUpdated={(ev) => setCal((c) => ({ ...c, events: c.events.map((x) => (x.id === ev.id ? { ...x, ...ev } : x)) }))}
         />
       )}
     </div>
