@@ -6,7 +6,17 @@ import { initialsFor, displayName } from "@/lib/initials";
 
 // Black circle with a workspace member's initials. Hover shows who it is;
 // click opens the Task Board filtered to the tasks they created.
-export default function MemberAvatar({ userId, size = 26, label = "Created by" }: { userId: string | null | undefined; size?: number; label?: string }) {
+export default function MemberAvatar({
+  userId,
+  size = 26,
+  label = "Created by",
+  light = false,
+}: {
+  userId: string | null | undefined;
+  size?: number;
+  label?: string;
+  light?: boolean; // quiet beige circle (task cards) instead of black
+}) {
   const router = useRouter();
   const { teamMembers } = useWorkspaceData();
   if (!userId) return null;
@@ -25,7 +35,7 @@ export default function MemberAvatar({ userId, size = 26, label = "Created by" }
         onClick={open}
         aria-label={`${label} ${name}${m ? `, ${m.email}` : ""}. View their tasks`}
         className={`rounded-full flex items-center justify-center font-semibold tracking-tight transition-transform hover:scale-105 ${
-          m ? "bg-dark text-white" : "bg-line text-muted cursor-default"
+          light ? "bg-card-alt border border-line text-muted hover:text-ink" : m ? "bg-dark text-white" : "bg-line text-muted cursor-default"
         }`}
         style={{ width: size, height: size, fontSize: size <= 24 ? 10 : 11 }}
       >

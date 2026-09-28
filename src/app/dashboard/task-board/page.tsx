@@ -911,9 +911,13 @@ function TaskBoard({
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-card-alt border border-line flex items-center justify-center flex-shrink-0">
-                              <User size={12} strokeWidth={1.75} className="text-muted" />
-                            </span>
+                            {t.createdBy ? (
+                              <MemberAvatar userId={t.createdBy} size={24} light />
+                            ) : (
+                              <span className="w-6 h-6 rounded-full bg-card-alt border border-line flex items-center justify-center flex-shrink-0">
+                                <User size={12} strokeWidth={1.75} className="text-muted" />
+                              </span>
+                            )}
                             <span
                               className="text-[12px] font-medium px-2.5 py-1 rounded-full"
                               style={{
