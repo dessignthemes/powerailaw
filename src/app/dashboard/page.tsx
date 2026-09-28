@@ -8,6 +8,7 @@ import TaskDetailModal from "@/components/TaskDetailModal";
 import { BoardTask, priorityMeta, statusMeta } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MemberAvatar from "@/components/MemberAvatar";
+import EventDetailModal from "@/components/EventDetailModal";
 import { rangeBounds, isDueIn, ymd } from "@/lib/taskDates";
 import {
   ListChecks,
@@ -76,6 +77,7 @@ export default function DashboardHome() {
       cancelled = true;
     };
   }, [range]);
+  const [openEvent, setOpenEvent] = useState<DashEvent | null>(null);
   const eventStart = (e: DashEvent) => (e.allDay ? new Date(`${e.start}T00:00:00`) : new Date(e.start));
   const periodWord = range === "today" ? "today" : range === "week" ? "this week" : "next week";
   const nextEvent = cal.events.find((e) => e.allDay || new Date(e.end) > new Date()) ?? null;
@@ -329,12 +331,10 @@ export default function DashboardHome() {
                   </div>
                   <div className="divide-y divide-line">
                     {list.map((e) => (
-                      <a
+                      <button
                         key={e.id}
-                        href={e.link ?? "/dashboard/calendar"}
-                        target={e.link ? "_blank" : undefined}
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-4 px-5 py-3 hover:bg-card-alt/60 transition-colors"
+                        onClick={() => setOpenEvent(e)}
+                        className="w-full text-left flex items-center gap-4 px-5 py-3 hover:bg-card-alt/60 transition-colors"
                       >
                         <span className="mono text-[12.5px] text-muted w-16 flex-shrink-0">{fmtTime(e)}</span>
                         <span className="text-[14.5px] font-medium truncate flex-1">{e.title}</span>
@@ -342,7 +342,7 @@ export default function DashboardHome() {
                         <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 flex-shrink-0">
                           {e.provider === "microsoft" ? "Outlook" : "Google"}
                         </span>
-                      </a>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -458,6 +458,13 @@ export default function DashboardHome() {
             updateTask(updated);
             setSelectedTask(updated);
           }}
+        />
+      )}
+      {openEvent && (
+        <EventDetailModal
+          event={openEvent}
+          onClose={() => setOpenEvent(null)}
+          onDeleted={(id) => setCal((c) => ({ ...c, events: c.events.filter((x) => x.id !== id) }))}
         />
       )}
     </div>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import Link from "next/link";
+import EventDetailModal from "@/components/EventDetailModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import {
   ChevronLeft,
@@ -298,9 +299,11 @@ export default function CalendarPage() {
     }
   }
 
+  const [selected, setSelected] = useState<Synced | null>(null);
   function openEvent(e: Shown, ev: React.MouseEvent) {
     ev.stopPropagation();
-    if (e.link) window.open(e.link, "_blank", "noopener");
+    const found = synced.find((x) => x.id === e.id);
+    if (found) setSelected(found); // events still being saved can't be opened yet
   }
 
   const headerLabel =
@@ -471,7 +474,7 @@ export default function CalendarPage() {
             {ok.length > 0 && (
               <div className="text-[12.5px] text-muted flex items-center gap-2 flex-wrap px-1">
                 <Check size={13} className="text-[#2F5E2A]" />
-                Synced with {ok.map((x) => `${providerName[x.provider]}${x.email ? ` (${x.email})` : ""}`).join(" and ")}. Click an event to open it there.
+                Synced with {ok.map((x) => `${providerName[x.provider]}${x.email ? ` (${x.email})` : ""}`).join(" and ")}. Click an event to see its details.
                 {!ok.some((x) => x.provider === "google") && !bad.some((x) => x.provider === "google") && (
                   <Link href={connect("google")} className="underline">Add Google Calendar</Link>
                 )}
@@ -725,6 +728,17 @@ export default function CalendarPage() {
             )}
           </div>
         </div>
+      )}
+
+      {selected && (
+        <EventDetailModal
+          event={selected}
+          onClose={() => setSelected(null)}
+          onDeleted={(id) => {
+            setSynced((list) => list.filter((x) => x.id !== id));
+            setSaveNotice({ kind: "ok", text: `“${selected.title}” was deleted.` });
+          }}
+        />
       )}
 
       {modalDate && (

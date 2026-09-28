@@ -205,3 +205,113 @@ export async function createSyncedEvent(userId: string, provider: MailProvider, 
     link: created.webLink ?? null,
   };
 }
+
+export type EventDetail = SyncedEvent & {
+  notes: string | null; // plain text
+  organizer: string | null;
+  attendees: { name: string | null; email: string; response: string | null }[];
+  joinUrl: string | null;
+};
+
+const EVENT_ID = /^[A-Za-z0-9=_+/-]{1,1024}$/;
+
+function stripHtml(html: string) {
+  return html
+    .replace(/<(script|style|head)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li|tr|h\d)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+async function calFetch(url: string, token: string, init: RequestInit = {}) {
+  const res = await fetch(url, { ...init, headers: { Authorization: `Bearer ${token}`, ...(init.headers ?? {}) }, cache: "no-store" });
+  if (res.status === 401) throw new MailError("reconnect", "Your calendar connection has expired. Reconnect, then try again.");
+  if (res.status === 403) throw new MailError("missing_scope", "LawPower isn't allowed to do that on this calendar. Reconnect and allow calendar access.");
+  if (res.status === 404 || res.status === 410) throw new MailError("provider_error", "This event no longer exists in the calendar.");
+  if (!res.ok) {
+    console.error("Calendar API error", res.status);
+    throw new MailError("provider_error", "The calendar service didn't respond as expected. Please try again.");
+  }
+  return res;
+}
+
+// One event's full details from the person's own Outlook / Google calendar.
+export async function getEventDetail(userId: string, provider: MailProvider, rawId: string): Promise<EventDetail> {
+  if (!EVENT_ID.test(rawId)) throw new MailError("provider_error", "This event no longer exists in the calendar.");
+  const { token } = await getAccessToken(userId, provider, "calendar");
+  const id = encodeURIComponent(rawId);
+  if (provider === "google") {
+    const e = (await (await calFetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`, token)).json()) as GEvent & {
+      description?: string;
+      hangoutLink?: string;
+      organizer?: { email?: string; displayName?: string };
+      attendees?: { email: string; displayName?: string; responseStatus?: string }[];
+      conferenceData?: { entryPoints?: { entryPointType?: string; uri?: string }[] };
+    };
+    const allDay = !!e.start?.date;
+    return {
+      id: `g:${e.id}`,
+      provider,
+      title: e.summary?.trim() || "(no title)",
+      start: allDay ? e.start!.date! : e.start!.dateTime!,
+      end: allDay ? e.end?.date ?? e.start!.date! : e.end?.dateTime ?? e.start!.dateTime!,
+      allDay,
+      location: e.location ?? null,
+      link: e.htmlLink ?? null,
+      notes: e.description ? stripHtml(e.description) : null,
+      organizer: e.organizer?.displayName || e.organizer?.email || null,
+      attendees: (e.attendees ?? []).map((a) => ({ name: a.displayName ?? null, email: a.email, response: a.responseStatus ?? null })),
+      joinUrl: e.hangoutLink ?? e.conferenceData?.entryPoints?.find((p) => p.entryPointType === "video")?.uri ?? null,
+    };
+  }
+  const e = (await (
+    await calFetch(
+      `https://graph.microsoft.com/v1.0/me/events/${id}?$select=id,subject,isAllDay,start,end,location,webLink,body,organizer,attendees,onlineMeeting`,
+      token,
+      { headers: { Prefer: 'outlook.timezone="UTC", outlook.body-content-type="text"' } }
+    )
+  ).json()) as MEvent & {
+    body?: { content?: string };
+    organizer?: { emailAddress?: { name?: string; address?: string } };
+    attendees?: { emailAddress?: { name?: string; address?: string }; status?: { response?: string } }[];
+    onlineMeeting?: { joinUrl?: string } | null;
+  };
+  const s = e.start?.dateTime ?? "";
+  const en = e.end?.dateTime ?? s;
+  const allDay = !!e.isAllDay;
+  return {
+    id: `m:${e.id}`,
+    provider,
+    title: e.subject?.trim() || "(no title)",
+    start: allDay ? s.slice(0, 10) : `${s.replace(/\.\d+$/, "")}Z`,
+    end: allDay ? en.slice(0, 10) : `${en.replace(/\.\d+$/, "")}Z`,
+    allDay,
+    location: e.location?.displayName || null,
+    link: e.webLink ?? null,
+    notes: e.body?.content?.trim() ? e.body.content.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim() : null,
+    organizer: e.organizer?.emailAddress?.name || e.organizer?.emailAddress?.address || null,
+    attendees: (e.attendees ?? [])
+      .filter((a) => a.emailAddress?.address)
+      .map((a) => ({ name: a.emailAddress?.name ?? null, email: a.emailAddress!.address!, response: a.status?.response ?? null })),
+    joinUrl: e.onlineMeeting?.joinUrl ?? null,
+  };
+}
+
+// Deletes the event from the person's own Outlook / Google calendar.
+export async function deleteSyncedEvent(userId: string, provider: MailProvider, rawId: string): Promise<void> {
+  if (!EVENT_ID.test(rawId)) throw new MailError("provider_error", "This event no longer exists in the calendar.");
+  const { token } = await getAccessToken(userId, provider, "calendar");
+  const id = encodeURIComponent(rawId);
+  const url =
+    provider === "google" ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}` : `https://graph.microsoft.com/v1.0/me/events/${id}`;
+  await calFetch(url, token, { method: "DELETE" });
+}
