@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import TimeSlider from "@/components/TimeSlider";
 import TaskFilterDropdown from "@/components/TaskFilterDropdown";
@@ -8,7 +8,7 @@ import TaskDetailModal from "@/components/TaskDetailModal";
 import { BoardTask, priorityMeta, statusMeta } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MemberAvatar from "@/components/MemberAvatar";
-import { isDueIn, ymd } from "@/lib/taskDates";
+import { rangeBounds, isDueIn, ymd } from "@/lib/taskDates";
 import {
   ListChecks,
   Calendar,
@@ -54,6 +54,33 @@ export default function DashboardHome() {
   });
 
   const activeRange = rangeTabs.find((r) => r.key === range)!;
+
+  // Real calendar events (Outlook / Google) for the selected period.
+  type DashEvent = { id: string; provider: "google" | "microsoft"; title: string; start: string; end: string; allDay: boolean; location: string | null; link: string | null };
+  const [cal, setCal] = useState<{ events: DashEvent[]; connected: boolean; loaded: boolean }>({ events: [], connected: true, loaded: false });
+  useEffect(() => {
+    let cancelled = false;
+    const b = rangeBounds(range);
+    const [ys, ms, ds] = b.start.split("-").map(Number);
+    const [ye, me, de] = b.end.split("-").map(Number);
+    const from = new Date(ys, ms - 1, ds);
+    const to = new Date(ye, me - 1, de + 1);
+    fetch(`/api/calendar/events?${new URLSearchParams({ from: from.toISOString(), to: to.toISOString() })}`)
+      .then((r) => (r.ok ? r.json() : { events: [], sources: [] }))
+      .then((d: { events?: DashEvent[]; sources?: { status: string }[] }) => {
+        if (cancelled) return;
+        setCal({ events: d.events ?? [], connected: (d.sources ?? []).length > 0, loaded: true });
+      })
+      .catch(() => !cancelled && setCal({ events: [], connected: true, loaded: true }));
+    return () => {
+      cancelled = true;
+    };
+  }, [range]);
+  const eventStart = (e: DashEvent) => (e.allDay ? new Date(`${e.start}T00:00:00`) : new Date(e.start));
+  const periodWord = range === "today" ? "today" : range === "week" ? "this week" : "next week";
+  const nextEvent = cal.events.find((e) => e.allDay || new Date(e.end) > new Date()) ?? null;
+  const fmtTime = (e: DashEvent) =>
+    e.allDay ? "All day" : eventStart(e).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(" ", "").toLowerCase();
 
   const { tasks, tasksLoaded, updateTask, boards } = useWorkspaceData();
   const boardName = (id: string | null | undefined) => (id ? boards.find((b) => b.id === id)?.name ?? "Board" : "General");
@@ -208,12 +235,37 @@ export default function DashboardHome() {
           })()}
         </div>
 
-        <div className="bg-card-alt rounded-2xl p-6">
+        <div className="bg-card-alt rounded-2xl p-6 relative">
           <div className="text-[13.5px] font-medium text-muted mb-8 flex items-center gap-1.5">
             <Calendar size={15} strokeWidth={1.75} /> Calendar
           </div>
-          <div className="text-[32px] font-display font-semibold mb-1">0 events</div>
-          <div className="text-[13px] text-muted mb-2">Nothing scheduled today</div>
+          <Link
+            href="/dashboard/calendar"
+            className="group/cal absolute top-5 right-5 flex items-center gap-2 pl-3 pr-1 py-1 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-line/50 transition-colors"
+          >
+            Open calendar
+            <span className="w-6 h-6 rounded-full border-2 border-line flex items-center justify-center group-hover/cal:border-ink transition-colors">
+              <ArrowUpRight size={12} strokeWidth={2} />
+            </span>
+          </Link>
+          <div className="text-[32px] font-display font-semibold mb-1">
+            {cal.loaded ? cal.events.length : "–"} {cal.events.length === 1 ? "event" : "events"}
+          </div>
+          <div className="text-[13px] text-muted mb-2 truncate">
+            {!cal.loaded ? (
+              "Loading your calendar…"
+            ) : !cal.connected ? (
+              <Link href="/dashboard/calendar" className="underline underline-offset-2 hover:text-ink">
+                Connect Outlook or Google Calendar
+              </Link>
+            ) : nextEvent ? (
+              <>
+                Next: <span className="text-ink font-medium">{fmtTime(nextEvent)}</span> {nextEvent.title}
+              </>
+            ) : (
+              `Nothing scheduled ${periodWord}`
+            )}
+          </div>
           <TimeSlider />
         </div>
 
@@ -250,7 +302,49 @@ export default function DashboardHome() {
             <Calendar size={15} strokeWidth={bottomTab === "events" ? 2 : 1.75} /> Events
           </button>
         </div>
-        {bottomTab === "tasks" && (dueTasks.length > 0 || undatedTasks.length > 0) ? (
+        {bottomTab === "events" && cal.events.length > 0 ? (
+          <div className="bg-cream rounded-xl py-2">
+            {(() => {
+              const byDay = new Map<string, DashEvent[]>();
+              for (const e of cal.events) {
+                const key = eventStart(e).toDateString();
+                byDay.set(key, [...(byDay.get(key) ?? []), e]);
+              }
+              return [...byDay.entries()].map(([day, list]) => (
+                <div key={day}>
+                  <div className="px-5 pt-3 pb-1 mono text-[11px] uppercase tracking-wider text-muted">
+                    {new Date(day).toDateString() === new Date().toDateString()
+                      ? "Today"
+                      : new Date(day).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                  </div>
+                  <div className="divide-y divide-line">
+                    {list.map((e) => (
+                      <a
+                        key={e.id}
+                        href={e.link ?? "/dashboard/calendar"}
+                        target={e.link ? "_blank" : undefined}
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 px-5 py-3 hover:bg-card-alt/60 transition-colors"
+                      >
+                        <span className="mono text-[12.5px] text-muted w-16 flex-shrink-0">{fmtTime(e)}</span>
+                        <span className="text-[14.5px] font-medium truncate flex-1">{e.title}</span>
+                        {e.location && <span className="text-[12.5px] text-muted truncate max-w-[200px] hidden sm:inline">{e.location}</span>}
+                        <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 flex-shrink-0">
+                          {e.provider === "microsoft" ? "Outlook" : "Google"}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()}
+            <div className="px-5 pt-4 pb-2">
+              <Link href="/dashboard/calendar" className="inline-flex items-center gap-1 text-[13px] font-medium text-muted hover:text-ink transition-colors">
+                Open calendar <ArrowUpRight size={13} strokeWidth={1.75} />
+              </Link>
+            </div>
+          </div>
+        ) : bottomTab === "tasks" && (dueTasks.length > 0 || undatedTasks.length > 0) ? (
           <div className="bg-cream rounded-xl min-h-[520px] py-2">
             {dueTasks.length > 0 && (
               <>
@@ -300,6 +394,8 @@ export default function DashboardHome() {
             <div className="text-[15px] font-medium">
               {bottomTab === "tasks" && !tasksLoaded
                 ? "Loading tasks…"
+                : bottomTab === "events" && !cal.loaded
+                  ? "Loading events…"
                 : `${bottomTab === "tasks" ? "Nothing due" : "Nothing scheduled"} ${
                     range === "today" ? "today" : range === "week" ? "this week" : "next week"
                   }`}

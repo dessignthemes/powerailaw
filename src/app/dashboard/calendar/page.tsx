@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import Link from "next/link";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,6 +15,7 @@ import {
   Check,
   ChevronDown,
   AlertTriangle,
+  X,
   Loader2,
 } from "lucide-react";
 import NewEventModal, { CalendarEvent } from "@/components/NewEventModal";
@@ -160,7 +162,10 @@ export default function CalendarPage() {
   const [view, setView] = useState<ViewMode>("Month");
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  // Events being saved to Outlook / Google (shown until the save finishes).
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [saveNotice, setSaveNotice] = useState<{ kind: "ok" | "error" | "saving"; text: string; link?: string | null } | null>(null);
+  const { addTask } = useWorkspaceData();
   const [modalDate, setModalDate] = useState<string | null>(null);
   const [synced, setSynced] = useState<Synced[]>([]);
   const [sources, setSources] = useState<Source[] | null>(null);
@@ -237,6 +242,61 @@ export default function CalendarPage() {
     const el = view === "Week" ? weekScroll.current : view === "Day" ? dayScroll.current : null;
     if (el) el.scrollTop = 7 * HOUR_PX;
   }, [view]);
+
+  async function saveEvent(event: CalendarEvent) {
+    // "Add as task" makes a LawPower task due that day instead of a calendar event.
+    if (event.isTask) {
+      addTask({
+        id: crypto.randomUUID(),
+        title: event.title,
+        description: event.description ?? "",
+        status: "todo",
+        priority: "Medium",
+        assignee: null,
+        dueDate: event.date,
+        comments: [],
+        boardId: null,
+      });
+      setSaveNotice({ kind: "ok", text: `“${event.title}” was added as a task in General, due ${event.date}.` });
+      return;
+    }
+    const target = (sources ?? []).find((x) => x.status === "ok") ?? (sources ?? [])[0];
+    if (!target) {
+      setSaveNotice({ kind: "error", text: "Connect Outlook or Google Calendar first. Events are saved to your own calendar." });
+      return;
+    }
+    const endDay = event.endDate && event.endDate >= event.date ? event.endDate : event.date;
+    let start: string, end: string;
+    if (event.allDay) {
+      const after = parseAllDay(endDay);
+      after.setDate(after.getDate() + 1); // all-day end is exclusive
+      start = event.date;
+      end = toISODate(after);
+    } else {
+      const s0 = new Date(`${event.date}T${event.start || "09:00"}`);
+      let e0 = new Date(`${endDay}T${event.end || "10:00"}`);
+      if (e0 <= s0) e0 = new Date(s0.getTime() + 30 * 60000);
+      start = s0.toISOString();
+      end = e0.toISOString();
+    }
+    setEvents((evs) => [...evs, event]);
+    setSaveNotice({ kind: "saving", text: `Saving “${event.title}” to ${providerName[target.provider]}…` });
+    try {
+      const res = await fetch("/api/calendar/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: target.provider, title: event.title, allDay: !!event.allDay, start, end, notes: event.description || null }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d?.error ?? "Couldn't save the event.");
+      setSynced((list) => [...list, d.event as Synced]);
+      setSaveNotice({ kind: "ok", text: `“${event.title}” was added to ${providerName[target.provider]}.`, link: (d.event as Synced).link });
+    } catch (e) {
+      setSaveNotice({ kind: "error", text: `${(e as Error).message} The event wasn't saved.` });
+    } finally {
+      setEvents((evs) => evs.filter((x) => x.id !== event.id));
+    }
+  }
 
   function openEvent(e: Shown, ev: React.MouseEvent) {
     ev.stopPropagation();
@@ -423,6 +483,31 @@ export default function CalendarPage() {
           </div>
         );
       })()}
+
+      {saveNotice && (
+        <div
+          className={`mb-5 -mt-2 rounded-xl px-4 py-3 text-[13.5px] flex items-center justify-between gap-3 border ${
+            saveNotice.kind === "error" ? "border-red-200 bg-red-50 text-red-700" : saveNotice.kind === "ok" ? "border-[#B9D6B2] bg-[#F1F7EF]" : "border-line bg-card-alt"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            {saveNotice.kind === "saving" ? <Loader2 size={14} className="animate-spin" /> : saveNotice.kind === "ok" ? <Check size={14} className="text-[#2F5E2A]" /> : <AlertTriangle size={14} />}
+            {saveNotice.text}
+          </span>
+          <span className="flex items-center gap-3">
+            {saveNotice.link && (
+              <a href={saveNotice.link} target="_blank" rel="noopener noreferrer" className="font-medium underline underline-offset-2">
+                Open it
+              </a>
+            )}
+            {saveNotice.kind !== "saving" && (
+              <button onClick={() => setSaveNotice(null)} aria-label="Dismiss">
+                <X size={14} />
+              </button>
+            )}
+          </span>
+        </div>
+      )}
 
       {view === "Month" && (
         <div className="border border-line rounded-2xl overflow-hidden">
@@ -647,8 +732,8 @@ export default function CalendarPage() {
           initialDate={modalDate}
           onClose={() => setModalDate(null)}
           onCreate={(event) => {
-            setEvents((evs) => [...evs, event]);
             setModalDate(null);
+            saveEvent(event);
           }}
         />
       )}

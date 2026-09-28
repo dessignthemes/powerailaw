@@ -136,3 +136,72 @@ export async function syncedEvents(userId: string, from: string, to: string) {
   events.sort((a, b) => (a.start < b.start ? -1 : 1));
   return { events, sources };
 }
+
+export type NewEvent = {
+  title: string;
+  allDay: boolean;
+  start: string; // ISO datetime (timed) or YYYY-MM-DD (all-day)
+  end: string; // ISO datetime (timed) or YYYY-MM-DD, exclusive (all-day)
+  location?: string | null;
+  notes?: string | null;
+};
+
+async function postJson<T>(url: string, token: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (res.status === 401) throw new MailError("reconnect", "Your calendar connection has expired. Reconnect, then try again.");
+  if (res.status === 403)
+    throw new MailError("missing_scope", "LawPower isn't allowed to add events to this calendar. Reconnect and allow calendar access, then try again.");
+  if (!res.ok) {
+    console.error("Calendar create error", res.status);
+    throw new MailError("provider_error", "The calendar service couldn't save the event. Please try again.");
+  }
+  return res.json() as Promise<T>;
+}
+
+// Creates the event in the person's own Outlook or Google calendar.
+export async function createSyncedEvent(userId: string, provider: MailProvider, e: NewEvent): Promise<SyncedEvent> {
+  const { token } = await getAccessToken(userId, provider, "calendar");
+  if (provider === "google") {
+    const created = await postJson<GEvent>("https://www.googleapis.com/calendar/v3/calendars/primary/events", token, {
+      summary: e.title,
+      location: e.location || undefined,
+      description: e.notes || undefined,
+      start: e.allDay ? { date: e.start } : { dateTime: e.start, timeZone: "UTC" },
+      end: e.allDay ? { date: e.end } : { dateTime: e.end, timeZone: "UTC" },
+    });
+    return {
+      id: `g:${created.id}`,
+      provider,
+      title: created.summary?.trim() || e.title,
+      start: e.start,
+      end: e.end,
+      allDay: e.allDay,
+      location: created.location ?? e.location ?? null,
+      link: created.htmlLink ?? null,
+    };
+  }
+  const iso = (v: string) => v.replace(/Z$/, "").replace(/\.\d+$/, "");
+  const created = await postJson<MEvent>("https://graph.microsoft.com/v1.0/me/events", token, {
+    subject: e.title,
+    isAllDay: e.allDay,
+    start: { dateTime: e.allDay ? `${e.start}T00:00:00` : iso(e.start), timeZone: "UTC" },
+    end: { dateTime: e.allDay ? `${e.end}T00:00:00` : iso(e.end), timeZone: "UTC" },
+    ...(e.location ? { location: { displayName: e.location } } : {}),
+    ...(e.notes ? { body: { contentType: "text", content: e.notes } } : {}),
+  });
+  return {
+    id: `m:${created.id}`,
+    provider,
+    title: created.subject?.trim() || e.title,
+    start: e.start,
+    end: e.end,
+    allDay: e.allDay,
+    location: created.location?.displayName || e.location || null,
+    link: created.webLink ?? null,
+  };
+}

@@ -15,6 +15,9 @@ export type CalendarEvent = {
   end: string;
   type: string;
   isTask: boolean;
+  endDate?: string;
+  allDay?: boolean;
+  description?: string;
 };
 
 const reminderOptions = [
@@ -118,6 +121,9 @@ export default function NewEventModal({
       end,
       type,
       isTask: asTask,
+      endDate: endDate || date,
+      allDay,
+      description,
     });
   }
 
