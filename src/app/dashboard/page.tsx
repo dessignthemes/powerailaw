@@ -25,7 +25,7 @@ import {
 const rangeTabs = [
   { key: "today", label: "Today", due: "Due today" },
   { key: "week", label: "Week", due: "Due this week" },
-  { key: "nextweek", label: "Next week", due: "Due next week" },
+  { key: "month", label: "Month", due: "Due this month" },
 ] as const;
 
 type RangeKey = (typeof rangeTabs)[number]["key"];
@@ -111,7 +111,7 @@ export default function DashboardHome() {
     };
   }, [range]);
   const eventStart = (e: DashEvent) => (e.allDay ? new Date(`${e.start}T00:00:00`) : new Date(e.start));
-  const periodWord = range === "today" ? "today" : range === "week" ? "this week" : "next week";
+  const periodWord = range === "today" ? "today" : range === "week" ? "this week" : "this month";
   const nextEvent = cal.events.find((e) => e.allDay || new Date(e.end) > new Date()) ?? null;
   const fmtTime = (e: DashEvent) =>
     e.allDay ? "All day" : eventStart(e).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(" ", "").toLowerCase();
@@ -417,7 +417,7 @@ export default function DashboardHome() {
             )}
             {dueTasks.length === 0 && (
               <div className="px-5 py-6 text-[14px] text-muted">
-                Nothing due {range === "today" ? "today" : range === "week" ? "this week" : "next week"}.
+                Nothing due {range === "today" ? "today" : range === "week" ? "this week" : "this month"}.
               </div>
             )}
             {undatedTasks.length > 0 && (
@@ -450,7 +450,7 @@ export default function DashboardHome() {
                 : bottomTab === "events" && !cal.loaded
                   ? "Loading events…"
                 : `${bottomTab === "tasks" ? "Nothing due" : "Nothing scheduled"} ${
-                    range === "today" ? "today" : range === "week" ? "this week" : "next week"
+                    range === "today" ? "today" : range === "week" ? "this week" : "this month"
                   }`}
             </div>
           </div>

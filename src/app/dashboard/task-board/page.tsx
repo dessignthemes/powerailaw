@@ -72,7 +72,7 @@ const initialColumns: Column[] = [
   { id: "done", title: "Done", color: "#22C55E", status: "done" },
 ];
 
-const filterPills = ["Me", "Overdue", "Due today", "Due this week", "Next week", "Waiting on client"];
+const filterPills = ["Me", "Overdue", "Due today", "Due this week", "Due this month", "Next week", "Waiting on client"];
 
 // Pills that actually narrow the task list. A task is shown if it matches
 // any active one. "Me" (tasks assigned to the signed-in person) is added in TaskBoard.
@@ -81,6 +81,7 @@ const filterTests: Record<string, (t: BoardTask) => boolean> = {
   "Due today": (t) => isDueIn(t, "today"),
   "Due this week": (t) => isDueIn(t, "week"),
   "Next week": (t) => isDueIn(t, "nextweek"),
+  "Due this month": (t) => isDueIn(t, "month"),
   "Waiting on client": (t) => t.status === "waiting",
 };
 
@@ -88,6 +89,7 @@ const dueParamToPill: Record<string, string> = {
   today: "Due today",
   week: "Due this week",
   nextweek: "Next week",
+  month: "Due this month",
 };
 
 export default function TaskBoardPage() {
@@ -98,7 +100,7 @@ export default function TaskBoardPage() {
   );
 }
 
-// Reads ?due=today|week|nextweek (used by the Dashboard's "Due today" card)
+// Reads ?due=today|week|nextweek|month (used by the Dashboard's "Due today" card)
 // and opens the board with that filter already on.
 function TaskBoardFromUrl() {
   const params = useSearchParams();

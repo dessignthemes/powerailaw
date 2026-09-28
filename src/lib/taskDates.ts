@@ -1,6 +1,6 @@
 import type { BoardTask } from "@/components/NewTaskModal";
 
-export type DueRange = "today" | "week" | "nextweek";
+export type DueRange = "today" | "week" | "nextweek" | "month";
 
 // Due dates are stored as "YYYY-MM-DD" (from <input type="date">), so all
 // comparisons use local calendar dates in that same format.
@@ -22,6 +22,12 @@ export function rangeBounds(range: DueRange) {
 
   if (range === "today") return { start: todayStr, end: todayStr, includeOverdue: true, today: todayStr };
   if (range === "week") return { start: todayStr, end: ymd(weekEnd), includeOverdue: true, today: todayStr };
+  if (range === "month") {
+    // The whole calendar month (tasks from earlier this month count as overdue).
+    const first = new Date(today.getFullYear(), today.getMonth(), 1);
+    const last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return { start: ymd(first), end: ymd(last), includeOverdue: true, today: todayStr };
+  }
 
   const nextStart = new Date(weekStart);
   nextStart.setDate(weekStart.getDate() + 7);
