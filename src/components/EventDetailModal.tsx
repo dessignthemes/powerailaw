@@ -181,7 +181,7 @@ export default function EventDetailModal({ event, onClose, onDeleted }: { event:
                 href={link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13.5px] font-medium text-muted hover:text-ink hover:bg-card-alt"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-ink bg-card-alt hover:bg-line/70 transition-colors"
               >
                 <ExternalLink size={13} strokeWidth={1.75} /> Open in {event.provider === "microsoft" ? "Outlook" : "Google"}
               </a>
