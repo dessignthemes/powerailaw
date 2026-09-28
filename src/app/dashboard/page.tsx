@@ -247,10 +247,10 @@ export default function DashboardHome() {
           </div>
           <Link
             href={`/dashboard/task-board?due=${range}`}
-            className="group/all absolute top-5 right-5 flex items-center gap-2 pl-3 pr-1 py-1 rounded-full text-[13px] font-medium text-ink bg-line/50 hover:bg-line/80 transition-colors"
+            className="group/all absolute top-5 right-5 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium text-ink bg-line/50 hover:bg-line/80 transition-colors"
           >
             View all tasks
-            <span className="w-6 h-6 rounded-full border-2 border-ink flex items-center justify-center transition-colors">
+            <span className="flex items-center">
               <ArrowUpRight size={12} strokeWidth={2} />
             </span>
           </Link>
@@ -298,10 +298,10 @@ export default function DashboardHome() {
           </div>
           <Link
             href="/dashboard/calendar"
-            className="group/cal absolute top-5 right-5 flex items-center gap-2 pl-3 pr-1 py-1 rounded-full text-[13px] font-medium text-ink bg-line/50 hover:bg-line/80 transition-colors"
+            className="group/cal absolute top-5 right-5 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium text-ink bg-line/50 hover:bg-line/80 transition-colors"
           >
             Open calendar
-            <span className="w-6 h-6 rounded-full border-2 border-ink flex items-center justify-center transition-colors">
+            <span className="flex items-center">
               <ArrowUpRight size={12} strokeWidth={2} />
             </span>
           </Link>
@@ -337,10 +337,10 @@ export default function DashboardHome() {
           </div>
           <Link
             href="/dashboard/time-tracking"
-            className="group/time absolute top-5 right-5 flex items-center gap-2 pl-3 pr-1 py-1 rounded-full text-[13px] font-medium text-ink bg-line/50 hover:bg-line/80 transition-colors"
+            className="group/time absolute top-5 right-5 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium text-ink bg-line/50 hover:bg-line/80 transition-colors"
           >
             Open time tracking
-            <span className="w-6 h-6 rounded-full border-2 border-ink flex items-center justify-center transition-colors">
+            <span className="flex items-center">
               <ArrowUpRight size={12} strokeWidth={2} />
             </span>
           </Link>
