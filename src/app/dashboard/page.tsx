@@ -174,7 +174,7 @@ export default function DashboardHome() {
             {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"}
           </div>
           <div className="text-[13px] text-muted">
-            {openCount} open · {undatedTasks.length} with no due date
+            {openCount} open in total · {undatedTasks.length} with no due date
           </div>
           {/* Per-board breakdown: each line opens that board, filtered to the same range. */}
           {(() => {
