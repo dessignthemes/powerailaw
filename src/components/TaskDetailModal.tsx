@@ -1,10 +1,12 @@
 "use client";
 
 import AssigneeOptions from "@/components/AssigneeOptions";
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { getTimer, startTimer, clearTimer, saveTimer, formatMinutes, type RunningTimer } from "@/lib/taskTimer";
 import {
   X,
   Maximize2,
+  Square,
   ExternalLink,
   Bold,
   Italic,
@@ -79,21 +81,64 @@ export default function TaskDetailModal({
   const [tab, setTab] = useState("Comments");
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<TaskComment[]>(task.comments ?? []);
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // Task timer: survives closing this window; stopping it saves a time entry.
+  const [timer, setTimer] = useState<RunningTimer | null>(() => (typeof window === "undefined" ? null : getTimer()));
+  const [now, setNow] = useState(() => Date.now());
+  const [timerMsg, setTimerMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [timerBusy, setTimerBusy] = useState(false);
+  const [taskEntries, setTaskEntries] = useState<{ id: string; minutes: number; date: string; description: string; source: string }[] | null>(null);
+  const timerRunning = !!timer && timer.taskId === task.id;
+  const elapsedSeconds = timerRunning ? Math.max(0, Math.floor((now - new Date(timer!.startedAt).getTime()) / 1000)) : 0;
 
   useEffect(() => {
     if (!timerRunning) return;
-    const interval = setInterval(() => {
-      setElapsedSeconds((s) => s + 1);
-    }, 1000);
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, [timerRunning]);
+
+  const loadTaskEntries = useCallback(() => {
+    fetch(`/api/time-entries?task=${task.id}&everyone=1`)
+      .then((r) => (r.ok ? r.json() : { entries: [] }))
+      .then((d) => setTaskEntries(d.entries ?? []))
+      .catch(() => setTaskEntries([]));
+  }, [task.id]);
+
+  async function toggleTimer() {
+    setTimerMsg(null);
+    if (timerRunning && timer) {
+      setTimerBusy(true);
+      try {
+        const { minutes } = await saveTimer(timer);
+        clearTimer();
+        setTimer(null);
+        setTimerMsg({ ok: true, text: `Saved ${formatMinutes(minutes)} to your timesheet.` });
+        loadTaskEntries();
+      } catch (e) {
+        setTimerMsg({ ok: false, text: `${(e as Error).message} The timer is still running.` });
+      } finally {
+        setTimerBusy(false);
+      }
+      return;
+    }
+    const other = getTimer();
+    if (other && other.taskId !== task.id) {
+      if (!confirm(`A timer is running on “${other.title}”. Stop it (and save that time) and start one here?`)) return;
+      try {
+        await saveTimer(other);
+      } catch (e) {
+        setTimerMsg({ ok: false, text: (e as Error).message });
+        return;
+      }
+    }
+    setNow(Date.now());
+    setTimer(startTimer(task.id, title || task.title));
+  }
 
   function formatElapsed(totalSeconds: number) {
     const m = Math.floor(totalSeconds / 60);
     const s = totalSeconds % 60;
     if (m === 0) return `${s}s`;
+    if (m >= 60) return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
     return `${m}m ${String(s).padStart(2, "0")}s`;
   }
 
@@ -332,6 +377,9 @@ export default function TaskDetailModal({
           </div>
 
           <div className="min-h-[56px] mb-3">
+            {tab === "Time tracking" && (
+              <TimeForTask entries={taskEntries} load={loadTaskEntries} />
+            )}
             {tab === "Comments" && (
               comments.length === 0 ? (
                 <div className="text-[13.5px] text-muted text-center py-2">
@@ -385,14 +433,50 @@ export default function TaskDetailModal({
 
         <div className="flex items-center justify-between px-7 py-4 border-t border-line">
           <button
-            onClick={() => setTimerRunning((r) => !r)}
-            className="flex items-center gap-1.5 text-[13.5px] font-medium text-muted hover:text-ink transition-colors"
+            onClick={toggleTimer}
+            disabled={timerBusy}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50 ${
+              timerRunning ? "bg-dark text-white hover:bg-dark2" : "bg-card-alt text-ink hover:bg-line/70"
+            }`}
           >
-            <Play size={14} strokeWidth={1.75} fill={timerRunning ? "currentColor" : "none"} />
-            {timerRunning ? "Timer running" : "Start timer"}
+            {timerRunning ? <Square size={11} fill="currentColor" /> : <Play size={13} strokeWidth={1.75} />}
+            {timerBusy ? "Saving…" : timerRunning ? "Stop & save time" : "Start timer"}
           </button>
-          <span className="text-[13px] text-muted mono">{formatElapsed(elapsedSeconds)}</span>
+          <span className="flex items-center gap-3">
+            {timerMsg && <span className={`text-[12.5px] ${timerMsg.ok ? "text-[#2F5E2A]" : "text-red-600"}`}>{timerMsg.text}</span>}
+            <span className={`text-[13px] mono ${timerRunning ? "text-ink font-semibold" : "text-muted"}`}>{formatElapsed(elapsedSeconds)}</span>
+          </span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function TimeForTask({
+  entries,
+  load,
+}: {
+  entries: { id: string; minutes: number; date: string; description: string; source: string }[] | null;
+  load: () => void;
+}) {
+  useEffect(() => {
+    load();
+  }, [load]);
+  if (!entries) return <div className="text-[13.5px] text-muted py-2">Loading time…</div>;
+  if (!entries.length) return <div className="text-[13.5px] text-muted py-2">No time logged yet. Use the timer below, or add an entry in Time tracking.</div>;
+  const total = entries.reduce((n, e) => n + e.minutes, 0);
+  return (
+    <div className="text-[13.5px]">
+      <div className="mb-2 font-medium">Total: {formatMinutes(total)}</div>
+      <div className="divide-y divide-line border border-line rounded-xl bg-white">
+        {entries.map((e) => (
+          <div key={e.id} className="flex items-center gap-3 px-3.5 py-2">
+            <span className="mono text-[12.5px] text-muted w-[88px]">{e.date}</span>
+            <span className="flex-1 truncate">{e.description || "—"}</span>
+            {e.source === "timer" && <span className="text-[11.5px] text-muted">timer</span>}
+            <span className="font-medium">{formatMinutes(e.minutes)}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

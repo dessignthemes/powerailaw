@@ -9,6 +9,7 @@ import { BoardTask, priorityMeta, statusMeta } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MemberAvatar from "@/components/MemberAvatar";
 import EventDetailModal from "@/components/EventDetailModal";
+import { formatMinutes } from "@/lib/taskTimer";
 import { rangeBounds, isDueIn, ymd } from "@/lib/taskDates";
 import {
   ListChecks,
@@ -78,6 +79,37 @@ export default function DashboardHome() {
     };
   }, [range]);
   const [openEvent, setOpenEvent] = useState<DashEvent | null>(null);
+
+  // Your tracked time: the selected period, and this week so far.
+  const [tracked, setTracked] = useState({ range: 0, week: 0, billable: 0, loaded: false });
+  useEffect(() => {
+    let cancelled = false;
+    const b = rangeBounds(range);
+    const wk = rangeBounds("week");
+    const today = new Date();
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    const weekFrom = ymd(monday);
+    const from = b.start < weekFrom ? b.start : weekFrom;
+    const to = b.end > wk.end ? b.end : wk.end;
+    fetch(`/api/time-entries?${new URLSearchParams({ from, to })}`)
+      .then((r) => (r.ok ? r.json() : { entries: [] }))
+      .then((d: { entries?: { date: string; minutes: number; billable: boolean }[] }) => {
+        if (cancelled) return;
+        const list = d.entries ?? [];
+        const inRange = list.filter((e) => e.date >= b.start && e.date <= b.end);
+        setTracked({
+          range: inRange.reduce((n, e) => n + e.minutes, 0),
+          billable: inRange.filter((e) => e.billable).reduce((n, e) => n + e.minutes, 0),
+          week: list.filter((e) => e.date >= weekFrom && e.date <= wk.end).reduce((n, e) => n + e.minutes, 0),
+          loaded: true,
+        });
+      })
+      .catch(() => !cancelled && setTracked({ range: 0, week: 0, billable: 0, loaded: true }));
+    return () => {
+      cancelled = true;
+    };
+  }, [range]);
   const eventStart = (e: DashEvent) => (e.allDay ? new Date(`${e.start}T00:00:00`) : new Date(e.start));
   const periodWord = range === "today" ? "today" : range === "week" ? "this week" : "next week";
   const nextEvent = cal.events.find((e) => e.allDay || new Date(e.end) > new Date()) ?? null;
@@ -281,12 +313,23 @@ export default function DashboardHome() {
           <TimeSlider />
         </div>
 
-        <div className="bg-card-alt rounded-2xl p-6">
+        <div className="bg-card-alt rounded-2xl p-6 relative">
           <div className="text-[13.5px] font-medium text-muted mb-8 flex items-center gap-1.5">
             <Timer size={15} strokeWidth={1.75} /> Tracked
           </div>
-          <div className="text-[32px] font-display font-semibold mb-1">0m</div>
-          <div className="text-[13px] text-muted mb-2">0m this week</div>
+          <Link
+            href="/dashboard/time-tracking"
+            className="group/time absolute top-5 right-5 flex items-center gap-2 pl-3 pr-1 py-1 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-line/50 transition-colors"
+          >
+            Open time tracking
+            <span className="w-6 h-6 rounded-full border-2 border-line flex items-center justify-center group-hover/time:border-ink transition-colors">
+              <ArrowUpRight size={12} strokeWidth={2} />
+            </span>
+          </Link>
+          <div className="text-[32px] font-display font-semibold mb-1">{tracked.loaded ? formatMinutes(tracked.range) : "–"}</div>
+          <div className="text-[13px] text-muted mb-2">
+            {tracked.loaded ? `${formatMinutes(tracked.week)} this week${tracked.billable ? ` · ${formatMinutes(tracked.billable)} billable` : ""}` : "Loading…"}
+          </div>
           <TimeSlider />
         </div>
       </div>
