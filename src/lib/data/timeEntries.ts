@@ -86,8 +86,7 @@ async function inOrg(table: "matters" | "tasks", orgId: string, id: unknown) {
   return data ? (data.id as string) : null;
 }
 
-export async function createTimeEntry(b: Record<string, unknown>): Promise<TimeEntry> {
-  const { userId, orgId } = await me();
+async function fields(orgId: string, b: Record<string, unknown>) {
   const date = String(b.date ?? "");
   if (!YMD.test(date)) throw new TimeError(400, "Choose a date.");
   const minutes = Math.round(Number(b.minutes));
@@ -96,25 +95,43 @@ export async function createTimeEntry(b: Record<string, unknown>): Promise<TimeE
   const iso = (v: unknown) => (typeof v === "string" && !isNaN(Date.parse(v)) ? new Date(v).toISOString() : null);
   const rate = b.rate === null || b.rate === undefined || b.rate === "" ? null : Number(b.rate);
   if (rate !== null && (!Number.isFinite(rate) || rate < 0 || rate > 100000)) throw new TimeError(400, "Check the hourly rate.");
+  return {
+    entry_date: date,
+    started_at: iso(b.startedAt),
+    ended_at: iso(b.endedAt),
+    minutes,
+    description: String(b.description ?? "").trim().slice(0, 2000),
+    matter_id: await inOrg("matters", orgId, b.matterId),
+    task_id: await inOrg("tasks", orgId, b.taskId),
+    billable: b.billable !== false,
+    rate_cents: rate === null ? null : Math.round(rate * 100),
+  };
+}
+
+export async function createTimeEntry(b: Record<string, unknown>): Promise<TimeEntry> {
+  const { userId, orgId } = await me();
   const { data, error } = await createAdminClient()
     .from("time_entries")
-    .insert({
-      org_id: orgId,
-      user_id: userId,
-      entry_date: date,
-      started_at: iso(b.startedAt),
-      ended_at: iso(b.endedAt),
-      minutes,
-      description: String(b.description ?? "").trim().slice(0, 2000),
-      matter_id: await inOrg("matters", orgId, b.matterId),
-      task_id: await inOrg("tasks", orgId, b.taskId),
-      billable: b.billable !== false,
-      rate_cents: rate === null ? null : Math.round(rate * 100),
-      source: b.source === "timer" ? "timer" : "manual",
-    })
+    .insert({ org_id: orgId, user_id: userId, ...(await fields(orgId, b)), source: b.source === "timer" ? "timer" : "manual" })
     .select("*")
     .single();
   if (error) throw error;
+  return toEntry(data as Row);
+}
+
+// People can only edit their own entries.
+export async function updateTimeEntry(id: string, b: Record<string, unknown>): Promise<TimeEntry> {
+  const { userId, orgId } = await me();
+  const { data, error } = await createAdminClient()
+    .from("time_entries")
+    .update(await fields(orgId, b))
+    .eq("id", id)
+    .eq("org_id", orgId)
+    .eq("user_id", userId)
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new TimeError(404, "You can only edit your own time entries.");
   return toEntry(data as Row);
 }
 

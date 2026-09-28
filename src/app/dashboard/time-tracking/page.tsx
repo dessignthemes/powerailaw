@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar, List, SlidersHorizontal, Plus, X, Clock, Check, ChevronDown, Trash2, Loader2, AlertTriangle, Timer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, List, SlidersHorizontal, Plus, X, Clock, Check, ChevronDown, Trash2, Loader2, AlertTriangle, Timer, Pencil } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { displayName } from "@/lib/initials";
 import { formatMinutes, localYmd } from "@/lib/taskTimer";
@@ -71,6 +71,7 @@ export default function TimeTrackingPage() {
   const [billable, setBillable] = useState<"all" | "billable" | "nonbillable">("all");
   const [everyone, setEveryone] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Entry | null>(null);
   const [entries, setEntries] = useState<Entry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -144,8 +145,14 @@ export default function TimeTrackingPage() {
   const row = (e: Entry, showDate: boolean) => {
     const tn = taskName(e.taskId);
     const rate = rateFor(e);
+    const mine = e.userId === meId;
     return (
-      <div key={e.id} className="group flex items-center justify-between gap-4 px-5 py-3.5 border-b border-line last:border-b-0">
+      <div
+        key={e.id}
+        onClick={mine ? () => setEditing(e) : undefined}
+        title={mine ? "Click to edit" : undefined}
+        className={`flex items-center justify-between gap-4 px-5 py-3.5 border-b border-line last:border-b-0 ${mine ? "cursor-pointer hover:bg-card-alt/40 transition-colors" : ""}`}
+      >
         <div className="min-w-0">
           <div className="text-[14.5px] font-medium truncate">{e.description || tn || "Untitled entry"}</div>
           <div className="text-[12.5px] text-muted mt-0.5 truncate">
@@ -170,14 +177,31 @@ export default function TimeTrackingPage() {
             <span className="text-[11.5px] text-muted px-2 py-1">Non-billable</span>
           )}
           <span className="mono text-[13.5px] font-medium w-[60px] text-right">{formatMinutes(e.minutes)}</span>
-          {e.userId === meId && (
-            <button
-              onClick={() => remove(e)}
-              aria-label="Delete entry"
-              className="w-7 h-7 rounded-full flex items-center justify-center text-muted hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Trash2 size={13} strokeWidth={1.75} />
-            </button>
+          {mine && (
+            <span className="flex items-center gap-1">
+              <button
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  setEditing(e);
+                }}
+                aria-label="Edit entry"
+                title="Edit entry"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-card-alt hover:text-ink hover:bg-line/70 transition-colors"
+              >
+                <Pencil size={13} strokeWidth={1.75} />
+              </button>
+              <button
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  remove(e);
+                }}
+                aria-label="Delete entry"
+                title="Delete entry"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-card-alt hover:text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 size={13} strokeWidth={1.75} />
+              </button>
+            </span>
           )}
         </div>
       </div>
@@ -354,11 +378,16 @@ export default function TimeTrackingPage() {
         </div>
       )}
 
-      {modalOpen && (
+      {(modalOpen || editing) && (
         <AddEntryModal
-          onClose={() => setModalOpen(false)}
+          entry={editing}
+          onClose={() => {
+            setModalOpen(false);
+            setEditing(null);
+          }}
           onSaved={() => {
             setModalOpen(false);
+            setEditing(null);
             setReloadKey((k) => k + 1);
           }}
         />
@@ -367,20 +396,23 @@ export default function TimeTrackingPage() {
   );
 }
 
-function AddEntryModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+function AddEntryModal({ entry, onClose, onSaved }: { entry?: Entry | null; onClose: () => void; onSaved: () => void }) {
   const { matters, tasks } = useWorkspaceData();
   const nowD = new Date();
   const endDefault = hm(nowD);
   const startDefault = fromMinutes(toMinutes(endDefault) - 60);
-  const [date, setDate] = useState(localYmd(nowD));
-  const [start, setStart] = useState(startDefault);
-  const [end, setEnd] = useState(endDefault);
-  const [duration, setDuration] = useState("1h");
-  const [description, setDescription] = useState("");
-  const [matterId, setMatterId] = useState("");
-  const [taskId, setTaskId] = useState("");
-  const [billable, setBillable] = useState(true);
-  const [rate, setRate] = useState("");
+  const s0 = entry?.startedAt ? new Date(entry.startedAt) : null;
+  const [date, setDate] = useState(entry?.date ?? localYmd(nowD));
+  const [start, setStart] = useState(s0 ? hm(s0) : entry ? "09:00" : startDefault);
+  const [end, setEnd] = useState(
+    entry ? (entry.endedAt ? hm(new Date(entry.endedAt)) : fromMinutes(toMinutes(s0 ? hm(s0) : "09:00") + entry.minutes)) : endDefault
+  );
+  const [duration, setDuration] = useState(entry ? formatMinutes(entry.minutes) : "1h");
+  const [description, setDescription] = useState(entry?.description ?? "");
+  const [matterId, setMatterId] = useState(entry?.matterId ?? "");
+  const [taskId, setTaskId] = useState(entry?.taskId ?? "");
+  const [billable, setBillable] = useState(entry?.billable ?? true);
+  const [rate, setRate] = useState(entry?.rate != null ? String(entry.rate) : "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -406,8 +438,8 @@ function AddEntryModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
     try {
       const startedAt = new Date(`${date}T${start}`);
       const endedAt = new Date(startedAt.getTime() + m * 60000);
-      const r = await fetch("/api/time-entries", {
-        method: "POST",
+      const r = await fetch(entry ? `/api/time-entries/${entry.id}` : "/api/time-entries", {
+        method: entry ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date,
@@ -439,7 +471,7 @@ function AddEntryModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="bg-cream rounded-3xl w-full max-w-[520px] max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
-          <h2 className="text-[20px] font-semibold">Add time entry</h2>
+          <h2 className="text-[20px] font-semibold">{entry ? "Edit time entry" : "Add time entry"}</h2>
           <button onClick={onClose} aria-label="Close" className="text-muted hover:text-ink">
             <X size={18} strokeWidth={1.75} />
           </button>
@@ -553,7 +585,7 @@ function AddEntryModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
             Cancel
           </button>
           <button onClick={save} disabled={saving} className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 disabled:opacity-50 flex items-center gap-1.5">
-            {saving && <Loader2 size={14} className="animate-spin" />} Add entry
+            {saving && <Loader2 size={14} className="animate-spin" />} {entry ? "Save changes" : "Add entry"}
           </button>
         </div>
       </div>
