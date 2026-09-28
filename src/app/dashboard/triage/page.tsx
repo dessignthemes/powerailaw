@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2, FolderInput, Mail, Check, X, RefreshCw, Undo2, Paperclip, ExternalLink, ChevronDown } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
@@ -15,6 +15,23 @@ type Item = { provider: MailProvider; messageId: string; status: "task" | "dismi
 
 const providerName: Record<MailProvider, string> = { google: "Gmail", microsoft: "Outlook" };
 const LAST_BOARD_KEY = "lawpower.triage.lastBoard";
+const MAX_BODY = 20000; // characters of email text copied into the task
+
+// Readable plain text from an email's HTML (runs in the browser only).
+function htmlToText(html: string) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("script, style, head").forEach((n) => n.remove());
+  doc.querySelectorAll("br").forEach((n) => n.replaceWith("\n"));
+  doc.querySelectorAll("p, div, tr, li, h1, h2, h3, h4, blockquote").forEach((n) => n.append("\n"));
+  return (doc.body.textContent ?? "").replace(/\u00a0/g, " ").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function emailHeader(email: MailSummary) {
+  return `From: ${email.from}${email.fromEmail && email.fromEmail !== email.from ? ` <${email.fromEmail}>` : ""}\nReceived: ${new Date(email.date).toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  })}\nSubject: ${email.subject || "(no subject)"}`;
+}
 
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } });
@@ -419,22 +436,30 @@ function CreateTaskFromEmail({
   const [due, setDue] = useState(todayYmd());
   const [priority, setPriority] = useState<TaskPriority>("Medium");
   const [link, setLink] = useState<string | null>(null);
-  const [notes, setNotes] = useState(
-    `From: ${email.from}${email.fromEmail && email.fromEmail !== email.from ? ` <${email.fromEmail}>` : ""}\nReceived: ${new Date(email.date).toLocaleString("en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    })}\nSubject: ${email.subject || "(no subject)"}\n\n${email.snippet}`
-  );
+  const [notes, setNotes] = useState(`${emailHeader(email)}\n\n${email.snippet}`);
+  const notesEdited = useRef(false); // has the person typed in the notes yet?
+  const [bodyState, setBodyState] = useState<"loading" | "full" | "preview">("loading");
 
-  // Link back to the email in Outlook / Gmail for the task notes.
+  // The full email (text + a link back to it in Outlook / Gmail) for the task notes.
   useEffect(() => {
+    let cancelled = false;
     fetch(`/api/mail/messages/${encodeURIComponent(email.id)}?provider=${provider}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { message?: MailMessage } | null) => {
-        if (d?.message?.webLink) setLink(d.message.webLink);
+        if (cancelled) return;
+        const msg = d?.message;
+        if (msg?.webLink) setLink(msg.webLink);
+        const body = (msg?.text?.trim() || (msg?.html ? htmlToText(msg.html) : "")).slice(0, MAX_BODY);
+        if (!body) return setBodyState("preview");
+        setBodyState("full");
+        // Don't overwrite anything the person has already typed.
+        if (!notesEdited.current) setNotes(`${emailHeader(email)}\n\n${body}`);
       })
-      .catch(() => {});
-  }, [email.id, provider]);
+      .catch(() => !cancelled && setBodyState("preview"));
+    return () => {
+      cancelled = true;
+    };
+  }, [email, provider]);
 
   function create() {
     if (!title.trim()) return;
@@ -463,7 +488,7 @@ function CreateTaskFromEmail({
   const field = "w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-ink";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-cream rounded-3xl w-full max-w-[560px] max-h-[90vh] overflow-y-auto p-6">
+      <div onClick={(e) => e.stopPropagation()} className="bg-cream rounded-3xl w-full max-w-[720px] max-h-[92vh] overflow-y-auto p-6">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h2 className="text-[19px] font-semibold">Create task from email</h2>
@@ -515,14 +540,26 @@ function CreateTaskFromEmail({
         </div>
 
         <label className="block text-[12.5px] font-medium text-muted mb-1">Notes</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6} className={`${field} resize-y mb-1`} />
+        <textarea
+          value={notes}
+          onChange={(e) => {
+            setNotes(e.target.value);
+            notesEdited.current = true;
+          }}
+          rows={12}
+          className={`${field} resize-y mb-1 leading-relaxed`}
+        />
         <div className="text-[12px] text-muted mb-5 flex items-center gap-1.5">
-          {link ? (
+          {bodyState === "loading" ? (
             <>
-              <ExternalLink size={12} /> A link to open this email is added to the notes.
+              <Loader2 size={12} className="animate-spin" /> Loading the full email…
             </>
           ) : (
-            "Getting a link to the email…"
+            <>
+              <ExternalLink size={12} />
+              {bodyState === "full" ? "The full email is in the notes" : "Only the email preview could be loaded"}
+              {link ? ", with a link to open it." : "."}
+            </>
           )}
         </div>
 

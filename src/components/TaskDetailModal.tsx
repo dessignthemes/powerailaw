@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import {
   X,
   Maximize2,
+  ExternalLink,
   Bold,
   Italic,
   Strikethrough,
@@ -65,6 +66,7 @@ export default function TaskDetailModal({
 }) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
+  const [expanded, setExpanded] = useState(false);
   const [status, setStatus] = useState<TaskStatus>(task.status);
   const [priority, setPriority] = useState<TaskPriority>(task.priority);
   const [assignee, setAssignee] = useState<string | null>(task.assignee);
@@ -120,7 +122,9 @@ export default function TaskDetailModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-cream rounded-3xl w-full max-w-[860px] max-h-[92vh] overflow-y-auto flex flex-col"
+        className={`bg-cream rounded-3xl w-full overflow-y-auto flex flex-col transition-all ${
+          expanded ? "max-w-none h-[96vh]" : "max-w-[980px] h-[92vh]"
+        }`}
       >
         <div className="flex items-center justify-between px-7 pt-6 pb-2">
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
@@ -129,7 +133,12 @@ export default function TaskDetailModal({
             <span className="text-ink font-semibold truncate max-w-[240px]">{title}</span>
           </div>
           <div className="flex items-center gap-3 text-muted">
-            <button className="hover:text-ink transition-colors">
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              title={expanded ? "Exit full screen" : "Full screen"}
+              aria-label={expanded ? "Exit full screen" : "Full screen"}
+              className="hover:text-ink transition-colors"
+            >
               <Maximize2 size={16} strokeWidth={1.75} />
             </button>
             <button onClick={onClose} className="hover:text-ink transition-colors">
@@ -162,9 +171,43 @@ export default function TaskDetailModal({
             onChange={(e) => setDescription(e.target.value)}
             onBlur={() => commit({ description })}
             placeholder="Add more detail..."
-            rows={3}
-            className="w-full bg-transparent outline-none text-[14.5px] placeholder:text-muted resize-none mb-6"
+            className={`w-full bg-transparent outline-none text-[15px] leading-relaxed placeholder:text-muted resize-y mb-2 overflow-y-auto ${
+              expanded ? "h-[58vh]" : "h-[44vh]"
+            } min-h-[180px]`}
           />
+          {/* Links in the notes (e.g. "Open email: https://…") as clean buttons */}
+          {(() => {
+            const links = [...description.matchAll(/(?:(open email):\s*)?(https?:\/\/[^\s<>()]+)/gi)].slice(0, 6);
+            if (!links.length) return <div className="mb-4" />;
+            return (
+              <div className="flex flex-wrap gap-2 mb-5">
+                {links.map((m, i) => {
+                  const url = m[2].replace(/[.,;:!?'"\]]+$/, ""); // drop punctuation after the address
+                  let host = "";
+                  try {
+                    host = new URL(url).hostname.replace(/^www\./, "");
+                  } catch {
+                    return null;
+                  }
+                  const isEmail = /open email/i.test(m[1] ?? "");
+                  const label = isEmail
+                    ? `Open email in ${/outlook|office|live\.com/.test(host) ? "Outlook" : /google/.test(host) ? "Gmail" : host}`
+                    : `Open ${host}`;
+                  return (
+                    <a
+                      key={i}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 bg-white border border-line hover:border-muted rounded-full px-3 py-1.5 text-[13px] font-medium"
+                    >
+                      <ExternalLink size={13} strokeWidth={1.75} /> {label}
+                    </a>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           <div className="flex flex-wrap items-center gap-2 mb-6">
             <GenericDropdown
@@ -288,10 +331,10 @@ export default function TaskDetailModal({
             ))}
           </div>
 
-          <div className="min-h-[140px] mb-4">
+          <div className="min-h-[56px] mb-3">
             {tab === "Comments" && (
               comments.length === 0 ? (
-                <div className="text-[14px] text-muted text-center py-6">
+                <div className="text-[13.5px] text-muted text-center py-2">
                   No comments yet — start the conversation.
                 </div>
               ) : (
