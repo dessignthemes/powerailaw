@@ -163,10 +163,12 @@ export default function DashboardHome() {
           </div>
           <Link
             href={`/dashboard/task-board?due=${range}`}
-            title="View all on the task board"
-            className="absolute top-6 right-6 w-6 h-6 rounded-full border-2 border-line flex items-center justify-center text-muted hover:text-ink hover:border-ink transition-colors"
+            className="group/all absolute top-5 right-5 flex items-center gap-2 pl-3 pr-1 py-1 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-line/50 transition-colors"
           >
-            <ArrowUpRight size={12} strokeWidth={2} />
+            View all tasks
+            <span className="w-6 h-6 rounded-full border-2 border-line flex items-center justify-center group-hover/all:border-ink transition-colors">
+              <ArrowUpRight size={12} strokeWidth={2} />
+            </span>
           </Link>
           <div className="text-[32px] font-display font-semibold mb-1">
             {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"}
@@ -184,12 +186,12 @@ export default function DashboardHome() {
             const rows = [...counts.entries()].sort((x, y) => y[1] - x[1]);
             if (!rows.length) return null;
             return (
-              <div className="mt-4 flex flex-col gap-0.5">
+              <div className="mt-4 flex flex-col gap-1.5">
                 {rows.slice(0, 5).map(([key, n]) => (
                   <Link
                     key={key}
                     href={`/dashboard/task-board?board=${key}&due=${range}`}
-                    className="group/row flex items-center gap-2 -mx-2 px-2 py-1 rounded-lg text-[13px] hover:bg-line/50 transition-colors"
+                    className="group/row flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium bg-line/45 hover:bg-line/80 transition-colors"
                   >
                     <span className="font-semibold tabular-nums w-5 text-right">{n}</span>
                     <span className="truncate flex-1">{key === "general" ? "General" : boardName(key)}</span>
