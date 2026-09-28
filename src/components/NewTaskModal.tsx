@@ -29,6 +29,7 @@ export type BoardTask = {
   dueDate: string | null;
   comments?: TaskComment[];
   boardId?: string | null; // null/undefined = main Task Board
+  columnId?: string | null; // a custom column on the board, if any
   createdBy?: string | null; // profile id of the person who created it
   updatedBy?: string | null; // profile id of the person who last changed it
   createdAt?: string;

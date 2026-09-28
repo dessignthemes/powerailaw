@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { boardInOrg } from "@/lib/data/boards";
+import { columnInOrg } from "@/lib/data/boardColumns";
 import type { BoardTask, TaskComment } from "@/components/NewTaskModal";
 
 type TaskRow = {
@@ -16,6 +17,7 @@ type TaskRow = {
   board_id?: string | null;
   created_by?: string | null;
   updated_by?: string | null;
+  column_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -32,6 +34,7 @@ function toTask(row: TaskRow): BoardTask {
     comments: Array.isArray(row.comments) ? row.comments : [],
     boardId: row.board_id ?? null,
     createdBy: row.created_by ?? null,
+    columnId: row.column_id ?? null,
     updatedBy: row.updated_by ?? row.created_by ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -48,6 +51,12 @@ function toColumns(task: BoardTask) {
     due_date: task.dueDate || null,
     comments: task.comments ?? [],
   };
+}
+
+// Adds column_id only when the task names a custom column in this workspace.
+async function withColumn<T extends Record<string, unknown>>(orgId: string, task: BoardTask, fields: T): Promise<T> {
+  if (task.columnId === undefined) return fields;
+  return { ...fields, column_id: await columnInOrg(orgId, task.columnId) };
 }
 
 export async function listTasks(): Promise<BoardTask[]> {
@@ -70,9 +79,15 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
 
   const { data, error } = await supabase
     .from("tasks")
-    .insert({ id: task.id, org_id: orgId, created_by: userId, ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId) })
+    .insert(await withColumn(orgId, task, { id: task.id, org_id: orgId, created_by: userId, ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId) }))
     .select("*")
-    .single();
+    .single()
+    .then(async (r) =>
+      // Before 0010 is run there's no column_id; save without it.
+      r.error && /column_id/.test(r.error.message ?? "")
+        ? supabase.from("tasks").insert({ id: task.id, org_id: orgId, created_by: userId, ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId) }).select("*").single()
+        : r
+    );
 
   if (error) throw error;
   return toTask(data as TaskRow);
@@ -82,13 +97,18 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   const supabase = createAdminClient();
   const orgId = await getCurrentOrgId();
 
-  const base = { ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId), updated_at: new Date().toISOString() };
+  const base = await withColumn(orgId, task, { ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId), updated_at: new Date().toISOString() });
   const run = (fields: Record<string, unknown>) =>
     supabase.from("tasks").update(fields).eq("id", id).eq("org_id", orgId).select("*").single();
 
   let { data, error } = await run(userId ? { ...base, updated_by: userId } : base);
   // Before 0009 is run there's no updated_by column; save without it.
   if (error && userId && /updated_by/.test(error.message ?? "")) ({ data, error } = await run(base));
+  if (error && /column_id/.test(error.message ?? "")) {
+    const { column_id: _c, ...noColumn } = base as Record<string, unknown>;
+    void _c;
+    ({ data, error } = await run(noColumn));
+  }
 
   if (error) throw error;
   return toTask(data as TaskRow);

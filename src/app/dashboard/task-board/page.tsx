@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Kanban,
@@ -34,11 +34,14 @@ import Link from "next/link";
 import { isDueIn, isOverdue } from "@/lib/taskDates";
 
 type Column = {
-  id: string;
+  id: string; // status for standard columns, database id for custom ones
   title: string;
   color: string;
-  status: TaskStatus;
+  status: TaskStatus; // custom columns hold tasks with status "todo" unless moved
+  custom?: boolean;
 };
+
+type ColumnRow = { id: string; status: TaskStatus | null; title: string; color: string; position: number };
 
 const initialColumns: Column[] = [
   { id: "todo", title: "To do", color: "#A5A6F6", status: "todo" },
@@ -104,7 +107,7 @@ function TaskBoard({
   initialTaskId: string | null;
 }) {
   const router = useRouter();
-  const { boards, createBoard, renameBoard, deleteBoard } = useWorkspaceData();
+  const { boards, createBoard, renameBoard, deleteBoard, refreshAll } = useWorkspaceData();
   const isGeneral = boardId === "general";
   const realBoardId = boardId && !isGeneral ? boardId : null;
   const board = realBoardId ? boards.find((b) => b.id === realBoardId) ?? null : null;
@@ -114,6 +117,9 @@ function TaskBoard({
   const [boardError, setBoardError] = useState<string | null>(null);
   const [view, setView] = useState<"board" | "list">("board");
   const [columns, setColumns] = useState<Column[]>(initialColumns);
+  // Saved columns belong to a board ("general" or its id). "All tasks" and
+  // "created by" views show the standard columns only.
+  const boardKey: string | null = createdBy || boardId === null ? null : boardId === "general" ? "general" : boardId;
   const { tasks: workspaceTasks, tasksLoaded, tasksError, clearTasksError, addTask: addWorkspaceTask, updateTask, deleteTasks } =
     useWorkspaceData();
   // Only this board's tasks; new tasks land on this board.
@@ -190,22 +196,56 @@ function TaskBoard({
     setActiveFilters((fs) => (fs.includes(f) ? fs.filter((x) => x !== f) : [...fs, f]));
   }
 
+  async function columnApi(url: string, method: string, body?: unknown) {
+    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d?.error ?? "Couldn't save the column.");
+    return d;
+  }
+
+  async function saveColumnLook(col: Column, patch: { title?: string; color?: string }) {
+    const before = columns;
+    setColumns((cols) => cols.map((c) => (c.id === col.id ? { ...c, ...patch } : c)));
+    if (!boardKey) return; // "All tasks" view: not saved
+    try {
+      if (col.custom) await columnApi(`/api/board-columns/${col.id}`, "PATCH", patch);
+      else await columnApi("/api/board-columns", "POST", { board: boardKey, status: col.status, title: patch.title ?? col.title, color: patch.color ?? col.color });
+    } catch (e) {
+      setColumns(before);
+      setBoardError((e as Error).message);
+    }
+  }
+
   function renameColumn(id: string) {
-    setColumns((cols) => cols.map((c) => (c.id === id ? { ...c, title: renameValue || c.title } : c)));
+    const col = columns.find((c) => c.id === id);
     setRenamingId(null);
+    if (col && renameValue.trim() && renameValue.trim() !== col.title) saveColumnLook(col, { title: renameValue.trim() });
   }
 
   function recolorColumn(id: string, color: string) {
-    setColumns((cols) => cols.map((c) => (c.id === id ? { ...c, color } : c)));
+    const col = columns.find((c) => c.id === id);
     setColorPickerFor(null);
+    if (col) saveColumnLook(col, { color });
   }
 
-  function deleteColumn(id: string) {
-    setColumns((cols) => cols.filter((c) => c.id !== id));
+  async function deleteColumn(id: string) {
     setMenuOpenFor(null);
+    const col = columns.find((c) => c.id === id);
+    if (!col?.custom) return;
+    const n = tasks.filter((t) => t.columnId === id).length;
+    if (!confirm(`Delete the "${col.title}" column?${n ? ` Its ${n} ${n === 1 ? "task moves" : "tasks move"} back to To do.` : ""}`)) return;
+    const before = columns;
+    setColumns((cols) => cols.filter((c) => c.id !== id));
+    try {
+      await columnApi(`/api/board-columns/${id}`, "DELETE");
+      refreshAll(); // tasks from that column now sit in their status column
+    } catch (e) {
+      setColumns(before);
+      setBoardError((e as Error).message);
+    }
   }
 
-  function addInlineTask(status: TaskStatus) {
+  function addInlineTask(col: Column) {
     if (!inlineValue.trim()) {
       setInlineAddFor(null);
       return;
@@ -214,7 +254,8 @@ function TaskBoard({
       id: crypto.randomUUID(),
       title: inlineValue.trim(),
       description: "",
-      status,
+      status: col.status,
+      columnId: col.custom ? col.id : null,
       priority: "Medium",
       assignee: null,
       dueDate: todayYmd(),
@@ -224,23 +265,45 @@ function TaskBoard({
     setInlineAddFor(null);
   }
 
-  function addColumn() {
-    if (!newColumnName.trim()) {
-      setAddingColumn(false);
-      return;
-    }
-    setColumns((cols) => [
-      ...cols,
-      {
-        id: crypto.randomUUID(),
-        title: newColumnName,
-        color: "#6B7280",
-        status: "todo",
-      },
-    ]);
-    setNewColumnName("");
+  async function addColumn() {
+    const title = newColumnName.trim();
     setAddingColumn(false);
+    setNewColumnName("");
+    if (!title || !boardKey) return;
+    try {
+      const d = await columnApi("/api/board-columns", "POST", { board: boardKey, title, color: "#6B7280" });
+      setColumns((cols) => [...cols, { id: d.column.id, title: d.column.title, color: d.column.color, status: "todo", custom: true }]);
+    } catch (e) {
+      setBoardError((e as Error).message);
+    }
   }
+
+  useEffect(() => {
+    if (!boardKey) return;
+    let cancelled = false;
+    fetch(`/api/board-columns?board=${encodeURIComponent(boardKey)}`)
+      .then(async (res) => {
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d?.error ?? "Couldn't load this board's columns.");
+        return (d.columns ?? []) as ColumnRow[];
+      })
+      .then((rows) => {
+        if (cancelled) return;
+        const standard = initialColumns.map((c) => {
+          const o = rows.find((r) => r.status === c.status);
+          return o ? { ...c, title: o.title, color: o.color } : c;
+        });
+        const custom = rows
+          .filter((r) => !r.status)
+          .sort((a, b) => a.position - b.position)
+          .map((r) => ({ id: r.id, title: r.title, color: r.color, status: "todo" as TaskStatus, custom: true }));
+        setColumns([...standard, ...custom]);
+      })
+      .catch((e: Error) => !cancelled && setBoardError(e.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [boardKey]);
 
   return (
     <div className="px-10 py-10">
@@ -491,7 +554,10 @@ function TaskBoard({
       ) : (
         <div className="flex gap-5 w-full items-start">
           {columns.map((col) => {
-            const colTasks = tasks.filter((t) => t.status === col.status);
+            const customIds = new Set(columns.filter((c) => c.custom).map((c) => c.id));
+            const colTasks = col.custom
+              ? tasks.filter((t) => t.columnId === col.id)
+              : tasks.filter((t) => t.status === col.status && !(t.columnId && customIds.has(t.columnId)));
             return (
               <div
                 key={col.id}
@@ -562,13 +628,17 @@ function TaskBoard({
                           >
                             <Palette size={14} strokeWidth={1.75} /> Recolor
                           </button>
-                          <div className="border-t border-line my-1" />
-                          <button
-                            onClick={() => deleteColumn(col.id)}
-                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-red-500 hover:bg-red-50 transition-colors"
-                          >
-                            <Trash2 size={14} strokeWidth={1.75} /> Delete column
-                          </button>
+                          {col.custom && (
+                            <>
+                              <div className="border-t border-line my-1" />
+                              <button
+                                onClick={() => deleteColumn(col.id)}
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-red-500 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 size={14} strokeWidth={1.75} /> Delete column
+                              </button>
+                            </>
+                          )}
                         </div>
                       </>
                     )}
@@ -602,9 +672,9 @@ function TaskBoard({
                         autoFocus
                         value={inlineValue}
                         onChange={(e) => setInlineValue(e.target.value)}
-                        onBlur={() => addInlineTask(col.status)}
+                        onBlur={() => addInlineTask(col)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") addInlineTask(col.status);
+                          if (e.key === "Enter") addInlineTask(col);
                           if (e.key === "Escape") setInlineAddFor(null);
                         }}
                         placeholder="Task title (Enter to add, Esc to cancel)"
@@ -618,9 +688,9 @@ function TaskBoard({
                           autoFocus
                           value={inlineValue}
                           onChange={(e) => setInlineValue(e.target.value)}
-                          onBlur={() => addInlineTask(col.status)}
+                          onBlur={() => addInlineTask(col)}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") addInlineTask(col.status);
+                            if (e.key === "Enter") addInlineTask(col);
                             if (e.key === "Escape") setInlineAddFor(null);
                           }}
                           placeholder="Task title (Enter to add, Esc to cancel)"
@@ -723,6 +793,7 @@ function TaskBoard({
             );
           })}
 
+          {boardKey && (
           <div className="w-[60px] flex-shrink-0 flex flex-col items-center pt-1">
             {addingColumn ? (
               <input
@@ -740,12 +811,15 @@ function TaskBoard({
             ) : (
               <button
                 onClick={() => setAddingColumn(true)}
-                className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center text-muted hover:text-ink"
+                title="Add a column"
+                aria-label="Add a column"
+                className="w-9 h-9 rounded-full bg-dark text-white hover:bg-dark2 transition-colors flex items-center justify-center shadow-sm"
               >
-                <Plus size={16} strokeWidth={1.75} />
+                <Plus size={17} strokeWidth={2.25} />
               </button>
             )}
           </div>
+          )}
         </div>
       )}
 

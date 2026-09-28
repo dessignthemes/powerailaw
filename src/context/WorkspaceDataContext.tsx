@@ -150,8 +150,14 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateTask = useCallback(
-    (task: BoardTask) => {
-      const previous = tasks.find((t) => t.id === task.id);
+    (incoming: BoardTask) => {
+      const previous = tasks.find((t) => t.id === incoming.id);
+      // Changing a task's status (e.g. ticking it done) moves it out of a
+      // custom column into the matching standard one.
+      const task =
+        previous && previous.status !== incoming.status && incoming.columnId && incoming.columnId === previous.columnId
+          ? { ...incoming, columnId: null }
+          : incoming;
       setTasks((ts) => ts.map((t) => (t.id === task.id ? task : t))); // optimistic
       fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
