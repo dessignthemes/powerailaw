@@ -608,9 +608,6 @@ function TaskBoard({
       )}
 
       <div className="flex items-center gap-2 mb-6 flex-wrap">
-        <div className="w-7 h-7 rounded-full bg-card-alt flex items-center justify-center text-muted text-[12px] font-medium">
-          ?
-        </div>
         {filterPills.map((f) => (
           <button
             key={f}
