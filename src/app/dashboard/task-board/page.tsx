@@ -84,7 +84,7 @@ function TaskBoardFromUrl() {
   return (
     <TaskBoard
       key={`${board ?? "main"}:${by ?? ""}:${due}`}
-      boardId={by ? null : board}
+      boardId={by ? null : board === "general" ? "general" : board}
       createdBy={by}
       initialFilters={pill ? [pill] : []}
       initialTaskId={params.get("task")}
@@ -98,14 +98,16 @@ function TaskBoard({
   initialFilters,
   initialTaskId,
 }: {
-  boardId: string | null; // null = main Task Board
+  boardId: string | null; // null = all tasks; "general" = tasks not on any board; else a board id
   createdBy: string | null; // show every task this person created, on any board
   initialFilters: string[];
   initialTaskId: string | null;
 }) {
   const router = useRouter();
   const { boards, createBoard, renameBoard, deleteBoard } = useWorkspaceData();
-  const board = boardId ? boards.find((b) => b.id === boardId) ?? null : null;
+  const isGeneral = boardId === "general";
+  const realBoardId = boardId && !isGeneral ? boardId : null;
+  const board = realBoardId ? boards.find((b) => b.id === realBoardId) ?? null : null;
   const [boardMenu, setBoardMenu] = useState(false);
   const [boardDialog, setBoardDialog] = useState<null | { mode: "new" | "rename"; name: string }>(null);
   const [boardBusy, setBoardBusy] = useState(false);
@@ -119,8 +121,11 @@ function TaskBoard({
   const creator = createdBy ? teamMembers.find((m) => m.id === createdBy) ?? null : null;
   const allTasks = createdBy
     ? workspaceTasks.filter((t) => t.createdBy === createdBy)
-    : workspaceTasks.filter((t) => (t.boardId ?? null) === boardId);
-  const addTask = (t: BoardTask) => addWorkspaceTask({ ...t, boardId });
+    : boardId === null
+      ? workspaceTasks // all boards
+      : workspaceTasks.filter((t) => (t.boardId ?? null) === realBoardId);
+  // New tasks land on the board being viewed; from "All tasks" or "General" they go to General.
+  const addTask = (t: BoardTask) => addWorkspaceTask({ ...t, boardId: realBoardId });
 
   async function saveBoard() {
     if (!boardDialog) return;
@@ -131,8 +136,8 @@ function TaskBoard({
         const b = await createBoard(boardDialog.name);
         setBoardDialog(null);
         router.push(`/dashboard/task-board?board=${b.id}`);
-      } else if (boardId) {
-        await renameBoard(boardId, boardDialog.name);
+      } else if (realBoardId) {
+        await renameBoard(realBoardId, boardDialog.name);
         setBoardDialog(null);
       }
     } catch (e) {
@@ -143,11 +148,11 @@ function TaskBoard({
   }
 
   async function removeBoard() {
-    if (!boardId || !board) return;
+    if (!realBoardId || !board) return;
     const n = allTasks.length;
-    if (!confirm(`Delete the "${board.name}" board?${n ? ` Its ${n} ${n === 1 ? "task moves" : "tasks move"} to the main Task Board.` : ""}`)) return;
+    if (!confirm(`Delete the "${board.name}" board?${n ? ` Its ${n} ${n === 1 ? "task moves" : "tasks move"} to General.` : ""}`)) return;
     try {
-      await deleteBoard(boardId);
+      await deleteBoard(realBoardId);
       router.push("/dashboard/task-board");
     } catch (e) {
       setBoardError((e as Error).message);
@@ -245,16 +250,18 @@ function TaskBoard({
           <h1 className="font-display text-[24px] font-semibold truncate">
             {createdBy
               ? `Tasks created by ${creator ? displayName(creator.fullName, creator.email) : "a former member"}`
-              : boardId
-                ? board?.name ?? "Board"
-                : "Task Board"}
+              : isGeneral
+                ? "General"
+                : realBoardId
+                  ? board?.name ?? "Board"
+                  : "All tasks"}
           </h1>
           {createdBy && (
             <Link href="/dashboard/task-board" className="text-[13px] text-muted hover:text-ink underline underline-offset-2 ml-1 flex-shrink-0">
               Show all tasks
             </Link>
           )}
-          {boardId && board && (
+          {realBoardId && board && (
             <div className="relative">
               <button
                 onClick={() => setBoardMenu((o) => !o)}
@@ -292,7 +299,7 @@ function TaskBoard({
             </div>
           )}
         </div>
-        {boardId && !board && boards.length > 0 && (
+        {realBoardId && !board && boards.length > 0 && (
           <span className="text-[13px] text-muted">This board no longer exists. Pick another board in the sidebar.</span>
         )}
       </div>
@@ -470,6 +477,11 @@ function TaskBoard({
                     >
                       {t.priority}
                     </span>
+                    {boardId === null && (
+                      <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[140px]">
+                        {t.boardId ? boards.find((b) => b.id === t.boardId)?.name ?? "Board" : "General"}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -683,6 +695,11 @@ function TaskBoard({
                             >
                               {t.priority}
                             </span>
+                            {boardId === null && !createdBy && (
+                              <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[130px]">
+                                {t.boardId ? boards.find((b) => b.id === t.boardId)?.name ?? "Board" : "General"}
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}

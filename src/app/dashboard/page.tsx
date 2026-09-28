@@ -55,7 +55,8 @@ export default function DashboardHome() {
 
   const activeRange = rangeTabs.find((r) => r.key === range)!;
 
-  const { tasks, tasksLoaded, updateTask } = useWorkspaceData();
+  const { tasks, tasksLoaded, updateTask, boards } = useWorkspaceData();
+  const boardName = (id: string | null | undefined) => (id ? boards.find((b) => b.id === id)?.name ?? "Board" : "General");
   const [selectedTask, setSelectedTask] = useState<BoardTask | null>(null);
 
   const { dueTasks, undatedTasks, openCount, recent } = useMemo(() => {
@@ -105,6 +106,9 @@ export default function DashboardHome() {
             {t.title}
           </span>
           <span className="text-[12px] text-muted flex-shrink-0">{statusMeta[t.status].label}</span>
+          <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[160px] hidden sm:inline">
+            {boardName(t.boardId)}
+          </span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {t.dueDate && (
@@ -153,26 +157,54 @@ export default function DashboardHome() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Link
-          href={`/dashboard/task-board?due=${range}`}
-          className="group bg-card-alt rounded-2xl p-6 relative block hover:bg-line/40 transition-colors"
-        >
+        <div className="bg-card-alt rounded-2xl p-6 relative">
           <div className="text-[13.5px] font-medium text-muted mb-8 flex items-center gap-1.5">
             <ListChecks size={15} strokeWidth={1.75} /> {activeRange.due}
           </div>
-          <div className="absolute top-6 right-6 w-6 h-6 rounded-full border-2 border-line flex items-center justify-center text-muted group-hover:text-ink group-hover:border-ink transition-colors">
+          <Link
+            href={`/dashboard/task-board?due=${range}`}
+            title="View all on the task board"
+            className="absolute top-6 right-6 w-6 h-6 rounded-full border-2 border-line flex items-center justify-center text-muted hover:text-ink hover:border-ink transition-colors"
+          >
             <ArrowUpRight size={12} strokeWidth={2} />
-          </div>
+          </Link>
           <div className="text-[32px] font-display font-semibold mb-1">
             {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"}
           </div>
           <div className="text-[13px] text-muted">
             {openCount} open · {undatedTasks.length} with no due date
           </div>
-          <div className="text-[12.5px] font-medium text-muted group-hover:text-ink mt-4 transition-colors">
-            View on task board →
-          </div>
-        </Link>
+          {/* Per-board breakdown: each line opens that board, filtered to the same range. */}
+          {(() => {
+            const counts = new Map<string, number>();
+            for (const t of dueTasks) {
+              const key = t.boardId ?? "general";
+              counts.set(key, (counts.get(key) ?? 0) + 1);
+            }
+            const rows = [...counts.entries()].sort((x, y) => y[1] - x[1]);
+            if (!rows.length) return null;
+            return (
+              <div className="mt-4 flex flex-col gap-0.5">
+                {rows.slice(0, 5).map(([key, n]) => (
+                  <Link
+                    key={key}
+                    href={`/dashboard/task-board?board=${key}&due=${range}`}
+                    className="group/row flex items-center gap-2 -mx-2 px-2 py-1 rounded-lg text-[13px] hover:bg-line/50 transition-colors"
+                  >
+                    <span className="font-semibold tabular-nums w-5 text-right">{n}</span>
+                    <span className="truncate flex-1">{key === "general" ? "General" : boardName(key)}</span>
+                    <span className="text-muted group-hover/row:text-ink">→</span>
+                  </Link>
+                ))}
+                {rows.length > 5 && (
+                  <Link href={`/dashboard/task-board?due=${range}`} className="text-[12.5px] text-muted hover:text-ink px-0 py-1">
+                    + {rows.length - 5} more boards
+                  </Link>
+                )}
+              </div>
+            );
+          })()}
+        </div>
 
         <div className="bg-card-alt rounded-2xl p-6">
           <div className="text-[13.5px] font-medium text-muted mb-8 flex items-center gap-1.5">
