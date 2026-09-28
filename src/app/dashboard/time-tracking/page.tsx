@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Calendar, List, SlidersHorizontal, Plus, X, 
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { displayName } from "@/lib/initials";
 import { formatMinutes, localYmd } from "@/lib/taskTimer";
+import SelectBox from "@/components/SelectBox";
 
 type Entry = {
   id: string;
@@ -493,26 +494,26 @@ function AddEntryModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
           </div>
           <div>
             <label className={label}>Matter</label>
-            <select value={matterId} onChange={(e) => setMatterId(e.target.value)} className={field}>
+            <SelectBox label="Matter" value={matterId} onChange={setMatterId}>
               <option value="">No matter</option>
               {matters.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.title}
                 </option>
               ))}
-            </select>
+            </SelectBox>
             {matters.length === 0 && <p className="text-[12px] text-muted mt-1">No matters yet. Create one in Matters to bill time to it.</p>}
           </div>
           <div>
             <label className={label}>Task</label>
-            <select value={taskId} onChange={(e) => setTaskId(e.target.value)} className={field}>
+            <SelectBox label="Task" value={taskId} onChange={setTaskId}>
               <option value="">No task</option>
               {openTasks.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.title}
                 </option>
               ))}
-            </select>
+            </SelectBox>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[14px] font-medium">Billable</span>

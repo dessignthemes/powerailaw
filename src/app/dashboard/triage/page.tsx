@@ -6,6 +6,7 @@ import { Loader2, FolderInput, Mail, Check, X, RefreshCw, Undo2, Paperclip, Exte
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { todayYmd, type TaskPriority } from "@/components/NewTaskModal";
 import { displayName } from "@/lib/initials";
+import SelectBox from "@/components/SelectBox";
 import { sortFolders } from "@/lib/mail/folders";
 import type { MailFolder, MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
 
@@ -505,25 +506,25 @@ function CreateTaskFromEmail({
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="block text-[12.5px] font-medium text-muted mb-1">Assign to</label>
-            <select value={assignee} onChange={(e) => setAssignee(e.target.value)} className={field}>
+            <SelectBox label="Assign to" value={assignee} onChange={(v) => setAssignee(v)}>
               <option value="">Unassigned</option>
               {members.map((m) => (
                 <option key={m.id} value={m.email}>
                   {displayName(m.fullName, m.email)}
                 </option>
               ))}
-            </select>
+            </SelectBox>
           </div>
           <div>
             <label className="block text-[12.5px] font-medium text-muted mb-1">Board</label>
-            <select value={board} onChange={(e) => setBoard(e.target.value)} className={field}>
+            <SelectBox label="Board" value={board} onChange={(v) => setBoard(v)}>
               <option value="general">General</option>
               {boards.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
                 </option>
               ))}
-            </select>
+            </SelectBox>
           </div>
           <div>
             <label className="block text-[12.5px] font-medium text-muted mb-1">Due date</label>
@@ -531,11 +532,11 @@ function CreateTaskFromEmail({
           </div>
           <div>
             <label className="block text-[12.5px] font-medium text-muted mb-1">Priority</label>
-            <select value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} className={field}>
+            <SelectBox label="Priority" value={priority} onChange={(v) => setPriority(v as TaskPriority)}>
               <option>High</option>
               <option>Medium</option>
               <option>Low</option>
-            </select>
+            </SelectBox>
           </div>
         </div>
 
