@@ -437,20 +437,55 @@ function TaskBoard({
             <SlidersHorizontal size={15} strokeWidth={1.75} />
           </button>
           <button
-            onClick={() => {
-              setBoardError(null);
-              setBoardDialog({ mode: "new", name: "" });
-            }}
-            className="bg-card-alt px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-line/60 transition-colors"
-          >
-            <Plus size={14} strokeWidth={2} /> Add sub board
-          </button>
-          <button
             onClick={() => setModalStatus("todo")}
             className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
           >
             <Plus size={14} strokeWidth={2} /> Add task
           </button>
+          {boardKey && (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setNewColumnName("");
+                  setAddingColumn((o) => !o);
+                }}
+                className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
+              >
+                <Plus size={14} strokeWidth={2} /> Add column
+              </button>
+              {addingColumn && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setAddingColumn(false)} />
+                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[260px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-3">
+                    <input
+                      autoFocus
+                      value={newColumnName}
+                      maxLength={60}
+                      onChange={(e) => setNewColumnName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") addColumn();
+                        if (e.key === "Escape") setAddingColumn(false);
+                      }}
+                      placeholder="Column name, e.g. Clients"
+                      className="w-full bg-card-alt rounded-xl px-3 py-2 text-[13.5px] outline-none placeholder:text-muted mb-2"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => setAddingColumn(false)} className="px-3 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink">
+                        Cancel
+                      </button>
+                      <button
+                        onClick={addColumn}
+                        disabled={!newColumnName.trim()}
+                        className="bg-dark text-white px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-dark2 disabled:opacity-40"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -793,33 +828,7 @@ function TaskBoard({
             );
           })}
 
-          {boardKey && (
-          <div className="w-[60px] flex-shrink-0 flex flex-col items-center pt-1">
-            {addingColumn ? (
-              <input
-                autoFocus
-                value={newColumnName}
-                onChange={(e) => setNewColumnName(e.target.value)}
-                onBlur={addColumn}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addColumn();
-                  if (e.key === "Escape") setAddingColumn(false);
-                }}
-                placeholder="Column name"
-                className="w-[180px] bg-white border border-line rounded-xl px-3 py-2 text-[13px] outline-none"
-              />
-            ) : (
-              <button
-                onClick={() => setAddingColumn(true)}
-                title="Add a column"
-                aria-label="Add a column"
-                className="w-9 h-9 rounded-full bg-dark text-white hover:bg-dark2 transition-colors flex items-center justify-center shadow-sm"
-              >
-                <Plus size={17} strokeWidth={2.25} />
-              </button>
-            )}
-          </div>
-          )}
+
         </div>
       )}
 
