@@ -260,8 +260,18 @@ export default function DashboardHome() {
               </Link>
             ) : nextEvent ? (
               <>
-                Next: <span className="text-ink font-medium">{fmtTime(nextEvent)}</span> {nextEvent.title}
+                Next:{" "}
+                <span className="text-ink font-medium">
+                  {range !== "today" && eventStart(nextEvent).toDateString() !== new Date().toDateString()
+                    ? `${eventStart(nextEvent).toLocaleDateString("en-US", { weekday: "short" })} `
+                    : ""}
+                  {fmtTime(nextEvent)}
+                </span>{" "}
+                {nextEvent.title}
               </>
+            ) : cal.events.length > 0 ? (
+              // Events exist in this period, but they've all finished.
+              `No more events ${periodWord} · ${cal.events.length} earlier`
             ) : (
               `Nothing scheduled ${periodWord}`
             )}
