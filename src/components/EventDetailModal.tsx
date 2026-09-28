@@ -534,8 +534,8 @@ export default function EventDetailModal({
                     }
                   }}
                   disabled={!detail}
-                  title={detail ? "Edit event" : "Loading…"}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[13.5px] font-medium text-ink hover:bg-card-alt disabled:opacity-40"
+                  title={detail ? undefined : "Loading…"}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-ink bg-card-alt hover:bg-line/70 transition-colors disabled:opacity-40"
                 >
                   <Pencil size={14} strokeWidth={1.75} /> Edit event
                 </button>
