@@ -480,6 +480,8 @@ function TaskBoard({
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                // Clicking anywhere else closes the box; the search itself stays on.
+                onBlur={() => setSearchOpen(false)}
                 onKeyDown={(e) => {
                   if (e.key === "Escape") {
                     setQuery("");
@@ -490,12 +492,14 @@ function TaskBoard({
                 className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] placeholder:text-muted"
               />
               <button
-                onClick={() => {
+                // mousedown runs before the input's blur, so the click isn't lost
+                onMouseDown={(e) => {
+                  e.preventDefault();
                   setQuery("");
                   setSearchOpen(false);
                 }}
                 className="w-6 h-6 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink"
-                aria-label="Close search"
+                aria-label="Clear search"
               >
                 <X size={13} />
               </button>
@@ -503,9 +507,11 @@ function TaskBoard({
           ) : (
             <button
               onClick={() => setSearchOpen(true)}
-              title="Search tasks"
-              aria-label="Search tasks"
-              className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center"
+              title={query.trim() ? `Searching for “${query.trim()}”` : "Search tasks"}
+              aria-label={query.trim() ? `Searching for ${query.trim()}. Edit search` : "Search tasks"}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
+                query.trim() ? "bg-dark text-white" : "bg-card-alt hover:bg-line/60"
+              }`}
             >
               <Search size={15} strokeWidth={1.75} />
             </button>
