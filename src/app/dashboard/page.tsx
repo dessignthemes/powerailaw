@@ -59,14 +59,28 @@ export default function DashboardHome() {
 
   // Real calendar events (Outlook / Google) for the selected period.
   type DashEvent = { id: string; provider: "google" | "microsoft"; title: string; start: string; end: string; allDay: boolean; location: string | null; link: string | null };
-  const [cal, setCal] = useState<{ events: DashEvent[]; connected: boolean; loaded: boolean }>({ events: [], connected: true, loaded: false });
+  const [calAll, setCal] = useState<{ events: DashEvent[]; connected: boolean; loaded: boolean }>({ events: [], connected: true, loaded: false });
+  // Calendar periods for events: today, the whole week (Mon–Sun), the whole month.
+  const periods = useMemo(() => {
+    const t = new Date();
+    const today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    const nextMonday = new Date(monday);
+    nextMonday.setDate(monday.getDate() + 7);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    return {
+      today: [today, tomorrow] as const,
+      week: [monday, nextMonday] as const,
+      month: [new Date(today.getFullYear(), today.getMonth(), 1), new Date(today.getFullYear(), today.getMonth() + 1, 1)] as const,
+    };
+  }, []);
   useEffect(() => {
     let cancelled = false;
-    const b = rangeBounds(range);
-    const [ys, ms, ds] = b.start.split("-").map(Number);
-    const [ye, me, de] = b.end.split("-").map(Number);
-    const from = new Date(ys, ms - 1, ds);
-    const to = new Date(ye, me - 1, de + 1);
+    // One request covering the week and the month, so each count can be shown.
+    const from = periods.week[0] < periods.month[0] ? periods.week[0] : periods.month[0];
+    const to = periods.week[1] > periods.month[1] ? periods.week[1] : periods.month[1];
     fetch(`/api/calendar/events?${new URLSearchParams({ from: from.toISOString(), to: to.toISOString() })}`)
       .then((r) => (r.ok ? r.json() : { events: [], sources: [] }))
       .then((d: { events?: DashEvent[]; sources?: { status: string }[] }) => {
@@ -77,7 +91,18 @@ export default function DashboardHome() {
     return () => {
       cancelled = true;
     };
-  }, [range]);
+  }, [periods]);
+  const eventsIn = (key: "today" | "week" | "month") => {
+    const [a, b] = periods[key];
+    return calAll.events.filter((e) => {
+      const s0 = e.allDay ? new Date(`${e.start}T00:00:00`) : new Date(e.start);
+      const e0 = e.allDay ? new Date(`${e.end}T00:00:00`) : new Date(e.end);
+      return s0 < b && (e0 > a || (e0.getTime() === s0.getTime() && s0 >= a));
+    });
+  };
+  const periodKey = range === "today" ? "today" : range === "week" ? "week" : "month";
+  // Events for the selected tab (used by the card and the Events list).
+  const cal = { ...calAll, events: eventsIn(periodKey) };
   const [openEvent, setOpenEvent] = useState<DashEvent | null>(null);
 
   // Your tracked time: the selected period, and this week so far.
@@ -111,8 +136,6 @@ export default function DashboardHome() {
     };
   }, [range]);
   const eventStart = (e: DashEvent) => (e.allDay ? new Date(`${e.start}T00:00:00`) : new Date(e.start));
-  const periodWord = range === "today" ? "today" : range === "week" ? "this week" : "this month";
-  const nextEvent = cal.events.find((e) => e.allDay || new Date(e.end) > new Date()) ?? null;
   const fmtTime = (e: DashEvent) =>
     e.allDay ? "All day" : eventStart(e).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(" ", "").toLowerCase();
 
@@ -285,29 +308,24 @@ export default function DashboardHome() {
           <div className="text-[32px] font-display font-semibold mb-1">
             {cal.loaded ? cal.events.length : "–"} {cal.events.length === 1 ? "event" : "events"}
           </div>
-          <div className="text-[13px] text-muted mb-2 truncate">
+          <div className="text-[13px] text-muted mb-2 flex flex-col gap-0.5">
             {!cal.loaded ? (
               "Loading your calendar…"
             ) : !cal.connected ? (
               <Link href="/dashboard/calendar" className="underline underline-offset-2 hover:text-ink">
                 Connect Outlook or Google Calendar
               </Link>
-            ) : nextEvent ? (
-              <>
-                Next:{" "}
-                <span className="text-ink font-medium">
-                  {range !== "today" && eventStart(nextEvent).toDateString() !== new Date().toDateString()
-                    ? `${eventStart(nextEvent).toLocaleDateString("en-US", { weekday: "short" })} `
-                    : ""}
-                  {fmtTime(nextEvent)}
-                </span>{" "}
-                {nextEvent.title}
-              </>
-            ) : cal.events.length > 0 ? (
-              // Events exist in this period, but they've all finished.
-              `No more events ${periodWord} · ${cal.events.length} earlier`
             ) : (
-              `Nothing scheduled ${periodWord}`
+              (["today", "week", "month"] as const)
+                .filter((k) => k !== periodKey)
+                .map((k) => {
+                  const n = eventsIn(k).length;
+                  return (
+                    <span key={k}>
+                      <span className="text-ink font-medium">{n}</span> {n === 1 ? "event" : "events"} {k === "today" ? "today" : `this ${k}`}
+                    </span>
+                  );
+                })
             )}
           </div>
           <TimeSlider />
