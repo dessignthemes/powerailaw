@@ -439,10 +439,12 @@ function Agent() {
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Header */}
         <div className="px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-line">
-          <div className="flex items-center gap-2 text-[14px] font-medium text-muted min-w-0">
-            <Sparkles size={15} strokeWidth={1.75} className="flex-shrink-0" />
-            <span className="truncate">{convId ? convTitle : "AI Agent"}</span>
-          </div>
+          {convId && (
+            <div className="flex items-center gap-2 text-[14px] font-medium text-muted min-w-0">
+              <Sparkles size={15} strokeWidth={1.75} className="flex-shrink-0" />
+              <span className="truncate">{convTitle}</span>
+            </div>
+          )}
           {matter && (
             <span className="hidden sm:flex items-center gap-1.5 text-[12.5px] bg-card-alt rounded-full px-2.5 py-1 min-w-0">
               <Folder size={12} className="text-muted flex-shrink-0" />
