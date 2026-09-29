@@ -39,9 +39,9 @@ const toolLinks: { label: string; href: string; icon: LucideIcon }[] = [
 const workspaceLinks: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Inbox", href: "/dashboard/inbox", icon: Inbox },
   { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
-  { label: "Records", href: "/dashboard/records", icon: Bookmark },
   { label: "Task Board", href: "/dashboard/task-board", icon: BarChart3 },
   { label: "Documents", href: "/dashboard/documents", icon: Copy },
+  { label: "Records", href: "/dashboard/records", icon: Bookmark },
   { label: "Clients", href: "/dashboard/clients", icon: CircleUser },
   { label: "Matters", href: "/dashboard/matters", icon: Folder },
 ];
