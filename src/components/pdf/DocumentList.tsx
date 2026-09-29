@@ -5,9 +5,14 @@ import Link from "next/link";
 import { FileText, Upload, ChevronDown, ChevronRight, Download, PenLine, Loader2, X, Folder, Check, Search, Layers, Trash2 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { uploadNewDocument, versionDownloadUrl, UploadError } from "@/lib/pdf/upload";
+import type { FileType } from "@/lib/documents/fileTypes";
+
+// Power PDF only works with PDF versions; Word and other files live in Documents.
+export const pdfVersions = (d: Doc) => d.versions.filter((v) => (v.fileType ?? "pdf") === "pdf");
 
 export type DocVersion = {
   id: string;
+  fileType: FileType;
   versionNumber: number;
   sizeBytes: number;
   pageCount: number;
@@ -37,7 +42,7 @@ export function formatWhen(iso: string) {
   });
 }
 
-function formatSize(bytes: number) {
+export function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
@@ -139,13 +144,14 @@ export default function DocumentList({
 
   async function download(versionId: string) {
     try {
-      window.open(await versionDownloadUrl(versionId), "_blank", "noopener");
+      window.open(await versionDownloadUrl(versionId, true), "_blank", "noopener");
     } catch (e) {
       setError((e as Error).message);
     }
   }
 
   const matterTitle = (id: string) => matters.find((m) => m.id === id)?.title ?? "Matter";
+  const pdfDocs = docs.filter((d) => pdfVersions(d).length > 0);
 
   return (
     <div>
@@ -200,7 +206,7 @@ export default function DocumentList({
       <div className="bg-card-alt rounded-2xl p-2">
         {loading ? (
           <div className="bg-cream rounded-xl py-14 text-center text-[14px] text-muted">Loading documents…</div>
-        ) : docs.length === 0 ? (
+        ) : pdfDocs.length === 0 ? (
           <div className="bg-cream rounded-xl py-14 text-center">
             <FileText size={22} strokeWidth={1.5} className="text-muted mx-auto mb-3" />
             <div className="text-[14.5px] font-medium">No PDFs here yet</div>
@@ -208,8 +214,9 @@ export default function DocumentList({
           </div>
         ) : (
           <div className="bg-cream rounded-xl divide-y divide-line">
-            {docs.map((d) => {
-              const latest = d.versions[0];
+            {pdfDocs.map((d) => {
+              const versions = pdfVersions(d);
+              const latest = versions[0];
               const open = expanded === d.id;
               return (
                 <div key={d.id}>
@@ -252,7 +259,7 @@ export default function DocumentList({
                   {open && (
                     <div className="px-5 pb-4 pl-[68px]">
                       <div className="border border-line rounded-xl divide-y divide-line bg-white/50">
-                        {d.versions.map((v) => (
+                        {versions.map((v) => (
                           <div key={v.id} className="flex items-center gap-3 px-4 py-2.5 flex-wrap text-[13px]">
                             <span className="font-medium w-[34px]">v{v.versionNumber}</span>
                             <span className="flex-1 min-w-[220px] text-muted">
@@ -289,7 +296,7 @@ export default function DocumentList({
 }
 
 // Pill-style matter picker matching the app's dropdowns (replaces the native <select>).
-function MatterPicker({
+export function MatterPicker({
   matters,
   value,
   onChange,

@@ -2,11 +2,21 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
 import { checkPdf, pdfProblemMessages, type PdfProblem } from "@/lib/pdfValidation";
+import {
+  FILE_TYPES,
+  checkFileBytes,
+  fileProblemMessages,
+  isFileType,
+  nameWithExtension,
+  type FileProblem,
+  type FileType,
+} from "@/lib/documents/fileTypes";
 
 export const DOCUMENTS_BUCKET = "matter-documents";
 
 export type DocumentVersion = {
   id: string;
+  fileType: FileType;
   versionNumber: number;
   sizeBytes: number;
   pageCount: number;
@@ -38,8 +48,49 @@ export class PdfRejectedError extends Error {
   }
 }
 
+export class FileRejectedError extends Error {
+  constructor(public problem: FileProblem) {
+    super(fileProblemMessages[problem]);
+  }
+}
+
+// Thrown when a feature needs a migration that hasn't been run yet.
+export class MigrationRequiredError extends Error {
+  constructor(public migration: string, message: string) {
+    super(message);
+  }
+}
+
+export const FILE_TYPES_MIGRATION = "0013_document_file_types.sql";
+
+function isMissingColumn(error: unknown) {
+  const e = error as { code?: string; message?: string } | null;
+  return e?.code === "42703" || e?.code === "PGRST204" || /file_type|mime_type/.test(e?.message ?? "");
+}
+
+// Whether migration 0013 (file types on versions) has been run. Only a
+// positive answer is cached, so running the migration takes effect at once.
+let fileTypesReady = false;
+export async function hasFileTypes(): Promise<boolean> {
+  if (fileTypesReady) return true;
+  const { error } = await createAdminClient().from("document_versions").select("file_type").limit(1);
+  if (!error) fileTypesReady = true;
+  else if (!isMissingColumn(error)) throw error;
+  return fileTypesReady;
+}
+
+export async function requireFileTypes() {
+  if (!(await hasFileTypes())) {
+    throw new MigrationRequiredError(
+      FILE_TYPES_MIGRATION,
+      `Word and other files need a database update. Run supabase/migrations/${FILE_TYPES_MIGRATION} in the Supabase SQL editor, then try again. PDFs work already.`
+    );
+  }
+}
+
 type VersionRow = {
   id: string;
+  file_type?: string | null;
   version_number: number;
   size_bytes: number;
   page_count: number;
@@ -52,6 +103,7 @@ type VersionRow = {
 function toVersion(v: VersionRow): DocumentVersion {
   return {
     id: v.id,
+    fileType: isFileType(v.file_type) ? v.file_type : "pdf",
     versionNumber: v.version_number,
     sizeBytes: Number(v.size_bytes),
     pageCount: v.page_count,
@@ -105,18 +157,23 @@ export async function requireDocumentAccess(documentId: string) {
 }
 
 // ── Storage paths ─────────────────────────────────────────────────────────
-// {org}/{matter}/{random}.pdf — the prefix is re-checked when a client
-// hands a path back, so nobody can attach a file from another matter.
+// {org}/{matter}/{random}.{ext} — the prefix is re-checked when a client
+// hands a path back, so nobody can attach a file from another matter. The
+// extension is chosen by the server from the allowed list.
 
-export function newStoragePath(orgId: string, matterId: string) {
-  return `${orgId}/${matterId}/${crypto.randomUUID()}.pdf`;
+export function newStoragePath(orgId: string, matterId: string, type: FileType = "pdf") {
+  return `${orgId}/${matterId}/${crypto.randomUUID()}.${FILE_TYPES[type].exts[0]}`;
 }
 
-function assertPathBelongs(path: string, orgId: string, matterId: string) {
+function assertPathBelongs(path: string, orgId: string, matterId: string): FileType {
   const prefix = `${orgId}/${matterId}/`;
-  if (!path.startsWith(prefix) || path.includes("..") || !/^[0-9a-f/-]+\.pdf$/i.test(path)) {
+  const m = path.match(/^[0-9a-f/-]+\.([a-z]+)$/i);
+  const ext = m?.[1].toLowerCase();
+  const type = ext && isFileType(ext) && FILE_TYPES[ext].exts[0] === ext ? ext : null;
+  if (!path.startsWith(prefix) || path.includes("..") || !type) {
     throw new AccessError(403, "That upload doesn't belong to this matter.");
   }
+  return type;
 }
 
 export async function createUploadUrl(path: string) {
@@ -127,17 +184,37 @@ export async function createUploadUrl(path: string) {
 }
 
 // Download what the browser uploaded, validate it, and delete it if it's bad.
-async function validateUploaded(path: string) {
+async function validateUploaded(path: string, type: FileType = "pdf") {
   const supabase = createAdminClient();
   const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).download(path);
-  if (error || !data) throw new PdfRejectedError("damaged");
+  if (error || !data) {
+    if (type === "pdf") throw new PdfRejectedError("damaged");
+    throw new FileRejectedError("mismatch");
+  }
   const bytes = new Uint8Array(await data.arrayBuffer());
-  const check = await checkPdf(bytes);
+  if (type === "pdf") {
+    const check = await checkPdf(bytes);
+    if (!check.ok) {
+      await supabase.storage.from(DOCUMENTS_BUCKET).remove([path]);
+      throw new PdfRejectedError(check.problem);
+    }
+    return { pageCount: check.pageCount, hasFormFields: check.hasFormFields, sizeBytes: bytes.byteLength };
+  }
+  const check = checkFileBytes(type, bytes);
   if (!check.ok) {
     await supabase.storage.from(DOCUMENTS_BUCKET).remove([path]);
-    throw new PdfRejectedError(check.problem);
+    throw new FileRejectedError(check.problem);
   }
-  return { ...check, sizeBytes: bytes.byteLength };
+  return { pageCount: 0, hasFormFields: false, sizeBytes: bytes.byteLength };
+}
+
+// Columns for a new version row; file type columns only once 0013 has run.
+async function typeColumns(type: FileType) {
+  if (!(await hasFileTypes())) {
+    if (type !== "pdf") await requireFileTypes();
+    return {};
+  }
+  return { file_type: type, mime_type: FILE_TYPES[type].mime };
 }
 
 // ── Queries ───────────────────────────────────────────────────────────────
@@ -166,12 +243,16 @@ function toDocument(row: DocRow): MatterDocument {
   };
 }
 
-const DOC_SELECT =
-  "id, matter_id, title, created_at, updated_at, matters(title), document_versions(id, version_number, size_bytes, page_count, has_form_fields, note, created_by_email, created_at)";
+const VERSION_FIELDS = "id, version_number, size_bytes, page_count, has_form_fields, note, created_by_email, created_at";
+
+async function docSelect() {
+  const fields = (await hasFileTypes()) ? `${VERSION_FIELDS}, file_type` : VERSION_FIELDS;
+  return `id, matter_id, title, created_at, updated_at, matters(title), document_versions(${fields})`;
+}
 
 export async function listDocuments(orgId: string, matterId?: string): Promise<MatterDocument[]> {
   const supabase = createAdminClient();
-  let q = supabase.from("documents").select(DOC_SELECT).eq("org_id", orgId);
+  let q = supabase.from("documents").select(await docSelect()).eq("org_id", orgId);
   if (matterId) q = q.eq("matter_id", matterId);
   const { data, error } = await q.order("updated_at", { ascending: false });
   if (error) throw error;
@@ -182,7 +263,7 @@ export async function getDocument(orgId: string, documentId: string): Promise<Ma
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("documents")
-    .select(DOC_SELECT)
+    .select(await docSelect())
     .eq("org_id", orgId)
     .eq("id", documentId)
     .single();
@@ -200,16 +281,23 @@ export async function createDocumentFromUpload(opts: {
   title: string;
   path: string;
 }): Promise<MatterDocument> {
-  assertPathBelongs(opts.path, opts.orgId, opts.matterId);
-  const check = await validateUploaded(opts.path);
+  const type = assertPathBelongs(opts.path, opts.orgId, opts.matterId);
   const supabase = createAdminClient();
+  let cols: Awaited<ReturnType<typeof typeColumns>>;
+  try {
+    cols = await typeColumns(type);
+  } catch (e) {
+    await supabase.storage.from(DOCUMENTS_BUCKET).remove([opts.path]);
+    throw e;
+  }
+  const check = await validateUploaded(opts.path, type);
 
   const { data: doc, error: docError } = await supabase
     .from("documents")
     .insert({
       org_id: opts.orgId,
       matter_id: opts.matterId,
-      title: opts.title.trim().slice(0, 200) || "Untitled.pdf",
+      title: opts.title.trim().slice(0, 200) || nameWithExtension("Untitled", type),
       created_by: opts.userId,
     })
     .select("id")
@@ -227,6 +315,7 @@ export async function createDocumentFromUpload(opts: {
     note: "Original upload",
     created_by: opts.userId,
     created_by_email: opts.userEmail,
+    ...cols,
   });
   if (vError) {
     await supabase.from("documents").delete().eq("id", doc.id);
@@ -246,9 +335,16 @@ export async function addVersionFromUpload(opts: {
   basedOnVersionId: string | null;
   note: string;
 }): Promise<MatterDocument> {
-  assertPathBelongs(opts.path, opts.orgId, opts.matterId);
-  const check = await validateUploaded(opts.path);
+  const type = assertPathBelongs(opts.path, opts.orgId, opts.matterId);
   const supabase = createAdminClient();
+  let cols: Awaited<ReturnType<typeof typeColumns>>;
+  try {
+    cols = await typeColumns(type);
+  } catch (e) {
+    await supabase.storage.from(DOCUMENTS_BUCKET).remove([opts.path]);
+    throw e;
+  }
+  const check = await validateUploaded(opts.path, type);
 
   // Next version number; the unique (document_id, version_number) constraint
   // catches two people saving at the same instant, so retry a couple of times.
@@ -274,6 +370,7 @@ export async function addVersionFromUpload(opts: {
       based_on_version_id: opts.basedOnVersionId,
       created_by: opts.userId,
       created_by_email: opts.userEmail,
+      ...cols,
     });
     if (!error) {
       await supabase
@@ -287,16 +384,28 @@ export async function addVersionFromUpload(opts: {
   throw new Error("Could not allocate a version number, please try again.");
 }
 
-export async function signedDownloadUrl(orgId: string, versionId: string) {
+// With asDownload, the browser saves the file under the document's name
+// (with the right extension) instead of opening it.
+export async function signedDownloadUrl(orgId: string, versionId: string, asDownload = false) {
   const supabase = createAdminClient();
   const { data: v } = await supabase
     .from("document_versions")
-    .select("storage_path")
+    .select("storage_path, version_number, documents(title)")
     .eq("id", versionId)
     .eq("org_id", orgId)
     .maybeSingle();
   if (!v) throw new AccessError(404, "Version not found, or you don't have access to it.");
-  const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).createSignedUrl(v.storage_path, 120);
+  const path = v.storage_path as string;
+  let download: string | undefined;
+  if (asDownload) {
+    const ext = path.split(".").pop() ?? "pdf";
+    const title = (v as unknown as { documents: { title: string } | null }).documents?.title ?? "document";
+    const base = nameWithExtension(title, isFileType(ext) ? ext : "pdf").replace(/[\\/:*?"<>|]+/g, "-");
+    download = v.version_number > 1 ? base.replace(/(\.[a-z0-9]+)$/i, ` (v${v.version_number})$1`) : base;
+  }
+  const { data, error } = await supabase.storage
+    .from(DOCUMENTS_BUCKET)
+    .createSignedUrl(path, 120, download ? { download } : undefined);
   if (error || !data) throw error ?? new Error("Could not create download URL");
   return data.signedUrl;
 }

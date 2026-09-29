@@ -35,7 +35,7 @@ import NewMatterModal, {
 import { getInitials, getAvatarColor } from "@/components/NewClientModal";
 import { GenericDropdown } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
-import DocumentList from "@/components/pdf/DocumentList";
+import DocumentsLibrary from "@/components/documents/DocumentsLibrary";
 import AssigneeOptions from "@/components/AssigneeOptions";
 
 const tabs = [
@@ -312,7 +312,7 @@ export default function MatterDetailPage() {
       </div>
 
       {activeTab === "documents" ? (
-        <DocumentList matterId={matter.id} />
+        <DocumentsLibrary matterId={matter.id} />
       ) : activeTab !== "overview" ? (
         <div className="border border-line rounded-2xl min-h-[240px] flex items-center justify-center text-[14px] text-muted">
           {tabs.find((t) => t.key === activeTab)?.label} coming soon.

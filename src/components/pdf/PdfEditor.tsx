@@ -45,7 +45,7 @@ import {
   type TextColor,
 } from "@/lib/pdf/editorModel";
 import SignatureModal, { type CapturedSignature } from "@/components/pdf/SignatureModal";
-import { formatWhen, type Doc, type DocVersion } from "@/components/pdf/DocumentList";
+import { formatWhen, pdfVersions, type Doc, type DocVersion } from "@/components/pdf/DocumentList";
 
 type Viewport = ReturnType<PdfPage["getViewport"]>;
 type Geo = PageGeometry & { vp: Viewport };
@@ -126,8 +126,13 @@ export default function PdfEditor({
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error ?? "Couldn't open this document.");
         const d: Doc = data.document;
-        const v = d.versions.find((x) => x.id === versionId) ?? d.versions[0];
-        if (!v) throw new Error("This document has no saved versions.");
+        const pdfs = pdfVersions(d);
+        const asked = d.versions.find((x) => x.id === versionId);
+        if (asked && asked.fileType !== "pdf" && asked.fileType) {
+          throw new Error("This version isn't a PDF. Go to Documents and use Convert to PDF to open it in Power PDF.");
+        }
+        const v = asked ?? pdfs[0];
+        if (!v) throw new Error("This document has no PDF version yet. Go to Documents and use Convert to PDF first.");
         const [b, helv] = await Promise.all([fetchVersionBytes(v.id), getHelvetica()]);
         const opened = await openPdf(b);
         if ("problem" in opened) throw new Error(openProblemMessages[opened.problem]);
@@ -803,7 +808,7 @@ export default function PdfEditor({
               <div>
                 <div className="font-semibold mb-1.5">Versions</div>
                 <div className="flex flex-col gap-1.5">
-                  {doc.versions.map((v) => (
+                  {pdfVersions(doc).map((v) => (
                     <Link
                       key={v.id}
                       href={`/dashboard/power-pdf/${doc.id}?version=${v.id}`}

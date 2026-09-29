@@ -1,6 +1,6 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { AccessError, PdfRejectedError } from "@/lib/data/documents";
+import { AccessError, PdfRejectedError, FileRejectedError, MigrationRequiredError } from "@/lib/data/documents";
 
 export function errorResponse(where: string, error: unknown) {
   if (error instanceof AccessError) {
@@ -8,6 +8,12 @@ export function errorResponse(where: string, error: unknown) {
   }
   if (error instanceof PdfRejectedError) {
     return NextResponse.json({ error: error.message, code: error.problem }, { status: 422 });
+  }
+  if (error instanceof FileRejectedError) {
+    return NextResponse.json({ error: error.message, code: error.problem }, { status: 422 });
+  }
+  if (error instanceof MigrationRequiredError) {
+    return NextResponse.json({ error: error.message, code: "setup_required", migration: error.migration }, { status: 503 });
   }
   console.error(`${where} failed:`, error);
 

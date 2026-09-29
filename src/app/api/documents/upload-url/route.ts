@@ -4,8 +4,9 @@ import {
   requireDocumentAccess,
   newStoragePath,
   createUploadUrl,
+  requireFileTypes,
 } from "@/lib/data/documents";
-import { MAX_PDF_BYTES, pdfProblemMessages } from "@/lib/pdfValidation";
+import { MAX_DOCUMENT_BYTES, fileProblemMessages, fileTypeFromName } from "@/lib/documents/fileTypes";
 import { errorResponse } from "@/lib/apiErrors";
 
 export const dynamic = "force-dynamic";
@@ -23,14 +24,18 @@ export async function POST(request: Request) {
     };
 
     if (typeof body.size !== "number" || body.size <= 0) {
-      return NextResponse.json({ error: pdfProblemMessages.empty, code: "empty" }, { status: 422 });
+      return NextResponse.json({ error: fileProblemMessages.empty, code: "empty" }, { status: 422 });
     }
-    if (body.size > MAX_PDF_BYTES) {
-      return NextResponse.json({ error: pdfProblemMessages.too_large, code: "too_large" }, { status: 422 });
+    if (body.size > MAX_DOCUMENT_BYTES) {
+      return NextResponse.json({ error: fileProblemMessages.too_large, code: "too_large" }, { status: 422 });
     }
-    if (body.fileName && !/\.pdf$/i.test(body.fileName)) {
-      return NextResponse.json({ error: pdfProblemMessages.not_pdf, code: "not_pdf" }, { status: 422 });
+    // No name means an edited PDF from Power PDF.
+    const type = body.fileName ? fileTypeFromName(body.fileName) : "pdf";
+    if (!type) {
+      return NextResponse.json({ error: fileProblemMessages.unsupported, code: "unsupported" }, { status: 422 });
     }
+    // Check before uploading: storage only accepts non-PDF files after 0013.
+    if (type !== "pdf") await requireFileTypes();
 
     let orgId: string;
     let matterId: string;
@@ -46,7 +51,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Choose a matter first." }, { status: 400 });
     }
 
-    const upload = await createUploadUrl(newStoragePath(orgId, matterId));
+    const upload = await createUploadUrl(newStoragePath(orgId, matterId, type));
     return NextResponse.json(upload);
   } catch (error) {
     return errorResponse("POST /api/documents/upload-url", error);
