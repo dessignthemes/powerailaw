@@ -25,7 +25,7 @@ export default function ClientIntakePage() {
     <div className="px-10 py-10">
       <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-[28px] font-semibold mb-1">Client intake</h1>
+          <h1 className="text-[28px] font-semibold mb-1">Client Intake</h1>
           <p className="text-[14.5px] text-muted">Review submissions.</p>
         </div>
         <div className="flex items-center gap-2">

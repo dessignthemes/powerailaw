@@ -30,7 +30,8 @@ import AdminModal from "@/components/AdminModal";
 import ContactSupportModal from "@/components/ContactSupportModal";
 
 const toolLinks: { label: string; href: string; icon: LucideIcon }[] = [
-  { label: "Time tracking", href: "/dashboard/time-tracking", icon: Timer },
+  { label: "AI Agent", href: "/dashboard/agent", icon: Sparkles },
+  { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
 ];
@@ -113,12 +114,6 @@ export default function Sidebar() {
             icon={Home}
             label="Dashboard"
             active={pathname === "/dashboard"}
-          />
-          <NavItem
-            href="/dashboard/agent"
-            icon={Sparkles}
-            label="AI Agent"
-            active={pathname === "/dashboard/agent"}
           />
           <NavItem
             href="/dashboard/community"

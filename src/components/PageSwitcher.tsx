@@ -18,6 +18,7 @@ import {
   CircleUser,
   Folder,
   Check,
+  Sparkles,
   ChevronDown,
   type LucideIcon,
 } from "lucide-react";
@@ -25,8 +26,9 @@ import {
 const pages: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
   { label: "Community", href: "/dashboard/community", icon: Users },
-  { label: "Time tracking", href: "/dashboard/time-tracking", icon: Timer },
-  { label: "Client intake", href: "/dashboard/client-intake", icon: UserPlus },
+  { label: "AI Agent", href: "/dashboard/agent", icon: Sparkles },
+  { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
+  { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
   { label: "Task board", href: "/dashboard/task-board", icon: BarChart3 },
   { label: "Documents", href: "/dashboard/documents", icon: Copy },
