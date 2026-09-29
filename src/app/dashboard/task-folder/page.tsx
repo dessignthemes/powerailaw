@@ -49,7 +49,7 @@ function when(iso: string) {
     : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function TriagePage() {
+export default function TaskFolderPage() {
   const { teamMembers, boards, addTask } = useWorkspaceData();
   const [conns, setConns] = useState<Conn[] | null>(null);
   const [settings, setSettings] = useState<Settings>(null);
@@ -172,7 +172,7 @@ export default function TriagePage() {
 
   return (
     <div className="px-10 py-10 max-w-[1100px]">
-      <h1 className="text-[28px] font-semibold mb-1">Triage</h1>
+      <h1 className="text-[28px] font-semibold mb-1">Task Folder</h1>
       <p className="text-[14.5px] text-muted mb-7">
         Drop emails that need action into one folder in your mailbox. They show up here, and with one click each becomes a task you can assign to anyone on a board.
         LawPower only reads that folder; your emails are never moved or changed.
@@ -188,7 +188,7 @@ export default function TriagePage() {
         <div className="border border-line rounded-2xl px-6 py-5 bg-card-alt flex items-center justify-between gap-4 flex-wrap">
           <div>
             <div className="text-[14.5px] font-semibold mb-0.5">Connect your mailbox first</div>
-            <div className="text-[13.5px] text-muted">Triage reads a folder from the mailbox you connect in the Inbox.</div>
+            <div className="text-[13.5px] text-muted">Task Folder reads a folder from the mailbox you connect in the Inbox.</div>
           </div>
           <Link href="/dashboard/inbox" className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2">
             Go to Inbox
@@ -358,7 +358,7 @@ export default function TriagePage() {
                                   View
                                 </Link>
                               )}
-                              <button onClick={() => putBack(m)} title="Show in Triage again" className="w-8 h-8 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink">
+                              <button onClick={() => putBack(m)} title="Show in Task Folder again" className="w-8 h-8 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink">
                                 <Undo2 size={14} />
                               </button>
                             </>
