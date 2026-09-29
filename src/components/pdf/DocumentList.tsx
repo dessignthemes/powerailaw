@@ -230,7 +230,12 @@ export default function DocumentList({
                     </button>
                     <FileText size={17} strokeWidth={1.75} className="text-muted flex-shrink-0" />
                     <div className="flex-1 min-w-[200px]">
-                      <div className="text-[14.5px] font-medium truncate">{d.title}</div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[14.5px] font-medium truncate">{d.title}</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-line/60 text-[11.5px] font-medium text-ink flex-shrink-0">
+                          PDF
+                        </span>
+                      </div>
                       <div className="text-[12.5px] text-muted">
                         {!fixedMatterId && <>{d.matterTitle ?? matterTitle(d.matterId)}, </>}
                         version {latest?.versionNumber ?? 1} of {d.versions.length}, saved{" "}
@@ -245,6 +250,14 @@ export default function DocumentList({
                       >
                         <PenLine size={13} strokeWidth={2} /> Open in Power PDF
                       </Link>
+                    )}
+                    {latest && (
+                      <button
+                        onClick={() => download(latest.id)}
+                        className="bg-card-alt hover:bg-line/70 text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+                      >
+                        <Download size={13} strokeWidth={2} /> Download
+                      </button>
                     )}
                     <button
                       onClick={() => remove(d)}

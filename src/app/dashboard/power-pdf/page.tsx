@@ -7,7 +7,7 @@ import DocumentList from "@/components/pdf/DocumentList";
 function PowerPdfHome() {
   const matter = useSearchParams().get("matter");
   return (
-    <div className="px-10 py-10 max-w-[1100px]">
+    <div className="px-10 py-10">
       <h1 className="text-[28px] font-semibold mb-1">Power PDF</h1>
       <p className="text-[14.5px] text-muted mb-7 max-w-[640px]">
         Upload a PDF to a matter, then fill its form fields, add text and a signature, and save the result as a new
