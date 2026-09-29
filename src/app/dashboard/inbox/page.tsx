@@ -36,6 +36,45 @@ function writePref(key: string, value: string) {
   }
 }
 
+// Emails opened here are remembered in this browser too, so they stay read
+// straight away (the server also records them once migration 0016 has run).
+const openedKey = (p: MailProvider) => `lawpower.inbox.opened.${p}`;
+function openedIds(p: MailProvider): Set<string> {
+  try {
+    return new Set(JSON.parse(readPref(openedKey(p)) ?? "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+function rememberOpened(p: MailProvider, id: string) {
+  const ids = [...openedIds(p)].filter((x) => x !== id);
+  ids.push(id);
+  writePref(openedKey(p), JSON.stringify(ids.slice(-1500)));
+}
+function withOpened(p: MailProvider, list: MailSummary[]) {
+  const opened = openedIds(p);
+  return opened.size ? list.map((m) => (m.unread && opened.has(m.id) ? { ...m, unread: false } : m)) : list;
+}
+
+// The last folder list is kept for this browser session, so it shows at once
+// when you come back and stays visible if Outlook or Gmail is slow to answer.
+const foldersKey = (p: MailProvider) => `lawpower.inbox.folders.${p}`;
+function cachedFolders(p: MailProvider | null): MailFolder[] {
+  if (!p || typeof window === "undefined") return [];
+  try {
+    return JSON.parse(window.sessionStorage.getItem(foldersKey(p)) ?? "[]") as MailFolder[];
+  } catch {
+    return [];
+  }
+}
+function cacheFolders(p: MailProvider, folders: MailFolder[]) {
+  try {
+    window.sessionStorage.setItem(foldersKey(p), JSON.stringify(folders));
+  } catch {
+    // storage full or blocked: the list just loads fresh next time
+  }
+}
+
 type Conn = { provider: MailProvider; email: string | null; status: "ok" | "reconnect" | "missing_scope"; autoRefresh: boolean };
 type Problem = { message: string; code?: string };
 
@@ -88,6 +127,7 @@ export default function InboxPage() {
   const [folders, setFolders] = useState<MailFolder[]>([]);
   const [foldersLoading, setFoldersLoading] = useState(true);
   const [foldersError, setFoldersError] = useState<string | null>(null);
+  const [foldersTry, setFoldersTry] = useState(0);
   const [folderId, setFolderId] = useState<string | null>(null); // null = Inbox
   const [panelHidden, setPanelHidden] = useState<boolean>(() => {
     const saved = readPref(PANEL_KEY);
@@ -162,7 +202,7 @@ export default function InboxPage() {
     fetchPage(provider, activeQuery, undefined, folderId)
       .then((d) => {
         if (cancelled) return;
-        setMessages(d.messages);
+        setMessages(withOpened(provider, d.messages));
         setNextPage(d.nextPageToken);
         setListError(null);
       })
@@ -177,25 +217,47 @@ export default function InboxPage() {
   useEffect(() => {
     if (!provider) return;
     let cancelled = false;
-    getJson<{ folders: MailFolder[] }>(`/api/mail/folders?provider=${provider}`)
-      .then((d) => {
-        if (cancelled) return;
-        setFolders(d.folders);
-        setFoldersError(null);
-      })
-      .catch((e: Error) => !cancelled && setFoldersError(e.message))
-      .finally(() => !cancelled && setFoldersLoading(false));
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const load = (attempt: number) =>
+      getJson<{ folders: MailFolder[] }>(`/api/mail/folders?provider=${provider}`)
+        .then((d) => {
+          if (cancelled) return;
+          setFolders(d.folders);
+          cacheFolders(provider, d.folders);
+          setFoldersError(null);
+          setFoldersLoading(false);
+        })
+        .catch((e: Error) => {
+          if (cancelled) return;
+          // One quiet retry: Outlook often answers on the second try.
+          if (attempt === 0) {
+            retry = setTimeout(() => load(1), 1500);
+            return;
+          }
+          setFoldersError(e.message);
+          setFoldersLoading(false);
+        });
+    load(0);
     return () => {
       cancelled = true;
+      if (retry) clearTimeout(retry);
     };
-  }, [provider]);
+  }, [provider, foldersTry]);
+
+  const shownFolders = folders.length ? folders : cachedFolders(provider);
+
+  function retryFolders() {
+    setFoldersError(null);
+    setFoldersLoading(true);
+    setFoldersTry((n) => n + 1);
+  }
 
   function reload() {
     if (!provider) return;
     setListLoading(true);
     fetchPage(provider, activeQuery, undefined, folderId)
       .then((d) => {
-        setMessages(d.messages);
+        setMessages(withOpened(provider, d.messages));
         setNextPage(d.nextPageToken);
         setListError(null);
       })
@@ -208,7 +270,7 @@ export default function InboxPage() {
     setListLoading(true);
     fetchPage(provider, activeQuery, nextPage, folderId)
       .then((d) => {
-        setMessages((m) => [...m, ...d.messages.filter((x) => !m.some((y) => y.id === x.id))]);
+        setMessages((m) => [...m, ...withOpened(provider, d.messages).filter((x) => !m.some((y) => y.id === x.id))]);
         setNextPage(d.nextPageToken);
       })
       .catch((e: Error & { code?: string }) => setListError({ message: e.message, code: e.code }))
@@ -225,6 +287,7 @@ export default function InboxPage() {
     getJson<{ message: MailMessage }>(`/api/mail/messages/${encodeURIComponent(m.id)}?provider=${provider}`)
       .then((d) => {
         setMessage(d.message);
+        rememberOpened(provider, m.id);
         setMessages((list) => list.map((x) => (x.id === m.id ? { ...x, unread: false } : x)));
         // Opening an unread message lowers the folder's unread count here too.
         if (m.unread) {
@@ -438,11 +501,12 @@ export default function InboxPage() {
               <div className="fixed inset-0 bg-black/20 z-30 min-[900px]:hidden" onClick={() => togglePanel(true)} />
               <div className="absolute min-[900px]:static inset-y-0 left-0 z-40 w-[250px] flex-shrink-0 border-r border-line bg-cream shadow-lg min-[900px]:shadow-none">
                 <FolderPanel
-                  folders={folders}
+                  folders={shownFolders}
                   loading={foldersLoading}
                   error={foldersError}
+                  onRetry={retryFolders}
                   accountEmail={conn?.email ?? null}
-                  selectedId={folderId ?? folders.find((f) => f.kind === "inbox")?.id ?? null}
+                  selectedId={folderId ?? shownFolders.find((f) => f.kind === "inbox")?.id ?? null}
                   favorites={provider ? currentFavorites(provider) : []}
                   onSelect={selectFolder}
                   onToggleFavorite={toggleFavorite}

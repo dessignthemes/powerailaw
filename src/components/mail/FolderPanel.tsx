@@ -35,6 +35,7 @@ export default function FolderPanel({
   folders,
   loading,
   error,
+  onRetry,
   accountEmail,
   selectedId,
   favorites,
@@ -45,6 +46,7 @@ export default function FolderPanel({
   folders: MailFolder[];
   loading: boolean;
   error: string | null;
+  onRetry?: () => void;
   accountEmail: string | null;
   selectedId: string | null;
   favorites: string[];
@@ -123,8 +125,18 @@ export default function FolderPanel({
           <div className="flex items-center gap-2 text-[12.5px] text-muted px-2 py-4">
             <Loader2 size={13} className="animate-spin" /> Loading folders…
           </div>
-        ) : error ? (
-          <div className="text-[12.5px] text-muted px-2 py-4">{error}</div>
+        ) : error && folders.length === 0 ? (
+          <div className="px-2 py-4">
+            <div className="text-[12.5px] text-muted mb-3">{error}</div>
+            {onRetry && (
+              <button
+                onClick={onRetry}
+                className="bg-card-alt hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
+              >
+                Try again
+              </button>
+            )}
+          </div>
         ) : (
           <>
             <button onClick={() => setFavOpen(!favOpen)} className="w-full flex items-center gap-1.5 px-1.5 py-1.5 text-[13px] font-semibold">

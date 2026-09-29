@@ -3,6 +3,7 @@ import { getAccessToken } from "@/lib/mail/tokens";
 import { listGmail } from "@/lib/mail/google";
 import { listOutlook } from "@/lib/mail/microsoft";
 import { requireUserId, parseProvider, mailErrorResponse } from "@/lib/mail/api";
+import { readMessageIds } from "@/lib/data/mailReads";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,12 @@ export async function GET(request: Request) {
     const { token } = await getAccessToken(userId, provider);
     const page =
       provider === "google" ? await listGmail(token, { q, pageToken, folder }) : await listOutlook(token, { q, pageToken, folder });
-    return NextResponse.json(page);
+    // Emails opened in LawPower show as read, even though the mailbox itself
+    // (which LawPower never changes) may still mark them unread.
+    const unreadIds = page.messages.filter((m) => m.unread).map((m) => m.id);
+    const opened = await readMessageIds(userId, provider, unreadIds);
+    const messages = opened.size ? page.messages.map((m) => (opened.has(m.id) ? { ...m, unread: false } : m)) : page.messages;
+    return NextResponse.json({ ...page, messages });
   } catch (error) {
     return mailErrorResponse("GET /api/mail/messages", error);
   }

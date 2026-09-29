@@ -1,5 +1,6 @@
 import "server-only";
 import { MailError } from "@/lib/mail/tokens";
+import { fetchWithRetry, mapLimit } from "@/lib/mail/limit";
 import type { FolderKind, MailFolder, MailMessage, MailPage, MailSummary } from "@/lib/mail/types";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
@@ -21,7 +22,7 @@ type GraphMsg = {
 };
 
 async function graph<T>(token: string, url: string): Promise<T> {
-  const res = await fetch(url.startsWith("http") ? url : `${GRAPH}${url}`, {
+  const res = await fetchWithRetry(url.startsWith("http") ? url : `${GRAPH}${url}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
@@ -116,27 +117,24 @@ const WELL_KNOWN: [string, FolderKind][] = [
   ["archive", "archive"],
 ];
 
+// Outlook allows 4 requests at once per mailbox; stay under it.
+const OUTLOOK_PARALLEL = 3;
+
 // Top-level mail folders plus one level of subfolders (e.g. folders inside Inbox).
 export async function listOutlookFolders(token: string): Promise<MailFolder[]> {
-  const [top, known] = await Promise.all([
-    graph<{ value: GraphFolder[] }>(token, `/me/mailFolders?$top=100&$select=${FOLDER_SELECT}`),
-    Promise.all(
-      WELL_KNOWN.map(([name, kind]) =>
-        graph<GraphFolder>(token, `/me/mailFolders/${name}?$select=id`)
-          .then((f) => [f.id, kind] as const)
-          .catch(() => null)
-      )
-    ),
-  ]);
+  const top = await graph<{ value: GraphFolder[] }>(token, `/me/mailFolders?$top=100&$select=${FOLDER_SELECT}`);
+  const known = await mapLimit(WELL_KNOWN, OUTLOOK_PARALLEL, ([name, kind]) =>
+    graph<GraphFolder>(token, `/me/mailFolders/${name}?$select=id`)
+      .then((f) => [f.id, kind] as const)
+      .catch(() => null)
+  );
   const kindById = new Map(known.filter((k): k is readonly [string, FolderKind] => !!k));
   const parents = top.value.filter((f) => (f.childFolderCount ?? 0) > 0).slice(0, 25);
   const children = (
-    await Promise.all(
-      parents.map((p) =>
-        graph<{ value: GraphFolder[] }>(token, `/me/mailFolders/${encodeURIComponent(p.id)}/childFolders?$top=100&$select=${FOLDER_SELECT}`)
-          .then((r) => r.value.map((c) => ({ ...c, parentFolderId: p.id })))
-          .catch(() => [] as GraphFolder[])
-      )
+    await mapLimit(parents, OUTLOOK_PARALLEL, (p) =>
+      graph<{ value: GraphFolder[] }>(token, `/me/mailFolders/${encodeURIComponent(p.id)}/childFolders?$top=100&$select=${FOLDER_SELECT}`)
+        .then((r) => r.value.map((c) => ({ ...c, parentFolderId: p.id })))
+        .catch(() => [] as GraphFolder[])
     )
   ).flat();
   const topIds = new Set(top.value.map((f) => f.id));

@@ -1,5 +1,6 @@
 import "server-only";
 import { MailError } from "@/lib/mail/tokens";
+import { fetchWithRetry, mapLimit } from "@/lib/mail/limit";
 import type { FolderKind, MailFolder, MailMessage, MailPage, MailSummary } from "@/lib/mail/types";
 
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
@@ -22,7 +23,7 @@ type GmailMsg = {
 };
 
 async function gmail<T>(token: string, path: string): Promise<T> {
-  const res = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  const res = await fetchWithRetry(`${API}${path}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
   if (res.status === 401) throw new MailError("reconnect", "Your Gmail connection has expired. Reconnect to keep reading mail.");
   if (res.status === 403) {
     const body = await res.json().catch(() => ({}));
@@ -104,7 +105,7 @@ export async function listGmail(token: string, opts: { q?: string; pageToken?: s
 
   const meta = new URLSearchParams({ format: "metadata" });
   ["From", "Subject", "Date"].forEach((h) => meta.append("metadataHeaders", h));
-  const msgs = await Promise.all(ids.map((id) => gmail<GmailMsg>(token, `/messages/${id}?${meta}`)));
+  const msgs = await mapLimit(ids, 10, (id) => gmail<GmailMsg>(token, `/messages/${id}?${meta}`));
 
   return { messages: msgs.map(toSummary), nextPageToken: list.nextPageToken ?? null };
 }
@@ -156,16 +157,14 @@ export async function listGmailFolders(token: string): Promise<MailFolder[]> {
   const { labels = [] } = await gmail<{ labels?: { id: string; name: string; type: string }[] }>(token, "/labels");
   const system = labels.filter((l) => GMAIL_SYSTEM[l.id]);
   const user = labels.filter((l) => l.type === "user").sort((a, b) => a.name.localeCompare(b.name)).slice(0, 60);
-  const withCounts = await Promise.all(
-    [...system, ...user].map(async (l) => {
+  const withCounts = await mapLimit([...system, ...user], 8, async (l) => {
       try {
         const d = await gmail<{ messagesUnread?: number; messagesTotal?: number }>(token, `/labels/${encodeURIComponent(l.id)}`);
         return { l, unread: d.messagesUnread ?? 0, total: d.messagesTotal ?? null };
       } catch {
         return { l, unread: 0, total: null };
       }
-    })
-  );
+  });
   const byName = new Map(user.map((l) => [l.name, l.id]));
   return withCounts.map(({ l, unread, total }) => {
     const sys = GMAIL_SYSTEM[l.id];
