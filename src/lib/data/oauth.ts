@@ -54,7 +54,9 @@ export async function getUserConnections(userId: string): Promise<ConnectionRow[
   const { data, error } = await supabase
     .from("oauth_connections")
     .select("id, provider, access_token, refresh_token, expires_at, scopes, account_email")
-    .eq("connected_by", userId);
+    .eq("connected_by", userId)
+    // Mail and calendar only; Dropbox connections are read in lib/dropbox.
+    .in("provider", ["google", "microsoft"]);
   if (error) throw error;
   return (data ?? []) as ConnectionRow[];
 }

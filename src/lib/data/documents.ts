@@ -280,6 +280,7 @@ export async function createDocumentFromUpload(opts: {
   userEmail: string | null;
   title: string;
   path: string;
+  note?: string;
 }): Promise<MatterDocument> {
   const type = assertPathBelongs(opts.path, opts.orgId, opts.matterId);
   const supabase = createAdminClient();
@@ -312,7 +313,7 @@ export async function createDocumentFromUpload(opts: {
     size_bytes: check.sizeBytes,
     page_count: check.pageCount,
     has_form_fields: check.hasFormFields,
-    note: "Original upload",
+    note: (opts.note ?? "Original upload").slice(0, 300),
     created_by: opts.userId,
     created_by_email: opts.userEmail,
     ...cols,

@@ -9,6 +9,7 @@ import {
   Timer,
   UserPlus,
   FilePen,
+  Cloud,
   Inbox,
   Calendar,
   ListChecks,
@@ -33,6 +34,7 @@ export const toolLinks: NavLink[] = [
   { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
+  { label: "Dropbox", href: "/dashboard/dropbox", icon: Cloud },
 ];
 
 export const workspaceLinks: NavLink[] = [
