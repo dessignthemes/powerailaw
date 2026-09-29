@@ -5,47 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 import { createClient } from "@/lib/supabase/client";
-import {
-  Home,
-  Sparkles,
-  Users,
-  Timer,
-  UserPlus,
-  ListChecks,
-  Inbox,
-  Calendar,
-  Bookmark,
-  BarChart3,
-  Copy,
-  CircleUser,
-  Folder,
-  Grid3x3,
-  FilePen,
-  ArrowUpRight,
-  type LucideIcon,
-} from "lucide-react";
+import { Grid3x3, ArrowUpRight, type LucideIcon } from "lucide-react";
+import { mainLinks, toolLinks, workspaceLinks, isActiveLink } from "@/lib/navigation";
 import AccountMenu from "@/components/AccountMenu";
 import TaskBoardNav from "@/components/TaskBoardNav";
 import AdminModal from "@/components/AdminModal";
 import ContactSupportModal from "@/components/ContactSupportModal";
-
-const toolLinks: { label: string; href: string; icon: LucideIcon }[] = [
-  { label: "AI Agent", href: "/dashboard/agent", icon: Sparkles },
-  { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
-  { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
-  { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
-];
-
-const workspaceLinks: { label: string; href: string; icon: LucideIcon }[] = [
-  { label: "Inbox", href: "/dashboard/inbox", icon: Inbox },
-  { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
-  { label: "Task Folder", href: "/dashboard/task-folder", icon: ListChecks },
-  { label: "Task Board", href: "/dashboard/task-board", icon: BarChart3 },
-  { label: "Documents", href: "/dashboard/documents", icon: Copy },
-  { label: "Records", href: "/dashboard/records", icon: Bookmark },
-  { label: "Clients", href: "/dashboard/clients", icon: CircleUser },
-  { label: "Matters", href: "/dashboard/matters", icon: Folder },
-];
 
 const ORG_NAME = "LawPower AI";
 
@@ -109,18 +74,9 @@ export default function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto">
         <div className="mb-1">
-          <NavItem
-            href="/dashboard"
-            icon={Home}
-            label="Dashboard"
-            active={pathname === "/dashboard"}
-          />
-          <NavItem
-            href="/dashboard/community"
-            icon={Users}
-            label="Community"
-            active={pathname === "/dashboard/community"}
-          />
+          {mainLinks.map((l) => (
+            <NavItem key={l.label} {...l} active={isActiveLink(l.href, pathname)} />
+          ))}
         </div>
 
         <div className="mt-6 mb-1">
@@ -128,7 +84,7 @@ export default function Sidebar() {
             Tools
           </div>
           {toolLinks.map((l) => (
-            <NavItem key={l.label} {...l} active={pathname === l.href || pathname.startsWith(l.href + "/")} />
+            <NavItem key={l.label} {...l} active={isActiveLink(l.href, pathname)} />
           ))}
         </div>
 
@@ -143,7 +99,7 @@ export default function Sidebar() {
                 <TaskBoardNav />
               </Suspense>
             ) : (
-              <NavItem key={l.label} {...l} active={pathname === l.href || pathname.startsWith(l.href + "/")} />
+              <NavItem key={l.label} {...l} active={isActiveLink(l.href, pathname)} />
             )
           )}
         </div>

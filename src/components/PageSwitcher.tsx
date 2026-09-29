@@ -3,58 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import {
-  Home,
-  Users,
-  FilePen,
-  Timer,
-  UserPlus,
-  ListChecks,
-  Inbox,
-  Calendar,
-  Bookmark,
-  BarChart3,
-  Copy,
-  CircleUser,
-  Folder,
-  Check,
-  Sparkles,
-  ChevronDown,
-  type LucideIcon,
-} from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
+import { allNavLinks, isActiveLink, navSections } from "@/lib/navigation";
 
-const pages: { label: string; href: string; icon: LucideIcon }[] = [
-  { label: "Dashboard", href: "/dashboard", icon: Home },
-  { label: "Community", href: "/dashboard/community", icon: Users },
-  { label: "AI Agent", href: "/dashboard/agent", icon: Sparkles },
-  { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
-  { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
-  { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
-  { label: "Task board", href: "/dashboard/task-board", icon: BarChart3 },
-  { label: "Documents", href: "/dashboard/documents", icon: Copy },
-  { label: "Records", href: "/dashboard/records", icon: Bookmark },
-  { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
-  { label: "Task Folder", href: "/dashboard/task-folder", icon: ListChecks },
-  { label: "Inbox", href: "/dashboard/inbox", icon: Inbox },
-  { label: "Clients", href: "/dashboard/clients", icon: CircleUser },
-  { label: "Matters", href: "/dashboard/matters", icon: Folder },
-];
-
+// Same pages, order and sections as the sidebar (both read lib/navigation).
 export default function PageSwitcher() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const current =
-    pages.find((p) => p.href === pathname) ??
-    pages.find((p) => pathname?.startsWith(p.href) && p.href !== "/dashboard") ??
-    pages[0];
-
+  const current = allNavLinks.find((p) => isActiveLink(p.href, pathname)) ?? allNavLinks[0];
   const CurrentIcon = current.icon;
 
   return (
     <div className="relative inline-block">
       <button
         onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
         className="flex items-center gap-2 bg-card-alt hover:bg-line/60 transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
       >
         <CurrentIcon size={15} strokeWidth={1.75} />
@@ -65,24 +30,38 @@ export default function PageSwitcher() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] py-2 w-[240px]">
-            {pages.map((p) => {
-              const Icon = p.icon;
-              return (
-                <Link
-                  key={p.label}
-                  href={p.href}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 text-[14px] font-medium hover:bg-card-alt transition-colors"
-                >
-                  <span className="flex items-center gap-3">
-                    <Icon size={16} strokeWidth={1.75} />
-                    {p.label}
-                  </span>
-                  {p.label === current.label && <Check size={14} strokeWidth={2} />}
-                </Link>
-              );
-            })}
+          <div
+            role="menu"
+            className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] py-2 w-[240px] max-h-[calc(100vh-110px)] overflow-y-auto"
+          >
+            {navSections.map((section, i) => (
+              <div key={section.title ?? "main"} className={i > 0 ? "mt-1.5 pt-1.5 border-t border-line" : ""}>
+                {section.title && (
+                  <div className="px-4 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{section.title}</div>
+                )}
+                {section.links.map((p) => {
+                  const Icon = p.icon;
+                  const active = p.href === current.href;
+                  return (
+                    <Link
+                      key={p.href}
+                      href={p.href}
+                      role="menuitem"
+                      onClick={() => setOpen(false)}
+                      className={`flex items-center justify-between gap-3 px-4 py-2.5 text-[14px] font-medium transition-colors ${
+                        active ? "bg-card-alt" : "hover:bg-card-alt"
+                      }`}
+                    >
+                      <span className="flex items-center gap-3">
+                        <Icon size={16} strokeWidth={1.75} />
+                        {p.label}
+                      </span>
+                      {active && <Check size={14} strokeWidth={2} />}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </>
       )}
