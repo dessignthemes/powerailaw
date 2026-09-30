@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Kanban,
@@ -17,6 +17,11 @@ import {
   ChevronDown,
   User,
   X,
+  ChevronLeft,
+  ChevronRight,
+  Columns3,
+  ChevronsRightLeft,
+  Check,
 } from "lucide-react";
 import NewTaskModal, {
   BoardTask,
@@ -43,6 +48,29 @@ import {
 } from "@/components/TaskBoardControls";
 
 const DISPLAY_KEY = "lawpower.taskboard.display";
+
+// Columns keep one readable width; when there are more than fit, the board
+// scrolls sideways instead of squeezing them.
+const COLUMN_MIN = 224;
+const COLUMN_MAX = 400;
+const COLUMN_GAP = 16;
+
+// Collapsed columns are remembered per board in this browser.
+const collapsedKey = (board: string) => `lawpower.taskboard.collapsed.${board}`;
+function readCollapsed(board: string): Set<string> {
+  try {
+    return new Set(JSON.parse(window.localStorage.getItem(collapsedKey(board)) ?? "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+function writeCollapsed(board: string, ids: Set<string>) {
+  try {
+    window.localStorage.setItem(collapsedKey(board), JSON.stringify([...ids]));
+  } catch {
+    // private mode: just not remembered
+  }
+}
 function readDisplay(): DisplayOptions {
   try {
     const raw = typeof window === "undefined" ? null : window.localStorage.getItem(DISPLAY_KEY);
@@ -141,6 +169,76 @@ function TaskBoard({
   const [boardError, setBoardError] = useState<string | null>(null);
   const [view, setView] = useState<"board" | "list">("board");
   const [columns, setColumns] = useState<Column[]>(initialColumns);
+
+  // ── Horizontal board: scrolling, arrows, jump menu, collapsed columns ──
+  const layoutKey = createdBy ? `by:${createdBy}` : boardId ?? "all";
+  const [collapsed, setCollapsed] = useState<Set<string>>(() =>
+    typeof window === "undefined" ? new Set() : readCollapsed(layoutKey)
+  );
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const colRefs = useRef(new Map<string, HTMLElement>());
+  const [edges, setEdges] = useState({ left: false, right: false });
+  const [onScreen, setOnScreen] = useState<Set<string>>(new Set());
+  const [boardHeight, setBoardHeight] = useState<number | null>(null);
+  const [jumpOpen, setJumpOpen] = useState(false);
+
+  const measure = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    setEdges({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+    const box = el.getBoundingClientRect();
+    setBoardHeight(Math.max(420, window.innerHeight - box.top - window.scrollY - 20));
+    const visible = new Set<string>();
+    colRefs.current.forEach((node, id) => {
+      const r = node.getBoundingClientRect();
+      const shown = Math.min(r.right, box.right) - Math.max(r.left, box.left);
+      if (shown >= Math.min(r.width, box.width) * 0.6) visible.add(id);
+    });
+    setOnScreen((prev) => (prev.size === visible.size && [...visible].every((v) => prev.has(v)) ? prev : visible));
+  }, []);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(el);
+    colRefs.current.forEach((node) => ro.observe(node));
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [measure, view, columns.length, collapsed]);
+
+  function toggleCollapsed(id: string, value?: boolean) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      const collapse = value ?? !next.has(id);
+      if (collapse) next.add(id);
+      else next.delete(id);
+      writeCollapsed(layoutKey, next);
+      return next;
+    });
+  }
+
+  function scrollByColumn(dir: 1 | -1) {
+    scrollerRef.current?.scrollBy({ left: dir * (COLUMN_MIN + COLUMN_GAP + 40), behavior: "smooth" });
+  }
+
+  function jumpTo(id: string) {
+    setJumpOpen(false);
+    if (collapsed.has(id)) toggleCollapsed(id, false);
+    // After an expand, wait a frame so the column has its full width.
+    requestAnimationFrame(() => {
+      const el = scrollerRef.current;
+      const node = colRefs.current.get(id);
+      if (!el || !node) return;
+      const left = node.offsetLeft; // the scroller is the columns' offset parent
+      const fits = left >= el.scrollLeft && left + node.offsetWidth <= el.scrollLeft + el.clientWidth;
+      if (!fits) el.scrollTo({ left: Math.max(0, left - COLUMN_GAP), behavior: "smooth" });
+      node.animate?.([{ boxShadow: "0 0 0 3px rgba(18,17,16,0.25)" }, { boxShadow: "0 0 0 0 rgba(18,17,16,0)" }], { duration: 900 });
+    });
+  }
   // Saved columns belong to a board ("general" or its id). "All tasks" and
   // "created by" views show the standard columns only.
   const boardKey: string | null = createdBy || boardId === null ? null : boardId === "general" ? "general" : boardId;
@@ -222,6 +320,13 @@ function TaskBoard({
     display.sort
   );
   const narrowing = activeTests.length > 0 || !!query.trim() || advCount > 0;
+
+  const shownColumns = columns.filter((c) => !(display.hideDone && !c.custom && c.status === "done"));
+  const customIds = new Set(columns.filter((c) => c.custom).map((c) => c.id));
+  const tasksFor = (col: Column) =>
+    col.custom
+      ? tasks.filter((t) => t.columnId === col.id)
+      : tasks.filter((t) => t.status === col.status && !(t.columnId && customIds.has(t.columnId)));
 
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [colorPickerFor, setColorPickerFor] = useState<string | null>(null);
@@ -473,6 +578,66 @@ function TaskBoard({
             <List size={14} strokeWidth={1.75} /> List
           </button>
         </div>
+        {view === "board" && (
+          <div className="relative mr-auto">
+            <button
+              onClick={() => setJumpOpen((o) => !o)}
+              aria-haspopup="menu"
+              aria-expanded={jumpOpen}
+              title="Jump to a column"
+              className="flex items-center gap-1.5 bg-card-alt hover:bg-line/70 px-3.5 py-2 rounded-full text-[13.5px] font-medium transition-colors"
+            >
+              <Columns3 size={14} strokeWidth={1.75} />
+              Columns
+              <span className="text-muted">
+                {onScreen.size && onScreen.size < shownColumns.length ? `${onScreen.size}/${shownColumns.length}` : shownColumns.length}
+              </span>
+              <ChevronDown size={13} strokeWidth={2} className="text-muted" />
+            </button>
+            {jumpOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setJumpOpen(false)} />
+                <div
+                  role="menu"
+                  className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[260px] max-h-[60vh] overflow-y-auto"
+                >
+                  <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Jump to column</div>
+                  {shownColumns.map((c) => (
+                    <button
+                      key={c.id}
+                      role="menuitem"
+                      onClick={() => jumpTo(c.id)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left hover:bg-card-alt transition-colors"
+                    >
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
+                      <span className="flex-1 truncate font-medium">{c.title}</span>
+                      {collapsed.has(c.id) && <span className="text-[11.5px] text-muted">collapsed</span>}
+                      <span className="text-[12px] text-muted">{tasksFor(c).length}</span>
+                      <Check size={13} strokeWidth={2} className={onScreen.has(c.id) && !collapsed.has(c.id) ? "text-ink" : "opacity-0"} />
+                    </button>
+                  ))}
+                  {collapsed.size > 0 && (
+                    <>
+                      <div className="border-t border-line my-1" />
+                      <button
+                        onClick={() => {
+                          setJumpOpen(false);
+                          setCollapsed(() => {
+                            writeCollapsed(layoutKey, new Set());
+                            return new Set();
+                          });
+                        }}
+                        className="w-full px-3 py-2 rounded-xl text-[13px] text-left font-medium hover:bg-card-alt transition-colors"
+                      >
+                        Expand all columns
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           {searchOpen ? (
@@ -709,19 +874,68 @@ function TaskBoard({
           )}
         </div>
       ) : (
-        <div className="flex gap-5 w-full items-start">
-          {columns.filter((c) => !(display.hideDone && !c.custom && c.status === "done")).map((col) => {
-            const customIds = new Set(columns.filter((c) => c.custom).map((c) => c.id));
-            const colTasks = col.custom
-              ? tasks.filter((t) => t.columnId === col.id)
-              : tasks.filter((t) => t.status === col.status && !(t.columnId && customIds.has(t.columnId)));
+        <div className="relative">
+          {/* Fades and arrows show there are more columns off to the side. */}
+          {edges.left && (
+            <>
+              <div className="pointer-events-none absolute left-0 top-0 bottom-3 w-12 z-20 bg-gradient-to-r from-cream to-transparent" />
+              <button
+                onClick={() => scrollByColumn(-1)}
+                aria-label="Show columns on the left"
+                className="absolute left-1 top-24 z-30 w-9 h-9 rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-card-alt transition-colors"
+              >
+                <ChevronLeft size={17} strokeWidth={2} />
+              </button>
+            </>
+          )}
+          {edges.right && (
+            <>
+              <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-12 z-20 bg-gradient-to-l from-cream to-transparent" />
+              <button
+                onClick={() => scrollByColumn(1)}
+                aria-label="Show columns on the right"
+                className="absolute right-1 top-24 z-30 w-9 h-9 rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-card-alt transition-colors"
+              >
+                <ChevronRight size={17} strokeWidth={2} />
+              </button>
+            </>
+          )}
+        <div
+          ref={scrollerRef}
+          onScroll={measure}
+          style={{ height: boardHeight ?? undefined, gap: COLUMN_GAP }}
+          className="relative flex w-full items-stretch overflow-x-auto overflow-y-hidden snap-x snap-proximity scroll-smooth pb-3 [scrollbar-width:thin]"
+        >
+          {shownColumns.map((col) => {
+            const colTasks = tasksFor(col);
+            const setRef = (node: HTMLElement | null) => {
+              if (node) colRefs.current.set(col.id, node);
+              else colRefs.current.delete(col.id);
+            };
+            if (collapsed.has(col.id)) {
+              return (
+                <button
+                  key={col.id}
+                  ref={setRef}
+                  onClick={() => toggleCollapsed(col.id, false)}
+                  title={`Expand ${col.title}`}
+                  className="snap-start flex-shrink-0 w-[52px] border-2 border-[#c9c0a6] rounded-2xl bg-card-alt hover:bg-line/50 flex flex-col items-center gap-3 py-4 transition-colors"
+                >
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
+                  <span className="text-[12px] text-muted bg-cream rounded-full px-1.5">{colTasks.length}</span>
+                  <span className="text-[14px] font-semibold [writing-mode:vertical-rl] truncate max-h-[70%]">{col.title}</span>
+                </button>
+              );
+            }
             return (
               <div
                 key={col.id}
-                className="flex-1 min-w-0 border-2 border-[#c9c0a6] rounded-2xl bg-card-alt overflow-visible"
+                ref={setRef}
+                style={{ flex: "1 0 0", minWidth: COLUMN_MIN, maxWidth: COLUMN_MAX }}
+                className="snap-start border-2 border-[#c9c0a6] rounded-2xl bg-card-alt flex flex-col min-h-0"
               >
-                <div className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2 px-4 py-3">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: col.color }}
@@ -739,13 +953,15 @@ function TaskBoard({
                         className="text-[14px] font-semibold bg-white border border-line rounded-md px-1.5 py-0.5 outline-none w-[110px]"
                       />
                     ) : (
-                      <span className="text-[14px] font-semibold">{col.title}</span>
+                      <span className="text-[14px] font-semibold truncate" title={col.title}>
+                        {col.title}
+                      </span>
                     )}
-                    <span className="text-[12px] text-muted bg-card-alt rounded-full px-1.5">
+                    <span className="text-[12px] text-muted bg-card-alt rounded-full px-1.5 flex-shrink-0">
                       {colTasks.length}
                     </span>
                   </div>
-                  <div className="flex items-center gap-0.5 relative">
+                  <div className="flex items-center gap-0.5 relative flex-shrink-0">
                     <button
                       onClick={() => {
                         setInlineAddFor(col.id);
@@ -785,6 +1001,15 @@ function TaskBoard({
                           >
                             <Palette size={14} strokeWidth={1.75} /> Recolor
                           </button>
+                          <button
+                            onClick={() => {
+                              setMenuOpenFor(null);
+                              toggleCollapsed(col.id, true);
+                            }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                          >
+                            <ChevronsRightLeft size={14} strokeWidth={1.75} /> Collapse
+                          </button>
                           {col.custom && (
                             <>
                               <div className="border-t border-line my-1" />
@@ -811,7 +1036,7 @@ function TaskBoard({
                   </div>
                 </div>
 
-                <div className="px-3 pb-3 min-h-[calc(100vh-260px)] flex flex-col">
+                <div className="px-3 pb-3 flex-1 min-h-0 overflow-y-auto flex flex-col">
                   {colTasks.length === 0 && inlineAddFor !== col.id ? (
                     <button
                       onClick={() => {
@@ -953,8 +1178,7 @@ function TaskBoard({
               </div>
             );
           })}
-
-
+        </div>
         </div>
       )}
 
