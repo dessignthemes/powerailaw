@@ -34,7 +34,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
   const [closingMessage, setClosingMessage] = useState("");
 
   const [appearanceTab, setAppearanceTab] = useState<"light" | "dark" | "auto">("light");
-  const [lightBg, setLightBg] = useState("#EEF4FB");
+  const [lightBg, setLightBg] = useState("#F6F7FB");
   const [lightAccent, setLightAccent] = useState("#121110");
   const [darkBg, setDarkBg] = useState("#1B1A18");
   const [darkAccent, setDarkAccent] = useState("#E9EAEE");
