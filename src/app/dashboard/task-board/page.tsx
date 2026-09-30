@@ -49,11 +49,12 @@ import {
 
 const DISPLAY_KEY = "lawpower.taskboard.display";
 
-// Columns keep one readable width; when there are more than fit, the board
-// scrolls sideways instead of squeezing them.
-const COLUMN_MIN = 224;
-const COLUMN_MAX = 400;
+// Four columns fill the board, each a quarter of its width. More columns
+// keep that same width and sit off to the right; the board scrolls sideways.
+const VISIBLE_COLUMNS = 4;
+const COLUMN_MIN = 224; // on small screens fewer than 4 fit
 const COLUMN_GAP = 16;
+const COLUMN_WIDTH = `calc((100% - ${(VISIBLE_COLUMNS - 1) * COLUMN_GAP}px) / ${VISIBLE_COLUMNS})`;
 
 // Collapsed columns are remembered per board in this browser.
 const collapsedKey = (board: string) => `lawpower.taskboard.collapsed.${board}`;
@@ -222,7 +223,10 @@ function TaskBoard({
   }
 
   function scrollByColumn(dir: 1 | -1) {
-    scrollerRef.current?.scrollBy({ left: dir * (COLUMN_MIN + COLUMN_GAP + 40), behavior: "smooth" });
+    const el = scrollerRef.current;
+    if (!el) return;
+    const step = (el.clientWidth - (VISIBLE_COLUMNS - 1) * COLUMN_GAP) / VISIBLE_COLUMNS + COLUMN_GAP;
+    el.scrollBy({ left: dir * Math.max(step, COLUMN_MIN + COLUMN_GAP), behavior: "smooth" });
   }
 
   function jumpTo(id: string) {
@@ -235,7 +239,7 @@ function TaskBoard({
       if (!el || !node) return;
       const left = node.offsetLeft; // the scroller is the columns' offset parent
       const fits = left >= el.scrollLeft && left + node.offsetWidth <= el.scrollLeft + el.clientWidth;
-      if (!fits) el.scrollTo({ left: Math.max(0, left - COLUMN_GAP), behavior: "smooth" });
+      if (!fits) el.scrollTo({ left, behavior: "smooth" });
       node.animate?.([{ boxShadow: "0 0 0 3px rgba(18,17,16,0.25)" }, { boxShadow: "0 0 0 0 rgba(18,17,16,0)" }], { duration: 900 });
     });
   }
@@ -931,7 +935,7 @@ function TaskBoard({
               <div
                 key={col.id}
                 ref={setRef}
-                style={{ flex: "1 0 0", minWidth: COLUMN_MIN, maxWidth: COLUMN_MAX }}
+                style={{ flex: `0 0 ${COLUMN_WIDTH}`, minWidth: COLUMN_MIN }}
                 className="snap-start border-2 border-[#c9c0a6] rounded-2xl bg-card-alt flex flex-col min-h-0"
               >
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
