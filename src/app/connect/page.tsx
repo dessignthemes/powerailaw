@@ -120,7 +120,7 @@ function ConnectPageInner() {
             <button
               onClick={handleConnect}
               disabled={connecting || count === 0}
-              className="block w-full bg-dark text-white text-center py-3.5 rounded-2xl text-[14.5px] font-semibold hover:bg-dark2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="block w-full bg-btn text-ink text-center py-3.5 rounded-2xl text-[14.5px] font-semibold hover:bg-btn-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {connecting ? "Redirecting…" : `Connect ${count} selected`}
             </button>

@@ -144,11 +144,11 @@ export default function MemoryPanel({
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                  tab === t.key ? "bg-dark text-white" : "text-muted hover:text-ink hover:bg-card-alt"
+                  tab === t.key ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "text-muted hover:text-ink hover:bg-card-alt"
                 }`}
               >
                 <Icon size={13} /> {t.label}
-                <span className={`text-[11px] ${tab === t.key ? "text-white/70" : "text-muted"}`}>{data[t.key]?.length ?? 0}</span>
+                <span className={`text-[11px] ${tab === t.key ? "text-ink/60" : "text-muted"}`}>{data[t.key]?.length ?? 0}</span>
               </button>
             );
           })}
@@ -179,7 +179,7 @@ export default function MemoryPanel({
               />
               <div className="flex items-center justify-between px-1.5">
                 <span className="text-[11.5px] text-muted">No passwords, keys or ID numbers.</span>
-                <button onClick={add} disabled={adding || !draft.trim()} className="flex items-center gap-1 bg-dark text-white px-3 py-1 rounded-full text-[12.5px] font-medium disabled:opacity-40">
+                <button onClick={add} disabled={adding || !draft.trim()} className="flex items-center gap-1 bg-btn text-ink px-3 py-1 rounded-full text-[12.5px] font-medium disabled:opacity-40">
                   {adding ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Add
                 </button>
               </div>
@@ -211,7 +211,7 @@ export default function MemoryPanel({
                       className="w-full border border-line rounded-lg p-2 text-[13.5px] outline-none focus:border-ink resize-none"
                     />
                     <div className="flex gap-2 mt-2">
-                      <button onClick={() => patch(m.id, { content: editText })} className="flex items-center gap-1 bg-dark text-white px-3 py-1 rounded-full text-[12.5px]">
+                      <button onClick={() => patch(m.id, { content: editText })} className="flex items-center gap-1 bg-btn text-ink px-3 py-1 rounded-full text-[12.5px]">
                         <Check size={12} /> Save
                       </button>
                       <button onClick={() => setEditingId(null)} className="px-3 py-1 rounded-full text-[12.5px] text-muted hover:text-ink">

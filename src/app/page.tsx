@@ -380,7 +380,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-3">
                 {pricingMonthly.map((item) => (
-                  <div key={item} className="flex items-center gap-2.5 text-[#d6d3c9] text-[14.5px]">
+                  <div key={item} className="flex items-center gap-2.5 text-[#D1D7E0] text-[14.5px]">
                     <span className="w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center flex-shrink-0 text-[11px] text-dark">
                       ✓
                     </span>

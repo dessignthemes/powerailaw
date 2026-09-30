@@ -34,10 +34,10 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
   const [closingMessage, setClosingMessage] = useState("");
 
   const [appearanceTab, setAppearanceTab] = useState<"light" | "dark" | "auto">("light");
-  const [lightBg, setLightBg] = useState("#FAF6EF");
+  const [lightBg, setLightBg] = useState("#EEF4FB");
   const [lightAccent, setLightAccent] = useState("#121110");
   const [darkBg, setDarkBg] = useState("#1B1A18");
-  const [darkAccent, setDarkAccent] = useState("#F4EFE6");
+  const [darkAccent, setDarkAccent] = useState("#E9EAEE");
   const [showPoweredBy, setShowPoweredBy] = useState(true);
 
   const [domains, setDomains] = useState<string[]>([]);
@@ -638,7 +638,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                   </div>
 
                   <div className="flex items-center gap-3 mb-8">
-                    <button className="bg-dark text-white px-5 py-2.5 rounded-full text-[14px] font-semibold hover:bg-dark2 transition-colors">
+                    <button className="bg-btn text-ink px-5 py-2.5 rounded-full text-[14px] font-semibold hover:bg-btn-hover transition-colors">
                       Save Changes
                     </button>
                     <button
@@ -705,7 +705,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                       <div
                         className="border rounded-xl px-3.5 py-2.5 text-[13px] mb-3"
                         style={{
-                          borderColor: appearanceTab === "dark" ? darkAccent + "40" : "#e7dfc9",
+                          borderColor: appearanceTab === "dark" ? darkAccent + "40" : "#D1D7E0",
                           color: appearanceTab === "dark" ? darkAccent + "99" : "#63666f",
                         }}
                       >

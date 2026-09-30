@@ -190,7 +190,7 @@ export default function TaskFolderPage() {
             <div className="text-[14.5px] font-semibold mb-0.5">Connect your mailbox first</div>
             <div className="text-[13.5px] text-muted">Task Folder reads a folder from the mailbox you connect in the Inbox.</div>
           </div>
-          <Link href="/dashboard/inbox" className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2">
+          <Link href="/dashboard/inbox" className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover">
             Go to Inbox
           </Link>
         </div>
@@ -229,12 +229,12 @@ export default function TaskFolderPage() {
               )}
               {connected.length > 1 ? (
                 connected.map((c) => (
-                  <button key={c.provider} onClick={() => openPicker(c.provider)} className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2">
+                  <button key={c.provider} onClick={() => openPicker(c.provider)} className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover">
                     {settings ? "Change" : "Choose"} {providerName[c.provider]} folder
                   </button>
                 ))
               ) : (
-                <button onClick={() => openPicker(connected[0].provider)} className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 flex items-center gap-1.5">
+                <button onClick={() => openPicker(connected[0].provider)} className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover flex items-center gap-1.5">
                   {settings ? "Change folder" : "Choose folder"} <ChevronDown size={14} />
                 </button>
               )}
@@ -367,7 +367,7 @@ export default function TaskFolderPage() {
                               <button onClick={() => mark(m, "dismissed")} className="px-3 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-card-alt">
                                 Dismiss
                               </button>
-                              <button onClick={() => setCreating(m)} className="bg-dark text-white px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-dark2">
+                              <button onClick={() => setCreating(m)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-btn-hover">
                                 Create task
                               </button>
                             </>
@@ -568,7 +568,7 @@ function CreateTaskFromEmail({
           <button onClick={onClose} className="px-4 py-2 rounded-full text-[13.5px] font-medium text-muted hover:text-ink">
             Cancel
           </button>
-          <button onClick={create} disabled={!title.trim()} className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 disabled:opacity-40">
+          <button onClick={create} disabled={!title.trim()} className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover disabled:opacity-40">
             Create task
           </button>
         </div>

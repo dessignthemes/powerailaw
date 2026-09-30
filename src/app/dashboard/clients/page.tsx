@@ -163,7 +163,7 @@ function ClientsPageInner() {
         </h1>
         <button
           onClick={() => setModalOpen(true)}
-          className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+          className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
         >
           + Add client
         </button>
@@ -180,7 +180,7 @@ function ClientsPageInner() {
           <div className="text-[14px] text-muted mb-5">Add your first client to start tracking matters for them.</div>
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+            className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
           >
             + Add client
           </button>

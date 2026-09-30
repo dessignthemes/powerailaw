@@ -278,7 +278,7 @@ function DropboxBrowser() {
             </div>
             <a
               href="/api/dropbox/connect"
-              className="inline-flex bg-dark text-white px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-dark2 transition-colors"
+              className="inline-flex bg-btn text-ink px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-btn-hover transition-colors"
             >
               Connect Dropbox
             </a>
@@ -528,7 +528,7 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
 
   const docHtml =
     loaded?.kind === "html"
-      ? `<!doctype html><html><head><meta charset="utf-8"><style>body{font:15px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1a1918;max-width:760px;margin:32px auto;padding:0 28px}img{max-width:100%}table{border-collapse:collapse}td,th{border:1px solid #d9d4ca;padding:4px 8px}</style></head><body>${loaded.html}</body></html>`
+      ? `<!doctype html><html><head><meta charset="utf-8"><style>body{font:15px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1a1918;max-width:760px;margin:32px auto;padding:0 28px}img{max-width:100%}table{border-collapse:collapse}td,th{border:1px solid #D1D7E0;padding:4px 8px}</style></head><body>${loaded.html}</body></html>`
       : "";
 
   return (
@@ -560,7 +560,7 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
               onClick={send}
               disabled={saving || tooLarge}
               title={tooLarge ? "Files over 25 MB can't be added to LawPower" : undefined}
-              className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-50"
+              className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 size={14} className="animate-spin" /> : type === "pdf" ? <PenLine size={14} strokeWidth={2} /> : <FolderInput size={14} strokeWidth={2} />}
               {saving ? "Saving…" : type === "pdf" ? "Open in Power PDF" : "Save to Documents"}
@@ -569,7 +569,7 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
           {saved && (
             <Link
               href="/dashboard/documents"
-              className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
+              className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
             >
               <Check size={14} strokeWidth={2} /> Saved · Open Documents
             </Link>

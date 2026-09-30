@@ -178,7 +178,7 @@ export default function AdminModal({
                       />
                       <button
                         onClick={handleAddPerson}
-                        className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
+                        className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex-shrink-0"
                       >
                         Add
                       </button>
@@ -249,7 +249,7 @@ export default function AdminModal({
                     />
                     <button
                       onClick={handleAddGroup}
-                      className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
+                      className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex-shrink-0"
                     >
                       Add
                     </button>

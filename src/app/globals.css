@@ -1,17 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --cream: #faf6ef;
-  --dark: #121110;
+  /* Cool blue-grey theme. */
+  --cream: #eef4fb; /* page background */
+  --dark: #121110; /* logo, avatars, "on" toggles */
   --dark2: #1a1917;
-  --beige: #e7dfc9;
+  --beige: #dde2e9;
   --card: #ffffff;
-  --card-alt: #f1eae2;
-  --line: #ddd5bf;
+  --card-alt: #e9eaee; /* panels, cards, secondary buttons */
+  --line: #d1d7e0; /* borders */
   --line-dark: #2b2a26;
-  --ink: #16150f;
-  --muted: #6e695c;
-  --muted-light: #a39d8c;
+  --btn: #d1d7e0; /* primary buttons (dark text) */
+  --btn-hover: #c2c9d4;
+  --btn-ring: #aeb8c6; /* outline on selected pills */
+  --ink: #141821;
+  --muted: #5e6978;
+  --muted-light: #98a1ae;
 }
 
 @theme inline {
@@ -23,6 +27,9 @@
   --color-card-alt: var(--card-alt);
   --color-line: var(--line);
   --color-line-dark: var(--line-dark);
+  --color-btn: var(--btn);
+  --color-btn-hover: var(--btn-hover);
+  --color-btn-ring: var(--btn-ring);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-muted-light: var(--muted-light);

@@ -427,7 +427,7 @@ export default function EventDetailModal({
                     href={detail.joinUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-dark text-white px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-dark2"
+                    className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-btn-hover"
                   >
                     Join meeting
                   </a>
@@ -505,7 +505,7 @@ export default function EventDetailModal({
               <button
                 onClick={save}
                 disabled={saving}
-                className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 disabled:opacity-50 flex items-center gap-1.5"
+                className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover disabled:opacity-50 flex items-center gap-1.5"
               >
                 {saving && <Loader2 size={14} className="animate-spin" />} Save
                 changes
@@ -554,7 +554,7 @@ export default function EventDetailModal({
                 )}
                 <button
                   onClick={onClose}
-                  className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2"
+                  className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover"
                 >
                   Done
                 </button>

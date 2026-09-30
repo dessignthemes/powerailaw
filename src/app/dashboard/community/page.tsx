@@ -231,7 +231,7 @@ const seedReferrals: Referral[] = [
 const availabilityStyle: Record<Availability, string> = {
   "Taking clients": "bg-[#DCEBD8] text-[#2F5E2A]",
   Limited: "bg-[#F5E3B3] text-[#8A6D1D]",
-  Full: "bg-[#EAE8E0] text-[#6B675F]",
+  Full: "bg-[#E9EAEE] text-[#5E6978]",
 };
 
 function initials(name: string) {
@@ -328,7 +328,7 @@ export default function CommunityPage() {
         >
           <InboxIcon size={15} strokeWidth={tab === "referrals" ? 2 : 1.75} /> Referrals
           {pendingReceived > 0 && (
-            <span className="ml-1 bg-dark text-white text-[11px] font-semibold rounded-full px-1.5 min-w-[18px] text-center">
+            <span className="ml-1 bg-btn text-ink text-[11px] font-semibold rounded-full px-1.5 min-w-[18px] text-center">
               {pendingReceived}
             </span>
           )}
@@ -353,7 +353,7 @@ export default function CommunityPage() {
             <button
               onClick={() => setArea(null)}
               className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                area === null ? "bg-dark text-white" : "bg-card-alt text-muted hover:text-ink"
+                area === null ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
               }`}
             >
               All areas
@@ -363,7 +363,7 @@ export default function CommunityPage() {
                 key={a}
                 onClick={() => setArea(area === a ? null : a)}
                 className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                  area === a ? "bg-dark text-white" : "bg-card-alt text-muted hover:text-ink"
+                  area === a ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
                 }`}
               >
                 {a}
@@ -415,7 +415,7 @@ export default function CommunityPage() {
                       <button
                         onClick={() => setReferTo(l)}
                         disabled={l.availability === "Full"}
-                        className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <Send size={13} strokeWidth={2} /> Refer a client
                       </button>
@@ -436,7 +436,7 @@ export default function CommunityPage() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-dark text-white text-[13.5px] font-medium px-4 py-2.5 rounded-full flex items-center gap-2 shadow-lg">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-btn text-ink text-[13.5px] font-medium px-4 py-2.5 rounded-full flex items-center gap-2 shadow-lg">
           <Check size={14} strokeWidth={2} /> {toast}
         </div>
       )}
@@ -521,7 +521,7 @@ function ReferralsView({
                           </button>
                           <button
                             onClick={() => onStatus(r.id, "Accepted")}
-                            className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-dark text-white hover:bg-dark2 transition-colors"
+                            className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-btn text-ink hover:bg-btn-hover transition-colors"
                           >
                             Accept
                           </button>
@@ -529,7 +529,7 @@ function ReferralsView({
                       ) : r.direction === "received" && r.status === "Accepted" && !r.addedToClients ? (
                         <button
                           onClick={() => addToClients(r)}
-                          className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-dark text-white hover:bg-dark2 transition-colors flex items-center gap-1.5"
+                          className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-btn text-ink hover:bg-btn-hover transition-colors flex items-center gap-1.5"
                         >
                           <UserPlus size={13} strokeWidth={2} /> Add to Clients
                         </button>
@@ -539,7 +539,7 @@ function ReferralsView({
                             r.status === "Accepted"
                               ? "bg-[#DCEBD8] text-[#2F5E2A]"
                               : r.status === "Declined"
-                              ? "bg-[#EAE8E0] text-[#6B675F]"
+                              ? "bg-[#E9EAEE] text-[#5E6978]"
                               : "bg-[#F5E3B3] text-[#8A6D1D]"
                           }`}
                         >
@@ -626,7 +626,7 @@ function ReferModal({
                   key={a}
                   onClick={() => setArea(a)}
                   className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                    area === a ? "bg-dark text-white" : "bg-card-alt text-muted hover:text-ink"
+                    area === a ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
                   }`}
                 >
                   {a}
@@ -654,7 +654,7 @@ function ReferModal({
                   key={u}
                   onClick={() => setUrgency(u)}
                   className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                    urgency === u ? "bg-dark text-white" : "bg-card-alt text-muted hover:text-ink"
+                    urgency === u ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
                   }`}
                 >
                   {u}
@@ -700,7 +700,7 @@ function ReferModal({
                 urgency,
               })
             }
-            className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Send size={13} strokeWidth={2} /> Send referral
           </button>

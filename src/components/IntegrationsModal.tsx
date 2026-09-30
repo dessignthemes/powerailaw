@@ -160,7 +160,7 @@ function PracticeAreaRow({
             onClick={() => onChange(opt)}
             className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
               status === opt
-                ? "bg-dark text-white"
+                ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring"
                 : "bg-white border border-line hover:bg-card-alt"
             }`}
           >
@@ -284,7 +284,7 @@ function MailCategoryRow({
               onClick={() => !disabled && onChange(opt)}
               className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
                 selected
-                  ? "bg-dark text-white"
+                  ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring"
                   : disabled
                   ? "bg-white border border-line text-muted-light cursor-not-allowed"
                   : "bg-white border border-line hover:bg-card-alt"
@@ -492,7 +492,7 @@ export default function IntegrationsModal({
                         orgName.charAt(0).toUpperCase() || "?"
                       )}
                     </div>
-                    <label className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors cursor-pointer">
+                    <label className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors cursor-pointer">
                       Upload
                       <input
                         type="file"
@@ -544,7 +544,7 @@ export default function IntegrationsModal({
                 <div className="flex items-center gap-3 mb-9">
                   <button
                     onClick={handleSaveGeneral}
-                    className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                    className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
                   >
                     Save Changes
                   </button>
@@ -594,7 +594,7 @@ export default function IntegrationsModal({
                 <div className="flex items-center gap-3 mb-10">
                   <button
                     onClick={handleSavePracticeAreas}
-                    className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                    className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
                   >
                     Save practice areas
                   </button>
@@ -650,7 +650,7 @@ export default function IntegrationsModal({
                     className={`px-4 py-2.5 rounded-full text-[13.5px] font-medium transition-colors ${
                       twoFactorEnabled
                         ? "bg-white border border-line hover:bg-card-alt"
-                        : "bg-dark text-white hover:bg-dark2"
+                        : "bg-btn text-ink hover:bg-btn-hover"
                     }`}
                   >
                     {twoFactorEnabled ? "Disable two-factor authentication" : "Enable two-factor authentication"}
@@ -817,7 +817,7 @@ export default function IntegrationsModal({
                   <div className="flex items-center gap-3 mt-3 mb-9">
                     <button
                       onClick={handleSaveSignature}
-                      className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                      className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
                     >
                       Save signature
                     </button>
@@ -886,7 +886,7 @@ export default function IntegrationsModal({
                   <div className="flex items-center gap-3 mb-9">
                     <button
                       onClick={handleSavePolicy}
-                      className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                      className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
                     >
                       Save policy
                     </button>
@@ -970,7 +970,7 @@ export default function IntegrationsModal({
                     </div>
                     <button
                       onClick={handleAddProtectedEntry}
-                      className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                      className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
                     >
                       Add
                     </button>
@@ -1007,7 +1007,7 @@ export default function IntegrationsModal({
                   </div>
                   <button
                     onClick={() => copyText(MCP_SERVER_URL, setUrlCopied)}
-                    className="flex items-center gap-1.5 bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
+                    className="flex items-center gap-1.5 bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex-shrink-0"
                   >
                     <Copy size={13} strokeWidth={1.75} />
                     {urlCopied ? "Copied!" : "Copy server URL"}
@@ -1221,7 +1221,7 @@ export default function IntegrationsModal({
                   </div>
                   <Link
                     href={`/connect?provider=${drilled}&next=/dashboard/inbox`}
-                    className="flex items-center gap-1.5 bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
+                    className="flex items-center gap-1.5 bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex-shrink-0"
                   >
                     <Link2 size={13} strokeWidth={1.75} /> Connect all
                   </Link>
@@ -1236,7 +1236,7 @@ export default function IntegrationsModal({
                       </div>
                       <Link
                         href={`/connect?provider=${drilled}&next=/dashboard/inbox`}
-                        className="flex items-center gap-1.5 bg-dark text-white px-4 py-2 rounded-full text-[13px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
+                        className="flex items-center gap-1.5 bg-btn text-ink px-4 py-2 rounded-full text-[13px] font-medium hover:bg-btn-hover transition-colors flex-shrink-0"
                       >
                         <Link2 size={12} strokeWidth={1.75} /> Connect
                       </Link>
@@ -1264,7 +1264,7 @@ export default function IntegrationsModal({
                   <div className="flex items-center gap-4 flex-wrap">
                     <Link
                       href="/connect?provider=google&next=/dashboard/inbox"
-                      className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                      className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
                     >
                       ↗ Import from Gmail
                     </Link>
@@ -1307,7 +1307,7 @@ export default function IntegrationsModal({
                             <div className="text-[12.5px] text-muted max-w-[440px]">{c.desc}</div>
                           </div>
                         </div>
-                        <button className="bg-dark text-white px-4 py-2 rounded-full text-[13px] font-medium hover:bg-dark2 transition-colors flex-shrink-0">
+                        <button className="bg-btn text-ink px-4 py-2 rounded-full text-[13px] font-medium hover:bg-btn-hover transition-colors flex-shrink-0">
                           Connect
                         </button>
                       </div>

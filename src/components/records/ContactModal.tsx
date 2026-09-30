@@ -113,7 +113,7 @@ export default function ContactModal({
                   if (!(k === "person" ? PERSON_ROLES : COMPANY_ROLES).includes(role)) setRole("");
                 }}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                  kind === k ? "bg-dark text-white" : "bg-card-alt hover:bg-line/70 text-ink"
+                  kind === k ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/70 text-ink"
                 }`}
               >
                 {k === "person" ? <User size={14} strokeWidth={1.75} /> : <Building2 size={14} strokeWidth={1.75} />}
@@ -224,7 +224,7 @@ export default function ContactModal({
           <button
             onClick={save}
             disabled={!!saving}
-            className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-60"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-60"
           >
             {saving === "save" && <Loader2 size={14} className="animate-spin" />}
             {isEdit ? "Save" : `Add ${noun}`}

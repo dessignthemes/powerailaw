@@ -554,7 +554,7 @@ function TaskBoard({
               <button
                 onClick={saveBoard}
                 disabled={boardBusy || !boardDialog.name.trim()}
-                className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 disabled:opacity-40"
+                className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover disabled:opacity-40"
               >
                 {boardBusy ? "Saving…" : boardDialog.mode === "new" ? "Create board" : "Save"}
               </button>
@@ -681,7 +681,7 @@ function TaskBoard({
               title={query.trim() ? `Searching for “${query.trim()}”` : "Search tasks"}
               aria-label={query.trim() ? `Searching for ${query.trim()}. Edit search` : "Search tasks"}
               className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
-                query.trim() ? "bg-dark text-white" : "bg-card-alt hover:bg-line/60"
+                query.trim() ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/60"
               }`}
             >
               <Search size={15} strokeWidth={1.75} />
@@ -692,7 +692,7 @@ function TaskBoard({
               onClick={() => setFilterOpen((o) => !o)}
               title="Filter tasks"
               aria-label="Filter tasks"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-dark text-white" : "bg-card-alt hover:bg-line/60"}`}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/60"}`}
             >
               <Filter size={15} strokeWidth={1.75} />
               {advCount > 0 && (
@@ -709,7 +709,7 @@ function TaskBoard({
               title="Display options"
               aria-label="Display options"
               className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
-                display.sort !== "manual" || display.hideDone ? "bg-dark text-white" : "bg-card-alt hover:bg-line/60"
+                display.sort !== "manual" || display.hideDone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/60"
               }`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
@@ -718,7 +718,7 @@ function TaskBoard({
           </div>
           <button
             onClick={() => setModalStatus("todo")}
-            className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
           >
             <Plus size={14} strokeWidth={2} /> Add task
           </button>
@@ -729,7 +729,7 @@ function TaskBoard({
                   setNewColumnName("");
                   setAddingColumn((o) => !o);
                 }}
-                className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
+                className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
               >
                 <Plus size={14} strokeWidth={2} /> Add column
               </button>
@@ -756,7 +756,7 @@ function TaskBoard({
                       <button
                         onClick={addColumn}
                         disabled={!newColumnName.trim()}
-                        className="bg-dark text-white px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-dark2 disabled:opacity-40"
+                        className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-btn-hover disabled:opacity-40"
                       >
                         Add
                       </button>
@@ -784,7 +784,7 @@ function TaskBoard({
             key={f}
             onClick={() => toggleFilter(f)}
             className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-              activeFilters.includes(f) ? "bg-dark text-white" : "bg-card-alt text-muted hover:text-ink"
+              activeFilters.includes(f) ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
             }`}
           >
             {f}
@@ -838,7 +838,7 @@ function TaskBoard({
               </div>
               <button
                 onClick={() => setModalStatus("todo")}
-                className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
+                className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
               >
                 <Plus size={14} strokeWidth={2} /> Add task
               </button>
@@ -923,7 +923,7 @@ function TaskBoard({
                   ref={setRef}
                   onClick={() => toggleCollapsed(col.id, false)}
                   title={`Expand ${col.title}`}
-                  className="snap-start flex-shrink-0 w-[52px] border-2 border-[#c9c0a6] rounded-2xl bg-card-alt hover:bg-line/50 flex flex-col items-center gap-3 py-4 transition-colors"
+                  className="snap-start flex-shrink-0 w-[52px] border-2 border-line rounded-2xl bg-card-alt hover:bg-line/50 flex flex-col items-center gap-3 py-4 transition-colors"
                 >
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
                   <span className="text-[12px] text-muted bg-cream rounded-full px-1.5">{colTasks.length}</span>
@@ -936,7 +936,7 @@ function TaskBoard({
                 key={col.id}
                 ref={setRef}
                 style={{ flex: `0 0 ${COLUMN_WIDTH}`, minWidth: COLUMN_MIN }}
-                className="snap-start border-2 border-[#c9c0a6] rounded-2xl bg-card-alt flex flex-col min-h-0"
+                className="snap-start border-2 border-line rounded-2xl bg-card-alt flex flex-col min-h-0"
               >
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
                   <div className="flex items-center gap-2 min-w-0">

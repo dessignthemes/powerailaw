@@ -147,7 +147,7 @@ export default function MattersPage() {
         </h1>
         <button
           onClick={() => setModalOpen(true)}
-          className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+          className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
         >
           + Add matter
         </button>
@@ -164,7 +164,7 @@ export default function MattersPage() {
           <div className="text-[14px] text-muted mb-5">Add one from the sidebar or here.</div>
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+            className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
           >
             + Add matter
           </button>

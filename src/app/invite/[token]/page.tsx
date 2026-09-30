@@ -88,7 +88,7 @@ export default function InvitePage() {
             <Users size={22} strokeWidth={1.5} className="mx-auto mb-3 text-muted" />
             <h1 className="font-display text-[22px] font-semibold mb-2">You&apos;ve been invited to a team</h1>
             <p className="text-[14px] text-muted mb-6">Sign in with the work email address the invite was sent to.</p>
-            <button onClick={() => goToLogin(token)} className="w-full bg-dark text-white py-3 rounded-full text-[14.5px] font-medium hover:bg-dark2">
+            <button onClick={() => goToLogin(token)} className="w-full bg-btn text-ink py-3 rounded-full text-[14.5px] font-medium hover:bg-btn-hover">
               Sign in to accept
             </button>
           </div>
@@ -108,7 +108,7 @@ export default function InvitePage() {
           <div className="text-center">
             <Check size={22} className="mx-auto mb-3 text-[#2F5E2A]" />
             <p className="text-[14.5px] mb-6">You&apos;re already in the {s.teamDomain} workspace.</p>
-            <a href="/dashboard" className="inline-block bg-dark text-white px-6 py-3 rounded-full text-[14.5px] font-medium hover:bg-dark2">
+            <a href="/dashboard" className="inline-block bg-btn text-ink px-6 py-3 rounded-full text-[14.5px] font-medium hover:bg-btn-hover">
               Go to dashboard
             </a>
           </div>
@@ -122,7 +122,7 @@ export default function InvitePage() {
               This invite is for <span className="text-ink font-medium">{s.invitedEmail}</span>, but you&apos;re signed in as{" "}
               <span className="text-ink font-medium">{s.signedInAs}</span>.
             </p>
-            <button onClick={switchAccount} className="w-full bg-dark text-white py-3 rounded-full text-[14.5px] font-medium hover:bg-dark2">
+            <button onClick={switchAccount} className="w-full bg-btn text-ink py-3 rounded-full text-[14.5px] font-medium hover:bg-btn-hover">
               Sign in as {s.invitedEmail}
             </button>
           </div>
@@ -149,7 +149,7 @@ export default function InvitePage() {
               </div>
             )}
             {joinError && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700 mb-4">{joinError}</div>}
-            <button onClick={join} disabled={joining} className="w-full bg-dark text-white py-3 rounded-full text-[14.5px] font-medium hover:bg-dark2 disabled:opacity-60 flex items-center justify-center gap-2">
+            <button onClick={join} disabled={joining} className="w-full bg-btn text-ink py-3 rounded-full text-[14.5px] font-medium hover:bg-btn-hover disabled:opacity-60 flex items-center justify-center gap-2">
               {joining && <Loader2 size={15} className="animate-spin" />} Join team
             </button>
             <p className="text-[12px] text-muted text-center mt-4">Signed in as {s.signedInAs}</p>

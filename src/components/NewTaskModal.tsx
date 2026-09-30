@@ -52,7 +52,7 @@ export function todayYmd() {
 }
 
 export const priorityMeta: Record<TaskPriority, { bg: string; text: string }> = {
-  Low: { bg: "#EAE8E0", text: "#6B675F" },
+  Low: { bg: "#E9EAEE", text: "#5E6978" },
   Medium: { bg: "#F5E3B3", text: "#8A6D1D" },
   High: { bg: "#F6C9C0", text: "#9C3A24" },
 };
@@ -285,7 +285,7 @@ export default function NewTaskModal({
         <div className="flex items-center justify-end px-7 py-5 border-t border-line">
           <button
             onClick={handleCreate}
-            className="bg-dark text-white px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-dark2 transition-colors"
+            className="bg-btn text-ink px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-btn-hover transition-colors"
           >
             Create
           </button>

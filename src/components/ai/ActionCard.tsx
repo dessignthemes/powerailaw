@@ -106,7 +106,7 @@ export function ActionCard({ action, onChange }: { action: ActionProposal; onCha
         {done && action.result ? (
           <Link
             href={action.result.href}
-            className="flex items-center gap-1.5 bg-dark text-white px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-dark2"
+            className="flex items-center gap-1.5 bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-btn-hover"
           >
             {meta.open}: {action.result.label} <ArrowUpRight size={13} />
           </Link>
@@ -117,7 +117,7 @@ export function ActionCard({ action, onChange }: { action: ActionProposal; onCha
             <button
               onClick={() => decide("confirm")}
               disabled={!!busy}
-              className="flex items-center gap-1.5 bg-dark text-white px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-dark2 disabled:opacity-60"
+              className="flex items-center gap-1.5 bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-btn-hover disabled:opacity-60"
             >
               {busy === "confirm" ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Confirm
             </button>
@@ -185,7 +185,7 @@ export function MemorySuggestionCard({
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <button onClick={save} disabled={busy} className="bg-dark text-white px-3 py-1 rounded-full text-[12.5px] font-medium hover:bg-dark2 disabled:opacity-60">
+          <button onClick={save} disabled={busy} className="bg-btn text-ink px-3 py-1 rounded-full text-[12.5px] font-medium hover:bg-btn-hover disabled:opacity-60">
             {busy ? "Saving…" : "Save to memory"}
           </button>
           <button onClick={() => onChange({ ...suggestion, dismissed: true })} className="px-3 py-1 rounded-full text-[12.5px] text-muted hover:text-ink">

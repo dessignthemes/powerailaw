@@ -262,7 +262,7 @@ export default function TimeTrackingPage() {
             <button
               onClick={() => setFilterOpen((o) => !o)}
               aria-label="Filters"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" || everyone ? "bg-dark text-white" : "bg-card-alt hover:bg-line/60"}`}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" || everyone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/60"}`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
             </button>
@@ -314,7 +314,7 @@ export default function TimeTrackingPage() {
 
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover"
           >
             <Plus size={14} strokeWidth={2} /> Add entry
           </button>
@@ -584,7 +584,7 @@ function AddEntryModal({ entry, onClose, onSaved }: { entry?: Entry | null; onCl
           <button onClick={onClose} className="px-4 py-2 rounded-full text-[13.5px] font-medium text-muted hover:text-ink">
             Cancel
           </button>
-          <button onClick={save} disabled={saving} className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 disabled:opacity-50 flex items-center gap-1.5">
+          <button onClick={save} disabled={saving} className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover disabled:opacity-50 flex items-center gap-1.5">
             {saving && <Loader2 size={14} className="animate-spin" />} {entry ? "Save changes" : "Add entry"}
           </button>
         </div>

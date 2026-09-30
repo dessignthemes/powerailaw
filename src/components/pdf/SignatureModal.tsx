@@ -161,7 +161,7 @@ export default function SignatureModal({
         setError(null);
       }}
       className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-        mode === m ? "bg-dark text-white" : "bg-card-alt text-muted hover:text-ink"
+        mode === m ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
       }`}
     >
       {label}
@@ -285,7 +285,7 @@ export default function SignatureModal({
           </button>
           <button
             onClick={done}
-            className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
           >
             Place on page
           </button>

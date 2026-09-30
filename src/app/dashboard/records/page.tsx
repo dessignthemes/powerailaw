@@ -47,7 +47,7 @@ async function readJson(res: Response) {
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-const blackBtn = "bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors";
+const blackBtn = "bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors";
 
 export default function RecordsPage() {
   const router = useRouter();
@@ -194,7 +194,7 @@ export default function RecordsPage() {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            className="bg-dark text-white pl-4 pr-3 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex items-center gap-1.5"
+            className="bg-btn text-ink pl-4 pr-3 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex items-center gap-1.5"
           >
             + Add record
             <ChevronDown size={14} strokeWidth={2} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} />
@@ -239,10 +239,10 @@ export default function RecordsPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                tab === t.key ? "bg-dark text-white" : "bg-card-alt text-ink hover:bg-line/70"
+                tab === t.key ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-ink hover:bg-line/70"
               }`}
             >
-              {t.label} <span className={tab === t.key ? "text-white/70" : "text-muted"}>{loaded ? counts[t.key] : ""}</span>
+              {t.label} <span className={tab === t.key ? "text-ink/60" : "text-muted"}>{loaded ? counts[t.key] : ""}</span>
             </button>
           ))}
         </div>

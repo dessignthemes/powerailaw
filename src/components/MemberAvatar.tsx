@@ -48,12 +48,12 @@ export default function MemberAvatar({
           role={m ? "link" : "tooltip"}
           tabIndex={-1}
           onClick={open}
-          className={`block whitespace-nowrap rounded-xl bg-dark text-white px-3 py-2 text-left shadow-lg ${m ? "cursor-pointer hover:bg-dark2" : ""}`}
+          className={`block whitespace-nowrap rounded-xl bg-btn text-ink px-3 py-2 text-left shadow-lg ${m ? "cursor-pointer hover:bg-btn-hover" : ""}`}
         >
-          <span className="block text-[11px] text-white/60">{label}</span>
+          <span className="block text-[11px] text-ink/60">{label}</span>
           <span className="block text-[12.5px] font-semibold">{name}</span>
-          {m && m.fullName && <span className="block text-[12px] text-white/80">{m.email}</span>}
-          {m && <span className="block text-[11.5px] text-white/60 mt-1 group-hover/avatar:text-white/80">Click to view their tasks →</span>}
+          {m && m.fullName && <span className="block text-[12px] text-ink/80">{m.email}</span>}
+          {m && <span className="block text-[11.5px] text-ink/60 mt-1 group-hover/avatar:text-ink/80">Click to view their tasks →</span>}
         </span>
       </span>
     </span>

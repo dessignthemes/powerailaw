@@ -146,7 +146,7 @@ export default function ContactSupportModal({
               <button
                 onClick={handleSend}
                 disabled={!canSend}
-                className="flex-1 bg-dark text-white px-4 py-2.5 rounded-xl text-[14px] font-medium hover:bg-dark2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 bg-btn text-ink px-4 py-2.5 rounded-xl text-[14px] font-medium hover:bg-btn-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Send to support
               </button>

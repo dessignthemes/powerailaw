@@ -382,7 +382,7 @@ export default function InboxPage() {
         <div className="flex gap-3 flex-wrap justify-center">
           <Link
             href={connectHref("google")}
-            className="bg-dark text-white px-5 py-2.5 rounded-full text-[14.5px] font-medium hover:bg-dark2 transition-colors"
+            className="bg-btn text-ink px-5 py-2.5 rounded-full text-[14.5px] font-medium hover:bg-btn-hover transition-colors"
           >
             Connect Gmail
           </Link>
@@ -488,7 +488,7 @@ export default function InboxPage() {
                   ? "Gmail access wasn't granted. Reconnect and keep the Gmail box ticked."
                   : `Your ${providerLabel[provider]} connection has expired.`)}
             </span>
-            <Link href={connectHref(provider)} className="bg-dark text-white px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-dark2">
+            <Link href={connectHref(provider)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-btn-hover">
               Reconnect {providerLabel[provider]}
             </Link>
           </div>

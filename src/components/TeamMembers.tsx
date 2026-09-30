@@ -134,7 +134,7 @@ export default function TeamMembers({ onChanged }: { onChanged?: () => void }) {
         {team.canInvite && (
           <button
             onClick={() => setInviteOpen((o) => !o)}
-            className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors flex-shrink-0"
+            className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex-shrink-0"
           >
             Invite member
           </button>
@@ -174,7 +174,7 @@ export default function TeamMembers({ onChanged }: { onChanged?: () => void }) {
           <button
             onClick={invite}
             disabled={busy || !email.trim()}
-            className="bg-dark text-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 disabled:opacity-50 flex items-center gap-1.5"
+            className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover disabled:opacity-50 flex items-center gap-1.5"
           >
             {busy && <Loader2 size={13} className="animate-spin" />} Create invite
           </button>
@@ -199,7 +199,7 @@ export default function TeamMembers({ onChanged }: { onChanged?: () => void }) {
           </p>
           <div className="flex items-center gap-2 flex-wrap">
             <code className="flex-1 min-w-[200px] bg-white border border-line rounded-lg px-3 py-2 text-[12px] truncate">{freshLink.link}</code>
-            <button onClick={() => copy(freshLink.link)} className="flex items-center gap-1.5 bg-dark text-white px-3.5 py-2 rounded-full text-[13px] font-medium hover:bg-dark2">
+            <button onClick={() => copy(freshLink.link)} className="flex items-center gap-1.5 bg-btn text-ink px-3.5 py-2 rounded-full text-[13px] font-medium hover:bg-btn-hover">
               {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied" : "Copy link"}
             </button>
             <a href={mailto(freshLink.email, freshLink.link)} className="flex items-center gap-1.5 bg-white border border-line px-3.5 py-2 rounded-full text-[13px] font-medium hover:border-muted">
@@ -233,7 +233,7 @@ export default function TeamMembers({ onChanged }: { onChanged?: () => void }) {
                   <option value="admin">Admin</option>
                 </select>
               ) : (
-                <span className={`px-3 py-1 rounded-full text-[12.5px] font-medium ${m.role === "owner" ? "bg-dark text-white" : "bg-card-alt text-muted"}`}>
+                <span className={`px-3 py-1 rounded-full text-[12.5px] font-medium ${m.role === "owner" ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted"}`}>
                   {roleLabel[m.role]}
                 </span>
               )}

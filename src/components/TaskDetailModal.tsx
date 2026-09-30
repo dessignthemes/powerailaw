@@ -436,7 +436,7 @@ export default function TaskDetailModal({
             onClick={toggleTimer}
             disabled={timerBusy}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50 ${
-              timerRunning ? "bg-dark text-white hover:bg-dark2" : "bg-card-alt text-ink hover:bg-line/70"
+              timerRunning ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring hover:bg-btn-hover" : "bg-card-alt text-ink hover:bg-line/70"
             }`}
           >
             {timerRunning ? <Square size={11} fill="currentColor" /> : <Play size={13} strokeWidth={1.75} />}

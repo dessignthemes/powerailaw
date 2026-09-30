@@ -56,7 +56,7 @@ function TypeBadge({ type }: { type: FileType }) {
 const beigeBtn =
   "bg-card-alt hover:bg-line/70 text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50";
 const blackBtn =
-  "bg-dark text-white px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-60";
+  "bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-60";
 
 export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId?: string }) {
   const router = useRouter();
@@ -185,7 +185,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
   }
 
   const addButton = (
-    <button onClick={() => setAdding(true)} className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors">
+    <button onClick={() => setAdding(true)} className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors">
       + Add document
     </button>
   );
@@ -589,7 +589,7 @@ function AddDocumentModal({
           <button
             onClick={upload}
             disabled={running || waiting === 0}
-            className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-50"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-50"
           >
             {running ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} strokeWidth={2} />}
             {running ? "Uploading…" : waiting > 1 ? `Add ${waiting} documents` : "Add document"}
@@ -649,7 +649,7 @@ function ConvertModal({
           <button
             onClick={go}
             disabled={running}
-            className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-60"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-60"
           >
             {running ? <Loader2 size={14} className="animate-spin" /> : <FileOutput size={14} strokeWidth={2} />}
             {running ? "Converting…" : "Convert and open in Power PDF"}

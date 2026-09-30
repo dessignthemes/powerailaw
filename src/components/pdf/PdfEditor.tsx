@@ -550,7 +550,7 @@ export default function PdfEditor({
       }}
       title={hint}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-        tool === t ? "bg-dark text-white" : "bg-card-alt text-ink hover:bg-line/60"
+        tool === t ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-ink hover:bg-line/60"
       }`}
     >
       {icon} {label}
@@ -645,7 +645,7 @@ export default function PdfEditor({
         <button
           onClick={() => setSaveOpen(true)}
           disabled={!dirty}
-          className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-40"
+          className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-40"
         >
           <Save size={14} strokeWidth={2} /> Save as new version
         </button>
@@ -656,7 +656,7 @@ export default function PdfEditor({
         <div ref={scrollRef} className="flex-1 overflow-auto bg-card-alt">
           {tool !== "select" && (
             <div className="sticky top-0 z-20 flex justify-center pointer-events-none">
-              <div className="mt-3 bg-dark text-white text-[12.5px] px-3.5 py-1.5 rounded-full pointer-events-auto flex items-center gap-2">
+              <div className="mt-3 bg-btn text-ink text-[12.5px] px-3.5 py-1.5 rounded-full pointer-events-auto flex items-center gap-2">
                 {tool === "text"
                   ? "Click where the text should start."
                   : "Click a highlighted piece of text to replace it. The original is covered, not removed."}
@@ -1239,7 +1239,7 @@ function SaveDialog({
           <button
             onClick={go}
             disabled={busy || !ack || charProblems.length > 0}
-            className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-40"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-40"
           >
             {busy ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} {busy ? "Saving…" : "Save"}
           </button>

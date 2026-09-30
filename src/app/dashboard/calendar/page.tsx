@@ -425,7 +425,7 @@ export default function CalendarPage() {
           </button>
           <button
             onClick={() => setModalDate(toISODate(cursor))}
-            className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
           >
             <Plus size={14} strokeWidth={2} /> Add
           </button>
@@ -466,7 +466,7 @@ export default function CalendarPage() {
                   <AlertTriangle size={14} className="flex-shrink-0" />
                   {providerName[b.provider]}{b.email ? ` (${b.email})` : ""}: {b.message ?? "needs attention"}
                 </span>
-                <Link href={connect(b.provider)} className="bg-dark text-white px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-dark2">
+                <Link href={connect(b.provider)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-btn-hover">
                   Reconnect
                 </Link>
               </div>

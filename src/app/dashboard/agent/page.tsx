@@ -461,7 +461,7 @@ function Agent() {
             <button
               onClick={() => setMemoryOpen(!memoryOpen)}
               className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                memoryOpen ? "bg-dark text-white" : "bg-card-alt text-ink hover:bg-line/60"
+                memoryOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-ink hover:bg-line/60"
               }`}
             >
               <Brain size={14} strokeWidth={1.75} /> Memory
@@ -733,7 +733,7 @@ function Composer({ textRef, fileInput, ...p }: ComposerProps) {
           <MatterPicker matter={p.matter} matters={p.matters} onChoose={p.chooseMatter} disabled={p.disabled || p.streaming} />
         </div>
         {p.streaming ? (
-          <button onClick={p.stop} title="Stop" aria-label="Stop generating" className="w-8 h-8 rounded-full bg-dark text-white flex items-center justify-center hover:bg-dark2 flex-shrink-0">
+          <button onClick={p.stop} title="Stop" aria-label="Stop generating" className="w-8 h-8 rounded-full bg-btn text-ink flex items-center justify-center hover:bg-btn-hover flex-shrink-0">
             <Square size={11} fill="currentColor" />
           </button>
         ) : (
@@ -742,7 +742,7 @@ function Composer({ textRef, fileInput, ...p }: ComposerProps) {
             disabled={p.disabled || !p.input.trim() || p.uploading}
             title={p.uploading ? "Waiting for files to finish" : "Send"}
             aria-label="Send"
-            className="w-8 h-8 rounded-full bg-dark text-white flex items-center justify-center hover:bg-dark2 disabled:bg-card disabled:text-muted flex-shrink-0"
+            className="w-8 h-8 rounded-full bg-btn text-ink flex items-center justify-center hover:bg-btn-hover disabled:bg-card disabled:text-muted flex-shrink-0"
           >
             <ArrowUp size={15} strokeWidth={2} />
           </button>

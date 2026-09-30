@@ -424,7 +424,7 @@ export default function NewMatterModal({
           <button
             onClick={handleSubmit}
             disabled={!title.trim()}
-            className="bg-dark text-white px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-dark2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="bg-btn text-ink px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-btn-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isEdit ? "Save" : "Create"}
           </button>

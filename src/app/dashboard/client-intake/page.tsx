@@ -47,7 +47,7 @@ export default function ClientIntakePage() {
             key={t}
             onClick={() => setFitFilter(t)}
             className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-              fitFilter === t ? "bg-dark text-white" : "bg-card-alt text-muted hover:text-ink"
+              fitFilter === t ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
             }`}
           >
             {t}
@@ -79,7 +79,7 @@ export default function ClientIntakePage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setSettingsOpen(true)}
-                className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+                className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
               >
                 Finish setup
               </button>

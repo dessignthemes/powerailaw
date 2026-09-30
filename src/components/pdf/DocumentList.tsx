@@ -177,7 +177,7 @@ export default function DocumentList({
         <button
           onClick={() => (matterId ? fileInput.current?.click() : setError("Choose the matter this PDF belongs to first."))}
           disabled={uploading}
-          className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors disabled:opacity-60"
+          className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-60"
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} strokeWidth={2} />}
           {uploading ? "Checking and uploading…" : "Upload PDF"}
@@ -246,7 +246,7 @@ export default function DocumentList({
                     {latest && (
                       <Link
                         href={`/dashboard/power-pdf/${d.id}?version=${latest.id}`}
-                        className="bg-dark text-white px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 hover:bg-dark2 transition-colors"
+                        className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
                       >
                         <PenLine size={13} strokeWidth={2} /> Open in Power PDF
                       </Link>
