@@ -886,9 +886,9 @@ function TaskBoard({
               <button
                 onClick={() => scrollByColumn(-1)}
                 aria-label="Show columns on the left"
-                className="absolute left-1 top-24 z-30 w-9 h-9 rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-card-alt transition-colors"
+                className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-card-alt transition-colors"
               >
-                <ChevronLeft size={17} strokeWidth={2} />
+                <ChevronLeft size={21} strokeWidth={2} />
               </button>
             </>
           )}
@@ -898,9 +898,9 @@ function TaskBoard({
               <button
                 onClick={() => scrollByColumn(1)}
                 aria-label="Show columns on the right"
-                className="absolute right-1 top-24 z-30 w-9 h-9 rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-card-alt transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-card-alt transition-colors"
               >
-                <ChevronRight size={17} strokeWidth={2} />
+                <ChevronRight size={21} strokeWidth={2} />
               </button>
             </>
           )}
