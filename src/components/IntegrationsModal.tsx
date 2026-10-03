@@ -1,7 +1,7 @@
 "use client";
 
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Settings,
@@ -312,11 +312,41 @@ export default function IntegrationsModal({
   const [active, setActive] = useState<SettingsTabKey>(initialTab);
   const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
 
+  // Firm details come from the signed-in person's own workspace; a new
+  // account starts with these empty.
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [orgName, setOrgName] = useState("Dessign");
-  const [urlSlug, setUrlSlug] = useState("dessign");
+  const [logoChanged, setLogoChanged] = useState(false);
+  const [orgName, setOrgName] = useState("");
+  const [urlSlug, setUrlSlug] = useState("");
   const [timezone, setTimezone] = useState("America/New_York");
   const [generalSaved, setGeneralSaved] = useState(false);
+  const [generalLoaded, setGeneralLoaded] = useState(false);
+  const [generalSaving, setGeneralSaving] = useState(false);
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  const [canEditGeneral, setCanEditGeneral] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/organization")
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error ?? "Couldn't load the firm details.");
+        return data.organization as { name: string; urlSlug: string; timezone: string; logoUrl: string | null; canEdit: boolean };
+      })
+      .then((o) => {
+        if (cancelled) return;
+        setOrgName(o.name);
+        setUrlSlug(o.urlSlug);
+        setTimezone(o.timezone);
+        setLogoUrl(o.logoUrl);
+        setCanEditGeneral(o.canEdit);
+      })
+      .catch((e: Error) => !cancelled && setGeneralError(e.message))
+      .finally(() => !cancelled && setGeneralLoaded(true));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [practiceStatus, setPracticeStatus] = useState<Record<string, PracticeAreaStatus>>(
     Object.fromEntries(practiceAreas.map((a) => [a, "Not set" as PracticeAreaStatus]))
@@ -326,14 +356,51 @@ export default function IntegrationsModal({
 
   const allPracticeAreasUnset = practiceAreas.every((a) => practiceStatus[a] === "Not set");
 
-  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  // The logo is shrunk to 256px in the browser and saved with the workspace.
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) setLogoUrl(URL.createObjectURL(file));
+    e.target.value = "";
+    if (!file) return;
+    setGeneralError(null);
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setGeneralError("Use a PNG, JPEG or WebP image up to 2 MB.");
+      return;
+    }
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, 256 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      setLogoUrl(canvas.toDataURL("image/png"));
+      setLogoChanged(true);
+    } catch {
+      setGeneralError("That image couldn't be read. Try a different file.");
+    }
   }
 
-  function handleSaveGeneral() {
-    setGeneralSaved(true);
-    setTimeout(() => setGeneralSaved(false), 1800);
+  async function handleSaveGeneral() {
+    setGeneralSaving(true);
+    setGeneralError(null);
+    try {
+      const res = await fetch("/api/organization", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: orgName, urlSlug, timezone, ...(logoChanged ? { logoUrl } : {}) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error ?? "Couldn't save the firm details.");
+      setOrgName(data.organization.name);
+      setUrlSlug(data.organization.urlSlug);
+      setLogoChanged(false);
+      setGeneralSaved(true);
+      setTimeout(() => setGeneralSaved(false), 1800);
+    } catch (e) {
+      setGeneralError((e as Error).message);
+    } finally {
+      setGeneralSaving(false);
+    }
   }
 
   function handleSavePracticeAreas() {
@@ -489,7 +556,7 @@ export default function IntegrationsModal({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={logoUrl} alt="Workspace logo" className="w-full h-full object-cover" />
                       ) : (
-                        orgName.charAt(0).toUpperCase() || "?"
+                        orgName.trim().charAt(0).toUpperCase() || "?"
                       )}
                     </div>
                     <label className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors cursor-pointer">
@@ -510,7 +577,10 @@ export default function IntegrationsModal({
                   <input
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
-                    className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none"
+                    placeholder={generalLoaded ? "Your firm's name" : "Loading…"}
+                    disabled={!generalLoaded || !canEditGeneral}
+                    maxLength={120}
+                    className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-ink placeholder:text-muted disabled:opacity-60"
                   />
                 </div>
 
@@ -518,8 +588,11 @@ export default function IntegrationsModal({
                   <div className="text-[14.5px] font-semibold mb-2">URL Slug</div>
                   <input
                     value={urlSlug}
-                    onChange={(e) => setUrlSlug(e.target.value)}
-                    className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none"
+                    onChange={(e) => setUrlSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-{2,}/g, "-"))}
+                    placeholder={generalLoaded ? "for example smith-law" : "Loading…"}
+                    disabled={!generalLoaded || !canEditGeneral}
+                    maxLength={48}
+                    className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-ink placeholder:text-muted disabled:opacity-60"
                   />
                 </div>
 
@@ -530,7 +603,7 @@ export default function IntegrationsModal({
                     onChange={(e) => setTimezone(e.target.value)}
                     className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none appearance-none"
                   >
-                    {timezones.map((tz) => (
+                    {(timezones.includes(timezone) ? timezones : [timezone, ...timezones]).map((tz) => (
                       <option key={tz} value={tz}>
                         {tz}
                       </option>
@@ -544,11 +617,16 @@ export default function IntegrationsModal({
                 <div className="flex items-center gap-3 mb-9">
                   <button
                     onClick={handleSaveGeneral}
-                    className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
+                    disabled={!generalLoaded || generalSaving || !canEditGeneral}
+                    className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors disabled:opacity-60"
                   >
-                    Save Changes
+                    {generalSaving ? "Saving…" : "Save Changes"}
                   </button>
                   {generalSaved && <span className="text-[13px] text-green-600 font-medium">Saved</span>}
+                  {generalError && <span className="text-[13px] text-red-700">{generalError}</span>}
+                  {generalLoaded && !canEditGeneral && (
+                    <span className="text-[13px] text-muted">Only the workspace owner or an admin can change these.</span>
+                  )}
                 </div>
 
                 <div className="border-t border-line pt-8 mb-8">
