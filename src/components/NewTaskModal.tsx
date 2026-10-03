@@ -51,10 +51,11 @@ export function todayYmd() {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
+// Priority chips: solid brand colors, with whichever text color reads best.
 export const priorityMeta: Record<TaskPriority, { bg: string; text: string }> = {
-  Low: { bg: "#E9EAEE", text: "#5E6978" },
-  Medium: { bg: "#F5E3B3", text: "#8A6D1D" },
-  High: { bg: "#F6C9C0", text: "#9C3A24" },
+  Low: { bg: "#00D178", text: "#04291A" },
+  Medium: { bg: "#FFBA2C", text: "#2E1F00" },
+  High: { bg: "#FF2F00", text: "#FFFFFF" },
 };
 
 export const statusMeta: Record<TaskStatus, { label: string; icon: typeof Circle; color: string }> = {
