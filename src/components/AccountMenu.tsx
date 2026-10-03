@@ -68,7 +68,7 @@ export default function AccountMenu({
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-card-alt transition-colors text-left"
               >
                 <Users size={16} strokeWidth={1.75} />
-                Team Members
+                Members
               </button>
               <button
                 onClick={() => {
