@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { initialsFor, displayName } from "@/lib/initials";
 
-// Circle with a workspace member's initials. Hover shows who it is; click
+// Grey circle with a workspace member's initials. Hover shows who it is; click
 // opens the Task Board filtered to the tasks they created.
 //
 // The hover card is drawn at the top of the page (a portal, fixed position),
@@ -15,12 +15,11 @@ export default function MemberAvatar({
   userId,
   size = 26,
   label = "Created by",
-  light = false,
 }: {
   userId: string | null | undefined;
   size?: number;
   label?: string;
-  light?: boolean; // quiet circle (task cards) instead of dark
+  light?: boolean; // kept for older call sites; every avatar is now the same grey
 }) {
   const router = useRouter();
   const { teamMembers } = useWorkspaceData();
@@ -78,7 +77,7 @@ export default function MemberAvatar({
         onBlur={hideSoon}
         aria-label={`${label} ${name}${m ? `, ${m.email}` : ""}. View their tasks`}
         className={`rounded-full flex items-center justify-center font-semibold tracking-tight transition-transform hover:scale-105 ${
-          light ? "bg-card-alt border border-line text-muted hover:text-ink" : m ? "bg-dark text-white" : "bg-line text-muted cursor-default"
+          m ? "bg-card-alt border border-line text-muted hover:text-ink" : "bg-card-alt border border-line text-muted/60 cursor-default"
         }`}
         style={{ width: size, height: size, fontSize: size <= 24 ? 10 : 11 }}
       >

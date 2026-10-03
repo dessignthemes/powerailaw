@@ -389,7 +389,7 @@ export default function TaskDetailModal({
                 <div className="flex flex-col gap-3">
                   {comments.map((c) => (
                     <div key={c.id} className="flex items-start gap-2.5">
-                      <span className="w-7 h-7 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-medium flex-shrink-0">
+                      <span className="w-7 h-7 rounded-full bg-card-alt border border-line text-muted flex items-center justify-center text-[11px] font-medium flex-shrink-0">
                         M
                       </span>
                       <div className="bg-card-alt rounded-2xl px-3.5 py-2.5 text-[14px]">{c.body}</div>

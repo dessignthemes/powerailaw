@@ -285,7 +285,7 @@ export default function NewEventModal({
                   key={a}
                   className="flex items-center gap-1.5 bg-card-alt rounded-full pl-1 pr-2.5 py-1 text-[13px] font-medium"
                 >
-                  <span className="w-5 h-5 rounded-full bg-dark text-white flex items-center justify-center text-[10px]">
+                  <span className="w-5 h-5 rounded-full bg-white border border-line text-muted flex items-center justify-center text-[10px]">
                     {a[0].toUpperCase()}
                   </span>
                   {a}

@@ -213,7 +213,7 @@ export default function TeamMembers({ onChanged }: { onChanged?: () => void }) {
         {team.members.map((m) => (
           <div key={m.id} className="flex items-center justify-between gap-4 px-5 py-4 flex-wrap">
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-7 h-7 rounded-full bg-dark text-white flex items-center justify-center text-[12px] font-medium flex-shrink-0">
+              <span className="w-7 h-7 rounded-full bg-card-alt border border-line text-muted flex items-center justify-center text-[12px] font-medium flex-shrink-0">
                 {m.email.charAt(0).toUpperCase()}
               </span>
               <span className="text-[14.5px] font-medium truncate">

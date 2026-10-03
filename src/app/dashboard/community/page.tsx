@@ -380,7 +380,7 @@ export default function CommunityPage() {
               <div className="bg-cream rounded-xl divide-y divide-line">
                 {results.map((l) => (
                   <div key={l.id} className="flex items-start gap-4 px-5 py-5 flex-wrap md:flex-nowrap">
-                    <div className="w-11 h-11 rounded-full bg-dark text-white flex items-center justify-center text-[14px] font-semibold flex-shrink-0">
+                    <div className="w-11 h-11 rounded-full bg-card-alt border border-line text-muted flex items-center justify-center text-[14px] font-semibold flex-shrink-0">
                       {initials(l.name)}
                     </div>
                     <div className="flex-1 min-w-[220px]">

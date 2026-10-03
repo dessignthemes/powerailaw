@@ -122,7 +122,7 @@ export default function AccountMenu({
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-card-alt transition-colors text-left"
       >
-        <div className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-medium flex-shrink-0">
+        <div className="w-6 h-6 rounded-full bg-card-alt border border-line text-muted flex items-center justify-center text-[11px] font-medium flex-shrink-0">
           {userInitial(userName, email)}
         </div>
         <span className="text-[13px] text-muted truncate flex-1">{email}</span>
