@@ -53,7 +53,7 @@ const navItems = [
   },
 ] as const;
 
-type PageKey = (typeof navItems)[number]["key"];
+export type PageKey = (typeof navItems)[number]["key"];
 
 function trialEndDate(): string {
   const d = new Date();
@@ -64,11 +64,13 @@ function trialEndDate(): string {
 export default function AdminModal({
   ownerEmail,
   onClose,
+  initialPage = "members",
 }: {
   ownerEmail: string;
   onClose: () => void;
+  initialPage?: PageKey;
 }) {
-  const [page, setPage] = useState<PageKey>("members");
+  const [page, setPage] = useState<PageKey>(initialPage);
 
 
   const [addPersonOpen, setAddPersonOpen] = useState(false);

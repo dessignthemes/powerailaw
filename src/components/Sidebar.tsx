@@ -122,6 +122,11 @@ export default function Sidebar() {
             setSupportOpen(false);
             setAdminOpen(true);
           }}
+          onOpenTeam={() => {
+            // Administration → Members, where new team members are invited.
+            setSupportOpen(false);
+            setAdminOpen(true);
+          }}
           onOpenSupport={() => {
             setAdminOpen(false);
             setSupportOpen(true);
@@ -131,7 +136,7 @@ export default function Sidebar() {
       </div>
 
       {adminOpen && (
-        <AdminModal ownerEmail={email ?? ""} onClose={() => setAdminOpen(false)} />
+        <AdminModal ownerEmail={email ?? ""} initialPage="members" onClose={() => setAdminOpen(false)} />
       )}
       {supportOpen && (
         <ContactSupportModal email={email ?? ""} onClose={() => setSupportOpen(false)} />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown } from "lucide-react";
+import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown, Users } from "lucide-react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 
 // The signed-in person's initial: first letter of their name, or of their
@@ -17,6 +17,7 @@ export default function AccountMenu({
   userName,
   orgName,
   onOpenAdmin,
+  onOpenTeam,
   onOpenSupport,
   onLogout,
 }: {
@@ -24,6 +25,7 @@ export default function AccountMenu({
   userName?: string | null;
   orgName: string;
   onOpenAdmin: () => void;
+  onOpenTeam: () => void;
   onOpenSupport: () => void;
   onLogout: () => void;
 }) {
@@ -57,6 +59,16 @@ export default function AccountMenu({
               >
                 <Settings size={16} strokeWidth={1.75} />
                 Settings
+              </button>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  onOpenTeam();
+                }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-card-alt transition-colors text-left"
+              >
+                <Users size={16} strokeWidth={1.75} />
+                Team Members
               </button>
               <button
                 onClick={() => {
