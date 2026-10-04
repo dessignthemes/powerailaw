@@ -9,7 +9,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <IntegrationsModalProvider>
         <div className="flex min-h-screen bg-cream">
           <Sidebar />
-          <main className="flex-1 min-w-0">
+          <main className="flex-1 min-w-0 bg-page">
             <div className="px-10 pt-6">
               <PageSwitcher />
             </div>

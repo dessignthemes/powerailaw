@@ -2,7 +2,8 @@
 
 :root {
   /* Cool blue-grey theme. */
-  --cream: #f9fafe; /* page background */
+  --cream: #f9fafe; /* sidebar and page background */
+  --page: #fcfdff; /* main content area (right of the sidebar) */
   --dark: #121110; /* logo, avatars, "on" toggles */
   --dark2: #1a1917;
   --beige: #dde2e9;
@@ -27,6 +28,7 @@
   --color-card-alt: var(--card-alt);
   --color-line: var(--line);
   --color-line-dark: var(--line-dark);
+  --color-page: var(--page);
   --color-btn: var(--btn);
   --color-btn-hover: var(--btn-hover);
   --color-btn-ring: var(--btn-ring);

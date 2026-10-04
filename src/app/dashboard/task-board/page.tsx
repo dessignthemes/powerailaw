@@ -882,7 +882,7 @@ function TaskBoard({
           {/* Fades and arrows show there are more columns off to the side. */}
           {edges.left && (
             <>
-              <div className="pointer-events-none absolute left-0 top-0 bottom-3 w-12 z-20 bg-gradient-to-r from-cream to-transparent" />
+              <div className="pointer-events-none absolute left-0 top-0 bottom-3 w-12 z-20 bg-gradient-to-r from-page to-transparent" />
               <button
                 onClick={() => scrollByColumn(-1)}
                 aria-label="Show columns on the left"
@@ -894,7 +894,7 @@ function TaskBoard({
           )}
           {edges.right && (
             <>
-              <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-12 z-20 bg-gradient-to-l from-cream to-transparent" />
+              <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-12 z-20 bg-gradient-to-l from-page to-transparent" />
               <button
                 onClick={() => scrollByColumn(1)}
                 aria-label="Show columns on the right"
