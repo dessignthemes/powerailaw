@@ -503,15 +503,13 @@ function Agent() {
             <div className="max-w-[560px] mx-auto mt-16 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{convError}</div>
           ) : empty ? (
             <div className="h-full flex flex-col items-center justify-center px-6">
-              <div className="w-full max-w-[600px] flex items-start gap-3 mb-8">
-                <div className="w-9 h-9 rounded-full bg-dark text-white flex items-center justify-center text-[15px] font-bold font-display flex-shrink-0">
+              <div className="w-full max-w-[600px] flex items-start gap-2.5 mb-5">
+                <div className="w-7 h-7 rounded-full bg-dark text-white flex items-center justify-center text-[12px] font-bold font-display flex-shrink-0">
                   L
                 </div>
-                <div className="bg-white border border-line rounded-2xl rounded-tl-md px-5 py-3.5">
-                  <div className="text-[15px] font-semibold">Hi, I&apos;m LawPower, your AI legal assistant.</div>
-                  <div className="text-[14.5px] text-muted mt-0.5">
-                    Tell me what you&apos;re working on and I&apos;ll help you get started: summarizing documents, organizing matters, or drafting for your review.
-                  </div>
+                <div className="bg-white border border-line rounded-xl rounded-tl-md px-3.5 py-1.5 text-[13px] leading-snug text-muted">
+                  <span className="font-semibold text-ink">Hi, I&apos;m LawPower, your AI legal assistant.</span> Tell me what you&apos;re working on
+                  and I&apos;ll help you get started: summarizing documents, organizing matters, or drafting for your review.
                 </div>
               </div>
               <div className="w-full max-w-[600px]">
