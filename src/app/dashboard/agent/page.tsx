@@ -455,9 +455,16 @@ function Agent() {
             <IconBtn label="New chat" onClick={() => newChat()}>
               <SquarePen size={16} strokeWidth={1.75} />
             </IconBtn>
-            <IconBtn label="History" active={historyOpen} onClick={() => setHistoryOpen(!historyOpen)}>
-              <History size={16} strokeWidth={1.75} />
-            </IconBtn>
+            <button
+              onClick={() => setHistoryOpen(!historyOpen)}
+              aria-pressed={historyOpen}
+              title="Past conversations"
+              className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
+                historyOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-ink hover:bg-line/60"
+              }`}
+            >
+              <History size={14} strokeWidth={1.75} /> History
+            </button>
             <button
               onClick={() => setMemoryOpen(!memoryOpen)}
               className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
