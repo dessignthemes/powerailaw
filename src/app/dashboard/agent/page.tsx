@@ -452,9 +452,13 @@ function Agent() {
             </span>
           )}
           <div className="ml-auto flex items-center gap-1 text-muted">
-            <IconBtn label="New chat" onClick={() => newChat()}>
-              <SquarePen size={16} strokeWidth={1.75} />
-            </IconBtn>
+            <button
+              onClick={() => newChat()}
+              title="Start a new conversation"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-card-alt text-ink hover:bg-line/60 transition-colors"
+            >
+              <SquarePen size={14} strokeWidth={1.75} /> New Chat
+            </button>
             <button
               onClick={() => setHistoryOpen(!historyOpen)}
               aria-pressed={historyOpen}
@@ -614,19 +618,6 @@ function Agent() {
 }
 
 // ── Pieces ────────────────────────────────────────────────────────────────
-
-function IconBtn({ label, onClick, active, children }: { label: string; onClick: () => void; active?: boolean; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${active ? "bg-card-alt text-ink" : "hover:bg-card-alt hover:text-ink"}`}
-    >
-      {children}
-    </button>
-  );
-}
 
 function Footnote({ status }: { status: Status | null }) {
   return (
