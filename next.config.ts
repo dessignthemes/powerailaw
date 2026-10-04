@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   // pdf.js loads its worker by path, which file tracing can't see.
   outputFileTracingIncludes: {
     "/api/ai/**": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs", "./node_modules/pdfjs-dist/legacy/build/pdf.mjs"],
+    "/api/accounting/**": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs", "./node_modules/pdfjs-dist/legacy/build/pdf.mjs"],
   },
 };
 
