@@ -659,7 +659,7 @@ type ComposerProps = {
 function Composer({ textRef, fileInput, ...p }: ComposerProps) {
   const shown = p.files.filter((f) => p.pendingFileIds.includes(f.id) || f.status === "uploading" || f.status === "processing" || (f.status === "failed" && f.id.startsWith("tmp-")));
   return (
-    <div className={`border border-line rounded-2xl px-4 pt-3 pb-3 bg-card-alt ${p.disabled ? "opacity-60" : ""}`}>
+    <div className={`border border-line rounded-2xl px-4 pt-3 pb-3 bg-cream ${p.disabled ? "opacity-60" : ""}`}>
       {shown.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {shown.map((f) => (
@@ -716,7 +716,7 @@ function Composer({ textRef, fileInput, ...p }: ComposerProps) {
         }}
         rows={1}
         placeholder={p.matter ? `Ask about ${p.matter.title}…` : "Ask anything"}
-        className="w-full bg-transparent outline-none text-[15px] placeholder:text-muted resize-none mb-2.5 max-h-[220px]"
+        className="w-full bg-transparent outline-none text-[15px] leading-relaxed placeholder:text-muted resize-none mb-2.5 min-h-[42px] max-h-[220px]"
       />
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
