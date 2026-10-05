@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { firmTimezone, todayIn } from "@/lib/ai/workspaceTools";
 import { getProvider, aiConfig } from "@/lib/ai/provider";
 import { ProviderError, type ChatMessage } from "@/lib/ai/provider/types";
 import {
@@ -129,8 +130,10 @@ export async function POST(request: Request) {
         const [excerpts, memories] = await Promise.all([searchChunks(ctx, scope, text, 6), memoriesForContext(ctx, convRow.matter_id, text)]);
         const pendingIndex = matter?.documents.filter((d) => !d.indexStatus).length ?? 0;
 
+        const tz = await firmTimezone(ctx.orgId);
         const system = buildSystemPrompt({
           userEmail: ctx.email,
+          today: { ...todayIn(tz), tz },
           matter,
           memories,
           files,

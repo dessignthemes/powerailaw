@@ -58,6 +58,9 @@ const TOOL_ACTIVITY: Record<string, string> = {
   createTask: "Preparing a proposal",
   saveDocumentDraft: "Preparing a draft",
   suggestMemory: "Suggesting a memory",
+  listCalendarEvents: "Checking your calendar",
+  searchEmail: "Searching your email",
+  readEmail: "Reading an email",
 };
 
 type Status = { configured: boolean; model: string; providerLabel?: string; keyName?: string; usage: { requests: number; tokens: number; requestLimit: number; tokenLimit: number } };
@@ -622,7 +625,7 @@ function Agent() {
 function Footnote({ status }: { status: Status | null }) {
   return (
     <p className="text-[11.5px] text-muted text-center mt-2 leading-snug">
-      Your messages, relevant document excerpts and the selected matter&apos;s details are sent to {status?.providerLabel ?? "the AI provider"}&apos;s API to generate answers. AI can be wrong. Check
+      Your messages, relevant document excerpts, the selected matter&apos;s details, and any emails or calendar events the Agent looks up for you are sent to {status?.providerLabel ?? "the AI provider"}&apos;s API to generate answers. AI can be wrong. Check
       important details, and treat drafts as drafts for attorney review.
       {status && status.usage.requestLimit > 0 && (
         <span className="block mt-0.5">
