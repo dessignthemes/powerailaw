@@ -7,6 +7,7 @@ import {
   Users,
   Sparkles,
   Calculator,
+  FolderSearch,
   Timer,
   UserPlus,
   FilePen,
@@ -33,6 +34,7 @@ export const mainLinks: NavLink[] = [
 export const toolLinks: NavLink[] = [
   { label: "AI Agent", href: "/dashboard/agent", icon: Sparkles },
   { label: "AI Accountant", href: "/dashboard/ai-accountant", icon: Calculator },
+  { label: "AI Matter", href: "/dashboard/ai-matter", icon: FolderSearch },
   { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
