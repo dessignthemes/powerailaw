@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 // Shared layout for public legal pages (/privacy, /terms).
-export const LEGAL_CONTACT = "dessign.net@gmail.com";
+export const PRIVACY_EMAIL = "privacy@lawpower.ai";
+export const SUPPORT_EMAIL = "support@lawpower.ai";
 export const LEGAL_UPDATED = "October 6, 2026";
 
 export function H2({ children }: { children: React.ReactNode }) {
@@ -15,6 +16,14 @@ export function P({ children }: { children: React.ReactNode }) {
 }
 export function UL({ children }: { children: React.ReactNode }) {
   return <ul className="list-disc pl-6 mb-3 space-y-1.5 text-[15px] leading-relaxed text-ink/90">{children}</ul>;
+}
+
+export function Mail({ to }: { to: string }) {
+  return (
+    <a href={`mailto:${to}`} className="underline underline-offset-2">
+      {to}
+    </a>
+  );
 }
 
 export default function LegalPage({ title, children }: { title: string; children: React.ReactNode }) {
@@ -38,7 +47,7 @@ export default function LegalPage({ title, children }: { title: string; children
         <p className="text-[14px] text-muted mt-2 mb-8">Last updated: {LEGAL_UPDATED}</p>
         {children}
         <p className="text-[14px] text-muted mt-12 border-t border-line pt-6">
-          Questions? Contact us at <a href={`mailto:${LEGAL_CONTACT}`} className="underline underline-offset-2">{LEGAL_CONTACT}</a>.
+          Privacy questions: <Mail to={PRIVACY_EMAIL} /> · Help with LawPower: <Mail to={SUPPORT_EMAIL} />
         </p>
       </main>
     </div>

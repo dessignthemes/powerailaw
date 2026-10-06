@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import LegalPage, { H2, P, UL } from "@/components/LegalPage";
+import LegalPage, { H2, P, UL, Mail, SUPPORT_EMAIL } from "@/components/LegalPage";
 
 export const metadata: Metadata = { title: "Terms of Service — LawPower AI", description: "The terms for using LawPower AI." };
 
@@ -92,6 +92,11 @@ export default function TermsPage() {
       <P>
         We may update these Terms. We will post the new version here with a new date, and notify you of material changes. Continuing to use
         LawPower after changes take effect means you accept them.
+      </P>
+
+      <H2>13. Contact us</H2>
+      <P>
+        Questions about these Terms or the service: <Mail to={SUPPORT_EMAIL} />.
       </P>
     </LegalPage>
   );

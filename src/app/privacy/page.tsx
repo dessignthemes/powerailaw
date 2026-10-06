@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LegalPage, { H2, H3, P, UL, LEGAL_CONTACT } from "@/components/LegalPage";
+import LegalPage, { H2, H3, P, UL, Mail, PRIVACY_EMAIL, SUPPORT_EMAIL } from "@/components/LegalPage";
 
 export const metadata: Metadata = { title: "Privacy Policy — LawPower AI", description: "How LawPower AI collects, uses and protects information." };
 
@@ -106,14 +106,15 @@ export default function PrivacyPage() {
       <H2>7. Retention and deletion</H2>
       <P>
         We keep your information while your account is active. You can delete content in LawPower at any time and disconnect connected services
-        at any time. To delete your account and its data, email us at {LEGAL_CONTACT}; we will delete it within 30 days, except where we must keep
+        at any time. To delete your account and its data, email us at <Mail to={PRIVACY_EMAIL} />; we will delete it within 30 days, except where we must keep
         certain records by law. Backups are overwritten on a rolling schedule.
       </P>
 
       <H2>8. Your choices and rights</H2>
       <P>
-        You can access, correct, export or delete your information, disconnect services, and withdraw consent by contacting us. Depending on where
-        you live, you may have additional rights under laws such as the CCPA or GDPR; contact us to exercise them.
+        You can access, correct, export or delete your information, disconnect services, and withdraw consent by emailing{" "}
+        <Mail to={PRIVACY_EMAIL} />. Depending on where you live, you may have additional rights under laws such as the CCPA or GDPR; email us to
+        exercise them.
       </P>
 
       <H2>9. Professional confidentiality</H2>
@@ -127,6 +128,12 @@ export default function PrivacyPage() {
 
       <H2>11. Changes to this policy</H2>
       <P>We may update this policy. We will post the new version here with a new date, and notify you of material changes.</P>
+
+      <H2>12. Contact us</H2>
+      <P>
+        For privacy questions, data requests or account deletion, email <Mail to={PRIVACY_EMAIL} />. For help using LawPower, email{" "}
+        <Mail to={SUPPORT_EMAIL} />.
+      </P>
     </LegalPage>
   );
 }
