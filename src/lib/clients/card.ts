@@ -23,6 +23,7 @@ export type Person = {
   placeOfDeath: string;
   occupation: string;
   employer: string;
+  education: string;
   ssnLast4: string;
   driversLicense: string;
   preferredLanguage: string;
@@ -49,7 +50,18 @@ export type Profile = {
   letter: { title: string; dear: string; titleAuto: boolean; dearAuto: boolean; style: "formal" | "friendly" };
   address: { street: Address; poBox: { box: string; city: string; state: string; zip: string; country: string }; future: Address & { from: string } };
   notes: string;
-  bank: { routing: string; account: string; name: string };
+  bank: { routing: string; account: string; name: string; institution: string; phone: string; address: string };
+  intake: {
+    referredBy: string;
+    reason: string;
+    practiceArea: string;
+    contactPreference: "" | "Home Phone" | "Cell Phone" | "E-Mail" | "Other";
+    contactPreferenceOther: string;
+    mailingAddress: string;
+    marriageDate: string;
+    children: "" | "Yes" | "No";
+    childrenDetails: string;
+  };
   labels: { supplier: boolean; marketingConsent: boolean };
   photo: string | null; // small data URL
 };
@@ -57,6 +69,13 @@ export type Profile = {
 export const TITLES = ["", "Mr.", "Mrs.", "Ms.", "Miss", "Dr.", "Prof.", "Hon.", "Rev."];
 export const RELATIONSHIP = ["", "Single", "Married", "Domestic partnership", "Separated", "Divorced", "Widowed"];
 export const CONTACT_KINDS: ContactKind[] = ["Email", "Phone", "Cell", "Fax", "Web", "Other"];
+// The firm's practice areas (from its intake sheet).
+export const PRACTICE_AREAS = [
+  "", "Bankruptcy", "Business Law", "Collection", "Contract Review", "Estate Planning", "Family Law", "General Litigation",
+  "Immigration", "Landlord/Tenant", "Probate", "Property Tax Appeals", "Real Estate", "Other",
+];
+export const CONTACT_PREFERENCES = ["", "Home Phone", "Cell Phone", "E-Mail", "Other"] as const;
+
 export const APT_TYPES = ["Apt.", "Suite", "Unit", "Floor", "Room", "Bldg."];
 export const ENTITY_TYPES = ["", "LLC", "Corporation", "S Corporation", "Partnership", "LLP", "Sole proprietorship", "Non-profit", "Trust", "Estate", "Government", "Other"];
 
@@ -67,7 +86,7 @@ export const newPerson = (): Person => ({
   title: "", first: "", middle: "", last: "", previousNames: "", suffix: "", gender: "", relationship: "",
   contacts: [{ kind: "Email", value: "" }, { kind: "Phone", value: "" }, { kind: "Cell", value: "" }, { kind: "Fax", value: "" }, { kind: "Web", value: "" }],
   dob: "", placeOfBirth: "", countryOfBirth: "", nationality: "", dod: "", placeOfDeath: "",
-  occupation: "", employer: "", ssnLast4: "", driversLicense: "", preferredLanguage: "", extra: [],
+  occupation: "", employer: "", education: "", ssnLast4: "", driversLicense: "", preferredLanguage: "", extra: [],
 });
 
 export const emptyProfile = (): Profile => ({
@@ -76,7 +95,8 @@ export const emptyProfile = (): Profile => ({
   letter: { title: "", dear: "", titleAuto: true, dearAuto: true, style: "formal" },
   address: { street: emptyAddress(), poBox: { box: "", city: "", state: "", zip: "", country: "United States" }, future: { ...emptyAddress(), from: "" } },
   notes: "",
-  bank: { routing: "", account: "", name: "" },
+  bank: { routing: "", account: "", name: "", institution: "", phone: "", address: "" },
+  intake: { referredBy: "", reason: "", practiceArea: "", contactPreference: "", contactPreferenceOther: "", mailingAddress: "", marriageDate: "", children: "", childrenDetails: "" },
   labels: { supplier: false, marketingConsent: false },
   photo: null,
 });
@@ -97,6 +117,7 @@ export function normalizeProfile(raw: unknown): Profile {
       future: { ...base.address.future, ...(p.address?.future ?? {}) },
     },
     bank: { ...base.bank, ...(p.bank ?? {}) },
+    intake: { ...base.intake, ...(p.intake ?? {}) },
     labels: { ...base.labels, ...(p.labels ?? {}) },
   };
 }

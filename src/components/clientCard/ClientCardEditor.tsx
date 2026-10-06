@@ -3,18 +3,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, Mail, MessageSquare, Phone, Plus, X, User, Building2, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera,
+  ArrowLeft, Mail, MessageSquare, Phone, Plus, X, User, Building2, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import SelectBox from "@/components/SelectBox";
 import { uploadAnyDocument, versionDownloadUrl, UploadError } from "@/lib/pdf/upload";
 import type { Doc } from "@/components/pdf/DocumentList";
 import {
-  APT_TYPES, CONTACT_KINDS, ENTITY_TYPES, RELATIONSHIP, TITLES, ageFrom, autoLetter, emptyProfile, newPerson, normalizeProfile,
+  APT_TYPES, CONTACT_KINDS, CONTACT_PREFERENCES, ENTITY_TYPES, PRACTICE_AREAS, RELATIONSHIP, TITLES, ageFrom, autoLetter, emptyProfile, personName, newPerson, normalizeProfile,
   personFullTitle, type CardType, type ContactLine, type Person, type Profile,
 } from "@/lib/clients/card";
 
-type Section = "person" | "details" | "address" | "notes" | "documents" | "mailings" | "matters";
+type Section = "person" | "intake" | "details" | "address" | "notes" | "documents" | "mailings" | "matters";
 
 const input = "w-full border border-line rounded-lg px-3 py-2 text-[14px] bg-white outline-none focus:border-ink placeholder:text-muted/70";
 const smallSelect = "border border-line rounded-lg px-2.5 py-2 text-[13.5px] bg-white outline-none focus:border-ink";
@@ -101,14 +101,19 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
   const [saving, setSaving] = useState(false);
   const [section, setSection] = useState<Section>("person");
   const [personId, setPersonId] = useState<string>(() => profile.people[0].id);
+  const [templates, setTemplates] = useState(false);
+  const [docBusy, setDocBusy] = useState<null | "intake">(null);
+  const [engagementOpen, setEngagementOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     fetch(`/api/client-cards/${id}`)
       .then(readJson)
-      .then(({ card }) => {
+      .then(({ card, templates: t }) => {
         if (cancelled) return;
+        setTemplates(!!t);
         const p = normalizeProfile(card.profile);
         setCardType(card.cardType);
         setProfile(p);
@@ -133,7 +138,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
   const setP = (fn: (p: Profile) => Profile) => setProfile((p) => fn(structuredClone(p)));
   const setPerson = (patch: Partial<Person>) => setP((p) => ({ ...p, people: p.people.map((x) => (x.id === person.id ? { ...x, ...patch } : x)) }));
 
-  async function save(close: boolean) {
+  async function save(close: boolean): Promise<string | null> {
     setSaving(true);
     setError(null);
     try {
@@ -152,10 +157,47 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
       refreshAll();
       onSaved(card.id);
       if (close) onClose();
+      return card.id as string;
+    } catch (e) {
+      setError((e as Error).message);
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Documents are filled from the saved card, so unsaved changes are saved first.
+  async function makeDocument(kind: "intake" | "engagement", extra: Record<string, string> = {}): Promise<{ blob: Blob; filename: string } | null> {
+    const id = dirty || !cardId ? await save(false) : cardId;
+    if (!id) return null;
+    const res = await fetch(`/api/client-cards/${id}/document`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, ...extra }) });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d?.error ?? "The document couldn't be created.");
+    }
+    const filename = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? `${kind}.docx`;
+    return { blob: await res.blob(), filename };
+  }
+
+  function download(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  async function intakeSheet() {
+    setDocBusy("intake");
+    setError(null);
+    try {
+      const out = await makeDocument("intake");
+      if (out) download(out.blob, out.filename);
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setSaving(false);
+      setDocBusy(null);
     }
   }
 
@@ -165,6 +207,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
   }
 
   const nav: [Section, string][] = [
+    ["intake", "Intake"],
     ["details", "Details"],
     ["address", "Address"],
     ["notes", "Notes & Other"],
@@ -190,6 +233,16 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
           <div className="text-[24px] font-semibold leading-tight">{name}</div>
           <div className="text-[13px] text-muted">{cardType === "company" ? "Company" : `People (${profile.people.length})`}{dirty ? " · unsaved changes" : ""}</div>
         </div>
+        {templates && cardId && (
+          <div className="flex gap-2">
+            <button onClick={intakeSheet} disabled={!!docBusy || saving} className="bg-card-alt hover:bg-line/70 px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
+              {docBusy === "intake" ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />} Intake sheet
+            </button>
+            <button onClick={() => setEngagementOpen(true)} disabled={saving} className="bg-btn hover:bg-btn-hover px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
+              <FileSignature size={14} /> Engagement agreement
+            </button>
+          </div>
+        )}
         <div className="flex gap-2">
           {[
             { icon: Mail, label: "Email", href: firstEmail ? `mailto:${firstEmail}` : null },
@@ -271,6 +324,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         <section className="bg-white p-6 md:p-8 overflow-x-auto">
           {section === "person" && cardType === "person" && <PersonView person={person} setPerson={setPerson} photo={profile.photo} setPhoto={(ph) => setP((p) => ({ ...p, photo: ph }))} />}
           {section === "person" && cardType === "company" && <CompanyView profile={profile} setP={setP} photo={profile.photo} setPhoto={(ph) => setP((p) => ({ ...p, photo: ph }))} />}
+          {section === "intake" && <IntakeView profile={profile} setP={setP} cardType={cardType} />}
           {section === "details" && <DetailsView cardType={cardType} profile={profile} setP={setP} person={person} setPerson={setPerson} auto={letter} />}
           {section === "address" && <AddressView profile={profile} setP={setP} />}
           {section === "notes" && <NotesView profile={profile} setP={setP} />}
@@ -280,9 +334,30 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         </section>
       </div>
 
+      {engagementOpen && (
+        <EngagementModal
+          cardType={cardType}
+          profile={profile}
+          dear={profile.letter.dearAuto ? letter.dear : profile.letter.dear}
+          matters={matters.filter((m) => m.clientId === cardId)}
+          onClose={() => setEngagementOpen(false)}
+          onCreate={async (opts, matterId) => {
+            const out = await makeDocument("engagement", opts);
+            if (!out) return;
+            download(out.blob, out.filename);
+            if (matterId) {
+              await uploadAnyDocument(matterId, new File([out.blob], out.filename, { type: out.blob.type }));
+              setNotice("Engagement agreement saved to the matter's Documents and downloaded.");
+            } else setNotice("Engagement agreement downloaded.");
+            setEngagementOpen(false);
+          }}
+        />
+      )}
+
       {/* Footer */}
       <div className="flex items-center gap-3 px-6 py-4 border-t border-line bg-cream/60 flex-wrap">
         {error && <span className="text-[13px] text-red-700 mr-auto">{error}</span>}
+        {!error && notice && <span className="text-[13px] text-green-700 mr-auto">{notice}</span>}
         <div className="ml-auto flex gap-2">
           <button onClick={cancel} disabled={saving} className="bg-card-alt hover:bg-line/70 px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
           <button onClick={() => save(false)} disabled={saving || (!dirty && !!cardId)} className="bg-card-alt hover:bg-line/70 px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Save</button>
@@ -374,6 +449,7 @@ function PersonView({ person: p, setPerson, photo, setPhoto }: { person: Person;
         <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
           <Field label="Occupation"><input value={p.occupation} onChange={(e) => setPerson({ occupation: e.target.value })} className={input} /></Field>
           <Field label="Employer"><input value={p.employer} onChange={(e) => setPerson({ employer: e.target.value })} className={input} /></Field>
+          <Field label="Education"><input value={p.education} onChange={(e) => setPerson({ education: e.target.value })} placeholder="Highest level, school" className={input} /></Field>
           <Field label="Language"><input value={p.preferredLanguage} onChange={(e) => setPerson({ preferredLanguage: e.target.value })} placeholder="Preferred language" className={input} /></Field>
           <Field label="Driver's license"><input value={p.driversLicense} onChange={(e) => setPerson({ driversLicense: e.target.value })} className={input} /></Field>
           <Field label="SSN (last 4)">
@@ -555,6 +631,11 @@ function NotesView({ profile, setP }: { profile: Profile; setP: (fn: (p: Profile
         </label>
         <label className="grid gap-1"><span className="text-[13px] text-muted">Account name</span><input value={bank.name} onChange={(e) => setBank({ name: e.target.value })} className={input} /></label>
       </div>
+      <div className="grid md:grid-cols-3 gap-3 mt-3">
+        <label className="grid gap-1"><span className="text-[13px] text-muted">Name of bank</span><input value={bank.institution} onChange={(e) => setBank({ institution: e.target.value })} className={input} /></label>
+        <label className="grid gap-1"><span className="text-[13px] text-muted">Bank phone</span><input value={bank.phone} onChange={(e) => setBank({ phone: e.target.value })} type="tel" className={input} /></label>
+        <label className="grid gap-1"><span className="text-[13px] text-muted">Bank address</span><input value={bank.address} onChange={(e) => setBank({ address: e.target.value })} className={input} /></label>
+      </div>
       <p className="text-[12px] text-muted mt-2">Visible to members of your workspace. Only store bank details you need, for example for trust refunds or settlement payments.</p>
       <Heading>Other</Heading>
       <div className="flex gap-6 text-[13.5px]">
@@ -726,3 +807,127 @@ function MattersView({ clientId, matters }: { clientId: string | null; matters: 
   );
 }
 
+
+function IntakeView({ profile, setP, cardType }: { profile: Profile; setP: (fn: (p: Profile) => Profile) => void; cardType: CardType }) {
+  const it = profile.intake;
+  const set = (patch: Partial<Profile["intake"]>) => setP((p) => ({ ...p, intake: { ...p.intake, ...patch } }));
+  return (
+    <div>
+      <div className="text-[13px] font-semibold uppercase tracking-wide text-muted mb-5">Intake</div>
+      <Heading>Reason for visit</Heading>
+      <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+        <Field label="Referred by"><input value={it.referredBy} onChange={(e) => set({ referredBy: e.target.value })} placeholder="Person, website, ad…" className={input} /></Field>
+        <Field label="Practice area">
+          <select value={it.practiceArea} onChange={(e) => set({ practiceArea: e.target.value })} className={`${smallSelect} w-full`}>
+            {PRACTICE_AREAS.map((a) => <option key={a} value={a}>{a || "—"}</option>)}
+          </select>
+        </Field>
+      </div>
+      <label className="grid gap-1.5 mt-3">
+        <span className="text-[13.5px] text-muted">General description of why the client is here</span>
+        <textarea value={it.reason} onChange={(e) => set({ reason: e.target.value })} rows={5} className={`${input} resize-y`} />
+      </label>
+      <Heading>Contact</Heading>
+      <div className="grid gap-3">
+        <Field label="Preference">
+          <div className="flex flex-wrap items-center gap-4 text-[13.5px]">
+            {CONTACT_PREFERENCES.filter(Boolean).map((c) => (
+              <label key={c} className="flex items-center gap-1.5"><input type="radio" checked={it.contactPreference === c} onChange={() => set({ contactPreference: c })} className="accent-black" /> {c}</label>
+            ))}
+            {it.contactPreference === "Other" && <input value={it.contactPreferenceOther} onChange={(e) => set({ contactPreferenceOther: e.target.value })} placeholder="e.g. WhatsApp" className={`${input} max-w-[200px]`} />}
+          </div>
+        </Field>
+        <Field label="Mailing address"><input value={it.mailingAddress} onChange={(e) => set({ mailingAddress: e.target.value })} placeholder="If different from the street address" className={input} /></Field>
+      </div>
+      {cardType === "person" && (
+        <>
+          <Heading>Family</Heading>
+          <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+            <Field label="Date of marriage"><input type="date" value={it.marriageDate} onChange={(e) => set({ marriageDate: e.target.value })} className={input} /></Field>
+            <Field label="Children">
+              <div className="flex gap-4 text-[13.5px]">
+                {(["Yes", "No"] as const).map((c) => (
+                  <label key={c} className="flex items-center gap-1.5"><input type="radio" checked={it.children === c} onChange={() => set({ children: c })} className="accent-black" /> {c}</label>
+                ))}
+              </div>
+            </Field>
+            {it.children === "Yes" && (
+              <Field label="Names / ages" wide><input value={it.childrenDetails} onChange={(e) => set({ childrenDetails: e.target.value })} placeholder="Anna (12), Tom (9)" className={input} /></Field>
+            )}
+          </div>
+          <p className="text-[12.5px] text-muted mt-3">
+            Spouse details come from the second person on this card: add them with <span className="font-medium">+</span> next to People. Marital status, employment and education are on each person&apos;s card.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function EngagementModal({ cardType, profile, dear, matters, onClose, onCreate }: {
+  cardType: CardType; profile: Profile; dear: string; matters: MatterLite[];
+  onClose: () => void; onCreate: (opts: Record<string, string>, matterId: string | null) => Promise<void>;
+}) {
+  const a = profile.address.street;
+  const property = [a.street, a.aptNo ? `${a.aptType || "Apt."} ${a.aptNo}` : "", a.city, [a.state, a.zip].filter(Boolean).join(" ")].map((x) => x.trim()).filter(Boolean).join(", ");
+  const names = cardType === "company" ? profile.company.name : personName(profile.people[0]); // "Your Ref" is the lead client
+  const [matterId, setMatterId] = useState(matters[0]?.id ?? "");
+  const [kind, setKind] = useState("purchase - residential");
+  const [prop, setProp] = useState(property);
+  const [ourRef, setOurRef] = useState(`PR:REP-${new Date().getFullYear()}-`);
+  const [yourRef, setYourRef] = useState(names);
+  const [dearLine, setDearLine] = useState(dear);
+  const [date, setDate] = useState(new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-6" onClick={() => !busy && onClose()}>
+      <div className="bg-cream rounded-2xl w-full max-w-[600px] max-h-full overflow-y-auto p-7 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between mb-1">
+          <h2 className="text-[20px] font-semibold">Engagement agreement</h2>
+          <button onClick={onClose} disabled={busy} className="text-muted hover:text-ink" aria-label="Close"><X size={18} /></button>
+        </div>
+        <p className="text-[13.5px] text-muted mb-5">Real estate purchase letter, filled in from this client card. You get a Word file to review, and it&apos;s saved to the matter&apos;s Documents.</p>
+        <div className="grid gap-3">
+          <Field label="Matter">
+            <select value={matterId} onChange={(e) => setMatterId(e.target.value)} className={`${smallSelect} w-full`}>
+              {matters.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
+              <option value="">Don&apos;t save to a matter (download only)</option>
+            </select>
+          </Field>
+          <Field label="Transaction">
+            <select value={kind} onChange={(e) => setKind(e.target.value)} className={`${smallSelect} w-full`}>
+              {["purchase - residential", "purchase - commercial", "purchase - new construction", "purchase - multi-family"].map((k) => <option key={k}>{k}</option>)}
+            </select>
+          </Field>
+          <Field label="Property"><input value={prop} onChange={(e) => setProp(e.target.value)} placeholder="317 Alpine Street, Lacey, NJ 08731" className={input} /></Field>
+          <Field label="Our ref"><input value={ourRef} onChange={(e) => setOurRef(e.target.value)} className={input} /></Field>
+          <Field label="Your ref"><input value={yourRef} onChange={(e) => setYourRef(e.target.value)} className={input} /></Field>
+          <Field label="Dear"><input value={dearLine} onChange={(e) => setDearLine(e.target.value)} className={input} /></Field>
+          <Field label="Date"><input value={date} onChange={(e) => setDate(e.target.value)} className={input} /></Field>
+        </div>
+        <p className="text-[12.5px] text-muted mt-3">The letter reads: &quot;Representing {cardType === "company" ? profile.company.name : profile.people.map(personName).filter(Boolean).join(" and ") || "…"} with the {kind} of {prop || "…"}.&quot;</p>
+        {err && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{err}</div>}
+        <div className="flex justify-end gap-2 mt-6">
+          <button onClick={onClose} disabled={busy} className="bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
+          <button
+            disabled={busy || !prop.trim()}
+            onClick={async () => {
+              setBusy(true);
+              setErr(null);
+              try {
+                await onCreate({ description: `${kind} of ${prop.trim()}`, ourRef, yourRef, dear: dearLine, date }, matterId || null);
+              } catch (e) {
+                setErr(e instanceof UploadError ? e.message : (e as Error).message);
+                setBusy(false);
+              }
+            }}
+            className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-50"
+          >
+            {busy && <Loader2 size={14} className="animate-spin" />} Create agreement
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
