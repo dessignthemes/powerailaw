@@ -68,6 +68,11 @@ export default function LoginPage() {
           Signing in also connects your mailbox and calendar so LawPower AI can read matters and
           drafts from your inbox.
         </p>
+        <p className="text-[12px] text-muted text-center mt-3">
+          By signing in, you agree to the{" "}
+          <a href="/terms" className="underline underline-offset-2 hover:text-ink">Terms of Service</a> and{" "}
+          <a href="/privacy" className="underline underline-offset-2 hover:text-ink">Privacy Policy</a>.
+        </p>
       </div>
     </div>
   );

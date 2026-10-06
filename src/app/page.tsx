@@ -442,8 +442,8 @@ export default function Home() {
             <a href="#product" className="hover:text-white transition-colors">Product</a>
             <a href="#integrations" className="hover:text-white transition-colors">Integrations</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
+            <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-white transition-colors">Terms</a>
           </div>
           <div className="text-[13px] text-muted-light">© 2026 LawPower AI</div>
         </div>
