@@ -37,7 +37,9 @@ export async function middleware(request: NextRequest) {
 
   // API routes use the service-role client, so they must never be reachable
   // without a signed-in session.
-  if (!user && pathname.startsWith("/api/")) {
+  // The only public API: e-signature links, each guarded by its own secret.
+  const publicApi = pathname.startsWith("/api/public/sign/");
+  if (!user && pathname.startsWith("/api/") && !publicApi) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

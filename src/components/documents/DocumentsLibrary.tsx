@@ -21,6 +21,8 @@ import {
   ChevronRight,
   FileUp,
   Check,
+  FileSignature,
+  Copy,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import SelectBox from "@/components/SelectBox";
@@ -33,6 +35,8 @@ import {
   UploadError,
 } from "@/lib/pdf/upload";
 import { ACCEPT_ATTR, ACCEPTED_SUMMARY, fileTypeLabel, type FileType } from "@/lib/documents/fileTypes";
+import SendForSignature from "@/components/esign/SendForSignature";
+import { STATUS_LABEL, type SignRequest } from "@/lib/esign/types";
 
 const typeOf = (v: DocVersion | undefined): FileType => v?.fileType ?? "pdf";
 
@@ -60,7 +64,41 @@ const blackBtn =
 
 export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId?: string }) {
   const router = useRouter();
-  const { matters, mattersLoaded } = useWorkspaceData();
+  const { matters, mattersLoaded, clients } = useWorkspaceData();
+  // E-signature requests for this workspace, grouped by document.
+  const [signing, setSigning] = useState<{ doc: Doc; version: DocVersion } | null>(null);
+  const [signReqs, setSignReqs] = useState<SignRequest[]>([]);
+  const [signTick, setSignTick] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/esign")
+      .then((r) => (r.ok ? r.json() : { requests: [] }))
+      .then((d) => !cancelled && setSignReqs(d.requests ?? []))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [signTick]);
+  const reqsFor = (docId: string) => signReqs.filter((r) => r.documentId === docId);
+  function signerFor(d: Doc) {
+    const m = matters.find((x) => x.id === d.matterId);
+    const c = clients.find((x) => x.id === m?.clientId);
+    return { name: c?.name ?? "", email: c?.email ?? "" };
+  }
+  async function signAction(r: SignRequest, action: "renew" | "cancel") {
+    try {
+      const res = await fetch(`/api/esign/${r.id}`, { method: action === "renew" ? "POST" : "DELETE" });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d?.error ?? "That didn't work.");
+      if (action === "renew") {
+        await navigator.clipboard.writeText(d.link).catch(() => {});
+        setNotice(`A new signing link for ${r.signerName} was copied. The previous link no longer works.`);
+      } else setNotice(`The signature request to ${r.signerName} was cancelled.`);
+      setSignTick((n) => n + 1);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
   const [matterFilter, setMatterFilter] = useState("");
   const matterId = fixedMatterId ?? matterFilter;
 
@@ -305,6 +343,13 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-[14.5px] font-medium truncate">{d.title}</span>
                         <TypeBadge type={type} />
+                        {(() => {
+                          const r = reqsFor(d.id).find((x) => x.status !== "cancelled");
+                          if (!r) return null;
+                          const cls = r.status === "signed" ? "bg-[#CAF0D9]" : r.status === "declined" ? "bg-[#F9B2B3]" : "bg-[#F9E1C0]";
+                          const label = r.status === "sent" ? "Awaiting signature" : r.status === "viewed" ? "Viewed by signer" : STATUS_LABEL[r.status];
+                          return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11.5px] font-medium flex-shrink-0 ${cls}`}><FileSignature size={11} /> {label}</span>;
+                        })()}
                       </div>
                       <div className="text-[12.5px] text-muted">
                         {!fixedMatterId && <>{d.matterTitle ?? "Matter"}, </>}
@@ -316,6 +361,11 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
                       <Link href={`/dashboard/power-pdf/${d.id}?version=${latest.id}`} className={blackBtn}>
                         <PenLine size={13} strokeWidth={2} /> Open in Power PDF
                       </Link>
+                    )}
+                    {latest && type === "pdf" && (
+                      <button onClick={() => setSigning({ doc: d, version: latest })} className={beigeBtn}>
+                        <FileSignature size={13} strokeWidth={2} /> Send for signature
+                      </button>
                     )}
                     {latest && type === "docx" && (
                       <button onClick={() => setConverting({ doc: d, version: latest })} disabled={working} className={blackBtn}>
@@ -341,6 +391,31 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
                     <div className="px-5 -mt-2 pb-3 pl-[68px] text-[12.5px] text-muted">
                       Older Word format (.doc). To edit it in Power PDF, open it in Word, save it as .docx or PDF, and upload that as a new
                       version.
+                    </div>
+                  )}
+                  {open && reqsFor(d.id).length > 0 && (
+                    <div className="px-5 pb-2 pl-[68px]">
+                      <div className="text-[12px] font-semibold uppercase tracking-wide text-muted mb-1.5">Signature requests</div>
+                      <div className="border border-line rounded-xl divide-y divide-line bg-white/50 mb-2">
+                        {reqsFor(d.id).map((r) => (
+                          <div key={r.id} className="flex items-center gap-3 px-4 py-2.5 flex-wrap text-[13px]">
+                            <span className="font-medium">{r.signerName}</span>
+                            <span className="text-muted">{r.signerEmail}</span>
+                            <span className="text-muted flex-1 min-w-[200px]">
+                              {STATUS_LABEL[r.status]}
+                              {r.status === "signed" && r.signedAt ? ` ${formatWhen(r.signedAt)}` : r.status === "declined" && r.declineReason ? `: ${r.declineReason}` : ` · sent ${formatWhen(r.createdAt)}`}
+                            </span>
+                            {(r.status === "sent" || r.status === "viewed") && (
+                              <>
+                                <button onClick={() => signAction(r, "renew")} className="text-[12.5px] font-medium text-muted hover:text-ink flex items-center gap-1" title="Create and copy a fresh link">
+                                  <Copy size={12} /> New link
+                                </button>
+                                <button onClick={() => signAction(r, "cancel")} className="text-[12.5px] font-medium text-muted hover:text-red-700">Cancel</button>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   {open && (
@@ -414,6 +489,20 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
           initialMatterId={matterFilter}
           onClose={() => setAdding(false)}
           onUploaded={() => reload()}
+        />
+      )}
+      {signing && (
+        <SendForSignature
+          documentId={signing.doc.id}
+          versionId={signing.version.id}
+          title={signing.doc.title}
+          defaultSigner={signerFor(signing.doc)}
+          onClose={() => {
+            setSigning(null);
+            setSignTick((n) => n + 1);
+            reload();
+          }}
+          onSent={() => setSignTick((n) => n + 1)}
         />
       )}
       {converting && (

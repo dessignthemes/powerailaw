@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/ai/**": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs", "./node_modules/pdfjs-dist/legacy/build/pdf.mjs"],
     "/api/client-cards/**": ["./src/templates/*.docx"],
+    "/api/public/sign/**": ["./public/pdfjs/standard_fonts/LiberationSans-Regular.ttf"],
     "/api/accounting/**": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs", "./node_modules/pdfjs-dist/legacy/build/pdf.mjs"],
   },
 };
