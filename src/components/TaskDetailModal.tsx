@@ -231,7 +231,7 @@ export default function TaskDetailModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`bg-cream rounded-3xl w-full overflow-y-auto flex flex-col transition-all ${
+        className={`bg-page rounded-3xl w-full overflow-y-auto flex flex-col transition-all ${
           expanded ? "max-w-none h-[96vh]" : "max-w-[980px] h-[92vh]"
         }`}
       >
