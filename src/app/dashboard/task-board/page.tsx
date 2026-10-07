@@ -1091,7 +1091,7 @@ function TaskBoard({
                           className="bg-cream border border-line rounded-xl px-3.5 py-3 cursor-pointer hover:shadow-sm transition-shadow"
                         >
                           <div className="flex items-start justify-between gap-2 mb-2.5">
-                            <div className="text-[14px] font-semibold leading-snug">{t.title}</div>
+                            <div className="text-[14px] font-normal leading-snug">{t.title}</div>
                             <div className="relative flex-shrink-0 -mt-0.5">
                               <button
                                 onClick={(e) => {
