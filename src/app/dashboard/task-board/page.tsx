@@ -923,7 +923,7 @@ function TaskBoard({
                   ref={setRef}
                   onClick={() => toggleCollapsed(col.id, false)}
                   title={`Expand ${col.title}`}
-                  className="snap-start flex-shrink-0 w-[52px] border-2 border-line rounded-2xl bg-card-alt hover:bg-line/50 flex flex-col items-center gap-3 py-4 transition-colors"
+                  className="snap-start flex-shrink-0 w-[52px] border border-line rounded-2xl bg-card-alt hover:bg-line/50 flex flex-col items-center gap-3 py-4 transition-colors"
                 >
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
                   <span className="text-[12px] text-muted bg-cream rounded-full px-1.5">{colTasks.length}</span>
@@ -935,8 +935,13 @@ function TaskBoard({
               <div
                 key={col.id}
                 ref={setRef}
-                style={{ flex: `0 0 ${COLUMN_WIDTH}`, minWidth: COLUMN_MIN }}
-                className="snap-start border-2 border-line rounded-2xl bg-card-alt flex flex-col min-h-0"
+                style={{
+                  flex: `0 0 ${COLUMN_WIDTH}`,
+                  minWidth: COLUMN_MIN,
+                  // Empty columns are half height, with "Add a task" centered.
+                  ...(colTasks.length === 0 ? { height: "50%", minHeight: 220, alignSelf: "flex-start" } : {}),
+                }}
+                className="snap-start border border-line rounded-2xl bg-card-alt flex flex-col min-h-0"
               >
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
                   <div className="flex items-center gap-2 min-w-0">
