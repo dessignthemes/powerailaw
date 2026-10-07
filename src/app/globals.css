@@ -3,7 +3,7 @@
 :root {
   /* Cool blue-grey theme. */
   --sidebar: #f0f1f3; /* left navigation */
-  --cream: #faf9f8; /* raised surfaces: cards on panels, modals */
+  --cream: #fafbfd; /* raised surfaces: cards on panels, modals */
   --page: #fcfcfc; /* main content area (right of the sidebar) */
   --dark: #1b191a; /* logo, avatars, "on" toggles */
   --dark2: #2a2728;
