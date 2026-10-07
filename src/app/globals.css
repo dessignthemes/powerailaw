@@ -2,7 +2,7 @@
 
 :root {
   /* Cool blue-grey theme. */
-  --sidebar: #f3f2f0; /* left navigation */
+  --sidebar: #fbfbf9; /* left navigation */
   --cream: #faf9f8; /* raised surfaces: cards on panels, modals */
   --page: #fcfcfc; /* main content area (right of the sidebar) */
   --dark: #1b191a; /* logo, avatars, "on" toggles */
