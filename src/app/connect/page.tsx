@@ -61,7 +61,7 @@ function ConnectPageInner() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cream px-6 py-16">
+    <div className="min-h-screen flex items-center justify-center bg-page px-6 py-16">
       <div className="max-w-[560px] w-full text-center">
         <h1 className="font-display text-[38px] font-semibold mb-3">
           Connect your practice
