@@ -35,9 +35,9 @@ export default function PageSwitcher() {
             className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] py-2 w-[240px] max-h-[calc(100vh-110px)] overflow-y-auto"
           >
             {navSections.map((section, i) => (
-              <div key={section.title ?? "main"} className={i > 0 ? "mt-1.5 pt-1.5 border-t border-line" : ""}>
+              <div key={section.title ?? "main"} className={i > 0 ? "mt-1 pt-1 border-t border-line" : ""}>
                 {section.title && (
-                  <div className="px-4 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{section.title}</div>
+                  <div className="px-4 pt-1.5 pb-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted">{section.title}</div>
                 )}
                 {section.links.map((p) => {
                   const Icon = p.icon;
@@ -48,12 +48,12 @@ export default function PageSwitcher() {
                       href={p.href}
                       role="menuitem"
                       onClick={() => setOpen(false)}
-                      className={`flex items-center justify-between gap-3 px-4 py-2.5 text-[14px] font-medium transition-colors ${
+                      className={`flex items-center justify-between gap-3 px-4 py-[7px] text-[13px] font-medium transition-colors ${
                         active ? "bg-chip" : "hover:bg-chip"
                       }`}
                     >
-                      <span className="flex items-center gap-3">
-                        <Icon size={16} strokeWidth={1.75} />
+                      <span className="flex items-center gap-2.5">
+                        <Icon size={15} strokeWidth={1.75} />
                         {p.label}
                       </span>
                       {active && <Check size={14} strokeWidth={2} />}

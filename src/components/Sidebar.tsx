@@ -28,11 +28,11 @@ function NavItem({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium transition-colors ${
+      className={`flex items-center gap-2 px-3 py-[6px] rounded-lg text-[13px] font-medium transition-colors ${
         active ? "bg-chip text-ink" : "text-muted hover:bg-chip hover:text-ink"
       }`}
     >
-      <Icon size={16} strokeWidth={1.75} className="flex-shrink-0" />
+      <Icon size={15} strokeWidth={1.75} className="flex-shrink-0" />
       {label}
     </Link>
   );
@@ -79,8 +79,8 @@ export default function Sidebar() {
           ))}
         </div>
 
-        <div className="mt-6 mb-1">
-          <div className="px-3 text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">
+        <div className="mt-5 mb-1">
+          <div className="px-3 text-[10.5px] font-semibold uppercase tracking-wide text-muted mb-1">
             Tools
           </div>
           {toolLinks.map((l) => (
@@ -88,8 +88,8 @@ export default function Sidebar() {
           ))}
         </div>
 
-        <div className="mt-6 mb-1">
-          <div className="px-3 text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">
+        <div className="mt-5 mb-1">
+          <div className="px-3 text-[10.5px] font-semibold uppercase tracking-wide text-muted mb-1">
             Workspace
           </div>
           {workspaceLinks.map((l) =>
@@ -108,9 +108,9 @@ export default function Sidebar() {
       <div className="border-t border-line pt-4 mt-4">
         <button
           onClick={() => openIntegrations("integrations")}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-muted hover:bg-chip hover:text-ink transition-colors mb-2 text-left"
+          className="w-full flex items-center gap-2 px-3 py-[6px] rounded-lg text-[13px] font-medium text-muted hover:bg-chip hover:text-ink transition-colors mb-2 text-left"
         >
-          <Grid3x3 size={16} strokeWidth={1.75} className="flex-shrink-0" />
+          <Grid3x3 size={15} strokeWidth={1.75} className="flex-shrink-0" />
           <span className="flex-1">Integrations</span>
           <ArrowUpRight size={14} strokeWidth={1.75} className="flex-shrink-0" />
         </button>

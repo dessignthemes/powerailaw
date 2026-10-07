@@ -61,7 +61,7 @@ export default function TaskBoardNav() {
   }
 
   const item = (active: boolean) =>
-    `flex items-center gap-2.5 rounded-lg text-[14px] font-medium transition-colors ${active ? "bg-card-alt text-ink" : "text-muted hover:bg-chip hover:text-ink"}`;
+    `flex items-center gap-2 rounded-lg text-[13px] font-medium transition-colors ${active ? "bg-chip text-ink" : "text-muted hover:bg-chip hover:text-ink"}`;
 
   return (
     <div>
@@ -70,9 +70,9 @@ export default function TaskBoardNav() {
         onClick={toggle}
         aria-expanded={open}
         aria-label={open ? "Collapse boards" : "Expand boards"}
-        className={`${item(false)} w-full px-3 py-2 text-left`}
+        className={`${item(false)} w-full px-3 py-[6px] text-left`}
       >
-        <BarChart3 size={16} strokeWidth={1.75} className="flex-shrink-0" />
+        <BarChart3 size={15} strokeWidth={1.75} className="flex-shrink-0" />
         <span className="flex-1">Task Board</span>
         {open ? <ChevronDown size={14} className="text-muted" /> : <ChevronRight size={14} className="text-muted" />}
       </button>
@@ -80,14 +80,14 @@ export default function TaskBoardNav() {
       {open && (
         <div className="ml-[22px] pl-2 border-l border-line mt-0.5 mb-1 flex flex-col gap-0.5">
           {(generalCount > 0 || current === "general") && (
-            <Link href="/dashboard/task-board?board=general" className={`${item(current === "general")} px-2.5 py-1.5 text-[13.5px]`} title="Tasks that aren't on a board">
+            <Link href="/dashboard/task-board?board=general" className={`${item(current === "general")} px-2.5 py-[5px] text-[12.5px]`} title="Tasks that aren't on a board">
               <Hash size={13} strokeWidth={1.75} className="flex-shrink-0" />
               <span className="truncate flex-1">General</span>
               {generalCount > 0 && <span className="text-[11.5px] text-muted tabular-nums">{generalCount}</span>}
             </Link>
           )}
           {boards.map((b) => (
-            <Link key={b.id} href={`/dashboard/task-board?board=${b.id}`} className={`${item(current === b.id)} px-2.5 py-1.5 text-[13.5px]`} title={b.name}>
+            <Link key={b.id} href={`/dashboard/task-board?board=${b.id}`} className={`${item(current === b.id)} px-2.5 py-[5px] text-[12.5px]`} title={b.name}>
               <Hash size={13} strokeWidth={1.75} className="flex-shrink-0" />
               <span className="truncate">{b.name}</span>
             </Link>
@@ -120,7 +120,7 @@ export default function TaskBoardNav() {
               {error && <div className="text-[11.5px] text-red-600 mt-1">{error}</div>}
             </div>
           ) : (
-            <button onClick={() => setAdding(true)} className={`${item(false)} px-2.5 py-1.5 text-[13px]`}>
+            <button onClick={() => setAdding(true)} className={`${item(false)} px-2.5 py-[5px] text-[12.5px]`}>
               <Plus size={13} strokeWidth={1.75} /> New board
             </button>
           )}
