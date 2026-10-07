@@ -113,7 +113,7 @@ export default function ContactSupportModal({
             </div>
 
             <div className="mb-7">
-              <label className="inline-flex items-center gap-1.5 bg-white border border-line px-4 py-2.5 rounded-xl text-[13.5px] font-medium cursor-pointer hover:bg-card-alt transition-colors">
+              <label className="inline-flex items-center gap-1.5 bg-white border border-line px-4 py-2.5 rounded-xl text-[13.5px] font-medium cursor-pointer hover:bg-chip transition-colors">
                 <Paperclip size={14} strokeWidth={1.75} />
                 Attach screenshots ({attachments.length}/5)
                 <input
@@ -139,7 +139,7 @@ export default function ContactSupportModal({
             <div className="flex items-center gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 bg-white border border-line px-4 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                className="flex-1 bg-white border border-line px-4 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
               >
                 Cancel
               </button>

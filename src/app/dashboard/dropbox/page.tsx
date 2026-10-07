@@ -220,14 +220,14 @@ function DropboxBrowser() {
               onClick={() => setReload((n) => n + 1)}
               title="Refresh"
               aria-label="Refresh"
-              className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/70 flex items-center justify-center transition-colors"
+              className="w-9 h-9 rounded-full bg-chip hover:bg-line/70 flex items-center justify-center transition-colors"
             >
               <RefreshCw size={15} strokeWidth={1.75} className={loading ? "animate-spin" : ""} />
             </button>
             <button
               onClick={disconnectDropbox}
               disabled={disconnecting}
-              className="bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50"
+              className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50"
             >
               {disconnecting ? "Disconnecting…" : "Disconnect"}
             </button>
@@ -291,7 +291,7 @@ function DropboxBrowser() {
         <>
           <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
             <nav className="flex items-center gap-1 text-[14px] min-w-0 flex-wrap" aria-label="Folder path">
-              <button onClick={() => go("/")} className={`px-2 py-1 rounded-lg hover:bg-card-alt ${crumbs.length ? "text-muted" : "font-medium"}`}>
+              <button onClick={() => go("/")} className={`px-2 py-1 rounded-lg hover:bg-chip ${crumbs.length ? "text-muted" : "font-medium"}`}>
                 Dropbox
               </button>
               {crumbs.map((c, i) => (
@@ -299,7 +299,7 @@ function DropboxBrowser() {
                   <ChevronRight size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
                   <button
                     onClick={() => go(c.path)}
-                    className={`px-2 py-1 rounded-lg hover:bg-card-alt truncate max-w-[240px] ${i === crumbs.length - 1 ? "font-medium" : "text-muted"}`}
+                    className={`px-2 py-1 rounded-lg hover:bg-chip truncate max-w-[240px] ${i === crumbs.length - 1 ? "font-medium" : "text-muted"}`}
                   >
                     {c.name}
                   </button>
@@ -359,7 +359,7 @@ function DropboxBrowser() {
                     <button
                       key={e.id}
                       onClick={() => openEntry(e)}
-                      className="w-full flex items-center gap-3.5 px-5 py-3 text-left hover:bg-card-alt/50 transition-colors last:rounded-b-xl"
+                      className="w-full flex items-center gap-3.5 px-5 py-3 text-left hover:bg-chip/50 transition-colors last:rounded-b-xl"
                     >
                       <EntryIcon entry={e} />
                       <span className="flex-1 min-w-0">
@@ -380,7 +380,7 @@ function DropboxBrowser() {
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 {loadingMore && <Loader2 size={14} className="animate-spin" />} Load more
               </button>
@@ -576,11 +576,11 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
           )}
           <button
             onClick={download}
-            className="bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 transition-colors"
+            className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 transition-colors"
           >
             <Download size={14} strokeWidth={2} /> Download
           </button>
-          <button onClick={onClose} disabled={saving} className="w-9 h-9 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink disabled:opacity-40" aria-label="Close">
+          <button onClick={onClose} disabled={saving} className="w-9 h-9 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink disabled:opacity-40" aria-label="Close">
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>

@@ -92,7 +92,7 @@ function ClientIntake() {
             </div>
             <div className="flex gap-1.5">
               {([["all", "All"], ["person", "People"], ["company", "Companies"]] as const).map(([k, l]) => (
-                <button key={k} onClick={() => setType(k)} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${type === k ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/70"}`}>{l}</button>
+                <button key={k} onClick={() => setType(k)} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${type === k ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/70"}`}>{l}</button>
               ))}
             </div>
           </div>
@@ -108,7 +108,7 @@ function ClientIntake() {
             ) : (
               <div className="bg-cream rounded-xl divide-y divide-line">
                 {shown.map((c) => (
-                  <button key={c.id} onClick={() => go(c.id)} className="w-full flex items-center gap-3.5 px-5 py-3.5 text-left hover:bg-card-alt/50 first:rounded-t-xl last:rounded-b-xl">
+                  <button key={c.id} onClick={() => go(c.id)} className="w-full flex items-center gap-3.5 px-5 py-3.5 text-left hover:bg-chip/50 first:rounded-t-xl last:rounded-b-xl">
                     <ClientAvatar
                       name={c.name}
                       company={c.cardType === "company"}

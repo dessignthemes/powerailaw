@@ -254,7 +254,7 @@ export default function DocumentList({
                     {latest && (
                       <button
                         onClick={() => download(latest.id)}
-                        className="bg-card-alt hover:bg-line/70 text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+                        className="bg-chip hover:bg-line/70 text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
                       >
                         <Download size={13} strokeWidth={2} /> Download
                       </button>
@@ -344,7 +344,7 @@ export function MatterPicker({
         key={id || "all"}
         onClick={() => pick(id)}
         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left transition-colors ${
-          active ? "bg-card-alt font-medium" : "hover:bg-card-alt/70"
+          active ? "bg-chip font-medium" : "hover:bg-chip/70"
         }`}
       >
         <span className="text-muted flex-shrink-0">{icon}</span>
@@ -360,7 +360,7 @@ export function MatterPicker({
         onClick={() => setOpen(!open)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex items-center gap-2 bg-card-alt hover:bg-line/50 transition-colors pl-3.5 pr-3 py-2 rounded-full text-[13.5px] font-medium max-w-[320px]"
+        className="flex items-center gap-2 bg-chip hover:bg-line/50 transition-colors pl-3.5 pr-3 py-2 rounded-full text-[13.5px] font-medium max-w-[320px]"
       >
         {current ? (
           <Folder size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />

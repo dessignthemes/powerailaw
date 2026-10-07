@@ -113,7 +113,7 @@ function InlineField({
         setDraft(value ?? "");
         setOpen(true);
       }}
-      className="flex items-center gap-1.5 bg-card-alt hover:bg-line/50 transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium"
+      className="flex items-center gap-1.5 bg-chip hover:bg-line/50 transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium"
     >
       {icon}
       {value ?? label}
@@ -235,7 +235,7 @@ export default function NewClientModal({
                     setStatus(s);
                     setStatusOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <Icon size={15} strokeWidth={2} className={statusMeta[s].color} />
@@ -266,7 +266,7 @@ export default function NewClientModal({
                     setType(t);
                     setTypeOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <Icon size={15} strokeWidth={1.75} />

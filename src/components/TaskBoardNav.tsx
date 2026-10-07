@@ -61,7 +61,7 @@ export default function TaskBoardNav() {
   }
 
   const item = (active: boolean) =>
-    `flex items-center gap-2.5 rounded-lg text-[14px] font-medium transition-colors ${active ? "bg-card-alt text-ink" : "text-muted hover:bg-card-alt hover:text-ink"}`;
+    `flex items-center gap-2.5 rounded-lg text-[14px] font-medium transition-colors ${active ? "bg-card-alt text-ink" : "text-muted hover:bg-chip hover:text-ink"}`;
 
   return (
     <div>

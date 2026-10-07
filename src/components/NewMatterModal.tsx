@@ -125,7 +125,7 @@ function InlineField({
         setDraft(value ?? "");
         setOpen(true);
       }}
-      className="flex items-center gap-1.5 bg-card-alt hover:bg-line/50 transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium"
+      className="flex items-center gap-1.5 bg-chip hover:bg-line/50 transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium"
     >
       {icon}
       {value ?? label}
@@ -251,7 +251,7 @@ export default function NewMatterModal({
                     setStatus(s);
                     setStatusOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <Icon size={15} strokeWidth={2} className={matterStatusMeta[s].color} />
@@ -295,7 +295,7 @@ export default function NewMatterModal({
                     setClientId(c.id);
                     setClientOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <span
@@ -349,7 +349,7 @@ export default function NewMatterModal({
                   setCategory(cat === "None" ? null : cat);
                   setCategoryOpen(false);
                 }}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
               >
                 {cat}
                 {(cat === "None" ? category === null : cat === category) && (
@@ -402,7 +402,7 @@ export default function NewMatterModal({
                   setBillingType(b);
                   setBillingOpen(false);
                 }}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
               >
                 {b}
                 {b === billingType && <Check size={14} strokeWidth={2} />}

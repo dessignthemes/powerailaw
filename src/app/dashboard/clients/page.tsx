@@ -46,7 +46,7 @@ function RowStatusPicker({
           e.stopPropagation();
           setOpen((o) => !o);
         }}
-        className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-card-alt transition-colors flex-shrink-0"
+        className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-chip transition-colors flex-shrink-0"
       >
         <Icon size={16} strokeWidth={2} className={statusMeta[status].color} />
       </button>
@@ -64,7 +64,7 @@ function RowStatusPicker({
                     onChange(s);
                     setOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <OptIcon size={15} strokeWidth={2} className={statusMeta[s].color} />
@@ -194,7 +194,7 @@ function ClientsPageInner() {
               <div key={group.status}>
                 <button
                   onClick={() => toggleCollapsed(group.status)}
-                  className="w-full flex items-center gap-2.5 bg-card-alt hover:bg-line/50 transition-colors px-4 py-3 rounded-xl text-left"
+                  className="w-full flex items-center gap-2.5 bg-chip hover:bg-line/50 transition-colors px-4 py-3 rounded-xl text-left"
                 >
                   {isCollapsed ? (
                     <ChevronRight size={15} strokeWidth={1.75} className="text-muted" />
@@ -214,7 +214,7 @@ function ClientsPageInner() {
                       <div
                         key={c.id}
                         onClick={() => setEditingClient(c)}
-                        className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-card-alt/40 transition-colors cursor-pointer"
+                        className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-chip/40 transition-colors cursor-pointer"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <button
@@ -266,7 +266,7 @@ function ClientsPageInner() {
                           <div className="relative" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => setRowMenuFor(rowMenuFor === c.id ? null : c.id)}
-                              className="w-7 h-7 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+                              className="w-7 h-7 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
                             >
                               <MoreHorizontal size={16} strokeWidth={1.75} />
                             </button>
@@ -279,7 +279,7 @@ function ClientsPageInner() {
                                       setEditingClient(c);
                                       setRowMenuFor(null);
                                     }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                                   >
                                     <Pencil size={14} strokeWidth={1.75} /> Edit
                                   </button>
@@ -288,7 +288,7 @@ function ClientsPageInner() {
                                       updateClientStatus(c, c.status === "Active" ? "Archived" : "Active");
                                       setRowMenuFor(null);
                                     }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                                   >
                                     {c.status === "Active" ? (
                                       <>
@@ -340,7 +340,7 @@ function ClientsPageInner() {
                 <button
                   key={s}
                   onClick={() => bulkSetStatus(s)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <Icon size={15} strokeWidth={2} className={statusMeta[s].color} />
                   {s}
@@ -356,7 +356,7 @@ function ClientsPageInner() {
           </button>
           <button
             onClick={() => setSelected(new Set())}
-            className="w-9 h-9 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+            className="w-9 h-9 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
           >
             <X size={16} strokeWidth={1.75} />
           </button>

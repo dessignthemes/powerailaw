@@ -161,7 +161,7 @@ function PracticeAreaRow({
             className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
               status === opt
                 ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring"
-                : "bg-white border border-line hover:bg-card-alt"
+                : "bg-white border border-line hover:bg-chip"
             }`}
           >
             {opt}
@@ -287,7 +287,7 @@ function MailCategoryRow({
                   ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring"
                   : disabled
                   ? "bg-white border border-line text-muted-light cursor-not-allowed"
-                  : "bg-white border border-line hover:bg-card-alt"
+                  : "bg-white border border-line hover:bg-chip"
               }`}
             >
               {opt}
@@ -500,8 +500,8 @@ export default function IntegrationsModal({
                   }}
                   className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-left transition-colors ${
                     active === item.key
-                      ? "bg-card-alt text-ink"
-                      : "text-muted hover:bg-card-alt hover:text-ink"
+                      ? "bg-chip text-ink"
+                      : "text-muted hover:bg-chip hover:text-ink"
                   }`}
                 >
                   <Icon size={16} strokeWidth={1.75} />
@@ -706,7 +706,7 @@ export default function IntegrationsModal({
                   <p className="text-[13.5px] text-muted mb-4 max-w-[520px]">
                     Change your password and optionally sign out every other active device.
                   </p>
-                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors">
+                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors">
                     Change password
                   </button>
                 </SecurityCard>
@@ -727,7 +727,7 @@ export default function IntegrationsModal({
                     onClick={() => setTwoFactorEnabled((v) => !v)}
                     className={`px-4 py-2.5 rounded-full text-[13.5px] font-medium transition-colors ${
                       twoFactorEnabled
-                        ? "bg-white border border-line hover:bg-card-alt"
+                        ? "bg-white border border-line hover:bg-chip"
                         : "bg-btn text-ink hover:bg-btn-hover"
                     }`}
                   >
@@ -738,7 +738,7 @@ export default function IntegrationsModal({
                 <SecurityCard
                   title="Passkeys"
                   badge={
-                    <button className="flex items-center gap-1.5 bg-white border border-line px-3.5 py-2 rounded-full text-[13px] font-medium hover:bg-card-alt transition-colors flex-shrink-0">
+                    <button className="flex items-center gap-1.5 bg-white border border-line px-3.5 py-2 rounded-full text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0">
                       <Fingerprint size={14} strokeWidth={1.75} /> Add passkey
                     </button>
                   }
@@ -753,7 +753,7 @@ export default function IntegrationsModal({
                   <p className="text-[13.5px] text-muted mb-4 max-w-[520px]">
                     Review or revoke AI tools connected through Sign in with LawPower AI.
                   </p>
-                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors">
+                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors">
                     Manage connected applications
                   </button>
                 </SecurityCard>
@@ -1138,7 +1138,7 @@ export default function IntegrationsModal({
                   <code className="text-[13.5px] font-mono">{MCP_SERVER_URL}</code>
                   <button
                     onClick={() => copyText(MCP_SERVER_URL, setUrlCopied)}
-                    className="flex items-center gap-1.5 bg-white border border-line px-3 py-1.5 rounded-lg text-[13px] font-medium hover:bg-card-alt transition-colors flex-shrink-0"
+                    className="flex items-center gap-1.5 bg-white border border-line px-3 py-1.5 rounded-lg text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0"
                   >
                     <Copy size={13} strokeWidth={1.75} />
                     {urlCopied ? "Copied" : "Copy"}
@@ -1153,7 +1153,7 @@ export default function IntegrationsModal({
                       className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${
                         mcpClientTab === tab
                           ? "bg-white border-ink"
-                          : "bg-white border-line text-muted hover:bg-card-alt"
+                          : "bg-white border-line text-muted hover:bg-chip"
                       }`}
                     >
                       {tab}
@@ -1348,7 +1348,7 @@ export default function IntegrationsModal({
                     </Link>
                     <Link
                       href="/connect?provider=microsoft&next=/dashboard/inbox"
-                      className="border border-line bg-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors"
+                      className="border border-line bg-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors"
                     >
                       ↗ Import from Outlook
                     </Link>
@@ -1361,7 +1361,7 @@ export default function IntegrationsModal({
                       <button
                         key={c.key}
                         onClick={() => setDrilled(c.key)}
-                        className="flex items-center justify-between py-4 hover:bg-card-alt transition-colors -mx-2 px-2 rounded-lg text-left"
+                        className="flex items-center justify-between py-4 hover:bg-chip transition-colors -mx-2 px-2 rounded-lg text-left"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-card-alt flex items-center justify-center text-[15px]">

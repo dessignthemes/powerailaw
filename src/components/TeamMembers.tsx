@@ -262,7 +262,7 @@ export default function TeamMembers({ onChanged }: { onChanged?: () => void }) {
               <button
                 onClick={() => inviteAction(inv, "new_link")}
                 title="Create a new invite link"
-                className="w-7 h-7 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink"
+                className="w-7 h-7 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink"
                 aria-label={`New link for ${inv.email}`}
               >
                 <RefreshCw size={13} strokeWidth={1.75} />

@@ -41,7 +41,7 @@ function RowStatusPicker({
           e.stopPropagation();
           setOpen((o) => !o);
         }}
-        className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-card-alt transition-colors flex-shrink-0"
+        className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-chip transition-colors flex-shrink-0"
       >
         <Icon size={16} strokeWidth={2} className={matterStatusMeta[status].color} />
       </button>
@@ -59,7 +59,7 @@ function RowStatusPicker({
                     onChange(s);
                     setOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <OptIcon size={15} strokeWidth={2} className={matterStatusMeta[s].color} />
@@ -178,7 +178,7 @@ export default function MattersPage() {
               <div key={group.status}>
                 <button
                   onClick={() => toggleCollapsed(group.status)}
-                  className="w-full flex items-center gap-2.5 bg-card-alt hover:bg-line/50 transition-colors px-4 py-3 rounded-xl text-left"
+                  className="w-full flex items-center gap-2.5 bg-chip hover:bg-line/50 transition-colors px-4 py-3 rounded-xl text-left"
                 >
                   {isCollapsed ? (
                     <ChevronRight size={15} strokeWidth={1.75} className="text-muted" />
@@ -200,7 +200,7 @@ export default function MattersPage() {
                         <div
                           key={m.id}
                           onClick={() => router.push(`/dashboard/matters/${m.id}`)}
-                          className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-card-alt/40 transition-colors cursor-pointer"
+                          className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-chip/40 transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <button
@@ -243,7 +243,7 @@ export default function MattersPage() {
                             <div className="relative" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => setRowMenuFor(rowMenuFor === m.id ? null : m.id)}
-                                className="w-7 h-7 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+                                className="w-7 h-7 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
                               >
                                 <MoreHorizontal size={16} strokeWidth={1.75} />
                               </button>
@@ -256,7 +256,7 @@ export default function MattersPage() {
                                         setEditingMatter(m);
                                         setRowMenuFor(null);
                                       }}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                                     >
                                       <Pencil size={14} strokeWidth={1.75} /> Edit
                                     </button>
@@ -265,7 +265,7 @@ export default function MattersPage() {
                                         updateMatterStatus(m, m.status === "Closed" ? "Active" : "Closed");
                                         setRowMenuFor(null);
                                       }}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                                     >
                                       {m.status === "Closed" ? (
                                         <>
@@ -318,7 +318,7 @@ export default function MattersPage() {
                 <button
                   key={s}
                   onClick={() => bulkSetStatus(s)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <Icon size={15} strokeWidth={2} className={matterStatusMeta[s].color} />
                   {s}
@@ -334,7 +334,7 @@ export default function MattersPage() {
           </button>
           <button
             onClick={() => setSelected(new Set())}
-            className="w-9 h-9 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+            className="w-9 h-9 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
           >
             <X size={16} strokeWidth={1.75} />
           </button>

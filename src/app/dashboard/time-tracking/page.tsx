@@ -151,7 +151,7 @@ export default function TimeTrackingPage() {
         key={e.id}
         onClick={mine ? () => setEditing(e) : undefined}
         title={mine ? "Click to edit" : undefined}
-        className={`flex items-center justify-between gap-4 px-5 py-3.5 border-b border-line last:border-b-0 ${mine ? "cursor-pointer hover:bg-card-alt/40 transition-colors" : ""}`}
+        className={`flex items-center justify-between gap-4 px-5 py-3.5 border-b border-line last:border-b-0 ${mine ? "cursor-pointer hover:bg-chip/40 transition-colors" : ""}`}
       >
         <div className="min-w-0">
           <div className="text-[14.5px] font-medium truncate">{e.description || tn || "Untitled entry"}</div>
@@ -186,7 +186,7 @@ export default function TimeTrackingPage() {
                 }}
                 aria-label="Edit entry"
                 title="Edit entry"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-card-alt hover:text-ink hover:bg-line/70 transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-chip hover:text-ink hover:bg-line/70 transition-colors"
               >
                 <Pencil size={13} strokeWidth={1.75} />
               </button>
@@ -197,7 +197,7 @@ export default function TimeTrackingPage() {
                 }}
                 aria-label="Delete entry"
                 title="Delete entry"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-card-alt hover:text-red-600 hover:bg-red-50 transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-chip hover:text-red-600 hover:bg-red-50 transition-colors"
               >
                 <Trash2 size={13} strokeWidth={1.75} />
               </button>
@@ -225,7 +225,7 @@ export default function TimeTrackingPage() {
           <div className="relative">
             <button
               onClick={() => setViewMenuOpen((o) => !o)}
-              className="flex items-center gap-2 bg-card-alt hover:bg-line/60 transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+              className="flex items-center gap-2 bg-chip hover:bg-line/60 transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
             >
               {view === "timesheet" ? <Calendar size={14} strokeWidth={1.75} /> : <List size={14} strokeWidth={1.75} />}
               {view === "timesheet" ? "Timesheet" : "Time entries"}
@@ -242,7 +242,7 @@ export default function TimeTrackingPage() {
                         setView(v);
                         setViewMenuOpen(false);
                       }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt"
+                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip"
                     >
                       <span className="flex items-center gap-2.5">
                         {v === "timesheet" ? <Calendar size={15} strokeWidth={1.75} /> : <List size={15} strokeWidth={1.75} />}
@@ -262,7 +262,7 @@ export default function TimeTrackingPage() {
             <button
               onClick={() => setFilterOpen((o) => !o)}
               aria-label="Filters"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" || everyone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/60"}`}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" || everyone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/60"}`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
             </button>
@@ -272,7 +272,7 @@ export default function TimeTrackingPage() {
                 <div className="absolute right-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-4 w-[290px]">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[13.5px] font-medium text-muted">Billable</span>
-                    <div className="flex bg-card-alt rounded-full p-1">
+                    <div className="flex bg-chip rounded-full p-1">
                       {(["all", "billable", "nonbillable"] as const).map((b) => (
                         <button
                           key={b}
@@ -307,7 +307,7 @@ export default function TimeTrackingPage() {
               setEntries(null);
               setWeekStart(getWeekStart(new Date()));
             }}
-            className={`px-3.5 py-2 rounded-full text-[13.5px] font-medium ${isThisWeek ? "bg-card-alt" : "bg-card-alt hover:bg-line/60"}`}
+            className={`px-3.5 py-2 rounded-full text-[13.5px] font-medium ${isThisWeek ? "bg-chip" : "bg-chip hover:bg-line/60"}`}
           >
             This week
           </button>

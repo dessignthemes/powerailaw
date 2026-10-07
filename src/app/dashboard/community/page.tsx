@@ -353,7 +353,7 @@ export default function CommunityPage() {
             <button
               onClick={() => setArea(null)}
               className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                area === null ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
+                area === null ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-muted hover:text-ink"
               }`}
             >
               All areas
@@ -363,7 +363,7 @@ export default function CommunityPage() {
                 key={a}
                 onClick={() => setArea(area === a ? null : a)}
                 className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                  area === a ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
+                  area === a ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-muted hover:text-ink"
                 }`}
               >
                 {a}
@@ -515,7 +515,7 @@ function ReferralsView({
                         <>
                           <button
                             onClick={() => onStatus(r.id, "Declined")}
-                            className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-card-alt text-muted hover:text-ink transition-colors"
+                            className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-chip text-muted hover:text-ink transition-colors"
                           >
                             Decline
                           </button>
@@ -626,7 +626,7 @@ function ReferModal({
                   key={a}
                   onClick={() => setArea(a)}
                   className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                    area === a ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
+                    area === a ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-muted hover:text-ink"
                   }`}
                 >
                   {a}
@@ -654,7 +654,7 @@ function ReferModal({
                   key={u}
                   onClick={() => setUrgency(u)}
                   className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                    urgency === u ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
+                    urgency === u ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-muted hover:text-ink"
                   }`}
                 >
                   {u}
@@ -663,7 +663,7 @@ function ReferModal({
             </div>
           </div>
 
-          <label className="flex items-start gap-2.5 bg-card-alt rounded-xl px-3.5 py-3 cursor-pointer">
+          <label className="flex items-start gap-2.5 bg-chip rounded-xl px-3.5 py-3 cursor-pointer">
             <input
               type="checkbox"
               checked={consent}

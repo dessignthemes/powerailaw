@@ -204,7 +204,7 @@ export default function AiAccountantPage() {
                     { icon: Receipt, label: "Add a receipt", hint: "PDF receipts are read by AI", go: () => setModal({ kind: "txn" }) },
                     { icon: PenLine, label: "Add manually", hint: "A payment, fee or expense", go: () => setModal({ kind: "txn" }) },
                   ].map((o) => (
-                    <button key={o.label} role="menuitem" onClick={() => { setAddOpen(false); o.go(); }} className="w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-card-alt">
+                    <button key={o.label} role="menuitem" onClick={() => { setAddOpen(false); o.go(); }} className="w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-chip">
                       <o.icon size={16} strokeWidth={1.75} className="mt-0.5 text-muted" />
                       <span>
                         <span className="block text-[13.5px] font-medium">{o.label}</span>
@@ -525,7 +525,7 @@ function TxnTable(p: { txns: Txn[]; clientName: (id: string | null) => string; m
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {[["all", "All"], ["income", "Income"], ["expense", "Expenses"], ["no_receipt", "Missing receipt"], ["trust", "Trust"], ["excluded", "Excluded"]].map(([k, l]) => (
-            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium ${filter === k ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/70"}`}>{l}</button>
+            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium ${filter === k ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/70"}`}>{l}</button>
           ))}
         </div>
       </div>

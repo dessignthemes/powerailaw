@@ -96,7 +96,7 @@ export default function MatterDetailPage() {
   return (
     <div className="px-10 py-10">
       <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium mb-5">
-        <Link href="/dashboard/matters" className="bg-card-alt px-2.5 py-1 rounded-full hover:bg-line/50 transition-colors">
+        <Link href="/dashboard/matters" className="bg-chip px-2.5 py-1 rounded-full hover:bg-line/50 transition-colors">
           Matters
         </Link>
         <ChevronRight size={13} strokeWidth={1.75} />
@@ -108,14 +108,14 @@ export default function MatterDetailPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setEditModalOpen(true)}
-            className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center"
           >
             <Pencil size={15} strokeWidth={1.75} />
           </button>
           <div className="relative">
             <button
               onClick={() => setMenuOpen((o) => !o)}
-              className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center"
+              className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center"
             >
               <MoreHorizontal size={15} strokeWidth={1.75} />
             </button>
@@ -161,7 +161,7 @@ export default function MatterDetailPage() {
                     patch({ status: s });
                     setStatusOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <Icon size={15} strokeWidth={2} className={matterStatusMeta[s].color} />
@@ -208,7 +208,7 @@ export default function MatterDetailPage() {
                     patch({ clientId: c.id });
                     setClientOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <span
@@ -240,7 +240,7 @@ export default function MatterDetailPage() {
                   patch({ category: cat === "None" ? null : cat });
                   setCategoryOpen(false);
                 }}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
               >
                 {cat}
                 {(cat === "None" ? matter.category === null : cat === matter.category) && (
@@ -359,7 +359,7 @@ export default function MatterDetailPage() {
               <div className="p-4 flex flex-col gap-4">
                 <div>
                   <div className="text-[13px] text-muted mb-2">Billing type</div>
-                  <div className="inline-flex items-center bg-card-alt rounded-full p-1">
+                  <div className="inline-flex items-center bg-chip rounded-full p-1">
                     {(["Hourly", "Flat fee"] as BillingType[]).map((b) => (
                       <button
                         key={b}

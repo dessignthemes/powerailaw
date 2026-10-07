@@ -169,7 +169,7 @@ export default function DashboardHome() {
       <div
         key={t.id}
         onClick={() => setSelectedTask(t)}
-        className="flex items-center justify-between gap-3 px-5 py-3.5 cursor-pointer hover:bg-card-alt/40 transition-colors"
+        className="flex items-center justify-between gap-3 px-5 py-3.5 cursor-pointer hover:bg-chip/40 transition-colors"
       >
         <div className="flex items-center gap-3 min-w-0">
           <button
@@ -411,7 +411,7 @@ export default function DashboardHome() {
                       <button
                         key={e.id}
                         onClick={() => setOpenEvent(e)}
-                        className="w-full text-left flex items-center gap-4 px-5 py-3 hover:bg-card-alt/60 transition-colors"
+                        className="w-full text-left flex items-center gap-4 px-5 py-3 hover:bg-chip/60 transition-colors"
                       >
                         <span className="mono text-[12.5px] text-muted w-16 flex-shrink-0">{fmtTime(e)}</span>
                         <span className="text-[14.5px] font-medium truncate flex-1">{e.title}</span>
@@ -510,7 +510,7 @@ export default function DashboardHome() {
                 <div
                   key={t.id}
                   onClick={() => setSelectedTask(t)}
-                  className="flex items-center justify-between gap-3 px-5 py-3.5 cursor-pointer hover:bg-card-alt/40 transition-colors"
+                  className="flex items-center justify-between gap-3 px-5 py-3.5 cursor-pointer hover:bg-chip/40 transition-colors"
                 >
                   <div className="text-[14px] truncate">
                     <span className="text-muted">{verb} task</span>{" "}

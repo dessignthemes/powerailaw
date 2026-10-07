@@ -211,7 +211,7 @@ export default function RecordsPage() {
                     key={k}
                     role="menuitem"
                     onClick={() => startAdd(k)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left hover:bg-card-alt transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left hover:bg-chip transition-colors"
                   >
                     <KindIcon kind={k} />
                     {KIND_LABEL[k]}
@@ -239,7 +239,7 @@ export default function RecordsPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                tab === t.key ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-ink hover:bg-line/70"
+                tab === t.key ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-line/70"
               }`}
             >
               {t.label} <span className={tab === t.key ? "text-ink/60" : "text-muted"}>{loaded ? counts[t.key] : ""}</span>
@@ -288,7 +288,7 @@ export default function RecordsPage() {
             {q ? (
               <>
                 <div className="text-[14.5px] font-medium">No records match “{query.trim()}”</div>
-                <button onClick={() => setQuery("")} className="bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium mt-4 transition-colors">
+                <button onClick={() => setQuery("")} className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium mt-4 transition-colors">
                   Clear search
                 </button>
               </>
@@ -314,7 +314,7 @@ export default function RecordsPage() {
               <button
                 key={r.key}
                 onClick={() => open(r)}
-                className="w-full flex items-center gap-3.5 px-5 py-3.5 text-left hover:bg-card-alt/50 transition-colors first:rounded-t-xl last:rounded-b-xl"
+                className="w-full flex items-center gap-3.5 px-5 py-3.5 text-left hover:bg-chip/50 transition-colors first:rounded-t-xl last:rounded-b-xl"
               >
                 <Avatar kind={r.kind} name={r.name} />
                 <div className="flex-1 min-w-0">

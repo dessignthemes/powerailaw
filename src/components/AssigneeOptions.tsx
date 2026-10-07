@@ -24,7 +24,7 @@ export default function AssigneeOptions({ value, onPick }: { value: string | nul
       </div>
       <button
         onClick={() => onPick(null)}
-        className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors text-muted"
+        className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors text-muted"
       >
         Unassigned
       </button>
@@ -33,7 +33,7 @@ export default function AssigneeOptions({ value, onPick }: { value: string | nul
         <button
           key={m.id}
           onClick={() => onPick(m.email)}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
         >
           <span className="w-6 h-6 rounded-full bg-card-alt border border-line text-muted flex items-center justify-center text-[11px] flex-shrink-0">
             {m.email.charAt(0).toUpperCase()}

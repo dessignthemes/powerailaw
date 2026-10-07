@@ -636,7 +636,7 @@ function AddDocumentModal({
           }}
           disabled={running}
           className={`w-full border-2 border-dashed rounded-xl py-8 flex flex-col items-center gap-2 transition-colors ${
-            dragging ? "border-ink bg-card-alt" : "border-line bg-white/60 hover:bg-card-alt/60"
+            dragging ? "border-ink bg-chip" : "border-line bg-white/60 hover:bg-chip/60"
           }`}
         >
           <FileUp size={22} strokeWidth={1.5} className="text-muted" />
@@ -672,7 +672,7 @@ function AddDocumentModal({
         {error && <div className="mt-3 text-[13px] text-red-700">{error}</div>}
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} disabled={running} className="bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50">
+          <button onClick={onClose} disabled={running} className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50">
             Cancel
           </button>
           <button
@@ -732,7 +732,7 @@ function ConvertModal({
         </p>
         {error && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{error}</div>}
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} disabled={running} className="bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50">
+          <button onClick={onClose} disabled={running} className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50">
             Cancel
           </button>
           <button

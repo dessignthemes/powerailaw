@@ -29,7 +29,7 @@ function NavItem({
     <Link
       href={href}
       className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium transition-colors ${
-        active ? "bg-card-alt text-ink" : "text-muted hover:bg-card-alt hover:text-ink"
+        active ? "bg-chip text-ink" : "text-muted hover:bg-chip hover:text-ink"
       }`}
     >
       <Icon size={16} strokeWidth={1.75} className="flex-shrink-0" />
@@ -108,7 +108,7 @@ export default function Sidebar() {
       <div className="border-t border-line pt-4 mt-4">
         <button
           onClick={() => openIntegrations("integrations")}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-muted hover:bg-card-alt hover:text-ink transition-colors mb-2 text-left"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-muted hover:bg-chip hover:text-ink transition-colors mb-2 text-left"
         >
           <Grid3x3 size={16} strokeWidth={1.75} className="flex-shrink-0" />
           <span className="flex-1">Integrations</span>

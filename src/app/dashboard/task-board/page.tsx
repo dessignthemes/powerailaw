@@ -485,7 +485,7 @@ function TaskBoard({
             <div className="relative">
               <button
                 onClick={() => setBoardMenu((o) => !o)}
-                className="w-8 h-8 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink"
+                className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink"
                 aria-label="Board options"
               >
                 <MoreHorizontal size={16} strokeWidth={1.75} />
@@ -500,7 +500,7 @@ function TaskBoard({
                         setBoardError(null);
                         setBoardDialog({ mode: "rename", name: board.name });
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip"
                     >
                       <Pencil size={14} strokeWidth={1.75} /> Rename board
                     </button>
@@ -564,7 +564,7 @@ function TaskBoard({
       )}
 
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <div className="flex items-center bg-card-alt rounded-full p-1">
+        <div className="flex items-center bg-chip rounded-full p-1">
           <button
             onClick={() => setView("board")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
@@ -589,7 +589,7 @@ function TaskBoard({
               aria-haspopup="menu"
               aria-expanded={jumpOpen}
               title="Jump to a column"
-              className="flex items-center gap-1.5 bg-card-alt hover:bg-line/70 px-3.5 py-2 rounded-full text-[13.5px] font-medium transition-colors"
+              className="flex items-center gap-1.5 bg-chip hover:bg-line/70 px-3.5 py-2 rounded-full text-[13.5px] font-medium transition-colors"
             >
               <Columns3 size={14} strokeWidth={1.75} />
               Columns
@@ -611,7 +611,7 @@ function TaskBoard({
                       key={c.id}
                       role="menuitem"
                       onClick={() => jumpTo(c.id)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left hover:bg-card-alt transition-colors"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left hover:bg-chip transition-colors"
                     >
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
                       <span className="flex-1 truncate font-medium">{c.title}</span>
@@ -631,7 +631,7 @@ function TaskBoard({
                             return new Set();
                           });
                         }}
-                        className="w-full px-3 py-2 rounded-xl text-[13px] text-left font-medium hover:bg-card-alt transition-colors"
+                        className="w-full px-3 py-2 rounded-xl text-[13px] text-left font-medium hover:bg-chip transition-colors"
                       >
                         Expand all columns
                       </button>
@@ -669,7 +669,7 @@ function TaskBoard({
                   setQuery("");
                   setSearchOpen(false);
                 }}
-                className="w-6 h-6 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink"
+                className="w-6 h-6 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink"
                 aria-label="Clear search"
               >
                 <X size={13} />
@@ -681,7 +681,7 @@ function TaskBoard({
               title={query.trim() ? `Searching for “${query.trim()}”` : "Search tasks"}
               aria-label={query.trim() ? `Searching for ${query.trim()}. Edit search` : "Search tasks"}
               className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
-                query.trim() ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/60"
+                query.trim() ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/60"
               }`}
             >
               <Search size={15} strokeWidth={1.75} />
@@ -692,7 +692,7 @@ function TaskBoard({
               onClick={() => setFilterOpen((o) => !o)}
               title="Filter tasks"
               aria-label="Filter tasks"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/60"}`}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/60"}`}
             >
               <Filter size={15} strokeWidth={1.75} />
               {advCount > 0 && (
@@ -709,7 +709,7 @@ function TaskBoard({
               title="Display options"
               aria-label="Display options"
               className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
-                display.sort !== "manual" || display.hideDone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/60"
+                display.sort !== "manual" || display.hideDone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/60"
               }`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
@@ -784,13 +784,13 @@ function TaskBoard({
             key={f}
             onClick={() => toggleFilter(f)}
             className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-              activeFilters.includes(f) ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted hover:text-ink"
+              activeFilters.includes(f) ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-muted hover:text-ink"
             }`}
           >
             {f}
           </button>
         ))}
-        <button className="flex items-center gap-1.5 bg-card-alt px-3.5 py-1.5 rounded-full text-[13.5px] font-medium text-muted">
+        <button className="flex items-center gap-1.5 bg-chip px-3.5 py-1.5 rounded-full text-[13.5px] font-medium text-muted">
           Matter <ChevronDown size={12} strokeWidth={1.75} />
         </button>
       </div>
@@ -851,7 +851,7 @@ function TaskBoard({
                   <div
                     key={t.id}
                     onClick={() => setSelectedTask(t)}
-                    className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-card-alt/40 transition-colors"
+                    className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-chip/40 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={15} strokeWidth={2} className={statusMeta[t.status].color} />
@@ -886,7 +886,7 @@ function TaskBoard({
               <button
                 onClick={() => scrollByColumn(-1)}
                 aria-label="Show columns on the left"
-                className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-card-alt transition-colors"
+                className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-chip transition-colors"
               >
                 <ChevronLeft size={21} strokeWidth={2} />
               </button>
@@ -898,7 +898,7 @@ function TaskBoard({
               <button
                 onClick={() => scrollByColumn(1)}
                 aria-label="Show columns on the right"
-                className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-card-alt transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-chip transition-colors"
               >
                 <ChevronRight size={21} strokeWidth={2} />
               </button>
@@ -971,13 +971,13 @@ function TaskBoard({
                         setInlineAddFor(col.id);
                         setInlineValue("");
                       }}
-                      className="w-6 h-6 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+                      className="w-6 h-6 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
                     >
                       <Plus size={14} strokeWidth={1.75} />
                     </button>
                     <button
                       onClick={() => setMenuOpenFor(menuOpenFor === col.id ? null : col.id)}
-                      className="w-6 h-6 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+                      className="w-6 h-6 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
                     >
                       <MoreHorizontal size={14} strokeWidth={1.75} />
                     </button>
@@ -992,7 +992,7 @@ function TaskBoard({
                               setRenameValue(col.title);
                               setMenuOpenFor(null);
                             }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                           >
                             <Pencil size={14} strokeWidth={1.75} /> Rename
                           </button>
@@ -1001,7 +1001,7 @@ function TaskBoard({
                               setColorPickerFor(col.id);
                               setMenuOpenFor(null);
                             }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                           >
                             <Palette size={14} strokeWidth={1.75} /> Recolor
                           </button>
@@ -1010,7 +1010,7 @@ function TaskBoard({
                               setMenuOpenFor(null);
                               toggleCollapsed(col.id, true);
                             }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                           >
                             <ChevronsRightLeft size={14} strokeWidth={1.75} /> Collapse
                           </button>
@@ -1120,7 +1120,7 @@ function TaskBoard({
                                         setCardMenuFor(null);
                                         setSelectedTask(t);
                                       }}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                                     >
                                       <Pencil size={14} strokeWidth={1.75} /> Open
                                     </button>

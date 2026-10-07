@@ -223,7 +223,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
     <div className="bg-card-alt rounded-2xl overflow-hidden border border-line">
       {/* Header */}
       <div className="flex items-center gap-4 px-6 py-5 border-b border-line bg-cream/60 flex-wrap">
-        <button onClick={cancel} className="w-9 h-9 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink" aria-label="Back to clients">
+        <button onClick={cancel} className="w-9 h-9 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink" aria-label="Back to clients">
           <ArrowLeft size={18} />
         </button>
         <ClientAvatar name={name} company={cardType === "company"} src={profile.photo} size={56} />
@@ -233,7 +233,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         </div>
         {templates && cardId && (
           <div className="flex gap-2">
-            <button onClick={intakeSheet} disabled={!!docBusy || saving} className="bg-card-alt hover:bg-line/70 px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
+            <button onClick={intakeSheet} disabled={!!docBusy || saving} className="bg-chip hover:bg-line/70 px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
               {docBusy === "intake" ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />} Intake sheet
             </button>
             <button onClick={() => setEngagementOpen(true)} disabled={saving} className="bg-btn hover:bg-btn-hover px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
@@ -248,7 +248,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
             { icon: Phone, label: "Call", href: firstPhone ? `tel:${firstPhone.replace(/[^\d+]/g, "")}` : null },
           ].map((a) =>
             a.href ? (
-              <a key={a.label} href={a.href} className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-card-alt text-[12px] text-muted hover:text-ink">
+              <a key={a.label} href={a.href} className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-chip text-[12px] text-muted hover:text-ink">
                 <a.icon size={18} strokeWidth={1.75} /> {a.label}
               </a>
             ) : (
@@ -357,8 +357,8 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         {error && <span className="text-[13px] text-red-700 mr-auto">{error}</span>}
         {!error && notice && <span className="text-[13px] text-green-700 mr-auto">{notice}</span>}
         <div className="ml-auto flex gap-2">
-          <button onClick={cancel} disabled={saving} className="bg-card-alt hover:bg-line/70 px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
-          <button onClick={() => save(false)} disabled={saving || (!dirty && !!cardId)} className="bg-card-alt hover:bg-line/70 px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Save</button>
+          <button onClick={cancel} disabled={saving} className="bg-chip hover:bg-line/70 px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
+          <button onClick={() => save(false)} disabled={saving || (!dirty && !!cardId)} className="bg-chip hover:bg-line/70 px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Save</button>
           <button onClick={() => save(true)} disabled={saving} className="bg-btn hover:bg-btn-hover px-5 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-60">
             {saving && <Loader2 size={14} className="animate-spin" />} Save &amp; Close
           </button>
@@ -466,7 +466,7 @@ function PersonView({ person: p, setPerson, photo, setPhoto }: { person: Person;
             </div>
           ))}
           {!p.extra.length && <p className="text-[13.5px] text-muted mb-1">Add any other details you track for this person.</p>}
-          <button type="button" onClick={() => setPerson({ extra: [...p.extra, { label: "", value: "" }] })} className="bg-card-alt hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[13px] font-medium justify-self-start flex items-center gap-1">
+          <button type="button" onClick={() => setPerson({ extra: [...p.extra, { label: "", value: "" }] })} className="bg-chip hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[13px] font-medium justify-self-start flex items-center gap-1">
             <Plus size={13} /> Add field
           </button>
         </div>
@@ -693,7 +693,7 @@ function DocumentsView({ clientId, matters }: { clientId: string | null; matters
               </select>
             )}
             <input ref={fileRef} type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) upload(f); }} />
-            <button onClick={() => fileRef.current?.click()} disabled={busy} className="bg-card-alt hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
+            <button onClick={() => fileRef.current?.click()} disabled={busy} className="bg-chip hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
               {busy ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />} Import document
             </button>
           </div>
@@ -717,7 +717,7 @@ function DocumentsView({ clientId, matters }: { clientId: string | null; matters
             <button
               key={d.id}
               onClick={async () => { const v = d.versions[0]; if (v) window.open(await versionDownloadUrl(v.id), "_blank", "noopener"); }}
-              className="w-full grid grid-cols-[1fr_180px_130px] gap-3 px-4 py-2.5 text-left text-[13.5px] border-b border-line last:border-0 hover:bg-card-alt/40"
+              className="w-full grid grid-cols-[1fr_180px_130px] gap-3 px-4 py-2.5 text-left text-[13.5px] border-b border-line last:border-0 hover:bg-chip/40"
             >
               <span className="flex items-center gap-2 truncate"><FileText size={15} className="text-muted flex-shrink-0" /> <span className="truncate">{d.title}</span></span>
               <span className="truncate text-muted">{matters.find((m) => m.id === d.matterId)?.title}</span>
@@ -758,7 +758,7 @@ function MailingsView({ clientId, dirty }: { clientId: string | null; dirty: boo
       ) : (
         <div className="border border-line rounded-xl overflow-hidden">
           {data.messages.map((m) => (
-            <Link key={m.id} href="/dashboard/inbox" className="block px-4 py-3 border-b border-line last:border-0 hover:bg-card-alt/40">
+            <Link key={m.id} href="/dashboard/inbox" className="block px-4 py-3 border-b border-line last:border-0 hover:bg-chip/40">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[13.5px] font-medium truncate">{m.subject || "(No subject)"}</span>
                 <span className="text-[12px] text-muted whitespace-nowrap">{new Date(m.date).toLocaleDateString()}</span>
@@ -792,7 +792,7 @@ function MattersView({ clientId, matters }: { clientId: string | null; matters: 
             <span>Matter</span><span>Type</span><span>Other side</span><span>Status</span>
           </div>
           {shown.map((m) => (
-            <Link key={m.id} href={`/dashboard/matters/${m.id}`} className="grid grid-cols-[1fr_160px_180px_120px] gap-3 px-4 py-2.5 text-[13.5px] border-b border-line last:border-0 hover:bg-card-alt/40">
+            <Link key={m.id} href={`/dashboard/matters/${m.id}`} className="grid grid-cols-[1fr_160px_180px_120px] gap-3 px-4 py-2.5 text-[13.5px] border-b border-line last:border-0 hover:bg-chip/40">
               <span className="font-medium truncate">{m.title}</span>
               <span className="text-muted truncate">{m.category && m.category !== "None" ? m.category : "—"}</span>
               <span className="text-muted truncate">{m.counterparty || "—"}</span>
@@ -907,7 +907,7 @@ function EngagementModal({ cardType, profile, dear, matters, onClose, onCreate }
         <p className="text-[12.5px] text-muted mt-3">The letter reads: &quot;Representing {cardType === "company" ? profile.company.name : profile.people.map(personName).filter(Boolean).join(" and ") || "…"} with the {kind} of {prop || "…"}.&quot;</p>
         {err && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{err}</div>}
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} disabled={busy} className="bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
+          <button onClick={onClose} disabled={busy} className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
           <button
             disabled={busy || !prop.trim()}
             onClick={async () => {

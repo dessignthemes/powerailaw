@@ -55,7 +55,7 @@ export default function AccountMenu({
                   setOpen(false);
                   openIntegrations("general");
                 }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-card-alt transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-chip transition-colors text-left"
               >
                 <Settings size={16} strokeWidth={1.75} />
                 Settings
@@ -65,7 +65,7 @@ export default function AccountMenu({
                   setOpen(false);
                   onOpenTeam();
                 }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-card-alt transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-chip transition-colors text-left"
               >
                 <Users size={16} strokeWidth={1.75} />
                 Members
@@ -75,7 +75,7 @@ export default function AccountMenu({
                   setOpen(false);
                   onOpenAdmin();
                 }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-card-alt transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-chip transition-colors text-left"
               >
                 <Shield size={16} strokeWidth={1.75} />
                 Admin
@@ -85,7 +85,7 @@ export default function AccountMenu({
                   setOpen(false);
                   onOpenSupport();
                 }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-card-alt transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-chip transition-colors text-left"
               >
                 <Headphones size={16} strokeWidth={1.75} />
                 Support
@@ -95,7 +95,7 @@ export default function AccountMenu({
                   setOpen(false);
                   openIntegrations("integrations");
                 }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-card-alt transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-chip transition-colors text-left"
               >
                 <Grid3x3 size={16} strokeWidth={1.75} />
                 Integrations
@@ -120,7 +120,7 @@ export default function AccountMenu({
 
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-card-alt transition-colors text-left"
+        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-chip transition-colors text-left"
       >
         <div className="w-6 h-6 rounded-full bg-card-alt border border-line text-muted flex items-center justify-center text-[11px] font-medium flex-shrink-0">
           {userInitial(userName, email)}

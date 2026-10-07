@@ -77,7 +77,7 @@ export default function MemberAvatar({
         onBlur={hideSoon}
         aria-label={`${label} ${name}${m ? `, ${m.email}` : ""}. View their tasks`}
         className={`rounded-full flex items-center justify-center font-semibold tracking-tight transition-transform hover:scale-105 ${
-          m ? "bg-card-alt border border-line text-muted hover:text-ink" : "bg-card-alt border border-line text-muted/60 cursor-default"
+          m ? "bg-chip border border-line text-muted hover:text-ink" : "bg-chip border border-line text-muted/60 cursor-default"
         }`}
         style={{ width: size, height: size, fontSize: size <= 24 ? 10 : 11 }}
       >
@@ -93,7 +93,7 @@ export default function MemberAvatar({
             onMouseLeave={hideSoon}
             style={{ left: pos.left, top: pos.top, transform: pos.above ? "translateY(-100%)" : undefined }}
             className={`fixed z-[100] block whitespace-nowrap rounded-xl bg-white border border-line text-ink px-3 py-2 text-left shadow-[0_12px_32px_-12px_rgba(20,24,33,0.35)] ${
-              m ? "cursor-pointer hover:bg-card-alt" : ""
+              m ? "cursor-pointer hover:bg-chip" : ""
             }`}
           >
             <span className="block text-[11px] text-muted">{label}</span>

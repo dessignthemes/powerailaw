@@ -72,7 +72,7 @@ export default function FolderPanel({
     return (
       <div key={`${inFavorites ? "fav" : "all"}-${f.id}`}>
         <div
-          className={`group flex items-center gap-1.5 pr-2 rounded-lg transition-colors ${active ? "bg-card-alt" : "hover:bg-card-alt/60"}`}
+          className={`group flex items-center gap-1.5 pr-2 rounded-lg transition-colors ${active ? "bg-card-alt" : "hover:bg-chip/60"}`}
           style={{ paddingLeft: 6 + depth * 14 }}
         >
           {kids.length > 0 ? (
@@ -116,7 +116,7 @@ export default function FolderPanel({
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
         <span className="text-[12px] font-semibold uppercase tracking-wide text-muted">Folders</span>
-        <button onClick={onHide} title="Hide folders" aria-label="Hide folders" className="w-7 h-7 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink">
+        <button onClick={onHide} title="Hide folders" aria-label="Hide folders" className="w-7 h-7 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink">
           <PanelLeftClose size={15} strokeWidth={1.75} />
         </button>
       </div>
@@ -131,7 +131,7 @@ export default function FolderPanel({
             {onRetry && (
               <button
                 onClick={onRetry}
-                className="bg-card-alt hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
+                className="bg-chip hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
               >
                 Try again
               </button>

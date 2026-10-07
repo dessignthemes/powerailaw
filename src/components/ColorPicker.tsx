@@ -18,7 +18,7 @@ export default function ColorPicker({
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 border border-line rounded-xl px-2.5 py-2.5 bg-card-alt hover:bg-line/50 transition-colors"
+        className="flex items-center gap-1 border border-line rounded-xl px-2.5 py-2.5 bg-chip hover:bg-line/50 transition-colors"
       >
         <span
           className="w-5 h-5 rounded-full flex-shrink-0"

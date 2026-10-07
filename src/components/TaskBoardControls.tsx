@@ -59,7 +59,7 @@ function toggle<T>(list: T[], v: T) {
 
 function Option({ on, label, onClick }: { on: boolean; label: React.ReactNode; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] hover:bg-card-alt text-left">
+    <button onClick={onClick} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] hover:bg-chip text-left">
       <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${on ? "bg-dark border-dark text-white" : "border-line"}`}>
         {on && <Check size={11} strokeWidth={3} />}
       </span>
@@ -142,7 +142,7 @@ export function DisplayMenu({ value, onChange, onClose }: { value: DisplayOption
           <button
             key={k}
             onClick={() => onChange({ ...value, sort: k })}
-            className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] hover:bg-card-alt text-left"
+            className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] hover:bg-chip text-left"
           >
             <span className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${value.sort === k ? "border-dark" : "border-line"}`}>
               {value.sort === k && <span className="w-2 h-2 rounded-full bg-dark" />}

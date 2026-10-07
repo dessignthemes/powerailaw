@@ -16,7 +16,7 @@ export default function TaskFilterDropdown() {
     <div className="relative inline-block">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 bg-card-alt hover:bg-line/60 transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+        className="flex items-center gap-2 bg-chip hover:bg-line/60 transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
       >
         <SlidersHorizontal size={14} strokeWidth={1.75} />
         All tasks
@@ -34,7 +34,7 @@ export default function TaskFilterDropdown() {
                   setOpen(false);
                 }}
                 className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium text-left transition-colors ${
-                  selected === o.key ? "bg-card-alt" : "hover:bg-card-alt"
+                  selected === o.key ? "bg-chip" : "hover:bg-chip"
                 }`}
               >
                 {o.label}

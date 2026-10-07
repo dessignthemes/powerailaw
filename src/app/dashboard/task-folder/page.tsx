@@ -266,7 +266,7 @@ export default function TaskFolderPage() {
                         <button
                           key={f.id}
                           onClick={() => chooseFolder(f)}
-                          className="w-full flex items-center gap-2 py-2 pr-3 rounded-xl text-[13.5px] hover:bg-card-alt text-left"
+                          className="w-full flex items-center gap-2 py-2 pr-3 rounded-xl text-[13.5px] hover:bg-chip text-left"
                           style={{ paddingLeft: 12 + depth * 16 }}
                         >
                           <span className="flex-1 truncate">{f.name}</span>
@@ -358,13 +358,13 @@ export default function TaskFolderPage() {
                                   View
                                 </Link>
                               )}
-                              <button onClick={() => putBack(m)} title="Show in Task Folder again" className="w-8 h-8 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink">
+                              <button onClick={() => putBack(m)} title="Show in Task Folder again" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink">
                                 <Undo2 size={14} />
                               </button>
                             </>
                           ) : (
                             <>
-                              <button onClick={() => mark(m, "dismissed")} className="px-3 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-card-alt">
+                              <button onClick={() => mark(m, "dismissed")} className="px-3 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-chip">
                                 Dismiss
                               </button>
                               <button onClick={() => setCreating(m)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-btn-hover">
@@ -380,7 +380,7 @@ export default function TaskFolderPage() {
               </div>
               {next && (
                 <div className="text-center mt-4">
-                  <button onClick={loadMore} disabled={listLoading} className="px-4 py-2 rounded-full bg-card-alt text-[13px] font-medium hover:bg-line/60 disabled:opacity-50">
+                  <button onClick={loadMore} disabled={listLoading} className="px-4 py-2 rounded-full bg-chip text-[13px] font-medium hover:bg-line/60 disabled:opacity-50">
                     {listLoading ? "Loading…" : "Load more"}
                   </button>
                 </div>

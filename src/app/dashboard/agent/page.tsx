@@ -458,7 +458,7 @@ function Agent() {
             <button
               onClick={() => newChat()}
               title="Start a new conversation"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-card-alt text-ink hover:bg-line/60 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip text-ink hover:bg-line/60 transition-colors"
             >
               <SquarePen size={14} strokeWidth={1.75} /> New Chat
             </button>
@@ -467,7 +467,7 @@ function Agent() {
               aria-pressed={historyOpen}
               title="Past conversations"
               className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                historyOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-ink hover:bg-line/60"
+                historyOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-line/60"
               }`}
             >
               <History size={14} strokeWidth={1.75} /> History
@@ -475,7 +475,7 @@ function Agent() {
             <button
               onClick={() => setMemoryOpen(!memoryOpen)}
               className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                memoryOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-ink hover:bg-line/60"
+                memoryOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-line/60"
               }`}
             >
               <Brain size={14} strokeWidth={1.75} /> Memory
@@ -795,13 +795,13 @@ function MatterPicker({
             )}
             <div className="max-h-[280px] overflow-y-auto">
               {!q && (
-                <button onClick={() => pick(null)} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left ${!matter ? "bg-card-alt font-medium" : "hover:bg-card-alt/70"}`}>
+                <button onClick={() => pick(null)} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left ${!matter ? "bg-chip font-medium" : "hover:bg-chip/70"}`}>
                   <Layers size={14} className="text-muted" /> <span className="flex-1">No matter (general chat)</span>
                   {!matter && <Check size={14} />}
                 </button>
               )}
               {list.map((m) => (
-                <button key={m.id} onClick={() => pick(m.id)} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left ${matter?.id === m.id ? "bg-card-alt font-medium" : "hover:bg-card-alt/70"}`}>
+                <button key={m.id} onClick={() => pick(m.id)} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left ${matter?.id === m.id ? "bg-chip font-medium" : "hover:bg-chip/70"}`}>
                   <Folder size={14} className="text-muted flex-shrink-0" /> <span className="flex-1 truncate">{m.title}</span>
                   {matter?.id === m.id && <Check size={14} />}
                 </button>
@@ -902,7 +902,7 @@ function AssistantMessage({
                 setTimeout(() => setCopied(false), 1500);
               });
             }}
-            className="flex items-center gap-1 text-[12px] text-muted hover:text-ink px-1.5 py-1 rounded-md hover:bg-card-alt"
+            className="flex items-center gap-1 text-[12px] text-muted hover:text-ink px-1.5 py-1 rounded-md hover:bg-chip"
           >
             {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? "Copied" : "Copy"}
           </button>
@@ -971,7 +971,7 @@ function HistoryPanel({
             <div className="text-[13px] text-muted text-center py-8">No conversations yet.</div>
           ) : (
             conversations.map((c) => (
-              <div key={c.id} className={`group rounded-xl px-3 py-2 mb-0.5 ${c.id === activeId ? "bg-card-alt" : "hover:bg-card-alt/60"}`}>
+              <div key={c.id} className={`group rounded-xl px-3 py-2 mb-0.5 ${c.id === activeId ? "bg-card-alt" : "hover:bg-chip/60"}`}>
                 {editing === c.id ? (
                   <div className="flex items-center gap-1">
                     <input

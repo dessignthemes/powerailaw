@@ -131,13 +131,13 @@ export default function SendForSignature({
               <p className="text-[13.5px] text-muted mb-5">Send this secure link to {name}. When they sign, the signed PDF is saved as a new version of this document, with a signature certificate page.</p>
               <div className="flex gap-2 mb-4">
                 <input readOnly value={link} className={`${input} font-mono text-[12.5px]`} onFocus={(e) => e.target.select()} />
-                <button onClick={() => { navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="bg-card-alt hover:bg-line/70 px-3.5 rounded-lg text-[13px] font-medium flex items-center gap-1.5">
+                <button onClick={() => { navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="bg-chip hover:bg-line/70 px-3.5 rounded-lg text-[13px] font-medium flex items-center gap-1.5">
                   {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copied" : "Copy"}
                 </button>
               </div>
               <div className="flex gap-2 justify-end">
                 <a href={mailto} className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5"><Mail size={14} /> Email it to {name.split(" ")[0] || "the client"}</a>
-                <button onClick={onClose} className="bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium">Done</button>
+                <button onClick={onClose} className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium">Done</button>
               </div>
               <p className="text-[12px] text-muted mt-4">“Email it” opens a ready-made email in your own mail app, so it comes from your address.</p>
             </div>
@@ -148,7 +148,7 @@ export default function SendForSignature({
               <div className="flex items-center gap-2 px-5 py-3 border-b border-line bg-white flex-wrap">
                 <span className="text-[12.5px] text-muted mr-1">Choose a field, then click on the page:</span>
                 {TOOLS.map((t) => (
-                  <button key={t.type} onClick={() => setTool(t.type)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium ${tool === t.type ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-card-alt hover:bg-line/70"}`}>
+                  <button key={t.type} onClick={() => setTool(t.type)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium ${tool === t.type ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/70"}`}>
                     <t.icon size={14} /> {FIELD_META[t.type].label}
                   </button>
                 ))}

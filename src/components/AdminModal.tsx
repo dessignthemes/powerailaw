@@ -116,7 +116,7 @@ export default function AdminModal({
       >
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 z-10 w-8 h-8 rounded-full bg-cream/80 hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+          className="absolute top-5 right-5 z-10 w-8 h-8 rounded-full bg-cream/80 hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
         >
           <X size={18} strokeWidth={1.75} />
         </button>
@@ -139,7 +139,7 @@ export default function AdminModal({
                         key={item.key}
                         onClick={() => setPage(item.key)}
                         className={`flex items-start gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
-                          page === item.key ? "bg-card-alt" : "hover:bg-card-alt"
+                          page === item.key ? "bg-chip" : "hover:bg-chip"
                         }`}
                       >
                         <Icon size={16} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" />
@@ -188,7 +188,7 @@ export default function AdminModal({
                   ) : (
                     <button
                       onClick={() => setAddPersonOpen(true)}
-                      className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors mb-5"
+                      className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors mb-5"
                     >
                       + Add person
                     </button>
@@ -229,7 +229,7 @@ export default function AdminModal({
                   <h2 className="text-[26px] font-semibold mt-1">Practice groups</h2>
                   <button
                     onClick={() => setAddGroupOpen((o) => !o)}
-                    className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors flex-shrink-0"
+                    className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors flex-shrink-0"
                   >
                     + Add group
                   </button>
@@ -313,7 +313,7 @@ export default function AdminModal({
 
                 <div className="flex items-center justify-between gap-4 mb-1.5">
                   <div className="text-[15px] font-semibold">Subscription</div>
-                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors flex-shrink-0">
+                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors flex-shrink-0">
                     Manage subscription
                   </button>
                 </div>
@@ -360,7 +360,7 @@ export default function AdminModal({
                     <button
                       onClick={handleReviewChange}
                       disabled={licenceCount === 1}
-                      className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-card-alt transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                      className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                     >
                       Review change
                     </button>

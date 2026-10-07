@@ -76,7 +76,7 @@ function ConnectPageInner() {
             <button
               onClick={() => setProvider("microsoft")}
               className={`rounded-xl py-2.5 text-[14px] font-medium transition-colors ${
-                provider === "microsoft" ? "bg-card-alt" : "text-muted hover:text-ink"
+                provider === "microsoft" ? "bg-chip" : "text-muted hover:text-ink"
               }`}
             >
               Microsoft 365
@@ -84,7 +84,7 @@ function ConnectPageInner() {
             <button
               onClick={() => setProvider("google")}
               className={`rounded-xl py-2.5 text-[14px] font-medium transition-colors ${
-                provider === "google" ? "bg-card-alt" : "text-muted hover:text-ink"
+                provider === "google" ? "bg-chip" : "text-muted hover:text-ink"
               }`}
             >
               Google

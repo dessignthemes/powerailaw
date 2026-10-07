@@ -212,7 +212,7 @@ export default function AiMatterPage() {
                                 <div className="text-[13px] text-muted">{i.detail}</div>
                               </div>
                               {i.fix.kind === "link" && i.fix.href ? (
-                                <Link href={i.fix.href} className="bg-card-alt hover:bg-line/70 px-3 py-1.5 rounded-full text-[12.5px] font-medium">{i.fix.label}</Link>
+                                <Link href={i.fix.href} className="bg-chip hover:bg-line/70 px-3 py-1.5 rounded-full text-[12.5px] font-medium">{i.fix.label}</Link>
                               ) : i.fix.task ? (
                                 <button
                                   disabled={created.has(i.key)}
@@ -232,7 +232,7 @@ export default function AiMatterPage() {
                             <button
                               disabled={created.has(`miss-${k}`)}
                               onClick={() => createTasks([{ key: `miss-${k}`, title: `Get: ${m.slice(0, 120)}`, description: `${m}\n\nSpotted by AI Matter.`, priority: "Medium", dueDate: null }])}
-                              className="bg-card-alt hover:bg-line/70 px-3 py-1.5 rounded-full text-[12.5px] font-medium disabled:opacity-50"
+                              className="bg-chip hover:bg-line/70 px-3 py-1.5 rounded-full text-[12.5px] font-medium disabled:opacity-50"
                             >
                               {created.has(`miss-${k}`) ? "Task created" : "Create task"}
                             </button>
@@ -262,7 +262,7 @@ export default function AiMatterPage() {
                               <div className="text-[12.5px] text-muted">{[n.why, n.dueDate ? `by ${n.dueDate}` : ""].filter(Boolean).join(" · ")}</div>
                             </div>
                             <span className={`text-[12px] px-2 py-0.5 rounded-full ${n.priority === "High" ? "bg-[#F9B2B3]" : n.priority === "Low" ? "bg-[#CAF0D9]" : "bg-[#F9E1C0]"}`}>{n.priority}</span>
-                            <button onClick={() => createTasks([stepItem(n, i)])} disabled={created.has(`step-${i}`)} className="bg-card-alt hover:bg-line/70 px-3 py-1.5 rounded-full text-[12.5px] font-medium disabled:opacity-50">
+                            <button onClick={() => createTasks([stepItem(n, i)])} disabled={created.has(`step-${i}`)} className="bg-chip hover:bg-line/70 px-3 py-1.5 rounded-full text-[12.5px] font-medium disabled:opacity-50">
                               {created.has(`step-${i}`) ? "Task created" : "Create task"}
                             </button>
                           </div>

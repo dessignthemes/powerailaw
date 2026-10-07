@@ -550,7 +550,7 @@ export default function PdfEditor({
       }}
       title={hint}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-        tool === t ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-ink hover:bg-line/60"
+        tool === t ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-line/60"
       }`}
     >
       {icon} {label}
@@ -580,7 +580,7 @@ export default function PdfEditor({
               setSelectedId(null);
               setSigModal({});
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-card-alt hover:bg-line/60 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip hover:bg-line/60 transition-colors"
           >
             <PenTool size={13} /> Signature
           </button>
@@ -597,7 +597,7 @@ export default function PdfEditor({
           <button
             onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
             disabled={pageIndex === 0}
-            className="w-8 h-8 rounded-full hover:bg-card-alt flex items-center justify-center disabled:opacity-30"
+            className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center disabled:opacity-30"
             aria-label="Previous page"
           >
             <ChevronLeft size={16} />
@@ -618,7 +618,7 @@ export default function PdfEditor({
           <button
             onClick={() => setPageIndex((p) => Math.min(geos.length - 1, p + 1))}
             disabled={pageIndex >= geos.length - 1}
-            className="w-8 h-8 rounded-full hover:bg-card-alt flex items-center justify-center disabled:opacity-30"
+            className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center disabled:opacity-30"
             aria-label="Next page"
           >
             <ChevronRight size={16} />
@@ -627,7 +627,7 @@ export default function PdfEditor({
           <span className="w-px h-5 bg-line mx-2" />
           <button
             onClick={() => setZoom((z) => ZOOMS[Math.max(0, ZOOMS.indexOf(z) - 1)] ?? z)}
-            className="w-8 h-8 rounded-full hover:bg-card-alt flex items-center justify-center"
+            className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center"
             aria-label="Zoom out"
           >
             <Minus size={15} />
@@ -635,7 +635,7 @@ export default function PdfEditor({
           <span className="w-11 text-center tabular-nums">{Math.round(zoom * 100)}%</span>
           <button
             onClick={() => setZoom((z) => ZOOMS[Math.min(ZOOMS.length - 1, ZOOMS.indexOf(z) + 1)] ?? z)}
-            className="w-8 h-8 rounded-full hover:bg-card-alt flex items-center justify-center"
+            className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center"
             aria-label="Zoom in"
           >
             <Plus size={15} />
@@ -815,7 +815,7 @@ export default function PdfEditor({
                       onClick={(e) => {
                         if (dirty && !confirm("Leave without saving your changes?")) e.preventDefault();
                       }}
-                      className={`rounded-lg px-2.5 py-1.5 -mx-2.5 hover:bg-card-alt ${v.id === version.id ? "bg-card-alt" : ""}`}
+                      className={`rounded-lg px-2.5 py-1.5 -mx-2.5 hover:bg-chip ${v.id === version.id ? "bg-chip" : ""}`}
                     >
                       <div className="font-medium">
                         v{v.versionNumber}

@@ -369,7 +369,7 @@ export default function CalendarPage() {
           <div className="relative">
             <button
               onClick={() => setViewMenuOpen((o) => !o)}
-              className="flex items-center gap-2 bg-card-alt hover:bg-line/60 transition-colors rounded-full px-3.5 py-2 text-[13.5px] font-medium"
+              className="flex items-center gap-2 bg-chip hover:bg-line/60 transition-colors rounded-full px-3.5 py-2 text-[13.5px] font-medium"
             >
               <ViewIcon size={14} strokeWidth={1.75} /> {view}
               <ChevronDown size={12} strokeWidth={2} className="text-muted" />
@@ -387,7 +387,7 @@ export default function CalendarPage() {
                           setView(v);
                           setViewMenuOpen(false);
                         }}
-                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                       >
                         <span className="flex items-center gap-2">
                           <Icon size={15} strokeWidth={1.75} /> {v}
@@ -403,23 +403,23 @@ export default function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center">
+          <button className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center">
             <Search size={15} strokeWidth={1.75} />
           </button>
-          <button className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center">
+          <button className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center">
             <SlidersHorizontal size={15} strokeWidth={1.75} />
           </button>
           <button
             onClick={refresh}
             title="Refresh calendar"
             aria-label="Refresh calendar"
-            className="w-9 h-9 rounded-full bg-card-alt hover:bg-line/60 transition-colors flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center"
           >
             <RotateCw size={15} strokeWidth={1.75} className={syncing ? "animate-spin" : ""} />
           </button>
           <button
             onClick={goToday}
-            className="bg-card-alt px-3.5 py-2 rounded-full text-[13.5px] font-medium hover:bg-line/60 transition-colors"
+            className="bg-chip px-3.5 py-2 rounded-full text-[13.5px] font-medium hover:bg-line/60 transition-colors"
           >
             Today
           </button>
@@ -531,7 +531,7 @@ export default function CalendarPage() {
                 <button
                   key={i}
                   onClick={() => setModalDate(iso)}
-                  className={`min-h-[140px] border-r border-b border-line px-2.5 py-2 text-left hover:bg-card-alt/60 transition-colors ${
+                  className={`min-h-[140px] border-r border-b border-line px-2.5 py-2 text-left hover:bg-chip/60 transition-colors ${
                     !inMonth ? "text-muted/40" : ""
                   } ${(i + 1) % 7 === 0 ? "border-r-0" : ""}`}
                 >
@@ -627,7 +627,7 @@ export default function CalendarPage() {
                       <button
                         key={`${iso}-${h}`}
                         onClick={() => setModalDate(iso)}
-                        className="border-t border-l border-line hover:bg-card-alt/50 transition-colors"
+                        className="border-t border-l border-line hover:bg-chip/50 transition-colors"
                         style={{ height: HOUR_PX }}
                       />
                     );
@@ -692,7 +692,7 @@ export default function CalendarPage() {
               <button
                 key={h}
                 onClick={() => setModalDate(toISODate(cursor))}
-                className="w-full flex border-t border-line hover:bg-card-alt/50 transition-colors text-left"
+                className="w-full flex border-t border-line hover:bg-chip/50 transition-colors text-left"
                 style={{ height: HOUR_PX }}
               >
                 <span className="text-[11px] text-muted w-14 text-right pr-2 -translate-y-2 flex-shrink-0">

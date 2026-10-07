@@ -278,7 +278,7 @@ export default function TaskDetailModal({
             {toolbarIcons.map((Icon, i) => (
               <button
                 key={i}
-                className="w-7 h-7 rounded-lg hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+                className="w-7 h-7 rounded-lg hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
               >
                 <Icon size={14} strokeWidth={1.75} />
               </button>
@@ -349,7 +349,7 @@ export default function TaskDetailModal({
                       commit({ status: s });
                       setStatusOpen(false);
                     }}
-                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                   >
                     <span className="flex items-center gap-2">
                       <Icon size={15} strokeWidth={2} className={statusMeta[s].color} />
@@ -383,7 +383,7 @@ export default function TaskDetailModal({
                     commit({ priority: p });
                     setPriorityOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-card-alt transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
                   {p}
                   {p === priority && <Check size={14} strokeWidth={2} />}
@@ -497,7 +497,7 @@ export default function TaskDetailModal({
               />
               <button
                 onClick={submitComment}
-                className="w-8 h-8 rounded-full bg-card-alt flex items-center justify-center text-muted hover:text-ink transition-colors"
+                className="w-8 h-8 rounded-full bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
               >
                 <ArrowUp size={14} strokeWidth={1.75} />
               </button>

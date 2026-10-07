@@ -81,7 +81,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
         </div>
 
         <div className="px-9 pt-5">
-          <div className="inline-flex bg-card-alt rounded-full p-1">
+          <div className="inline-flex bg-chip rounded-full p-1">
             <button
               onClick={() => setTab("setup")}
               className={`px-4 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
@@ -139,7 +139,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                     <div className="relative">
                       <button
                         onClick={() => setLangMenuOpen((o) => !o)}
-                        className="flex items-center gap-1.5 border border-line rounded-full px-3.5 py-1.5 text-[13.5px] font-medium hover:bg-card-alt transition-colors"
+                        className="flex items-center gap-1.5 border border-line rounded-full px-3.5 py-1.5 text-[13.5px] font-medium hover:bg-chip transition-colors"
                       >
                         <Plus size={13} strokeWidth={2} /> Add language
                       </button>
@@ -156,7 +156,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                                     setLanguages((ls) => [...ls, l]);
                                     setLangMenuOpen(false);
                                   }}
-                                  className="w-full text-left px-3 py-2 rounded-xl text-[14px] hover:bg-card-alt transition-colors"
+                                  className="w-full text-left px-3 py-2 rounded-xl text-[14px] hover:bg-chip transition-colors"
                                 >
                                   {l}
                                 </button>
@@ -180,7 +180,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                     <button
                       onClick={() => setFirstView("conversation")}
                       className={`text-left border rounded-2xl p-4 transition-colors ${
-                        firstView === "conversation" ? "border-ink bg-card-alt" : "border-line"
+                        firstView === "conversation" ? "border-ink bg-chip" : "border-line"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1.5">
@@ -196,7 +196,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                     <button
                       onClick={() => setFirstView("form")}
                       className={`text-left border rounded-2xl p-4 transition-colors ${
-                        firstView === "form" ? "border-ink bg-card-alt" : "border-line"
+                        firstView === "form" ? "border-ink bg-chip" : "border-line"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1.5">
@@ -360,7 +360,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                     onClick={() =>
                       setQuestions((qs) => [...qs, { id: crypto.randomUUID(), text: "" }])
                     }
-                    className="flex items-center gap-1.5 border border-line rounded-full px-3.5 py-1.5 text-[13.5px] font-medium hover:bg-card-alt transition-colors"
+                    className="flex items-center gap-1.5 border border-line rounded-full px-3.5 py-1.5 text-[13.5px] font-medium hover:bg-chip transition-colors"
                   >
                     <Plus size={13} strokeWidth={2} /> Add question
                   </button>
@@ -413,7 +413,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                     LawPower AI&rsquo;s own look.
                   </p>
 
-                  <div className="inline-flex bg-card-alt rounded-full p-1 mb-5">
+                  <div className="inline-flex bg-chip rounded-full p-1 mb-5">
                     {(["light", "dark", "auto"] as const).map((t) => (
                       <button
                         key={t}
@@ -546,7 +546,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                         </div>
                         <button
                           onClick={() => copy(directLink, "link")}
-                          className="flex items-center gap-1.5 border border-line rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-card-alt transition-colors flex-shrink-0"
+                          className="flex items-center gap-1.5 border border-line rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0"
                         >
                           <Copy size={13} strokeWidth={1.75} />
                           {copiedKey === "link" ? "Copied" : "Copy"}
@@ -570,7 +570,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                         </pre>
                         <button
                           onClick={() => copy(embedSnippet, "embed")}
-                          className="flex items-center gap-1.5 border border-line rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-card-alt transition-colors flex-shrink-0"
+                          className="flex items-center gap-1.5 border border-line rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0"
                         >
                           <Copy size={13} strokeWidth={1.75} />
                           {copiedKey === "embed" ? "Copied" : "Copy"}
@@ -609,7 +609,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                               setDomainInput("");
                             }
                           }}
-                          className="flex items-center gap-1.5 border border-line rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-card-alt transition-colors flex-shrink-0"
+                          className="flex items-center gap-1.5 border border-line rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0"
                         >
                           <Plus size={13} strokeWidth={2} /> Add
                         </button>
@@ -674,7 +674,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                     </div>
                     <button
                       onClick={() => copy(directLink, "public")}
-                      className="border border-line rounded-xl p-2.5 hover:bg-card-alt transition-colors flex-shrink-0"
+                      className="border border-line rounded-xl p-2.5 hover:bg-chip transition-colors flex-shrink-0"
                     >
                       <Copy size={15} strokeWidth={1.75} />
                     </button>
