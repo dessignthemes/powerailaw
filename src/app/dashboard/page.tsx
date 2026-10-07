@@ -242,7 +242,7 @@ export default function DashboardHome() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="bg-card-alt rounded-2xl p-6 relative">
-          <div className="text-[13.5px] font-medium text-muted mb-8 flex items-center gap-1.5">
+          <div className="text-[13.5px] font-medium text-muted mb-4 flex items-center gap-1.5">
             <ListChecks size={15} strokeWidth={1.75} /> {activeRange.due}
           </div>
           <Link
@@ -254,7 +254,7 @@ export default function DashboardHome() {
               <ArrowUpRight size={12} strokeWidth={2} />
             </span>
           </Link>
-          <div className="text-[32px] font-display font-semibold mb-1">
+          <div className="text-[24px] leading-tight font-display font-semibold mb-1">
             {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"}
           </div>
           <div className="text-[13px] text-muted">
@@ -293,7 +293,7 @@ export default function DashboardHome() {
         </div>
 
         <div className="bg-card-alt rounded-2xl p-6 relative">
-          <div className="text-[13.5px] font-medium text-muted mb-8 flex items-center gap-1.5">
+          <div className="text-[13.5px] font-medium text-muted mb-4 flex items-center gap-1.5">
             <Calendar size={15} strokeWidth={1.75} /> Calendar
           </div>
           <Link
@@ -305,7 +305,7 @@ export default function DashboardHome() {
               <ArrowUpRight size={12} strokeWidth={2} />
             </span>
           </Link>
-          <div className="text-[32px] font-display font-semibold mb-1">
+          <div className="text-[24px] leading-tight font-display font-semibold mb-1">
             {cal.loaded ? cal.events.length : "–"} {cal.events.length === 1 ? "event" : "events"}
           </div>
           <div className="text-[13px] text-muted mb-2 flex flex-col gap-0.5">
@@ -332,7 +332,7 @@ export default function DashboardHome() {
         </div>
 
         <div className="bg-card-alt rounded-2xl p-6 relative">
-          <div className="text-[13.5px] font-medium text-muted mb-8 flex items-center gap-1.5">
+          <div className="text-[13.5px] font-medium text-muted mb-4 flex items-center gap-1.5">
             <Timer size={15} strokeWidth={1.75} /> Tracked
           </div>
           <Link
@@ -344,7 +344,7 @@ export default function DashboardHome() {
               <ArrowUpRight size={12} strokeWidth={2} />
             </span>
           </Link>
-          <div className="text-[32px] font-display font-semibold mb-1">{tracked.loaded ? formatMinutes(tracked.range) : "–"}</div>
+          <div className="text-[24px] leading-tight font-display font-semibold mb-1">{tracked.loaded ? formatMinutes(tracked.range) : "–"}</div>
           <div className="text-[13px] text-muted mb-2 flex flex-col gap-0.5">
             {tracked.loaded ? (
               <>
