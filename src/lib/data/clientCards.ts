@@ -18,7 +18,7 @@ function missingColumn(e: { code?: string; message?: string } | null) {
 const setup = () =>
   new CardError(503, `Client cards need a database update. Run supabase/migrations/${CARDS_MIGRATION} in the Supabase SQL editor, then refresh.`, "setup_required");
 
-export type CardSummary = { id: string; name: string; cardType: CardType; email: string | null; phone: string | null; status: string; updatedAt: string };
+export type CardSummary = { id: string; name: string; cardType: CardType; email: string | null; phone: string | null; status: string; updatedAt: string; hasPhoto: boolean };
 
 export async function listCards(): Promise<CardSummary[]> {
   const orgId = await getCurrentOrgId();
@@ -32,9 +32,13 @@ export async function listCards(): Promise<CardSummary[]> {
     if (missingColumn(error)) throw setup();
     throw error;
   }
+  // Which cards have a photo (the photos themselves load separately, one small image each).
+  const withPhoto = new Set<string>();
+  const photos = await createAdminClient().from("clients").select("id").eq("org_id", orgId).not("profile->>photo", "is", null).limit(2000);
+  for (const r of photos.data ?? []) withPhoto.add(r.id as string);
   return (data ?? []).map((r) => ({
     id: r.id, name: r.name, cardType: (r.card_type ?? (r.type === "Legal entity" ? "company" : "person")) as CardType,
-    email: r.email, phone: r.phone, status: r.status, updatedAt: r.updated_at,
+    email: r.email, phone: r.phone, status: r.status, updatedAt: r.updated_at, hasPhoto: withPhoto.has(r.id),
   }));
 }
 
@@ -106,4 +110,13 @@ export function cardFail(where: string, error: unknown) {
   if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
   console.error(`${where} failed:`, error);
   return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
+}
+
+// A client's photo as image bytes (for list avatars).
+export async function getCardPhoto(id: string): Promise<{ type: string; bytes: Buffer } | null> {
+  const orgId = await getCurrentOrgId();
+  const { data, error } = await createAdminClient().from("clients").select("photo:profile->>photo").eq("org_id", orgId).eq("id", id).maybeSingle();
+  if (error) throw error;
+  const m = /^data:(image\/(?:png|jpeg|webp));base64,(.+)$/.exec(String((data as { photo?: string } | null)?.photo ?? ""));
+  return m ? { type: m[1], bytes: Buffer.from(m[2], "base64") } : null;
 }

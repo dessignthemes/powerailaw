@@ -2,10 +2,11 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, X, User, Building2, ChevronRight } from "lucide-react";
+import { Search, X, ChevronRight } from "lucide-react";
+import ClientAvatar from "@/components/clientCard/ClientAvatar";
 import ClientCardEditor from "@/components/clientCard/ClientCardEditor";
 
-type Card = { id: string; name: string; cardType: "person" | "company"; email: string | null; phone: string | null; status: string; updatedAt: string };
+type Card = { id: string; name: string; cardType: "person" | "company"; email: string | null; phone: string | null; status: string; updatedAt: string; hasPhoto?: boolean };
 
 export default function ClientIntakePage() {
   return (
@@ -108,9 +109,11 @@ function ClientIntake() {
               <div className="bg-cream rounded-xl divide-y divide-line">
                 {shown.map((c) => (
                   <button key={c.id} onClick={() => go(c.id)} className="w-full flex items-center gap-3.5 px-5 py-3.5 text-left hover:bg-card-alt/50 first:rounded-t-xl last:rounded-b-xl">
-                    <span className="w-9 h-9 rounded-full bg-card-alt border border-line flex items-center justify-center text-muted flex-shrink-0">
-                      {c.cardType === "company" ? <Building2 size={16} /> : <User size={16} />}
-                    </span>
+                    <ClientAvatar
+                      name={c.name}
+                      company={c.cardType === "company"}
+                      src={c.hasPhoto ? `/api/client-cards/${c.id}/photo?v=${encodeURIComponent(c.updatedAt)}` : null}
+                    />
                     <span className="flex-1 min-w-0">
                       <span className="block text-[14.5px] font-medium truncate">{c.name}</span>
                       <span className="block text-[12.5px] text-muted truncate">

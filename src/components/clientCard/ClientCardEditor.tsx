@@ -1,9 +1,10 @@
 "use client";
 
+import ClientAvatar from "@/components/clientCard/ClientAvatar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, Mail, MessageSquare, Phone, Plus, X, User, Building2, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList,
+  ArrowLeft, Mail, MessageSquare, Phone, Plus, X, User, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import SelectBox from "@/components/SelectBox";
@@ -225,10 +226,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         <button onClick={cancel} className="w-9 h-9 rounded-full hover:bg-card-alt flex items-center justify-center text-muted hover:text-ink" aria-label="Back to clients">
           <ArrowLeft size={18} />
         </button>
-        <div className="w-14 h-14 rounded-full bg-card-alt border border-line overflow-hidden flex items-center justify-center text-muted flex-shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {profile.photo ? <img src={profile.photo} alt="" className="w-full h-full object-cover" /> : cardType === "company" ? <Building2 size={24} /> : <User size={24} />}
-        </div>
+        <ClientAvatar name={name} company={cardType === "company"} src={profile.photo} size={56} />
         <div className="flex-1 min-w-[200px]">
           <div className="text-[24px] font-semibold leading-tight">{name}</div>
           <div className="text-[13px] text-muted">{cardType === "company" ? "Company" : `People (${profile.people.length})`}{dirty ? " · unsaved changes" : ""}</div>
