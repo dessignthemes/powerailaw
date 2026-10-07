@@ -1093,7 +1093,7 @@ function TaskBoard({
                         <div
                           key={t.id}
                           onClick={() => setSelectedTask(t)}
-                          className="bg-cream rounded-xl px-3.5 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.08),0_1px_2px_rgba(27,25,26,0.04)] hover:shadow-[0_4px_12px_rgba(27,25,26,0.10),0_2px_4px_rgba(27,25,26,0.05)] transition-shadow"
+                          className="bg-page rounded-xl px-3.5 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.08),0_1px_2px_rgba(27,25,26,0.04)] hover:shadow-[0_4px_12px_rgba(27,25,26,0.10),0_2px_4px_rgba(27,25,26,0.05)] transition-shadow"
                         >
                           <div className="flex items-start justify-between gap-2 mb-2.5">
                             <div className="text-[14px] font-normal leading-snug">{t.title}</div>
