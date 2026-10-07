@@ -589,7 +589,7 @@ function TaskBoard({
               aria-haspopup="menu"
               aria-expanded={jumpOpen}
               title="Jump to a column"
-              className="flex items-center gap-1.5 bg-chip hover:bg-line/70 px-3.5 py-2 rounded-full text-[13.5px] font-medium transition-colors"
+              className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13.5px] font-medium transition-colors"
             >
               <Columns3 size={14} strokeWidth={1.75} />
               Columns
@@ -681,7 +681,7 @@ function TaskBoard({
               title={query.trim() ? `Searching for “${query.trim()}”` : "Search tasks"}
               aria-label={query.trim() ? `Searching for ${query.trim()}. Edit search` : "Search tasks"}
               className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
-                query.trim() ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/60"
+                query.trim() ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"
               }`}
             >
               <Search size={15} strokeWidth={1.75} />
@@ -692,7 +692,7 @@ function TaskBoard({
               onClick={() => setFilterOpen((o) => !o)}
               title="Filter tasks"
               aria-label="Filter tasks"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/60"}`}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"}`}
             >
               <Filter size={15} strokeWidth={1.75} />
               {advCount > 0 && (
@@ -709,7 +709,7 @@ function TaskBoard({
               title="Display options"
               aria-label="Display options"
               className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
-                display.sort !== "manual" || display.hideDone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/60"
+                display.sort !== "manual" || display.hideDone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"
               }`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />

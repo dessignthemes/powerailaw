@@ -369,7 +369,7 @@ export default function CalendarPage() {
           <div className="relative">
             <button
               onClick={() => setViewMenuOpen((o) => !o)}
-              className="flex items-center gap-2 bg-chip hover:bg-line/60 transition-colors rounded-full px-3.5 py-2 text-[13.5px] font-medium"
+              className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors rounded-full px-3.5 py-2 text-[13.5px] font-medium"
             >
               <ViewIcon size={14} strokeWidth={1.75} /> {view}
               <ChevronDown size={12} strokeWidth={2} className="text-muted" />
@@ -403,23 +403,23 @@ export default function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center">
+          <button className="w-9 h-9 rounded-full bg-chip hover:bg-btn transition-colors flex items-center justify-center">
             <Search size={15} strokeWidth={1.75} />
           </button>
-          <button className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center">
+          <button className="w-9 h-9 rounded-full bg-chip hover:bg-btn transition-colors flex items-center justify-center">
             <SlidersHorizontal size={15} strokeWidth={1.75} />
           </button>
           <button
             onClick={refresh}
             title="Refresh calendar"
             aria-label="Refresh calendar"
-            className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-chip hover:bg-btn transition-colors flex items-center justify-center"
           >
             <RotateCw size={15} strokeWidth={1.75} className={syncing ? "animate-spin" : ""} />
           </button>
           <button
             onClick={goToday}
-            className="bg-chip px-3.5 py-2 rounded-full text-[13.5px] font-medium hover:bg-line/60 transition-colors"
+            className="bg-chip px-3.5 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors"
           >
             Today
           </button>

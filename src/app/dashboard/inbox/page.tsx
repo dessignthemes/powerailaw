@@ -553,7 +553,7 @@ export default function InboxPage() {
                     <button
                       onClick={loadMore}
                       disabled={listLoading}
-                      className="w-full py-2 rounded-full bg-chip text-[13px] font-medium hover:bg-line/60 disabled:opacity-60 flex items-center justify-center gap-2"
+                      className="w-full py-2 rounded-full bg-chip text-[13px] font-medium hover:bg-btn disabled:opacity-60 flex items-center justify-center gap-2"
                     >
                       {listLoading && <Loader2 size={13} className="animate-spin" />} Load more
                     </button>
@@ -596,7 +596,7 @@ export default function InboxPage() {
                     {message.html && !showImages && (
                       <button
                         onClick={() => setShowImages(true)}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-line/60"
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
                         title="Remote images are blocked by default because they can tell the sender you opened the email."
                       >
                         <ImageIcon size={12} /> Show images
@@ -607,7 +607,7 @@ export default function InboxPage() {
                         href={message.webLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-line/60"
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
                       >
                         <ExternalLink size={12} /> Open in {provider ? providerLabel[provider] : "mail"}
                       </a>

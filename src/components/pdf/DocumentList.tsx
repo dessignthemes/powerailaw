@@ -254,7 +254,7 @@ export default function DocumentList({
                     {latest && (
                       <button
                         onClick={() => download(latest.id)}
-                        className="bg-chip hover:bg-line/70 text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+                        className="bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
                       >
                         <Download size={13} strokeWidth={2} /> Download
                       </button>
@@ -360,7 +360,7 @@ export function MatterPicker({
         onClick={() => setOpen(!open)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex items-center gap-2 bg-chip hover:bg-line/50 transition-colors pl-3.5 pr-3 py-2 rounded-full text-[13.5px] font-medium max-w-[320px]"
+        className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors pl-3.5 pr-3 py-2 rounded-full text-[13.5px] font-medium max-w-[320px]"
       >
         {current ? (
           <Folder size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />

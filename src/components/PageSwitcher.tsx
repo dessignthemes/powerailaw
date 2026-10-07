@@ -20,7 +20,7 @@ export default function PageSwitcher() {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2 bg-chip hover:bg-line/60 transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+        className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
       >
         <CurrentIcon size={15} strokeWidth={1.75} />
         {current.label}

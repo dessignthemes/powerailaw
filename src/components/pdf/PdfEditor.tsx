@@ -550,7 +550,7 @@ export default function PdfEditor({
       }}
       title={hint}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-        tool === t ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-line/60"
+        tool === t ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-btn"
       }`}
     >
       {icon} {label}
@@ -580,7 +580,7 @@ export default function PdfEditor({
               setSelectedId(null);
               setSigModal({});
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip hover:bg-line/60 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip hover:bg-btn transition-colors"
           >
             <PenTool size={13} /> Signature
           </button>

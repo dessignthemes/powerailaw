@@ -84,7 +84,7 @@ export function GenericDropdown({
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 bg-chip hover:bg-line/50 transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium"
+        className="flex items-center gap-1.5 bg-chip hover:bg-btn transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium"
       >
         {trigger}
         <ChevronDown size={12} strokeWidth={1.75} className="text-muted" />

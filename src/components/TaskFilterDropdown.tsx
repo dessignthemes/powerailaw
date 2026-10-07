@@ -16,7 +16,7 @@ export default function TaskFilterDropdown() {
     <div className="relative inline-block">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 bg-chip hover:bg-line/60 transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+        className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
       >
         <SlidersHorizontal size={14} strokeWidth={1.75} />
         All tasks

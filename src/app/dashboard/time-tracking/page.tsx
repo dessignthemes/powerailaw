@@ -186,7 +186,7 @@ export default function TimeTrackingPage() {
                 }}
                 aria-label="Edit entry"
                 title="Edit entry"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-chip hover:text-ink hover:bg-line/70 transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-chip hover:text-ink hover:bg-btn transition-colors"
               >
                 <Pencil size={13} strokeWidth={1.75} />
               </button>
@@ -225,7 +225,7 @@ export default function TimeTrackingPage() {
           <div className="relative">
             <button
               onClick={() => setViewMenuOpen((o) => !o)}
-              className="flex items-center gap-2 bg-chip hover:bg-line/60 transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+              className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
             >
               {view === "timesheet" ? <Calendar size={14} strokeWidth={1.75} /> : <List size={14} strokeWidth={1.75} />}
               {view === "timesheet" ? "Timesheet" : "Time entries"}
@@ -262,7 +262,7 @@ export default function TimeTrackingPage() {
             <button
               onClick={() => setFilterOpen((o) => !o)}
               aria-label="Filters"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" || everyone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/60"}`}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" || everyone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"}`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
             </button>
@@ -307,7 +307,7 @@ export default function TimeTrackingPage() {
               setEntries(null);
               setWeekStart(getWeekStart(new Date()));
             }}
-            className={`px-3.5 py-2 rounded-full text-[13.5px] font-medium ${isThisWeek ? "bg-chip" : "bg-chip hover:bg-line/60"}`}
+            className={`px-3.5 py-2 rounded-full text-[13.5px] font-medium ${isThisWeek ? "bg-chip" : "bg-chip hover:bg-btn"}`}
           >
             This week
           </button>

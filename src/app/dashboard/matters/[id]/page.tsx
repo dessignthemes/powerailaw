@@ -96,7 +96,7 @@ export default function MatterDetailPage() {
   return (
     <div className="px-10 py-10">
       <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium mb-5">
-        <Link href="/dashboard/matters" className="bg-chip px-2.5 py-1 rounded-full hover:bg-line/50 transition-colors">
+        <Link href="/dashboard/matters" className="bg-chip px-2.5 py-1 rounded-full hover:bg-btn transition-colors">
           Matters
         </Link>
         <ChevronRight size={13} strokeWidth={1.75} />
@@ -108,14 +108,14 @@ export default function MatterDetailPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setEditModalOpen(true)}
-            className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center"
+            className="w-9 h-9 rounded-full bg-chip hover:bg-btn transition-colors flex items-center justify-center"
           >
             <Pencil size={15} strokeWidth={1.75} />
           </button>
           <div className="relative">
             <button
               onClick={() => setMenuOpen((o) => !o)}
-              className="w-9 h-9 rounded-full bg-chip hover:bg-line/60 transition-colors flex items-center justify-center"
+              className="w-9 h-9 rounded-full bg-chip hover:bg-btn transition-colors flex items-center justify-center"
             >
               <MoreHorizontal size={15} strokeWidth={1.75} />
             </button>

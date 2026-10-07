@@ -220,14 +220,14 @@ function DropboxBrowser() {
               onClick={() => setReload((n) => n + 1)}
               title="Refresh"
               aria-label="Refresh"
-              className="w-9 h-9 rounded-full bg-chip hover:bg-line/70 flex items-center justify-center transition-colors"
+              className="w-9 h-9 rounded-full bg-chip hover:bg-btn flex items-center justify-center transition-colors"
             >
               <RefreshCw size={15} strokeWidth={1.75} className={loading ? "animate-spin" : ""} />
             </button>
             <button
               onClick={disconnectDropbox}
               disabled={disconnecting}
-              className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50"
+              className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50"
             >
               {disconnecting ? "Disconnecting…" : "Disconnect"}
             </button>
@@ -380,7 +380,7 @@ function DropboxBrowser() {
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 {loadingMore && <Loader2 size={14} className="animate-spin" />} Load more
               </button>
@@ -576,7 +576,7 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
           )}
           <button
             onClick={download}
-            className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 transition-colors"
+            className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 transition-colors"
           >
             <Download size={14} strokeWidth={2} /> Download
           </button>

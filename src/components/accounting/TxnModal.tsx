@@ -226,7 +226,7 @@ export default function TxnModal({
                 if (CAT[category]?.kind !== k) setCategory("uncategorized");
               }}
               className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                kind === k ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/70"
+                kind === k ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"
               }`}
             >
               {k === "expense" ? "Money out" : k === "income" ? "Money in" : "Transfer / owner"}
@@ -313,7 +313,7 @@ export default function TxnModal({
             </button>
           )}
           <div className="flex-1" />
-          <button onClick={onClose} disabled={!!busy} className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">
+          <button onClick={onClose} disabled={!!busy} className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">
             Cancel
           </button>
           <button onClick={save} disabled={!!busy} className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover flex items-center gap-1.5 disabled:opacity-60">

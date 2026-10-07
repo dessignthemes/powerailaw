@@ -131,7 +131,7 @@ export default function FolderPanel({
             {onRetry && (
               <button
                 onClick={onRetry}
-                className="bg-chip hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
+                className="bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
               >
                 Try again
               </button>

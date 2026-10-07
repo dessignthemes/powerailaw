@@ -178,7 +178,7 @@ export default function MattersPage() {
               <div key={group.status}>
                 <button
                   onClick={() => toggleCollapsed(group.status)}
-                  className="w-full flex items-center gap-2.5 bg-chip hover:bg-line/50 transition-colors px-4 py-3 rounded-xl text-left"
+                  className="w-full flex items-center gap-2.5 bg-chip hover:bg-btn transition-colors px-4 py-3 rounded-xl text-left"
                 >
                   {isCollapsed ? (
                     <ChevronRight size={15} strokeWidth={1.75} className="text-muted" />

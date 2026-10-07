@@ -20,7 +20,7 @@ export default function DropdownField({
     <div className="relative flex-1">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-2 border border-line rounded-xl px-3.5 py-2.5 text-[13.5px] bg-chip hover:bg-line/50 transition-colors"
+        className="w-full flex items-center justify-between gap-2 border border-line rounded-xl px-3.5 py-2.5 text-[13.5px] bg-chip hover:bg-btn transition-colors"
       >
         <span className="flex items-center gap-2">
           {icon}

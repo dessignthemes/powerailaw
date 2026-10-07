@@ -535,7 +535,7 @@ export default function EventDetailModal({
                   }}
                   disabled={!detail}
                   title={detail ? undefined : "Loading…"}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-ink bg-chip hover:bg-line/70 transition-colors disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-ink bg-chip hover:bg-btn transition-colors disabled:opacity-40"
                 >
                   <Pencil size={14} strokeWidth={1.75} /> Edit event
                 </button>
@@ -546,7 +546,7 @@ export default function EventDetailModal({
                     href={link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-ink bg-chip hover:bg-line/70 transition-colors"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-ink bg-chip hover:bg-btn transition-colors"
                   >
                     <ExternalLink size={13} strokeWidth={1.75} /> Open in{" "}
                     {event.provider === "microsoft" ? "Outlook" : "Google"}

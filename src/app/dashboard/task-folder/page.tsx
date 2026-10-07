@@ -380,7 +380,7 @@ export default function TaskFolderPage() {
               </div>
               {next && (
                 <div className="text-center mt-4">
-                  <button onClick={loadMore} disabled={listLoading} className="px-4 py-2 rounded-full bg-chip text-[13px] font-medium hover:bg-line/60 disabled:opacity-50">
+                  <button onClick={loadMore} disabled={listLoading} className="px-4 py-2 rounded-full bg-chip text-[13px] font-medium hover:bg-btn disabled:opacity-50">
                     {listLoading ? "Loading…" : "Load more"}
                   </button>
                 </div>

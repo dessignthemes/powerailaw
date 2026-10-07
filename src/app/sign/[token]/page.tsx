@@ -199,7 +199,7 @@ export default function SignPage({ params }: { params: Promise<{ token: string }
       <div className="fixed bottom-0 inset-x-0 bg-white border-t border-line shadow-[0_-8px_24px_rgba(20,24,33,0.08)]">
         <div className="max-w-[900px] mx-auto px-5 py-3.5 flex items-center gap-3 flex-wrap">
           <div className="text-[13px] text-muted">{completed} of {required.length} required fields done</div>
-          {!allDone && <button onClick={nextField} className="bg-chip hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[13px] font-medium">Next field</button>}
+          {!allDone && <button onClick={nextField} className="bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium">Next field</button>}
           <label className="flex items-start gap-2 text-[12.5px] flex-1 min-w-[260px]">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="accent-black mt-0.5" />
             <span>{view.consentText}</span>
@@ -305,7 +305,7 @@ function SignaturePad({ kind, defaultText, onClose, onAdopt }: { kind: "signatur
         </div>
         <div className="flex gap-2 mb-3">
           {(["type", "draw"] as const).map((m) => (
-            <button key={m} onClick={() => { setMode(m); setDrawn(false); }} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium capitalize ${mode === m ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-line/70"}`}>{m}</button>
+            <button key={m} onClick={() => { setMode(m); setDrawn(false); }} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium capitalize ${mode === m ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"}`}>{m}</button>
           ))}
         </div>
         {mode === "type" && <input value={text} onChange={(e) => setText(e.target.value)} className="w-full border border-line rounded-lg px-3 py-2 text-[14px] mb-3 outline-none focus:border-ink" />}

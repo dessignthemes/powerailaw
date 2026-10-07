@@ -233,7 +233,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         </div>
         {templates && cardId && (
           <div className="flex gap-2">
-            <button onClick={intakeSheet} disabled={!!docBusy || saving} className="bg-chip hover:bg-line/70 px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
+            <button onClick={intakeSheet} disabled={!!docBusy || saving} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
               {docBusy === "intake" ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />} Intake sheet
             </button>
             <button onClick={() => setEngagementOpen(true)} disabled={saving} className="bg-btn hover:bg-btn-hover px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
@@ -357,8 +357,8 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         {error && <span className="text-[13px] text-red-700 mr-auto">{error}</span>}
         {!error && notice && <span className="text-[13px] text-green-700 mr-auto">{notice}</span>}
         <div className="ml-auto flex gap-2">
-          <button onClick={cancel} disabled={saving} className="bg-chip hover:bg-line/70 px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
-          <button onClick={() => save(false)} disabled={saving || (!dirty && !!cardId)} className="bg-chip hover:bg-line/70 px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Save</button>
+          <button onClick={cancel} disabled={saving} className="bg-chip hover:bg-btn px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
+          <button onClick={() => save(false)} disabled={saving || (!dirty && !!cardId)} className="bg-chip hover:bg-btn px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Save</button>
           <button onClick={() => save(true)} disabled={saving} className="bg-btn hover:bg-btn-hover px-5 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-60">
             {saving && <Loader2 size={14} className="animate-spin" />} Save &amp; Close
           </button>
@@ -466,7 +466,7 @@ function PersonView({ person: p, setPerson, photo, setPhoto }: { person: Person;
             </div>
           ))}
           {!p.extra.length && <p className="text-[13.5px] text-muted mb-1">Add any other details you track for this person.</p>}
-          <button type="button" onClick={() => setPerson({ extra: [...p.extra, { label: "", value: "" }] })} className="bg-chip hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[13px] font-medium justify-self-start flex items-center gap-1">
+          <button type="button" onClick={() => setPerson({ extra: [...p.extra, { label: "", value: "" }] })} className="bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium justify-self-start flex items-center gap-1">
             <Plus size={13} /> Add field
           </button>
         </div>
@@ -693,7 +693,7 @@ function DocumentsView({ clientId, matters }: { clientId: string | null; matters
               </select>
             )}
             <input ref={fileRef} type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) upload(f); }} />
-            <button onClick={() => fileRef.current?.click()} disabled={busy} className="bg-chip hover:bg-line/70 px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
+            <button onClick={() => fileRef.current?.click()} disabled={busy} className="bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
               {busy ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />} Import document
             </button>
           </div>
@@ -907,7 +907,7 @@ function EngagementModal({ cardType, profile, dear, matters, onClose, onCreate }
         <p className="text-[12.5px] text-muted mt-3">The letter reads: &quot;Representing {cardType === "company" ? profile.company.name : profile.people.map(personName).filter(Boolean).join(" and ") || "…"} with the {kind} of {prop || "…"}.&quot;</p>
         {err && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{err}</div>}
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} disabled={busy} className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
+          <button onClick={onClose} disabled={busy} className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
           <button
             disabled={busy || !prop.trim()}
             onClick={async () => {

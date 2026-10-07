@@ -458,7 +458,7 @@ function Agent() {
             <button
               onClick={() => newChat()}
               title="Start a new conversation"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip text-ink hover:bg-line/60 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip text-ink hover:bg-btn transition-colors"
             >
               <SquarePen size={14} strokeWidth={1.75} /> New Chat
             </button>
@@ -467,7 +467,7 @@ function Agent() {
               aria-pressed={historyOpen}
               title="Past conversations"
               className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                historyOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-line/60"
+                historyOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-btn"
               }`}
             >
               <History size={14} strokeWidth={1.75} /> History
@@ -475,7 +475,7 @@ function Agent() {
             <button
               onClick={() => setMemoryOpen(!memoryOpen)}
               className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                memoryOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-line/60"
+                memoryOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-btn"
               }`}
             >
               <Brain size={14} strokeWidth={1.75} /> Memory

@@ -239,7 +239,7 @@ export default function RecordsPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                tab === t.key ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-line/70"
+                tab === t.key ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-btn"
               }`}
             >
               {t.label} <span className={tab === t.key ? "text-ink/60" : "text-muted"}>{loaded ? counts[t.key] : ""}</span>
@@ -288,7 +288,7 @@ export default function RecordsPage() {
             {q ? (
               <>
                 <div className="text-[14.5px] font-medium">No records match “{query.trim()}”</div>
-                <button onClick={() => setQuery("")} className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium mt-4 transition-colors">
+                <button onClick={() => setQuery("")} className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium mt-4 transition-colors">
                   Clear search
                 </button>
               </>

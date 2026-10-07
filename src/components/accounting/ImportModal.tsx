@@ -164,7 +164,7 @@ export default function ImportModal({ onClose, onImported }: { onClose: () => vo
         {error && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{error}</div>}
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} disabled={busy} className="bg-chip hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">
+          <button onClick={onClose} disabled={busy} className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">
             Cancel
           </button>
           <button onClick={go} disabled={!ready || busy} className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover flex items-center gap-1.5 disabled:opacity-50">

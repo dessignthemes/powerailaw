@@ -227,7 +227,7 @@ export default function NewEventModal({
             <div className="flex-1 relative">
               <button
                 onClick={() => setMatterOpen((o) => !o)}
-                className="w-full flex items-center gap-2 border border-line rounded-xl px-3.5 py-2.5 text-[13.5px] bg-chip hover:bg-line/50 transition-colors text-left"
+                className="w-full flex items-center gap-2 border border-line rounded-xl px-3.5 py-2.5 text-[13.5px] bg-chip hover:bg-btn transition-colors text-left"
               >
                 <Folder size={13} strokeWidth={1.75} className="text-muted flex-shrink-0" />
                 <span className={matter ? "text-ink" : "text-muted"}>{matter ?? "Matter"}</span>
