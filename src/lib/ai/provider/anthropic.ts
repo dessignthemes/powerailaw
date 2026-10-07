@@ -47,7 +47,15 @@ export class AnthropicProvider implements ChatProvider {
   constructor(apiKey: string, readonly model: string, opts: { timeoutMs: number; maxRetries: number; fetch?: typeof fetch }) {
     // The SDK retries connection errors, 408/409/429 and 5xx with backoff,
     // up to maxRetries; timeout applies per attempt.
-    this.client = new Anthropic({ apiKey, timeout: opts.timeoutMs, maxRetries: opts.maxRetries, fetch: opts.fetch });
+    // Organization-level keys (not tied to a workspace) must name one.
+    const workspace = process.env.ANTHROPIC_WORKSPACE_ID?.trim();
+    this.client = new Anthropic({
+      apiKey,
+      timeout: opts.timeoutMs,
+      maxRetries: opts.maxRetries,
+      fetch: opts.fetch,
+      ...(workspace ? { defaultHeaders: { "anthropic-workspace-id": workspace } } : {}),
+    });
   }
 
   async *stream(req: ChatRequest): AsyncGenerator<ProviderEvent> {

@@ -77,8 +77,8 @@ export default function PrivacyPage() {
       <H2>4. AI features</H2>
       <P>
         When you use the AI Agent or AI Accountant, the content needed to answer your request (your message, relevant document excerpts, the
-        selected matter&apos;s details, and any emails or calendar events the Agent looks up for you) is sent to our AI provider, OpenAI, through its
-        business API to generate the response. Under OpenAI&apos;s API terms, this data is not used to train OpenAI&apos;s models. AI output can be
+        selected matter&apos;s details, and any emails or calendar events the Agent looks up for you) is sent to our AI provider, Anthropic (Claude), through its
+        commercial API to generate the response. Under Anthropic&apos;s commercial terms, this data is not used to train its models. AI output can be
         wrong; LawPower is a tool for legal professionals and does not provide legal, tax or accounting advice.
       </P>
 
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
       <UL>
         <li><strong>Supabase</strong> — database, sign-in and file storage (United States).</li>
         <li><strong>Vercel</strong> — application hosting.</li>
-        <li><strong>OpenAI</strong> — AI processing for features you use.</li>
+        <li><strong>Anthropic</strong> — AI processing (Claude) for features you use.</li>
         <li><strong>Google, Microsoft and Dropbox</strong> — only to connect the accounts you choose to connect.</li>
       </UL>
       <P>

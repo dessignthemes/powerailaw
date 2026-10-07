@@ -4,7 +4,7 @@ import { AnthropicProvider } from "@/lib/ai/provider/anthropic";
 import { OpenAIProvider } from "@/lib/ai/provider/openai";
 
 // Supported model IDs. Override with AI_MODEL.
-export const DEFAULT_MODELS = { anthropic: "claude-sonnet-5", openai: "gpt-5.5" } as const;
+export const DEFAULT_MODELS = { anthropic: "claude-sonnet-5-5", openai: "gpt-5.5" } as const;
 export type ProviderName = keyof typeof DEFAULT_MODELS;
 
 export const PROVIDER_LABEL: Record<ProviderName, string> = { anthropic: "Anthropic", openai: "OpenAI" };
