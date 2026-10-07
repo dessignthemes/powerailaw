@@ -73,14 +73,14 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto">
-        <div className="mb-1">
+        <div className="mb-1 flex flex-col gap-[2px]">
           {mainLinks.map((l) => (
             <NavItem key={l.label} {...l} active={isActiveLink(l.href, pathname)} />
           ))}
         </div>
 
-        <div className="mt-5 mb-1">
-          <div className="px-3 text-[10.5px] font-semibold uppercase tracking-wide text-muted mb-1">
+        <div className="mt-5 mb-1 flex flex-col gap-[2px]">
+          <div className="px-3 text-[10.5px] font-semibold uppercase tracking-wide text-muted mb-0.5">
             Tools
           </div>
           {toolLinks.map((l) => (
@@ -88,8 +88,8 @@ export default function Sidebar() {
           ))}
         </div>
 
-        <div className="mt-5 mb-1">
-          <div className="px-3 text-[10.5px] font-semibold uppercase tracking-wide text-muted mb-1">
+        <div className="mt-5 mb-1 flex flex-col gap-[2px]">
+          <div className="px-3 text-[10.5px] font-semibold uppercase tracking-wide text-muted mb-0.5">
             Workspace
           </div>
           {workspaceLinks.map((l) =>
