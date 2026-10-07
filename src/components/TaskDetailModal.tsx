@@ -1,12 +1,24 @@
 "use client";
 
 import AssigneeOptions from "@/components/AssigneeOptions";
-import { useCallback, useState, useEffect } from "react";
-import { getTimer, startTimer, clearTimer, saveTimer, formatMinutes, type RunningTimer } from "@/lib/taskTimer";
+import { useCallback, useState, useEffect, useRef } from "react";
+import {
+  formatMinutes,
+  getAutoTimer,
+  setAutoTimer,
+  newSession,
+  storeSession,
+  dropSession,
+  saveSession,
+  recoverSessions,
+  MIN_SAVE_MS,
+  type TaskSession,
+} from "@/lib/taskTimer";
 import {
   X,
   Maximize2,
-  Square,
+  Pause,
+  Trash2,
   ExternalLink,
   Bold,
   Italic,
@@ -81,20 +93,7 @@ export default function TaskDetailModal({
   const [tab, setTab] = useState("Comments");
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<TaskComment[]>(task.comments ?? []);
-  // Task timer: survives closing this window; stopping it saves a time entry.
-  const [timer, setTimer] = useState<RunningTimer | null>(() => (typeof window === "undefined" ? null : getTimer()));
-  const [now, setNow] = useState(() => Date.now());
-  const [timerMsg, setTimerMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [timerBusy, setTimerBusy] = useState(false);
   const [taskEntries, setTaskEntries] = useState<{ id: string; minutes: number; date: string; description: string; source: string }[] | null>(null);
-  const timerRunning = !!timer && timer.taskId === task.id;
-  const elapsedSeconds = timerRunning ? Math.max(0, Math.floor((now - new Date(timer!.startedAt).getTime()) / 1000)) : 0;
-
-  useEffect(() => {
-    if (!timerRunning) return;
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, [timerRunning]);
 
   const loadTaskEntries = useCallback(() => {
     fetch(`/api/time-entries?task=${task.id}&everyone=1`)
@@ -103,36 +102,101 @@ export default function TaskDetailModal({
       .catch(() => setTaskEntries([]));
   }, [task.id]);
 
-  async function toggleTimer() {
-    setTimerMsg(null);
-    if (timerRunning && timer) {
-      setTimerBusy(true);
-      try {
-        const { minutes } = await saveTimer(timer);
-        clearTimer();
-        setTimer(null);
-        setTimerMsg({ ok: true, text: `Saved ${formatMinutes(minutes)} to your timesheet.` });
-        loadTaskEntries();
-      } catch (e) {
-        setTimerMsg({ ok: false, text: `${(e as Error).message} The timer is still running.` });
-      } finally {
-        setTimerBusy(false);
-      }
-      return;
-    }
-    const other = getTimer();
-    if (other && other.taskId !== task.id) {
-      if (!confirm(`A timer is running on “${other.title}”. Stop it (and save that time) and start one here?`)) return;
-      try {
-        await saveTimer(other);
-      } catch (e) {
-        setTimerMsg({ ok: false, text: (e as Error).message });
-        return;
-      }
-    }
-    setNow(Date.now());
-    setTimer(startTimer(task.id, title || task.title));
+  // Automatic timer: starts when the task opens, saves one time entry when it closes.
+  const sessionRef = useRef<TaskSession | null>(null);
+  const lastTickRef = useRef(Date.now());
+  const titleRef = useRef(task.title);
+  titleRef.current = title || task.title;
+  const [clock, setClock] = useState<{ active: boolean; running: boolean; ms: number }>({ active: false, running: false, ms: 0 });
+  const [autoOn, setAutoOn] = useState(() => (typeof window === "undefined" ? true : getAutoTimer()));
+
+  const show = useCallback(() => {
+    const s = sessionRef.current;
+    setClock(s ? { active: true, running: s.running, ms: s.activeMs } : { active: false, running: false, ms: 0 });
+  }, []);
+
+  // Count time since the last tick. Gaps over 2 minutes (computer asleep) are not counted.
+  const tick = useCallback(() => {
+    const now = Date.now();
+    const delta = now - lastTickRef.current;
+    lastTickRef.current = now;
+    const s = sessionRef.current;
+    if (!s) return;
+    if (s.running && delta > 0 && delta < 120_000) s.activeMs += delta;
+    s.lastSeen = now;
+    s.title = titleRef.current;
+    storeSession(s);
+  }, []);
+
+  const startSession = useCallback(() => {
+    lastTickRef.current = Date.now();
+    sessionRef.current = newSession(task.id, titleRef.current);
+    storeSession(sessionRef.current);
+    show();
+  }, [task.id, show]);
+
+  // Ends the session and saves it (fire-and-forget when the window is closing).
+  const finishSession = useCallback(() => {
+    tick();
+    const s = sessionRef.current;
+    sessionRef.current = null;
+    if (!s) return Promise.resolve(0);
+    dropSession(s.id);
+    return saveSession(s).catch(() => {
+      storeSession({ ...s, closed: true }); // saved next time a task is opened
+      return 0;
+    });
+  }, [tick]);
+
+  useEffect(() => {
+    const auto = getAutoTimer();
+    recoverSessions().then((n) => n && loadTaskEntries());
+    loadTaskEntries();
+    if (auto) startSession();
+    const interval = setInterval(() => {
+      tick();
+      show();
+    }, 1000);
+    const onHide = () => void finishSession();
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted && getAutoTimer()) startSession(); // page restored from the back/forward cache
+    };
+    window.addEventListener("pagehide", onHide);
+    window.addEventListener("pageshow", onShow);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("pagehide", onHide);
+      window.removeEventListener("pageshow", onShow);
+      void finishSession(); // closing the task stops and records the time
+    };
+  }, [task.id, startSession, finishSession, tick, show, loadTaskEntries]);
+
+  function pauseOrResume() {
+    const s = sessionRef.current;
+    if (!s) return startSession();
+    tick();
+    s.running = !s.running;
+    lastTickRef.current = Date.now();
+    storeSession(s);
+    show();
   }
+
+  function discardSession() {
+    const s = sessionRef.current;
+    if (!s) return;
+    sessionRef.current = null;
+    dropSession(s.id);
+    show();
+  }
+
+  function toggleAuto() {
+    const next = !autoOn;
+    setAutoOn(next);
+    setAutoTimer(next);
+    if (next && !sessionRef.current) startSession();
+  }
+
+  const loggedMinutes = (taskEntries ?? []).reduce((n, e) => n + e.minutes, 0);
 
   function formatElapsed(totalSeconds: number) {
     const m = Math.floor(totalSeconds / 60);
@@ -191,6 +255,16 @@ export default function TaskDetailModal({
             </button>
           </div>
         </div>
+
+        <TimerBar
+          clock={clock}
+          autoOn={autoOn}
+          loggedMinutes={loggedMinutes}
+          onPause={pauseOrResume}
+          onDiscard={discardSession}
+          onToggleAuto={toggleAuto}
+          format={formatElapsed}
+        />
 
         <div className="px-7 pt-3">
           <input
@@ -431,22 +505,6 @@ export default function TaskDetailModal({
           </div>
         )}
 
-        <div className="flex items-center justify-between px-7 py-4 border-t border-line">
-          <button
-            onClick={toggleTimer}
-            disabled={timerBusy}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50 ${
-              timerRunning ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring hover:bg-btn-hover" : "bg-card-alt text-ink hover:bg-line/70"
-            }`}
-          >
-            {timerRunning ? <Square size={11} fill="currentColor" /> : <Play size={13} strokeWidth={1.75} />}
-            {timerBusy ? "Saving…" : timerRunning ? "Stop & save time" : "Start timer"}
-          </button>
-          <span className="flex items-center gap-3">
-            {timerMsg && <span className={`text-[12.5px] ${timerMsg.ok ? "text-[#2F5E2A]" : "text-red-600"}`}>{timerMsg.text}</span>}
-            <span className={`text-[13px] mono ${timerRunning ? "text-ink font-semibold" : "text-muted"}`}>{formatElapsed(elapsedSeconds)}</span>
-          </span>
-        </div>
       </div>
     </div>
   );
@@ -463,7 +521,7 @@ function TimeForTask({
     load();
   }, [load]);
   if (!entries) return <div className="text-[13.5px] text-muted py-2">Loading time…</div>;
-  if (!entries.length) return <div className="text-[13.5px] text-muted py-2">No time logged yet. Use the timer below, or add an entry in Time tracking.</div>;
+  if (!entries.length) return <div className="text-[13.5px] text-muted py-2">No time logged yet. Time is recorded automatically while this task is open.</div>;
   const total = entries.reduce((n, e) => n + e.minutes, 0);
   return (
     <div className="text-[13.5px]">
@@ -478,6 +536,78 @@ function TimeForTask({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function TimerBar({
+  clock,
+  autoOn,
+  loggedMinutes,
+  onPause,
+  onDiscard,
+  onToggleAuto,
+  format,
+}: {
+  clock: { active: boolean; running: boolean; ms: number };
+  autoOn: boolean;
+  loggedMinutes: number;
+  onPause: () => void;
+  onDiscard: () => void;
+  onToggleAuto: () => void;
+  format: (s: number) => string;
+}) {
+  const seconds = Math.floor(clock.ms / 1000);
+  const state = !clock.active ? "Timer off" : clock.running ? "Recording time" : "Paused";
+  return (
+    <div className="mx-7 mt-2 flex flex-wrap items-center gap-3 rounded-2xl bg-card-alt px-4 py-2.5">
+      <span className="flex items-center gap-2 text-[13.5px] font-medium">
+        <span
+          className={`w-2 h-2 rounded-full ${clock.active && clock.running ? "bg-[#2F9E5A] animate-pulse" : "bg-[#AEB8C6]"}`}
+          aria-hidden
+        />
+        {state}
+      </span>
+      <span className={`mono text-[15px] ${clock.active ? "text-ink font-semibold" : "text-muted"}`} aria-live="off">
+        {format(seconds)}
+      </span>
+      <button
+        onClick={onPause}
+        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium bg-btn text-ink hover:bg-btn-hover transition-colors"
+      >
+        {clock.active && clock.running ? <Pause size={12} strokeWidth={2} /> : <Play size={12} strokeWidth={2} />}
+        {!clock.active ? "Start" : clock.running ? "Pause" : "Resume"}
+      </button>
+      {clock.active && (
+        <button
+          onClick={onDiscard}
+          title="Throw away this time (nothing is recorded)"
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-btn transition-colors"
+        >
+          <Trash2 size={12} strokeWidth={1.75} />
+          Don&apos;t record
+        </button>
+      )}
+      <span className="ml-auto flex items-center gap-4 text-[13px] text-muted">
+        <span>
+          Logged on this task: <span className="text-ink font-medium">{formatMinutes(loggedMinutes)}</span>
+        </span>
+        <button
+          onClick={onToggleAuto}
+          role="switch"
+          aria-checked={autoOn}
+          title="Start the timer automatically when a task is opened"
+          className="flex items-center gap-2 hover:text-ink"
+        >
+          Auto-start
+          <span className={`relative w-8 h-[18px] rounded-full transition-colors ${autoOn ? "bg-ink" : "bg-btn-ring"}`}>
+            <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all ${autoOn ? "left-[16px]" : "left-[2px]"}`} />
+          </span>
+        </button>
+      </span>
+      {clock.active && clock.ms < MIN_SAVE_MS && (
+        <span className="basis-full text-[12px] text-muted">Saved to your timesheet when you close the task (quick looks under 30 seconds aren&apos;t recorded).</span>
+      )}
     </div>
   );
 }
