@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Kanban,
@@ -43,6 +43,7 @@ import {
   matchesFilters,
   matchesSearch,
   sortTasks,
+  manualKey,
   type AdvancedFilters,
   type DisplayOptions,
 } from "@/components/TaskBoardControls";
@@ -332,15 +333,24 @@ function TaskBoard({
       ? tasks.filter((t) => t.columnId === col.id)
       : tasks.filter((t) => t.status === col.status && !(t.columnId && customIds.has(t.columnId)));
 
-  // Drag and drop: drag a task card onto another column to move it there.
+  // Drag and drop: drag a task card to another column, or up/down within a column
+  // to arrange it (saved as the card's position, shown in "My order").
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropCol, setDropCol] = useState<string | null>(null);
+  const [dropBefore, setDropBefore] = useState<string | null>(null); // card to drop above; null = bottom
+  const endDrag = () => {
+    setDragId(null);
+    setDropCol(null);
+    setDropBefore(null);
+  };
   const dropProps = (col: Column) => ({
     onDragOver: (e: React.DragEvent) => {
       if (!dragId) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
       if (dropCol !== col.id) setDropCol(col.id);
+      // Over empty space (not a card): drop at the bottom.
+      if (!(e.target as Element).closest?.("[data-task-card]") && dropBefore !== null) setDropBefore(null);
     },
     onDragLeave: (e: React.DragEvent) => {
       if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropCol((c) => (c === col.id ? null : c));
@@ -348,13 +358,34 @@ function TaskBoard({
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
       const id = dragId ?? e.dataTransfer.getData("text/plain");
-      setDragId(null);
-      setDropCol(null);
+      const before = dropBefore;
+      endDrag();
       const t = tasks.find((x) => x.id === id);
       if (!t) return;
       const columnId = col.custom ? col.id : null;
-      if (t.status === col.status && (t.columnId ?? null) === columnId) return;
-      updateTask({ ...t, status: col.status, columnId });
+      // Neighbours in the column's own (manual) order, without the dragged card.
+      const list = sortTasks(tasksFor(col), "manual").filter((x) => x.id !== t.id);
+      const at = before ? list.findIndex((x) => x.id === before) : list.length;
+      const idx = at < 0 ? list.length : at;
+      const prev = list[idx - 1];
+      const next = list[idx];
+      const sameColumn = t.status === col.status && (t.columnId ?? null) === columnId;
+      if (sameColumn) {
+        const current = sortTasks(tasksFor(col), "manual");
+        const oldIdx = current.findIndex((x) => x.id === t.id);
+        if (oldIdx === idx) return; // dropped where it already was
+      }
+      const position =
+        prev && next
+          ? (manualKey(prev) + manualKey(next)) / 2
+          : prev
+            ? manualKey(prev) + 1000
+            : next
+              ? manualKey(next) - 1000
+              : (t.position ?? null);
+      updateTask({ ...t, status: col.status, columnId, position });
+      // Show the arrangement: switch the board to "My order" if it was sorted another way.
+      if (display.sort !== "manual") setDisplay({ ...display, sort: "manual" });
     },
   });
 
@@ -1077,7 +1108,7 @@ function TaskBoard({
                   </div>
                 </div>
 
-                <div className="px-3 pb-3 flex-1 min-h-0 overflow-y-auto flex flex-col">
+                <div className="px-3 pt-1.5 -mt-1.5 pb-3 flex-1 min-h-0 overflow-y-auto flex flex-col">
                   {colTasks.length === 0 && inlineAddFor !== col.id ? (
                     <button
                       onClick={() => {
@@ -1122,21 +1153,34 @@ function TaskBoard({
                       )}
 
                       {colTasks.map((t) => (
+                        <Fragment key={t.id}>
                         <div
                           key={t.id}
                           onClick={() => setSelectedTask(t)}
+                          data-task-card
                           draggable
                           onDragStart={(e) => {
                             e.dataTransfer.setData("text/plain", t.id);
                             e.dataTransfer.effectAllowed = "move";
                             setDragId(t.id);
                           }}
-                          onDragEnd={() => {
-                            setDragId(null);
-                            setDropCol(null);
+                          onDragEnd={endDrag}
+                          onDragOver={(e) => {
+                            if (!dragId) return;
+                            const r = e.currentTarget.getBoundingClientRect();
+                            const upper = e.clientY < r.top + r.height / 2;
+                            const i = colTasks.findIndex((x) => x.id === t.id);
+                            const target = upper ? t.id : (colTasks[i + 1]?.id ?? null);
+                            if (dropBefore !== target) setDropBefore(target);
                           }}
-                          className={`${dragId === t.id ? "opacity-40" : ""} bg-page rounded-xl px-3.5 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.08),0_1px_2px_rgba(27,25,26,0.04)] hover:shadow-[0_4px_12px_rgba(27,25,26,0.10),0_2px_4px_rgba(27,25,26,0.05)] transition-shadow`}
+                          className={`${dragId === t.id ? "opacity-40" : ""} relative bg-page rounded-xl px-3.5 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.08),0_1px_2px_rgba(27,25,26,0.04)] hover:shadow-[0_4px_12px_rgba(27,25,26,0.10),0_2px_4px_rgba(27,25,26,0.05)] transition-shadow`}
                         >
+                          {dragId && dragId !== t.id && dropCol === col.id && dropBefore === t.id && (
+                            <span className="absolute left-1 right-1 -top-[5.5px] h-[3px] rounded-full bg-[#3B82F6] pointer-events-none" aria-hidden />
+                          )}
+                          {dragId && dragId !== t.id && dropCol === col.id && dropBefore === null && t.id === colTasks[colTasks.length - 1]?.id && (
+                            <span className="absolute left-1 right-1 -bottom-[5.5px] h-[3px] rounded-full bg-[#3B82F6] pointer-events-none" aria-hidden />
+                          )}
                           <div className="flex items-start justify-between gap-2 mb-2.5">
                             <div className="text-[14px] font-normal leading-snug">{t.title}</div>
                             <div className="relative flex-shrink-0 -mt-0.5">
@@ -1209,6 +1253,7 @@ function TaskBoard({
                             )}
                           </div>
                         </div>
+                        </Fragment>
                       ))}
 
                       {inlineAddFor !== col.id && (

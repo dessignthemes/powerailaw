@@ -18,6 +18,7 @@ type TaskRow = {
   created_by?: string | null;
   updated_by?: string | null;
   column_id?: string | null;
+  position?: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -35,6 +36,7 @@ function toTask(row: TaskRow): BoardTask {
     boardId: row.board_id ?? null,
     createdBy: row.created_by ?? null,
     columnId: row.column_id ?? null,
+    position: typeof row.position === "number" ? row.position : null,
     updatedBy: row.updated_by ?? row.created_by ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -50,6 +52,8 @@ function toColumns(task: BoardTask) {
     assignee: task.assignee,
     due_date: task.dueDate || null,
     comments: task.comments ?? [],
+    // Only sent when the card has been arranged by hand.
+    ...(typeof task.position === "number" && Number.isFinite(task.position) ? { position: task.position } : {}),
   };
 }
 
@@ -101,13 +105,15 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   const run = (fields: Record<string, unknown>) =>
     supabase.from("tasks").update(fields).eq("id", id).eq("org_id", orgId).select("*").single();
 
-  let { data, error } = await run(userId ? { ...base, updated_by: userId } : base);
-  // Before 0009 is run there's no updated_by column; save without it.
-  if (error && userId && /updated_by/.test(error.message ?? "")) ({ data, error } = await run(base));
-  if (error && /column_id/.test(error.message ?? "")) {
-    const { column_id: _c, ...noColumn } = base as Record<string, unknown>;
-    void _c;
-    ({ data, error } = await run(noColumn));
+  // Columns added by later migrations; if one isn't there yet, save without it.
+  let fields: Record<string, unknown> = userId ? { ...base, updated_by: userId } : { ...base };
+  let { data, error } = await run(fields);
+  for (const col of ["updated_by", "column_id", "position"]) {
+    if (!error || !new RegExp(col).test(error.message ?? "") || !(col in fields)) continue;
+    const { [col]: _drop, ...rest } = fields;
+    void _drop;
+    fields = rest;
+    ({ data, error } = await run(fields));
   }
 
   if (error) throw error;

@@ -43,8 +43,15 @@ export function matchesSearch(t: BoardTask, q: string) {
 
 const PRIORITY_RANK: Record<Priority, number> = { High: 0, Medium: 1, Low: 2 };
 
+// Manual order: a dragged card's saved position, otherwise when it was added.
+export function manualKey(t: BoardTask) {
+  if (typeof t.position === "number") return t.position;
+  const added = Date.parse(t.createdAt ?? "");
+  return Number.isNaN(added) ? Number.MAX_SAFE_INTEGER : added;
+}
+
 export function sortTasks(list: BoardTask[], sort: SortKey) {
-  if (sort === "manual") return list;
+  if (sort === "manual") return [...list].sort((a, b) => manualKey(a) - manualKey(b));
   const out = [...list];
   if (sort === "due") out.sort((a, b) => (a.dueDate ?? "9999-99-99").localeCompare(b.dueDate ?? "9999-99-99"));
   if (sort === "priority") out.sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]);
@@ -126,7 +133,7 @@ export function FilterMenu({
 
 export function DisplayMenu({ value, onChange, onClose }: { value: DisplayOptions; onChange: (d: DisplayOptions) => void; onClose: () => void }) {
   const sorts: [SortKey, string][] = [
-    ["manual", "Order added"],
+    ["manual", "My order (drag to arrange)"],
     ["due", "Due date (soonest first)"],
     ["priority", "Priority (high first)"],
     ["newest", "Newest first"],
