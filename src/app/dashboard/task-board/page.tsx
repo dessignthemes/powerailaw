@@ -332,6 +332,32 @@ function TaskBoard({
       ? tasks.filter((t) => t.columnId === col.id)
       : tasks.filter((t) => t.status === col.status && !(t.columnId && customIds.has(t.columnId)));
 
+  // Drag and drop: drag a task card onto another column to move it there.
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropCol, setDropCol] = useState<string | null>(null);
+  const dropProps = (col: Column) => ({
+    onDragOver: (e: React.DragEvent) => {
+      if (!dragId) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (dropCol !== col.id) setDropCol(col.id);
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropCol((c) => (c === col.id ? null : c));
+    },
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      const id = dragId ?? e.dataTransfer.getData("text/plain");
+      setDragId(null);
+      setDropCol(null);
+      const t = tasks.find((x) => x.id === id);
+      if (!t) return;
+      const columnId = col.custom ? col.id : null;
+      if (t.status === col.status && (t.columnId ?? null) === columnId) return;
+      updateTask({ ...t, status: col.status, columnId });
+    },
+  });
+
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [colorPickerFor, setColorPickerFor] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -923,7 +949,10 @@ function TaskBoard({
                   ref={setRef}
                   onClick={() => toggleCollapsed(col.id, false)}
                   title={`Expand ${col.title}`}
-                  className="snap-start flex-shrink-0 w-[52px] border border-line rounded-2xl bg-card-alt hover:bg-line/50 flex flex-col items-center gap-3 py-4 transition-colors"
+                  {...dropProps(col)}
+                  className={`snap-start flex-shrink-0 w-[52px] border rounded-2xl flex flex-col items-center gap-3 py-4 transition-colors ${
+                    dropCol === col.id ? "border-btn-ring bg-chip" : "border-line bg-card-alt hover:bg-line/50"
+                  }`}
                 >
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
                   <span className="text-[12px] text-muted bg-cream rounded-full px-1.5">{colTasks.length}</span>
@@ -941,7 +970,10 @@ function TaskBoard({
                   // Empty columns are half height, with "Add a task" centered.
                   ...(colTasks.length === 0 ? { height: "50%", minHeight: 220, alignSelf: "flex-start" } : {}),
                 }}
-                className="snap-start border border-line rounded-2xl bg-card-alt flex flex-col min-h-0"
+                {...dropProps(col)}
+                className={`snap-start border rounded-2xl flex flex-col min-h-0 transition-colors ${
+                  dropCol === col.id ? "border-btn-ring bg-chip" : "border-line bg-card-alt"
+                }`}
               >
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
                   <div className="flex items-center gap-2 min-w-0">
@@ -1093,7 +1125,17 @@ function TaskBoard({
                         <div
                           key={t.id}
                           onClick={() => setSelectedTask(t)}
-                          className="bg-page rounded-xl px-3.5 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.08),0_1px_2px_rgba(27,25,26,0.04)] hover:shadow-[0_4px_12px_rgba(27,25,26,0.10),0_2px_4px_rgba(27,25,26,0.05)] transition-shadow"
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("text/plain", t.id);
+                            e.dataTransfer.effectAllowed = "move";
+                            setDragId(t.id);
+                          }}
+                          onDragEnd={() => {
+                            setDragId(null);
+                            setDropCol(null);
+                          }}
+                          className={`${dragId === t.id ? "opacity-40" : ""} bg-page rounded-xl px-3.5 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.08),0_1px_2px_rgba(27,25,26,0.04)] hover:shadow-[0_4px_12px_rgba(27,25,26,0.10),0_2px_4px_rgba(27,25,26,0.05)] transition-shadow`}
                         >
                           <div className="flex items-start justify-between gap-2 mb-2.5">
                             <div className="text-[14px] font-normal leading-snug">{t.title}</div>
