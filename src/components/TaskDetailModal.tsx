@@ -563,7 +563,7 @@ function TimerBar({
     <div className="mx-7 mt-2 flex flex-wrap items-center gap-3 rounded-2xl bg-card-alt px-4 py-2.5">
       <span className="flex items-center gap-2 text-[13.5px] font-medium">
         <span
-          className={`w-2 h-2 rounded-full ${clock.active && clock.running ? "bg-[#2F9E5A] animate-pulse" : "bg-[#AEB8C6]"}`}
+          className={`w-2 h-2 rounded-full ${clock.active && clock.running ? "bg-[#2F9E5A] animate-pulse" : "bg-btn-ring"}`}
           aria-hidden
         />
         {state}

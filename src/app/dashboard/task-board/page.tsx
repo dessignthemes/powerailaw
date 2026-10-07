@@ -428,7 +428,7 @@ function TaskBoard({
     setNewColumnName("");
     if (!title || !boardKey) return;
     try {
-      const d = await columnApi("/api/board-columns", "POST", { board: boardKey, title, color: "#6B7280" });
+      const d = await columnApi("/api/board-columns", "POST", { board: boardKey, title, color: "#8C8784" });
       setColumns((cols) => [...cols, { id: d.column.id, title: d.column.title, color: d.column.color, status: "todo", custom: true }]);
     } catch (e) {
       setBoardError((e as Error).message);

@@ -21,7 +21,7 @@ const cleanTitle = (t: unknown) => {
   if (!s) throw new BoardError(400, "Give the column a name.");
   return s;
 };
-const cleanColor = (c: unknown) => (typeof c === "string" && /^#[0-9A-Fa-f]{6}$/.test(c) ? c : "#6B7280");
+const cleanColor = (c: unknown) => (typeof c === "string" && /^#[0-9A-Fa-f]{6}$/.test(c) ? c : "#8C8784");
 
 export async function listColumns(board: unknown): Promise<ColumnRow[]> {
   const orgId = await getCurrentOrgId();

@@ -2,24 +2,26 @@
 
 :root {
   /* Cool blue-grey theme. */
-  --cream: #f9fafe; /* sidebar and page background */
-  --page: #fcfdff; /* main content area (right of the sidebar) */
-  --dark: #121110; /* logo, avatars, "on" toggles */
-  --dark2: #1a1917;
-  --beige: #dde2e9;
+  --sidebar: #f3f2f0; /* left navigation */
+  --cream: #faf9f8; /* raised surfaces: cards on panels, modals */
+  --page: #f6f5f3; /* main content area (right of the sidebar) */
+  --dark: #1b191a; /* logo, avatars, "on" toggles */
+  --dark2: #2a2728;
+  --beige: #e6e3df;
   --card: #ffffff;
-  --card-alt: #e9eaee; /* panels, cards, secondary buttons */
-  --line: #d1d7e0; /* borders */
-  --line-dark: #2b2a26;
-  --btn: #d1d7e0; /* primary buttons (dark text) */
-  --btn-hover: #c2c9d4;
-  --btn-ring: #aeb8c6; /* outline on selected pills */
-  --ink: #141821;
-  --muted: #5e6978;
-  --muted-light: #98a1ae;
+  --card-alt: #ecebe9; /* panels, columns, secondary buttons */
+  --line: #dbd9db; /* 1px borders */
+  --line-dark: #2b2829;
+  --btn: #d9d9d9; /* primary buttons (dark text) */
+  --btn-hover: #cdcccb;
+  --btn-ring: #b5b3b2; /* outline on selected pills */
+  --ink: #1b191a; /* text (never pure black) */
+  --muted: #6e6a68;
+  --muted-light: #a6a2a0;
 }
 
 @theme inline {
+  --color-sidebar: var(--sidebar);
   --color-cream: var(--cream);
   --color-dark: var(--dark);
   --color-dark2: var(--dark2);
@@ -41,7 +43,7 @@
 }
 
 body {
-  background: var(--cream);
+  background: var(--page);
   color: var(--ink);
 }
 

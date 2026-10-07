@@ -231,7 +231,7 @@ const seedReferrals: Referral[] = [
 const availabilityStyle: Record<Availability, string> = {
   "Taking clients": "bg-[#DCEBD8] text-[#2F5E2A]",
   Limited: "bg-[#F5E3B3] text-[#8A6D1D]",
-  Full: "bg-[#E9EAEE] text-[#5E6978]",
+  Full: "bg-card-alt text-muted",
 };
 
 function initials(name: string) {
@@ -539,7 +539,7 @@ function ReferralsView({
                             r.status === "Accepted"
                               ? "bg-[#DCEBD8] text-[#2F5E2A]"
                               : r.status === "Declined"
-                              ? "bg-[#E9EAEE] text-[#5E6978]"
+                              ? "bg-card-alt text-muted"
                               : "bg-[#F5E3B3] text-[#8A6D1D]"
                           }`}
                         >

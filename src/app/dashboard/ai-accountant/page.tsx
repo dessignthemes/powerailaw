@@ -425,7 +425,7 @@ function CategoryBars({ rows }: { rows: { key: string; label: string; total: num
       {rows.map((c) => (
         <div key={c.key} className="grid grid-cols-[200px_1fr_110px] items-center gap-3 text-[13.5px]">
           <span className="truncate">{c.label}</span>
-          <div className="h-2 rounded-full bg-white overflow-hidden"><div className="h-full rounded-full bg-[#9AA8BC]" style={{ width: `${(c.total / max) * 100}%` }} /></div>
+          <div className="h-2 rounded-full bg-white overflow-hidden"><div className="h-full rounded-full bg-muted-light" style={{ width: `${(c.total / max) * 100}%` }} /></div>
           <span className="text-right tabular-nums">{money(c.total)}</span>
         </div>
       ))}
