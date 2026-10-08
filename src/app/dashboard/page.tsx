@@ -275,7 +275,7 @@ export default function DashboardHome() {
                   <Link
                     key={key}
                     href={`/dashboard/task-board?board=${key}&due=${range}`}
-                    className="group/row flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium bg-line/45 hover:bg-line/80 transition-colors"
+                    className="group/row flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium bg-[#E1E7F4] hover:bg-[#D5DDEE] transition-colors"
                   >
                     <span className="font-semibold tabular-nums w-5 text-right">{n}</span>
                     <span className="truncate flex-1">{key === "general" ? "General" : boardName(key)}</span>
