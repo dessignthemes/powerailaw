@@ -120,7 +120,7 @@ export default function AccountMenu({
 
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2 px-3 py-[6px] rounded-lg hover:bg-btn transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-[6px] rounded-lg hover:bg-nav transition-colors text-left"
       >
         <div className="w-6 h-6 rounded-full bg-card-alt border border-line text-muted flex items-center justify-center text-[11px] font-medium flex-shrink-0">
           {userInitial(userName, email)}
