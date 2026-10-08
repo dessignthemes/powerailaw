@@ -13,9 +13,9 @@
   --chip: #e9eef6; /* secondary buttons, pills and hover states */
   --line: #dbd9db; /* 1px borders */
   --line-dark: #2b2829;
-  --btn: #c2c8d3; /* primary buttons (dark text) */
-  --btn-hover: #b4bbc8;
-  --btn-ring: #a3abb9; /* outline on selected pills */
+  --btn: #cfd7e8; /* primary buttons (dark text) */
+  --btn-hover: #c0c9dd;
+  --btn-ring: #aeb8ce; /* outline on selected pills */
   --ink: #1b191a; /* text (never pure black) */
   --muted: #6e6a68;
   --muted-light: #a6a2a0;
