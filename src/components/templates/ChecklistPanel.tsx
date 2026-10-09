@@ -61,12 +61,12 @@ export function ChecklistPicker({
                 <div className="my-1 border-t border-line" />
                 <button
                   onClick={() => {
-                    if (confirm("Remove the whole checklist from this task?")) onChange(null);
+                    if (confirm("Remove the template and its checklist from this task?")) onChange(null);
                     setOpen(false);
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] text-muted hover:text-[#B42318] hover:bg-chip transition-colors text-left"
                 >
-                  <Trash2 size={13} strokeWidth={1.75} /> Remove checklist
+                  <Trash2 size={13} strokeWidth={1.75} /> Remove template
                 </button>
               </>
             )}
