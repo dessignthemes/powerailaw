@@ -5,7 +5,7 @@ import { Check, ChevronDown, ChevronRight, ListChecks, Plus, Trash2, X } from "l
 import { useTemplates } from "./useTemplates";
 import { applyTemplate, progress, type TaskChecklist } from "@/lib/checklist";
 
-// "Checklist" button for the task's property row: pick a template to add.
+// "Templates" button for the task's property row: pick a template to add.
 export function ChecklistPicker({
   checklist,
   onChange,
@@ -23,7 +23,7 @@ export function ChecklistPicker({
         className="flex items-center gap-1.5 bg-chip hover:bg-btn transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium"
       >
         <ListChecks size={13} strokeWidth={1.75} />
-        {p.total ? `Checklist ${p.done}/${p.total}` : "Checklist"}
+        {p.total ? `Templates ${p.done}/${p.total}` : "Templates"}
         <ChevronDown size={12} strokeWidth={1.75} className="text-muted" />
       </button>
       {open && (

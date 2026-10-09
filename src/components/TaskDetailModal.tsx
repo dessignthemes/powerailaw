@@ -327,7 +327,7 @@ export default function TaskDetailModal({
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 bg-white border border-line hover:border-muted rounded-full px-3 py-1.5 text-[13px] font-medium"
+                      className="flex items-center gap-1.5 bg-chip hover:bg-btn transition-colors rounded-full px-3 py-1.5 text-[13px] font-medium"
                     >
                       <ExternalLink size={13} strokeWidth={1.75} /> {label}
                     </a>
