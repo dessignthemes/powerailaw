@@ -2,6 +2,8 @@
 
 import AssigneeOptions from "@/components/AssigneeOptions";
 import { useCallback, useState, useEffect, useRef } from "react";
+import ChecklistPanel, { ChecklistPicker } from "@/components/templates/ChecklistPanel";
+import type { TaskChecklist } from "@/lib/checklist";
 import {
   formatMinutes,
   getAutoTimer,
@@ -93,6 +95,11 @@ export default function TaskDetailModal({
   const [tab, setTab] = useState("Comments");
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<TaskComment[]>(task.comments ?? []);
+  const [checklist, setChecklist] = useState<TaskChecklist | null>(task.checklist ?? null);
+  const changeChecklist = (next: TaskChecklist | null) => {
+    setChecklist(next);
+    commit({ checklist: next });
+  };
   const [taskEntries, setTaskEntries] = useState<{ id: string; minutes: number; date: string; description: string; source: string }[] | null>(null);
 
   const loadTaskEntries = useCallback(() => {
@@ -104,9 +111,11 @@ export default function TaskDetailModal({
 
   // Automatic timer: starts when the task opens, saves one time entry when it closes.
   const sessionRef = useRef<TaskSession | null>(null);
-  const lastTickRef = useRef(Date.now());
+  const lastTickRef = useRef(0); // set when a session starts
   const titleRef = useRef(task.title);
-  titleRef.current = title || task.title;
+  useEffect(() => {
+    titleRef.current = title || task.title;
+  }, [title, task.title]);
   const [clock, setClock] = useState<{ active: boolean; running: boolean; ms: number }>({ active: false, running: false, ms: 0 });
   const [autoOn, setAutoOn] = useState(() => (typeof window === "undefined" ? true : getAutoTimer()));
 
@@ -221,7 +230,7 @@ export default function TaskDetailModal({
 
   function commit(patch: Partial<BoardTask>) {
     if (!(patch.title ?? title).trim()) return;
-    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, ...patch });
+    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, ...patch });
   }
 
   return (
@@ -365,6 +374,8 @@ export default function TaskDetailModal({
               <Folder size={13} strokeWidth={1.75} /> Matter
             </div>
 
+            <ChecklistPicker checklist={checklist} onChange={changeChecklist} />
+
             <GenericDropdown
               open={priorityOpen}
               setOpen={setPriorityOpen}
@@ -435,6 +446,8 @@ export default function TaskDetailModal({
               </div>
             </GenericDropdown>
           </div>
+
+          {checklist && <ChecklistPanel checklist={checklist} onChange={changeChecklist} />}
 
           <div className="flex items-center gap-6 border-b border-line mb-5">
             {detailTabs.map((t) => (

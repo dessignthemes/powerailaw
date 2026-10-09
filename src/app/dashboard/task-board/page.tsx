@@ -1,5 +1,7 @@
 "use client";
 
+import TemplatesModal from "@/components/templates/TemplatesModal";
+import { progress as checklistProgress } from "@/lib/checklist";
 import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -22,6 +24,7 @@ import {
   Columns3,
   ChevronsRightLeft,
   Check,
+  ListChecks,
 } from "lucide-react";
 import NewTaskModal, {
   BoardTask,
@@ -335,6 +338,7 @@ function TaskBoard({
 
   // Drag and drop: drag a task card to another column, or up/down within a column
   // to arrange it (saved as the card's position, shown in "My order").
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropCol, setDropCol] = useState<string | null>(null);
   const [dropBefore, setDropBefore] = useState<string | null>(null); // card to drop above; null = bottom
@@ -778,6 +782,13 @@ function TaskBoard({
             className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
           >
             <Plus size={14} strokeWidth={2} /> Add task
+          </button>
+          <button
+            onClick={() => setTemplatesOpen(true)}
+            title="Checklist templates you can add to any task"
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
+          >
+            <Plus size={14} strokeWidth={2} /> Add template
           </button>
           {boardKey && (
             <div className="relative">
@@ -1229,7 +1240,7 @@ function TaskBoard({
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             {t.createdBy ? (
                               <MemberAvatar userId={t.createdBy} size={24} light />
                             ) : (
@@ -1246,6 +1257,20 @@ function TaskBoard({
                             >
                               {t.priority}
                             </span>
+                            {(() => {
+                              const cp = checklistProgress(t.checklist);
+                              if (!cp.total) return null;
+                              const all = cp.done === cp.total;
+                              return (
+                                <span
+                                  title="Checklist"
+                                  className={`flex items-center gap-1 text-[11.5px] font-medium rounded-md px-1.5 py-0.5 ${all ? "bg-[#CAF0D9] text-ink" : "bg-card-alt text-muted"}`}
+                                >
+                                  <ListChecks size={12} strokeWidth={1.75} />
+                                  {cp.done}/{cp.total}
+                                </span>
+                              );
+                            })()}
                             {boardId === null && !createdBy && (
                               <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[130px]">
                                 {t.boardId ? boards.find((b) => b.id === t.boardId)?.name ?? "Board" : "General"}
@@ -1289,6 +1314,7 @@ function TaskBoard({
         />
       )}
 
+      {templatesOpen && <TemplatesModal onClose={() => setTemplatesOpen(false)} />}
       {openTask && (
         <TaskDetailModal
           task={openTask}

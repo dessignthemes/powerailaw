@@ -1,4 +1,5 @@
 import "server-only";
+import { cleanChecklist } from "@/lib/checklist";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { boardInOrg } from "@/lib/data/boards";
@@ -19,6 +20,7 @@ type TaskRow = {
   updated_by?: string | null;
   column_id?: string | null;
   position?: number | null;
+  checklist?: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -37,6 +39,7 @@ function toTask(row: TaskRow): BoardTask {
     createdBy: row.created_by ?? null,
     columnId: row.column_id ?? null,
     position: typeof row.position === "number" ? row.position : null,
+    checklist: cleanChecklist(row.checklist),
     updatedBy: row.updated_by ?? row.created_by ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -54,6 +57,8 @@ function toColumns(task: BoardTask) {
     comments: task.comments ?? [],
     // Only sent when the card has been arranged by hand.
     ...(typeof task.position === "number" && Number.isFinite(task.position) ? { position: task.position } : {}),
+    // Only sent when the task's checklist was changed (null removes it).
+    ...(task.checklist !== undefined ? { checklist: cleanChecklist(task.checklist) } : {}),
   };
 }
 
@@ -108,7 +113,7 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   // Columns added by later migrations; if one isn't there yet, save without it.
   let fields: Record<string, unknown> = userId ? { ...base, updated_by: userId } : { ...base };
   let { data, error } = await run(fields);
-  for (const col of ["updated_by", "column_id", "position"]) {
+  for (const col of ["updated_by", "column_id", "position", "checklist"]) {
     if (!error || !new RegExp(col).test(error.message ?? "") || !(col in fields)) continue;
     const { [col]: _drop, ...rest } = fields;
     void _drop;

@@ -31,6 +31,7 @@ export type BoardTask = {
   boardId?: string | null; // null/undefined = main Task Board
   columnId?: string | null; // a custom column on the board, if any
   position?: number | null; // manual order inside its column (null = order added)
+  checklist?: import("@/lib/checklist").TaskChecklist | null; // ticked-off items from applied templates
   createdBy?: string | null; // profile id of the person who created it
   updatedBy?: string | null; // profile id of the person who last changed it
   createdAt?: string;
