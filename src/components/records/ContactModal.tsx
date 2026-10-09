@@ -113,7 +113,7 @@ export default function ContactModal({
                   if (!(k === "person" ? PERSON_ROLES : COMPANY_ROLES).includes(role)) setRole("");
                 }}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                  kind === k ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn text-ink"
+                  kind === k ? "bg-btn text-ink" : "bg-chip hover:bg-btn text-ink"
                 }`}
               >
                 {k === "person" ? <User size={14} strokeWidth={1.75} /> : <Building2 size={14} strokeWidth={1.75} />}

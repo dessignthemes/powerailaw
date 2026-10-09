@@ -160,7 +160,7 @@ function PracticeAreaRow({
             onClick={() => onChange(opt)}
             className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
               status === opt
-                ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring"
+                ? "bg-btn text-ink"
                 : "bg-white border border-line hover:bg-chip"
             }`}
           >
@@ -284,7 +284,7 @@ function MailCategoryRow({
               onClick={() => !disabled && onChange(opt)}
               className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
                 selected
-                  ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring"
+                  ? "bg-btn text-ink"
                   : disabled
                   ? "bg-white border border-line text-muted-light cursor-not-allowed"
                   : "bg-white border border-line hover:bg-chip"
@@ -706,7 +706,7 @@ export default function IntegrationsModal({
                   <p className="text-[13.5px] text-muted mb-4 max-w-[520px]">
                     Change your password and optionally sign out every other active device.
                   </p>
-                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors">
+                  <button className="bg-chip px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors">
                     Change password
                   </button>
                 </SecurityCard>
@@ -738,7 +738,7 @@ export default function IntegrationsModal({
                 <SecurityCard
                   title="Passkeys"
                   badge={
-                    <button className="flex items-center gap-1.5 bg-white border border-line px-3.5 py-2 rounded-full text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0">
+                    <button className="flex items-center gap-1.5 bg-chip px-3.5 py-2 rounded-full text-[13px] font-medium hover:bg-btn transition-colors flex-shrink-0">
                       <Fingerprint size={14} strokeWidth={1.75} /> Add passkey
                     </button>
                   }
@@ -753,7 +753,7 @@ export default function IntegrationsModal({
                   <p className="text-[13.5px] text-muted mb-4 max-w-[520px]">
                     Review or revoke AI tools connected through Sign in with LawPower AI.
                   </p>
-                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors">
+                  <button className="bg-chip px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors">
                     Manage connected applications
                   </button>
                 </SecurityCard>
@@ -1138,7 +1138,7 @@ export default function IntegrationsModal({
                   <code className="text-[13.5px] font-mono">{MCP_SERVER_URL}</code>
                   <button
                     onClick={() => copyText(MCP_SERVER_URL, setUrlCopied)}
-                    className="flex items-center gap-1.5 bg-white border border-line px-3 py-1.5 rounded-lg text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0"
+                    className="flex items-center gap-1.5 bg-chip px-3 py-1.5 rounded-lg text-[13px] font-medium hover:bg-btn transition-colors flex-shrink-0"
                   >
                     <Copy size={13} strokeWidth={1.75} />
                     {urlCopied ? "Copied" : "Copy"}
@@ -1150,10 +1150,10 @@ export default function IntegrationsModal({
                     <button
                       key={tab}
                       onClick={() => setMcpClientTab(tab)}
-                      className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${
+                      className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
                         mcpClientTab === tab
-                          ? "bg-white border-ink"
-                          : "bg-white border-line text-muted hover:bg-chip"
+                          ? "bg-btn"
+                          : "bg-chip text-muted hover:bg-btn"
                       }`}
                     >
                       {tab}
@@ -1348,7 +1348,7 @@ export default function IntegrationsModal({
                     </Link>
                     <Link
                       href="/connect?provider=microsoft&next=/dashboard/inbox"
-                      className="border border-line bg-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors"
+                      className="bg-chip px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors"
                     >
                       ↗ Import from Outlook
                     </Link>

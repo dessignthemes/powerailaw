@@ -222,7 +222,7 @@ export default function TaskFolderPage() {
                   }}
                   title="Refresh"
                   aria-label="Refresh"
-                  className="w-9 h-9 rounded-full bg-white border border-line hover:border-muted flex items-center justify-center"
+                  className="w-9 h-9 rounded-full bg-chip flex items-center justify-center hover:bg-btn"
                 >
                   <RefreshCw size={14} strokeWidth={1.75} className={listLoading ? "animate-spin" : ""} />
                 </button>

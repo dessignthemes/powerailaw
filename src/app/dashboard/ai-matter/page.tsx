@@ -117,7 +117,7 @@ export default function AiMatterPage() {
           </div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {STATUSES.map((s) => (
-              <button key={s} onClick={() => setStatus(s)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${status === s ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-white/70 hover:bg-white"}`}>{s}</button>
+              <button key={s} onClick={() => setStatus(s)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${status === s ? "bg-btn" : "bg-white/70 hover:bg-white"}`}>{s}</button>
             ))}
           </div>
           <div className="flex flex-col gap-1.5 max-h-[65vh] overflow-y-auto">
@@ -161,7 +161,7 @@ export default function AiMatterPage() {
                   {review && <div className="text-[12px] text-muted mt-1">Reviewed {new Date(review.generatedAt).toLocaleString()}</div>}
                 </div>
                 <div className="flex gap-2">
-                  <Link href={`/dashboard/matters/${sel.id}`} className="bg-white hover:bg-line/40 border border-line px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5">
+                  <Link href={`/dashboard/matters/${sel.id}`} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5">
                     Open matter <ArrowUpRight size={13} />
                   </Link>
                   <button onClick={() => run(sel.id)} disabled={busy} className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-60">

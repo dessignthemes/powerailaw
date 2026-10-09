@@ -226,7 +226,7 @@ export default function TxnModal({
                 if (CAT[category]?.kind !== k) setCategory("uncategorized");
               }}
               className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                kind === k ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"
+                kind === k ? "bg-btn text-ink" : "bg-chip hover:bg-btn"
               }`}
             >
               {k === "expense" ? "Money out" : k === "income" ? "Money in" : "Transfer / owner"}

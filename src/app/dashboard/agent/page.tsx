@@ -467,7 +467,7 @@ function Agent() {
               aria-pressed={historyOpen}
               title="Past conversations"
               className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                historyOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-btn"
+                historyOpen ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
               }`}
             >
               <History size={14} strokeWidth={1.75} /> History
@@ -475,7 +475,7 @@ function Agent() {
             <button
               onClick={() => setMemoryOpen(!memoryOpen)}
               className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                memoryOpen ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-btn"
+                memoryOpen ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
               }`}
             >
               <Brain size={14} strokeWidth={1.75} /> Memory
@@ -725,7 +725,7 @@ function Composer({ textRef, fileInput, ...p }: ComposerProps) {
             disabled={p.disabled}
             title="Attach PDF, Word or text files"
             aria-label="Attach files"
-            className="w-7 h-7 rounded-full border border-line flex items-center justify-center text-muted hover:text-ink hover:border-muted flex-shrink-0"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-muted hover:text-ink flex-shrink-0 hover:bg-btn"
           >
             <Plus size={14} strokeWidth={1.75} />
           </button>
@@ -775,8 +775,8 @@ function MatterPicker({
       <button
         onClick={() => setOpen(!open)}
         disabled={disabled}
-        className={`flex items-center gap-1.5 text-[13px] border rounded-full px-3 py-1.5 min-w-0 transition-colors ${
-          matter ? "border-ink/30 bg-white text-ink" : "border-line text-muted hover:text-ink"
+        className={`flex items-center gap-1.5 text-[13px] rounded-full px-3 py-1.5 min-w-0 transition-colors ${
+          matter ? "bg-btn text-ink" : "bg-chip text-muted hover:bg-btn hover:text-ink"
         }`}
       >
         <Folder size={13} strokeWidth={1.75} className="flex-shrink-0" />
@@ -868,7 +868,7 @@ function AssistantMessage({
             <button
               key={c.id}
               onClick={() => onCite(c)}
-              className="flex items-center gap-1.5 text-[12px] bg-white border border-line rounded-lg px-2 py-1 hover:border-muted max-w-full"
+              className="flex items-center gap-1.5 text-[12px] bg-chip rounded-lg px-2 py-1 max-w-full hover:bg-btn"
               title="Open source"
             >
               <span className="font-semibold">{c.id.replace("S", "")}</span>

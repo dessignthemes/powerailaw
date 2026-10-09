@@ -239,7 +239,7 @@ export default function RecordsPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                tab === t.key ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-btn"
+                tab === t.key ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
               }`}
             >
               {t.label} <span className={tab === t.key ? "text-ink/60" : "text-muted"}>{loaded ? counts[t.key] : ""}</span>

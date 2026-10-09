@@ -738,7 +738,7 @@ function TaskBoard({
               title={query.trim() ? `Searching for “${query.trim()}”` : "Search tasks"}
               aria-label={query.trim() ? `Searching for ${query.trim()}. Edit search` : "Search tasks"}
               className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
-                query.trim() ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"
+                query.trim() ? "bg-btn text-ink" : "bg-chip hover:bg-btn"
               }`}
             >
               <Search size={15} strokeWidth={1.75} />
@@ -749,7 +749,7 @@ function TaskBoard({
               onClick={() => setFilterOpen((o) => !o)}
               title="Filter tasks"
               aria-label="Filter tasks"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"}`}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-btn text-ink" : "bg-chip hover:bg-btn"}`}
             >
               <Filter size={15} strokeWidth={1.75} />
               {advCount > 0 && (
@@ -766,7 +766,7 @@ function TaskBoard({
               title="Display options"
               aria-label="Display options"
               className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
-                display.sort !== "manual" || display.hideDone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"
+                display.sort !== "manual" || display.hideDone ? "bg-btn text-ink" : "bg-chip hover:bg-btn"
               }`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
@@ -841,7 +841,7 @@ function TaskBoard({
             key={f}
             onClick={() => toggleFilter(f)}
             className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-              activeFilters.includes(f) ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-muted hover:text-ink"
+              activeFilters.includes(f) ? "bg-btn text-ink" : "bg-chip text-muted hover:text-ink"
             }`}
           >
             {f}
@@ -943,7 +943,7 @@ function TaskBoard({
               <button
                 onClick={() => scrollByColumn(-1)}
                 aria-label="Show columns on the left"
-                className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-chip transition-colors"
+                className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white shadow-md flex items-center justify-center hover:bg-chip transition-colors"
               >
                 <ChevronLeft size={21} strokeWidth={2} />
               </button>
@@ -955,7 +955,7 @@ function TaskBoard({
               <button
                 onClick={() => scrollByColumn(1)}
                 aria-label="Show columns on the right"
-                className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white border border-line shadow-md flex items-center justify-center hover:bg-chip transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white shadow-md flex items-center justify-center hover:bg-chip transition-colors"
               >
                 <ChevronRight size={21} strokeWidth={2} />
               </button>

@@ -525,7 +525,7 @@ function TxnTable(p: { txns: Txn[]; clientName: (id: string | null) => string; m
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {[["all", "All"], ["income", "Income"], ["expense", "Expenses"], ["no_receipt", "Missing receipt"], ["trust", "Trust"], ["excluded", "Excluded"]].map(([k, l]) => (
-            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium ${filter === k ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"}`}>{l}</button>
+            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium ${filter === k ? "bg-btn" : "bg-chip hover:bg-btn"}`}>{l}</button>
           ))}
         </div>
       </div>

@@ -388,7 +388,7 @@ export default function InboxPage() {
           </Link>
           <Link
             href={connectHref("microsoft")}
-            className="bg-white border border-line px-5 py-2.5 rounded-full text-[14.5px] font-medium hover:border-muted transition-colors"
+            className="bg-chip px-5 py-2.5 rounded-full text-[14.5px] font-medium transition-colors hover:bg-btn"
           >
             Connect Outlook
           </Link>

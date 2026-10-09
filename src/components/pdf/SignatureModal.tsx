@@ -161,7 +161,7 @@ export default function SignatureModal({
         setError(null);
       }}
       className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-        mode === m ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-muted hover:text-ink"
+        mode === m ? "bg-btn text-ink" : "bg-chip text-muted hover:text-ink"
       }`}
     >
       {label}

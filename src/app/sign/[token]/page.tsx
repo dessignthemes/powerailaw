@@ -305,7 +305,7 @@ function SignaturePad({ kind, defaultText, onClose, onAdopt }: { kind: "signatur
         </div>
         <div className="flex gap-2 mb-3">
           {(["type", "draw"] as const).map((m) => (
-            <button key={m} onClick={() => { setMode(m); setDrawn(false); }} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium capitalize ${mode === m ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"}`}>{m}</button>
+            <button key={m} onClick={() => { setMode(m); setDrawn(false); }} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium capitalize ${mode === m ? "bg-btn" : "bg-chip hover:bg-btn"}`}>{m}</button>
           ))}
         </div>
         {mode === "type" && <input value={text} onChange={(e) => setText(e.target.value)} className="w-full border border-line rounded-lg px-3 py-2 text-[14px] mb-3 outline-none focus:border-ink" />}

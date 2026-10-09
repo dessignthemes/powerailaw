@@ -550,7 +550,7 @@ export default function PdfEditor({
       }}
       title={hint}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-        tool === t ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip text-ink hover:bg-btn"
+        tool === t ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
       }`}
     >
       {icon} {label}

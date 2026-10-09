@@ -148,7 +148,7 @@ export default function SendForSignature({
               <div className="flex items-center gap-2 px-5 py-3 border-b border-line bg-white flex-wrap">
                 <span className="text-[12.5px] text-muted mr-1">Choose a field, then click on the page:</span>
                 {TOOLS.map((t) => (
-                  <button key={t.type} onClick={() => setTool(t.type)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium ${tool === t.type ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"}`}>
+                  <button key={t.type} onClick={() => setTool(t.type)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium ${tool === t.type ? "bg-btn" : "bg-chip hover:bg-btn"}`}>
                     <t.icon size={14} /> {FIELD_META[t.type].label}
                   </button>
                 ))}

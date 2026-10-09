@@ -202,7 +202,7 @@ export default function TeamMembers({ onChanged }: { onChanged?: () => void }) {
             <button onClick={() => copy(freshLink.link)} className="flex items-center gap-1.5 bg-btn text-ink px-3.5 py-2 rounded-full text-[13px] font-medium hover:bg-btn-hover">
               {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied" : "Copy link"}
             </button>
-            <a href={mailto(freshLink.email, freshLink.link)} className="flex items-center gap-1.5 bg-white border border-line px-3.5 py-2 rounded-full text-[13px] font-medium hover:border-muted">
+            <a href={mailto(freshLink.email, freshLink.link)} className="flex items-center gap-1.5 bg-chip px-3.5 py-2 rounded-full text-[13px] font-medium hover:bg-btn">
               <Mail size={13} /> Email invite
             </a>
           </div>
@@ -233,7 +233,7 @@ export default function TeamMembers({ onChanged }: { onChanged?: () => void }) {
                   <option value="admin">Admin</option>
                 </select>
               ) : (
-                <span className={`px-3 py-1 rounded-full text-[12.5px] font-medium ${m.role === "owner" ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-card-alt text-muted"}`}>
+                <span className={`px-3 py-1 rounded-full text-[12.5px] font-medium ${m.role === "owner" ? "bg-btn text-ink" : "bg-card-alt text-muted"}`}>
                   {roleLabel[m.role]}
                 </span>
               )}

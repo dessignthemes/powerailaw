@@ -92,7 +92,7 @@ function ClientIntake() {
             </div>
             <div className="flex gap-1.5">
               {([["all", "All"], ["person", "People"], ["company", "Companies"]] as const).map(([k, l]) => (
-                <button key={k} onClick={() => setType(k)} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${type === k ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"}`}>{l}</button>
+                <button key={k} onClick={() => setType(k)} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${type === k ? "bg-btn" : "bg-chip hover:bg-btn"}`}>{l}</button>
               ))}
             </div>
           </div>

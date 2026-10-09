@@ -262,7 +262,7 @@ export default function TimeTrackingPage() {
             <button
               onClick={() => setFilterOpen((o) => !o)}
               aria-label="Filters"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" || everyone ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "bg-chip hover:bg-btn"}`}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" || everyone ? "bg-btn text-ink" : "bg-chip hover:bg-btn"}`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
             </button>

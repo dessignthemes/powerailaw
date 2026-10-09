@@ -49,14 +49,14 @@ export default function LoginPage() {
           <button
             onClick={() => handleLogin("google")}
             disabled={loading !== null}
-            className="w-full bg-white border border-line rounded-full px-4 py-3 text-[14.5px] font-medium hover:bg-cream transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-chip rounded-full px-4 py-3 text-[14.5px] font-medium hover:bg-btn transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading === "google" ? "Redirecting…" : "Continue with Google"}
           </button>
           <button
             onClick={() => handleLogin("microsoft")}
             disabled={loading !== null}
-            className="w-full bg-white border border-line rounded-full px-4 py-3 text-[14.5px] font-medium hover:bg-cream transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-chip rounded-full px-4 py-3 text-[14.5px] font-medium hover:bg-btn transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading === "microsoft" ? "Redirecting…" : "Continue with Microsoft"}
           </button>

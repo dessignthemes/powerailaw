@@ -144,7 +144,7 @@ export default function MemoryPanel({
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                  tab === t.key ? "bg-btn text-ink ring-1 ring-inset ring-btn-ring" : "text-muted hover:text-ink hover:bg-chip"
+                  tab === t.key ? "bg-btn text-ink" : "text-muted hover:text-ink hover:bg-chip"
                 }`}
               >
                 <Icon size={13} /> {t.label}

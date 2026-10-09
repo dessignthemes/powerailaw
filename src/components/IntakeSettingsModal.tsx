@@ -139,7 +139,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                     <div className="relative">
                       <button
                         onClick={() => setLangMenuOpen((o) => !o)}
-                        className="flex items-center gap-1.5 border border-line rounded-full px-3.5 py-1.5 text-[13.5px] font-medium hover:bg-chip transition-colors"
+                        className="bg-chip flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13.5px] font-medium hover:bg-btn transition-colors"
                       >
                         <Plus size={13} strokeWidth={2} /> Add language
                       </button>
@@ -360,7 +360,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                     onClick={() =>
                       setQuestions((qs) => [...qs, { id: crypto.randomUUID(), text: "" }])
                     }
-                    className="flex items-center gap-1.5 border border-line rounded-full px-3.5 py-1.5 text-[13.5px] font-medium hover:bg-chip transition-colors"
+                    className="bg-chip flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13.5px] font-medium hover:bg-btn transition-colors"
                   >
                     <Plus size={13} strokeWidth={2} /> Add question
                   </button>
@@ -546,7 +546,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                         </div>
                         <button
                           onClick={() => copy(directLink, "link")}
-                          className="flex items-center gap-1.5 border border-line rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0"
+                          className="bg-chip flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-btn transition-colors flex-shrink-0"
                         >
                           <Copy size={13} strokeWidth={1.75} />
                           {copiedKey === "link" ? "Copied" : "Copy"}
@@ -570,7 +570,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                         </pre>
                         <button
                           onClick={() => copy(embedSnippet, "embed")}
-                          className="flex items-center gap-1.5 border border-line rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0"
+                          className="bg-chip flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-btn transition-colors flex-shrink-0"
                         >
                           <Copy size={13} strokeWidth={1.75} />
                           {copiedKey === "embed" ? "Copied" : "Copy"}
@@ -609,7 +609,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                               setDomainInput("");
                             }
                           }}
-                          className="flex items-center gap-1.5 border border-line rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-chip transition-colors flex-shrink-0"
+                          className="bg-chip flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[13px] font-medium hover:bg-btn transition-colors flex-shrink-0"
                         >
                           <Plus size={13} strokeWidth={2} /> Add
                         </button>
@@ -674,7 +674,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                     </div>
                     <button
                       onClick={() => copy(directLink, "public")}
-                      className="border border-line rounded-xl p-2.5 hover:bg-chip transition-colors flex-shrink-0"
+                      className="bg-chip rounded-xl p-2.5 hover:bg-btn transition-colors flex-shrink-0"
                     >
                       <Copy size={15} strokeWidth={1.75} />
                     </button>

@@ -21,7 +21,7 @@ function withCitations(children: ReactNode, citations: Citation[], onCite: (c: C
             key={`${key}-${i}`}
             onClick={() => onCite(c)}
             title={`${c.name}${c.page ? `, page ${c.page}` : c.section ? `, ${c.section}` : ""}`}
-            className="inline-flex items-center align-baseline mx-0.5 px-1.5 rounded-md bg-chip border border-line text-[11.5px] font-medium text-ink hover:border-muted leading-[18px]"
+            className="inline-flex items-center align-baseline mx-0.5 px-1.5 rounded-md bg-chip text-[11.5px] font-medium text-ink leading-[18px] hover:bg-btn"
           >
             {c.id.replace("S", "")}
           </button>

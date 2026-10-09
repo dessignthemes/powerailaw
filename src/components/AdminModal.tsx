@@ -188,7 +188,7 @@ export default function AdminModal({
                   ) : (
                     <button
                       onClick={() => setAddPersonOpen(true)}
-                      className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors mb-5"
+                      className="bg-chip px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors mb-5"
                     >
                       + Add person
                     </button>
@@ -229,7 +229,7 @@ export default function AdminModal({
                   <h2 className="text-[26px] font-semibold mt-1">Practice groups</h2>
                   <button
                     onClick={() => setAddGroupOpen((o) => !o)}
-                    className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors flex-shrink-0"
+                    className="bg-chip px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors flex-shrink-0"
                   >
                     + Add group
                   </button>
@@ -313,7 +313,7 @@ export default function AdminModal({
 
                 <div className="flex items-center justify-between gap-4 mb-1.5">
                   <div className="text-[15px] font-semibold">Subscription</div>
-                  <button className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors flex-shrink-0">
+                  <button className="bg-chip px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors flex-shrink-0">
                     Manage subscription
                   </button>
                 </div>
@@ -360,7 +360,7 @@ export default function AdminModal({
                     <button
                       onClick={handleReviewChange}
                       disabled={licenceCount === 1}
-                      className="bg-white border border-line px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-chip transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                      className="bg-chip px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                     >
                       Review change
                     </button>
