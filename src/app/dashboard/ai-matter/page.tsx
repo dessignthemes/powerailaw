@@ -131,14 +131,12 @@ export default function AiMatterPage() {
                   key={m.id}
                   onClick={() => pick(m.id)}
                   aria-current={selected === m.id ? "true" : undefined}
-                  className={`group/row w-full flex items-center gap-3 text-left px-3.5 py-2.5 rounded-xl shadow-[0_1px_1px_rgba(27,25,26,0.10)] transition-colors ${
+                  title={[clientName(m.clientId), m.status].filter(Boolean).join(" · ")}
+                  className={`group/row w-full flex items-center gap-3 text-left px-3.5 py-2 rounded-xl shadow-[0_1px_1px_rgba(27,25,26,0.10)] transition-colors ${
                     selected === m.id ? "bg-[#CFD7E8]" : "bg-[#E1E7F4] hover:bg-[#D5DDEE]"
                   }`}
                 >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13.5px] font-medium truncate">{m.title}</span>
-                    <span className="block text-[12px] text-muted truncate">{[clientName(m.clientId), m.status, m.category && m.category !== "None" ? m.category : ""].filter(Boolean).join(" · ")}</span>
-                  </span>
+                  <span className="min-w-0 flex-1 text-[13.5px] font-medium truncate">{m.title}</span>
                   <span className={`flex-shrink-0 ${selected === m.id ? "text-ink" : "text-muted group-hover/row:text-ink"}`} aria-hidden>→</span>
                 </button>
               ))
