@@ -68,6 +68,14 @@ a {
   cursor: pointer;
 }
 
+.texture-cool {
+  background-color: #eef2f8;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%),
+    radial-gradient(circle at 80% 75%, rgba(27,25,26,0.04) 0%, rgba(27,25,26,0) 50%),
+    repeating-linear-gradient(115deg, rgba(27,25,26,0.03) 0px, rgba(27,25,26,0.03) 1px, transparent 1px, transparent 14px);
+}
+
 .texture-beige {
   background-color: var(--beige);
   background-image:

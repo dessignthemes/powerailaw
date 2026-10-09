@@ -1329,7 +1329,7 @@ export default function IntegrationsModal({
                   Connect external services to your organization.
                 </p>
 
-                <div className="texture-beige rounded-3xl p-8 mb-8">
+                <div className="texture-cool rounded-3xl p-8 mb-8">
                   <h3 className="text-[26px] font-semibold mb-3 leading-tight">
                     Import your entire client base
                     <br />
@@ -1348,23 +1348,23 @@ export default function IntegrationsModal({
                     </Link>
                     <Link
                       href="/connect?provider=microsoft&next=/dashboard/inbox"
-                      className="bg-chip px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors"
+                      className="bg-white px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors"
                     >
                       ↗ Import from Outlook
                     </Link>
                   </div>
                 </div>
 
-                <div className="flex flex-col divide-y divide-line border-t border-line">
+                <div className="flex flex-col gap-3">
                   {connectors.map((c) =>
                     c.drillDown ? (
                       <button
                         key={c.key}
                         onClick={() => setDrilled(c.key)}
-                        className="flex items-center justify-between py-4 hover:bg-chip transition-colors -mx-2 px-2 rounded-lg text-left"
+                        className="group/row flex items-center justify-between px-4 py-3.5 rounded-2xl bg-[#E1E7F4] hover:bg-[#D5DDEE] shadow-[0_2px_2px_rgba(27,25,26,0.08)] transition-colors text-left"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-card-alt flex items-center justify-center text-[15px]">
+                          <div className="w-9 h-9 rounded-lg bg-white/70 flex items-center justify-center text-[15px]">
                             {c.icon}
                           </div>
                           <div>
@@ -1372,10 +1372,10 @@ export default function IntegrationsModal({
                             <div className="text-[12.5px] text-muted">{c.desc}</div>
                           </div>
                         </div>
-                        <ChevronRight size={16} strokeWidth={1.75} className="text-muted" />
+                        <ChevronRight size={16} strokeWidth={1.75} className="text-muted group-hover/row:text-ink" />
                       </button>
                     ) : (
-                      <div key={c.key} className="flex items-center justify-between py-4 gap-4">
+                      <div key={c.key} className="flex items-center justify-between px-4 py-3.5 gap-4 rounded-2xl bg-card-alt">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-card-alt flex items-center justify-center text-[15px] flex-shrink-0">
                             {c.icon}
