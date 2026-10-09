@@ -58,9 +58,9 @@ function TypeBadge({ type }: { type: FileType }) {
 }
 
 const beigeBtn =
-  "bg-card-alt hover:bg-line/70 text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50";
+  "bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50";
 const blackBtn =
-  "bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-60";
+  "bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-60";
 
 export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId?: string }) {
   const router = useRouter();
