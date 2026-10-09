@@ -131,7 +131,7 @@ export default function AiMatterPage() {
                   key={m.id}
                   onClick={() => pick(m.id)}
                   aria-current={selected === m.id ? "true" : undefined}
-                  className={`group/row w-full flex items-center gap-3 text-left px-3.5 py-2.5 rounded-xl transition-colors ${
+                  className={`group/row w-full flex items-center gap-3 text-left px-3.5 py-2.5 rounded-xl shadow-[0_1px_1px_rgba(27,25,26,0.10)] transition-colors ${
                     selected === m.id ? "bg-[#CFD7E8]" : "bg-[#E1E7F4] hover:bg-[#D5DDEE]"
                   }`}
                 >
