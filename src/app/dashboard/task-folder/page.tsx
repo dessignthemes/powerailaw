@@ -364,7 +364,7 @@ export default function TaskFolderPage() {
                             </>
                           ) : (
                             <>
-                              <button onClick={() => mark(m, "dismissed")} className="px-3 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-chip">
+                              <button onClick={() => mark(m, "dismissed")} className="px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip text-ink hover:bg-btn transition-colors">
                                 Dismiss
                               </button>
                               <button onClick={() => setCreating(m)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-btn-hover">
