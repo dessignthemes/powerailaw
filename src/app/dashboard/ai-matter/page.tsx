@@ -120,16 +120,26 @@ export default function AiMatterPage() {
               <button key={s} onClick={() => setStatus(s)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${status === s ? "bg-btn ring-1 ring-inset ring-btn-ring" : "bg-white/70 hover:bg-white"}`}>{s}</button>
             ))}
           </div>
-          <div className="bg-cream rounded-xl divide-y divide-line max-h-[65vh] overflow-y-auto">
+          <div className="flex flex-col gap-1.5 max-h-[65vh] overflow-y-auto">
             {shown.length === 0 ? (
-              <div className="px-4 py-10 text-center text-[13.5px] text-muted">
+              <div className="bg-cream rounded-xl px-4 py-10 text-center text-[13.5px] text-muted">
                 {matters.length === 0 ? <>No matters yet. <Link href="/dashboard/matters" className="underline underline-offset-2">Create one</Link>.</> : "No matters match."}
               </div>
             ) : (
               shown.map((m) => (
-                <button key={m.id} onClick={() => pick(m.id)} className={`w-full text-left px-3.5 py-3 ${selected === m.id ? "bg-white" : "hover:bg-white/60"}`}>
-                  <div className="text-[13.5px] font-medium truncate">{m.title}</div>
-                  <div className="text-[12px] text-muted truncate">{[clientName(m.clientId), m.status, m.category && m.category !== "None" ? m.category : ""].filter(Boolean).join(" · ")}</div>
+                <button
+                  key={m.id}
+                  onClick={() => pick(m.id)}
+                  aria-current={selected === m.id ? "true" : undefined}
+                  className={`group/row w-full flex items-center gap-3 text-left px-3.5 py-2.5 rounded-xl transition-colors ${
+                    selected === m.id ? "bg-[#CFD7E8]" : "bg-[#E1E7F4] hover:bg-[#D5DDEE]"
+                  }`}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13.5px] font-medium truncate">{m.title}</span>
+                    <span className="block text-[12px] text-muted truncate">{[clientName(m.clientId), m.status, m.category && m.category !== "None" ? m.category : ""].filter(Boolean).join(" · ")}</span>
+                  </span>
+                  <span className={`flex-shrink-0 ${selected === m.id ? "text-ink" : "text-muted group-hover/row:text-ink"}`} aria-hidden>→</span>
                 </button>
               ))
             )}
