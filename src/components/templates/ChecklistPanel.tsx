@@ -20,10 +20,12 @@ export function ChecklistPicker({
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 bg-chip hover:bg-btn transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium"
+        className={`flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium ${
+          p.total ? "bg-btn hover:bg-btn-hover" : "bg-chip hover:bg-btn"
+        }`}
       >
         <ListChecks size={13} strokeWidth={1.75} />
-        {p.total ? `Templates ${p.done}/${p.total}` : "Templates"}
+        Templates
         <ChevronDown size={12} strokeWidth={1.75} className="text-muted" />
       </button>
       {open && (
