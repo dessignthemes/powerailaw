@@ -1361,7 +1361,7 @@ export default function IntegrationsModal({
                       <button
                         key={c.key}
                         onClick={() => setDrilled(c.key)}
-                        className="group/row flex items-center justify-between px-4 py-3.5 rounded-2xl bg-[#E1E7F4] hover:bg-[#D5DDEE] shadow-[0_2px_2px_rgba(27,25,26,0.08)] transition-colors text-left"
+                        className="group/row flex items-center justify-between px-4 py-3.5 rounded-2xl bg-chip hover:bg-[#DEE5F1] shadow-[0_2px_2px_rgba(27,25,26,0.08)] transition-colors text-left"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-white/70 flex items-center justify-center text-[15px]">
