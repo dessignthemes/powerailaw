@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId, NoWorkspaceError } from "@/lib/data/org";
 import { getSessionUserId } from "@/lib/auth";
-import { cleanSections, type TaskTemplate } from "@/lib/checklist";
+import { cleanSections, withExamples, type TaskTemplate } from "@/lib/checklist";
 
 export class TemplateError extends Error {
   constructor(public status: 400 | 404, message: string) {
@@ -30,7 +30,7 @@ export async function listTemplates(): Promise<TaskTemplate[]> {
   const orgId = await getCurrentOrgId();
   const { data, error } = await createAdminClient().from("task_templates").select(COLS).eq("org_id", orgId).order("name");
   if (error) throw error;
-  return ((data ?? []) as Row[]).map(toTemplate);
+  return withExamples(((data ?? []) as Row[]).map(toTemplate));
 }
 
 export async function createTemplate(input: { name?: unknown; sections?: unknown }): Promise<TaskTemplate> {

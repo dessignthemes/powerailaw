@@ -3,7 +3,8 @@
 // anchor = the critical date the step hangs off (e.g. "Closing date"); days = +/- days from it.
 export type TemplateItem = { id: string; text: string; anchor?: string; days?: number };
 export type TemplateSection = { id: string; title: string; items: TemplateItem[] };
-export type TaskTemplate = { id: string; name: string; sections: TemplateSection[]; updatedAt?: string };
+// example = built-in template every firm gets (read-only; saving makes the firm its own copy).
+export type TaskTemplate = { id: string; name: string; sections: TemplateSection[]; updatedAt?: string; example?: boolean };
 
 export type ChecklistItem = { id: string; text: string; done: boolean; doneAt?: string | null; anchor?: string; days?: number };
 export type ChecklistSection = { id: string; title: string; items: ChecklistItem[] };
@@ -126,55 +127,6 @@ export function toOutline(sections: TemplateSection[]): string {
     .map((s) => [s.title, ...s.items.map((i) => (i.anchor ? `* ${i.text} | ${i.anchor} | ${fmtDays(i.days ?? 0)}` : `* ${i.text}`))].join("\n"))
     .join("\n\n");
 }
-
-// Ready-made starter so a firm doesn't have to type it in.
-export const REAL_ESTATE_PURCHASE = `Intake & Engagement
-* Date Contract Signed
-* Legal Service Agreement Sent Out
-* Legal Service Agreement Received
-* Intake Form Completed
-* Invoice Sent Out
-* Invoice Sent Out
-
-Attorney Review
-* Review Letter Sent Out
-* Review Letter Received
-* Review Letter Response
-* Attorney Review Concluded
-
-Deposits & Escrow
-* 1st Deposit Received
-* 2nd Deposit Received
-* Escrow Letter
-* Escrow Held?
-* Fee Received
-
-Inspection & Contingencies
-* Contingency Date Letter
-* Home Inspection Report Received
-* Home Inspection Letter Sent Out
-* Home Inspection Contingency Satisfied
-
-Mortgage & Title
-* Mortgage Commitment Received
-* Title Ordered
-* Title Binder Received
-* Appraisal
-* Survey
-* Certificate of Occupancy
-* Smoke Cert
-* Final Water/Sewer Read
-
-Closing Preparation
-* Realtor Commission Statement
-* Cleared to Close
-* Closing Scheduled
-* Deposit Checks Cut
-
-Post Closing
-* Recorded Deed
-* Owners Title Policy
-* File Completed`;
 
 // ---------------------------------------------------------------------------
 // Due dates: each timed step is due <days> after (or before) one of the task's critical dates.
@@ -340,8 +292,13 @@ Post Closing
 Not Proceeding
 * Not Proceeding | Not proceeding date | 0`;
 
-export const STARTERS: { name: string; outline: string }[] = [
-  { name: "Real Estate Purchase", outline: REAL_ESTATE_PURCHASE },
-  { name: "Real Estate Purchase Workflow [NJ]", outline: RE_PURCHASE_NJ },
-  { name: "Real Estate Sale Workflow [NJ]", outline: RE_SALE_NJ },
+// Built-in examples every firm sees (a firm's own template with the same name takes its place).
+export const EXAMPLE_TEMPLATES: TaskTemplate[] = [
+  { id: "example-re-purchase", name: "Real Estate Purchase Workflow", sections: parseOutline(RE_PURCHASE_NJ), example: true },
+  { id: "example-re-sale", name: "Real Estate Sale Workflow", sections: parseOutline(RE_SALE_NJ), example: true },
 ];
+
+export function withExamples(own: TaskTemplate[]): TaskTemplate[] {
+  const names = new Set(own.map((t) => t.name.trim().toLowerCase()));
+  return [...own, ...EXAMPLE_TEMPLATES.filter((e) => !names.has(e.name.toLowerCase()))].sort((a, b) => a.name.localeCompare(b.name));
+}

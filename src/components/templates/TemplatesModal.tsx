@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { X, Plus, Trash2, ListChecks, Loader2, ClipboardPaste } from "lucide-react";
 import { useTemplates } from "./useTemplates";
-import { parseOutline, toOutline, STARTERS, COMMON_ANCHORS, type TemplateSection } from "@/lib/checklist";
+import { parseOutline, toOutline, COMMON_ANCHORS, type TemplateSection } from "@/lib/checklist";
 
-type Draft = { id?: string; name: string; sections: TemplateSection[] };
+type Draft = { id?: string; name: string; sections: TemplateSection[]; example?: boolean };
 const uid = () => crypto.randomUUID();
 const blank = (): Draft => ({ name: "", sections: [{ id: uid(), title: "", items: [{ id: uid(), text: "" }] }] });
 
@@ -19,7 +19,6 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
 
-  const missingStarters = STARTERS.filter((st) => !(templates ?? []).some((t) => t.name.toLowerCase() === st.name.toLowerCase()));
   const itemCount = (d: Draft) => d.sections.reduce((n, s) => n + s.items.filter((i) => i.text.trim()).length, 0);
 
   function open(d: Draft) {
@@ -38,9 +37,9 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const saved = await save({ ...draft, name: draft.name.trim() });
+      const saved = await save({ id: draft.example ? undefined : draft.id, name: draft.name.trim(), sections: draft.sections });
       setDraft({ id: saved.id, name: saved.name, sections: saved.sections });
-      setNotice("Template saved.");
+      setNotice(draft.example ? "Saved as your firm’s own copy. The example stays available." : "Template saved.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -75,7 +74,7 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
           ))}
         </datalist>
         {/* Template list */}
-        <div className="w-[260px] flex-shrink-0 bg-sidebar border-r border-line flex flex-col">
+        <div className="w-[300px] flex-shrink-0 bg-sidebar border-r border-line flex flex-col">
           <div className="px-5 pt-5 pb-3">
             <div className="text-[15px] font-semibold flex items-center gap-2">
               <ListChecks size={16} strokeWidth={1.75} /> Templates
@@ -91,12 +90,15 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
               templates.map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => open({ id: t.id, name: t.name, sections: t.sections })}
+                  onClick={() => open({ id: t.id, name: t.name, sections: t.sections, example: t.example })}
                   className={`text-left px-3 py-[7px] rounded-lg text-[13px] font-medium transition-colors ${
                     draft?.id === t.id ? "bg-nav text-ink" : "text-muted hover:bg-nav hover:text-ink"
                   }`}
                 >
-                  <span className="block truncate">{t.name}</span>
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <span className="truncate" title={t.name}>{t.name}</span>
+                    {t.example && <span className="flex-shrink-0 text-[10.5px] font-semibold uppercase tracking-wide text-muted bg-white/70 rounded px-1 py-px">Example</span>}
+                  </span>
                 </button>
               ))
             )}
@@ -111,28 +113,13 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
             >
               <Plus size={14} strokeWidth={2} /> New template
             </button>
-            {templates !== null && !loadError && missingStarters.length > 0 && (
-              <>
-                <div className="px-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Ready-made</div>
-                {missingStarters.map((st) => (
-                  <button
-                    key={st.name}
-                    onClick={() => open({ name: st.name, sections: parseOutline(st.outline) })}
-                    title={`Start with ${st.name}`}
-                    className="flex items-center justify-center gap-1.5 bg-chip hover:bg-btn px-3 py-2 rounded-full text-[12.5px] font-medium transition-colors"
-                  >
-                    <Plus size={12} strokeWidth={2} /> <span className="truncate">{st.name}</span>
-                  </button>
-                ))}
-              </>
-            )}
           </div>
         </div>
 
         {/* Editor */}
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
-            <div className="text-[13px] text-muted">{draft ? (draft.id ? "Edit template" : "New template") : "Checklist templates"}</div>
+            <div className="text-[13px] text-muted">{draft ? (draft.example ? "Example template" : draft.id ? "Edit template" : "New template") : "Checklist templates"}</div>
             <button onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">
               <X size={16} strokeWidth={1.75} />
             </button>
@@ -290,7 +277,8 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="border-t border-line px-6 py-3.5 flex items-center gap-3">
-                {draft.id && (
+                {draft.example && <span className="text-[12.5px] text-muted">Built-in example. Saving makes your own copy.</span>}
+                {draft.id && !draft.example && (
                   <button onClick={onDelete} disabled={busy} className="text-[13px] text-muted hover:text-[#B42318] flex items-center gap-1.5">
                     <Trash2 size={13} strokeWidth={1.75} /> Delete template
                   </button>
@@ -303,7 +291,7 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                   disabled={busy || !draft.name.trim() || itemCount(draft) === 0}
                   className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50 flex items-center gap-1.5"
                 >
-                  {busy && <Loader2 size={13} className="animate-spin" />} Save template
+                  {busy && <Loader2 size={13} className="animate-spin" />} {draft.example ? "Save my copy" : "Save template"}
                 </button>
               </div>
             </>

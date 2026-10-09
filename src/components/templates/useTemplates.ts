@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { TaskTemplate, TemplateSection } from "@/lib/checklist";
+import { withExamples, type TaskTemplate, type TemplateSection } from "@/lib/checklist";
 
 async function call(url: string, method: string, body?: unknown) {
   const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
@@ -45,13 +45,13 @@ export function useTemplates() {
       ? await call(`/api/task-templates/${t.id}`, "PATCH", { name: t.name, sections: t.sections })
       : await call("/api/task-templates", "POST", { name: t.name, sections: t.sections });
     const saved = d.template as TaskTemplate;
-    setTemplates((list) => [...(list ?? []).filter((x) => x.id !== saved.id), saved].sort((a, b) => a.name.localeCompare(b.name)));
+    setTemplates((list) => withExamples([...(list ?? []).filter((x) => x.id !== saved.id && !x.example), saved]));
     return saved;
   }, []);
 
   const remove = useCallback(async (id: string) => {
     await call(`/api/task-templates/${id}`, "DELETE");
-    setTemplates((list) => (list ?? []).filter((x) => x.id !== id));
+    setTemplates((list) => withExamples((list ?? []).filter((x) => x.id !== id && !x.example)));
   }, []);
 
   return { templates, error, reload: load, save, remove };
