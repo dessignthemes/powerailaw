@@ -1,7 +1,7 @@
 "use client";
 
 import TemplatesModal from "@/components/templates/TemplatesModal";
-import { progress as checklistProgress } from "@/lib/checklist";
+import { progress as checklistProgress, alerts as checklistAlerts } from "@/lib/checklist";
 import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -1261,7 +1261,19 @@ function TaskBoard({
                               const cp = checklistProgress(t.checklist);
                               if (!cp.total) return null;
                               const all = cp.done === cp.total;
+                              const al = checklistAlerts(t.checklist);
                               return (
+                                <>
+                                {al.overdue > 0 && (
+                                  <span title="Checklist steps past their due date" className="text-[11.5px] font-medium rounded-md px-1.5 py-0.5 bg-[#F9B2B3] text-ink">
+                                    {al.overdue} overdue
+                                  </span>
+                                )}
+                                {al.overdue === 0 && al.soon > 0 && (
+                                  <span title="Checklist steps due in the next 3 days" className="text-[11.5px] font-medium rounded-md px-1.5 py-0.5 bg-[#F9E1C0] text-ink">
+                                    {al.soon} due soon
+                                  </span>
+                                )}
                                 <span
                                   title="Checklist"
                                   className={`flex items-center gap-1 text-[11.5px] font-medium rounded-md px-1.5 py-0.5 ${all ? "bg-[#CAF0D9] text-ink" : "bg-card-alt text-muted"}`}
@@ -1269,6 +1281,7 @@ function TaskBoard({
                                   <ListChecks size={12} strokeWidth={1.75} />
                                   {cp.done}/{cp.total}
                                 </span>
+                                </>
                               );
                             })()}
                             {boardId === null && !createdBy && (

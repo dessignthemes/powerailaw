@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, ChevronRight, ListChecks, Plus, Trash2, X } from "lucide-react";
 import { useTemplates } from "./useTemplates";
-import { applyTemplate, progress, type TaskChecklist } from "@/lib/checklist";
+import { applyTemplate, progress, anchorsOf, dueState, fmtDays, alerts, type TaskChecklist, type DueState } from "@/lib/checklist";
 
 // "Templates" button for the task's property row: pick a template to add.
 export function ChecklistPicker({
@@ -77,6 +77,21 @@ export function ChecklistPicker({
   );
 }
 
+const fmtDate = (ymd: string) => {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+};
+
+const dueStyle: Record<DueState, string> = {
+  none: "",
+  unset: "text-muted-light",
+  done: "text-muted-light",
+  overdue: "bg-[#F9B2B3] text-ink",
+  today: "bg-[#F9E1C0] text-ink",
+  soon: "bg-[#F9E1C0] text-ink",
+  later: "text-muted",
+};
+
 // The task's checklist: sections with steps to tick off.
 export default function ChecklistPanel({
   checklist,
@@ -90,6 +105,14 @@ export default function ChecklistPanel({
   const [newText, setNewText] = useState("");
   const p = progress(checklist);
   const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
+  const anchors = anchorsOf(checklist);
+  const al = alerts(checklist);
+  const setDate = (anchor: string, value: string) => {
+    const dates = { ...(checklist.dates ?? {}) };
+    if (value) dates[anchor] = value;
+    else delete dates[anchor];
+    onChange({ ...checklist, dates });
+  };
 
   function update(sectionId: string, fn: (items: TaskChecklist["sections"][number]["items"]) => TaskChecklist["sections"][number]["items"]) {
     onChange({ ...checklist, sections: checklist.sections.map((s) => (s.id === sectionId ? { ...s, items: fn(s.items) } : s)) });
@@ -108,6 +131,34 @@ export default function ChecklistPanel({
       <div className="h-1.5 rounded-full bg-white overflow-hidden mb-4" aria-hidden>
         <div className="h-full rounded-full bg-[#2F9E5A] transition-all" style={{ width: `${pct}%` }} />
       </div>
+
+      {anchors.length > 0 && (
+        <div className="bg-page rounded-xl px-3.5 py-3 mb-2">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="text-[13px] font-semibold">Critical dates</div>
+            <div className="text-[12px] text-muted">Enter them once and every step gets its due date.</div>
+            {(al.overdue > 0 || al.soon > 0) && (
+              <div className="ml-auto flex items-center gap-1.5 text-[12px] font-medium">
+                {al.overdue > 0 && <span className="bg-[#F9B2B3] rounded-md px-1.5 py-0.5">{al.overdue} overdue</span>}
+                {al.soon > 0 && <span className="bg-[#F9E1C0] rounded-md px-1.5 py-0.5">{al.soon} due soon</span>}
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-x-4 gap-y-1.5">
+            {anchors.map((a) => (
+              <label key={a} className="flex items-center justify-between gap-2 text-[12.5px]">
+                <span className="text-muted truncate" title={a}>{a}</span>
+                <input
+                  type="date"
+                  value={checklist.dates?.[a] ?? ""}
+                  onChange={(e) => setDate(a, e.target.value)}
+                  className="bg-white border border-line rounded-lg px-2 py-1 text-[12.5px] outline-none w-[140px] flex-shrink-0"
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         {checklist.sections.map((s) => {
@@ -145,6 +196,28 @@ export default function ChecklistPanel({
                         {i.done && <Check size={12} strokeWidth={3} />}
                       </button>
                       <span className={`text-[13.5px] flex-1 ${i.done ? "line-through text-muted" : ""}`}>{i.text}</span>
+                      {(() => {
+                        const ds = dueState(i, checklist.dates);
+                        if (ds.state === "none" || ds.state === "done") return null;
+                        const label =
+                          ds.state === "unset"
+                            ? (i.days ?? 0) === 0
+                              ? `On ${i.anchor}`
+                              : `${Math.abs(i.days ?? 0)}d ${(i.days ?? 0) > 0 ? "after" : "before"} ${i.anchor}`
+                            : ds.state === "overdue"
+                              ? `Overdue \u00b7 ${fmtDate(ds.due!)}`
+                              : ds.state === "today"
+                                ? "Due today"
+                                : `Due ${fmtDate(ds.due!)}`;
+                        return (
+                          <span
+                            title={`${i.anchor} ${fmtDays(i.days ?? 0)} days`}
+                            className={`text-[11.5px] font-medium rounded-md px-1.5 py-0.5 flex-shrink-0 ${dueStyle[ds.state]}`}
+                          >
+                            {label}
+                          </span>
+                        );
+                      })()}
                       {i.done && i.doneAt && (
                         <span className="text-[11.5px] text-muted-light flex-shrink-0">
                           {new Date(i.doneAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}

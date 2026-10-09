@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Plus, Trash2, ListChecks, Loader2, ClipboardPaste } from "lucide-react";
 import { useTemplates } from "./useTemplates";
-import { parseOutline, toOutline, REAL_ESTATE_PURCHASE, type TemplateSection } from "@/lib/checklist";
+import { parseOutline, toOutline, STARTERS, COMMON_ANCHORS, type TemplateSection } from "@/lib/checklist";
 
 type Draft = { id?: string; name: string; sections: TemplateSection[] };
 const uid = () => crypto.randomUUID();
@@ -19,7 +19,7 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
 
-  const hasRealEstate = (templates ?? []).some((t) => t.name.toLowerCase() === "real estate purchase");
+  const missingStarters = STARTERS.filter((st) => !(templates ?? []).some((t) => t.name.toLowerCase() === st.name.toLowerCase()));
   const itemCount = (d: Draft) => d.sections.reduce((n, s) => n + s.items.filter((i) => i.text.trim()).length, 0);
 
   function open(d: Draft) {
@@ -64,11 +64,16 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-page rounded-3xl w-full max-w-[920px] h-[min(760px,92vh)] flex overflow-hidden shadow-[0_20px_60px_rgba(27,25,26,0.18)]"
+        className="bg-page rounded-3xl w-full max-w-[1060px] h-[min(760px,92vh)] flex overflow-hidden shadow-[0_20px_60px_rgba(27,25,26,0.18)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label="Checklist templates"
       >
+        <datalist id="lp-anchors">
+          {COMMON_ANCHORS.map((a) => (
+            <option key={a} value={a} />
+          ))}
+        </datalist>
         {/* Template list */}
         <div className="w-[260px] flex-shrink-0 bg-sidebar border-r border-line flex flex-col">
           <div className="px-5 pt-5 pb-3">
@@ -106,13 +111,20 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
             >
               <Plus size={14} strokeWidth={2} /> New template
             </button>
-            {!hasRealEstate && templates !== null && !loadError && (
-              <button
-                onClick={() => open({ name: "Real Estate Purchase", sections: parseOutline(REAL_ESTATE_PURCHASE) })}
-                className="flex items-center justify-center gap-1.5 bg-chip hover:bg-btn px-3 py-2 rounded-full text-[12.5px] font-medium transition-colors"
-              >
-                Start with Real Estate Purchase
-              </button>
+            {templates !== null && !loadError && missingStarters.length > 0 && (
+              <>
+                <div className="px-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Ready-made</div>
+                {missingStarters.map((st) => (
+                  <button
+                    key={st.name}
+                    onClick={() => open({ name: st.name, sections: parseOutline(st.outline) })}
+                    title={`Start with ${st.name}`}
+                    className="flex items-center justify-center gap-1.5 bg-chip hover:bg-btn px-3 py-2 rounded-full text-[12.5px] font-medium transition-colors"
+                  >
+                    <Plus size={12} strokeWidth={2} /> <span className="truncate">{st.name}</span>
+                  </button>
+                ))}
+              </>
             )}
           </div>
         </div>
@@ -166,6 +178,7 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                   <div className="mb-4">
                     <div className="text-[12.5px] text-muted mb-2">
                       One section name per line, with its steps underneath starting with <b>*</b> or <b>-</b>. Leave a blank line between sections.
+                      To give a step a due date, add the critical date and days after a bar, e.g. <b>* Title Binder Received | Closing date | -14</b>
                     </div>
                     <textarea
                       value={pasteText}
@@ -224,7 +237,29 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                                 }}
                                 placeholder="Step, e.g. Review Letter Sent Out"
                                 maxLength={200}
-                                className="flex-1 bg-white/70 focus:bg-white rounded-lg px-2.5 py-1.5 text-[13px] outline-none"
+                                className="flex-1 min-w-0 bg-white/70 focus:bg-white rounded-lg px-2.5 py-1.5 text-[13px] outline-none"
+                              />
+                              <input
+                                value={i.anchor ?? ""}
+                                onChange={(e) =>
+                                  setSection(s.id, {
+                                    items: s.items.map((x) => (x.id === i.id ? { ...x, anchor: e.target.value || undefined, days: x.days ?? 0 } : x)),
+                                  })
+                                }
+                                list="lp-anchors"
+                                placeholder="Critical date"
+                                title="The date this step is counted from, e.g. Closing date (optional)"
+                                maxLength={60}
+                                className="w-[190px] bg-white/70 focus:bg-white rounded-lg px-2.5 py-1.5 text-[12.5px] outline-none"
+                              />
+                              <input
+                                type="number"
+                                value={i.anchor ? (i.days ?? 0) : ""}
+                                disabled={!i.anchor}
+                                onChange={(e) => setSection(s.id, { items: s.items.map((x) => (x.id === i.id ? { ...x, days: Number(e.target.value) || 0 } : x)) })}
+                                placeholder="Days"
+                                title="Days after (+) or before (−) the critical date"
+                                className="w-[64px] bg-white/70 focus:bg-white rounded-lg px-2 py-1.5 text-[12.5px] outline-none text-right disabled:opacity-40"
                               />
                               <button
                                 onClick={() => setSection(s.id, { items: s.items.filter((x) => x.id !== i.id) })}
