@@ -246,7 +246,7 @@ export default function DocumentList({
                     {latest && (
                       <Link
                         href={`/dashboard/power-pdf/${d.id}?version=${latest.id}`}
-                        className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
+                        className="bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
                       >
                         <PenLine size={13} strokeWidth={2} /> Open in Power PDF
                       </Link>
