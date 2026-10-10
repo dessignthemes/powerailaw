@@ -11,9 +11,14 @@ import {
   ShieldCheck,
   Calculator,
   Inbox,
-  Play,
   Lock,
+  Star,
+  UserRound,
 } from "lucide-react";
+
+// Hero rating row. Use real numbers only (e.g. score: "4.9/5", label: "120+ Reviews") —
+// made-up ratings or review counts are illegal under the FTC's 2024 fake-review rule.
+const HERO_RATING: { score: string; label: string } = { score: "", label: "Loved by attorneys" };
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -97,7 +102,7 @@ const pricingYearly = [
 
 function Logo({ light = false }: { light?: boolean }) {
   return (
-    <div className={`flex items-center gap-2.5 font-display font-semibold text-[21px] ${light ? "text-white" : "text-ink"}`}>
+    <div className={`flex items-center gap-2.5 font-display font-semibold text-[18px] sm:text-[21px] whitespace-nowrap ${light ? "text-white" : "text-ink"}`}>
       <span className={light ? "rounded-[7px] ring-1 ring-white/25" : ""}>
         <LogoMark size={32} />
       </span>
@@ -111,11 +116,11 @@ export default function Home() {
     <>
       {/* HEADER */}
       <header className="bg-white border-b border-line">
-        <div className="max-w-[1440px] mx-auto px-6 md:px-[110px] h-[76px] flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-[110px] h-[76px] flex items-center justify-between gap-3">
           <Link href="/" aria-label="LawPower AI home">
             <Logo />
           </Link>
-          <div className="flex items-center gap-7">
+          <div className="flex items-center gap-4 sm:gap-7 whitespace-nowrap">
             <nav className="hidden lg:flex gap-7 text-[14px] font-medium text-muted">
               {navLinks.map((l) => (
                 <a key={l.href} href={l.href} className="hover:text-ink transition-colors">
@@ -123,63 +128,87 @@ export default function Home() {
                 </a>
               ))}
             </nav>
-            <a href="/portal/login" className="text-[14px] font-medium text-muted hover:text-ink transition-colors">
+            <a href="/portal/login" className="text-[13px] sm:text-[14px] font-medium text-muted hover:text-ink transition-colors">
               Client login
             </a>
             <a href="/login" className="hidden sm:inline text-[14px] font-medium text-ink hover:opacity-70 transition-opacity">
               Sign in
             </a>
-            <a href="/connect" className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors">
+            <a href="/connect" className="bg-dark text-white px-3.5 sm:px-4 py-2 rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-dark2 transition-colors">
               Get started
             </a>
           </div>
         </div>
       </header>
 
-      {/* HERO — dark rock texture, headline box, product window */}
+      {/* HERO — rock background, text directly on the image */}
       <section className="px-2 md:px-4 bg-white">
-        <div className="relative overflow-hidden bg-[#0b0b0b] lg:h-[790px] border border-[#2a2a2a]">
-          <Image src="/hero-rock.webp" alt="" fill priority sizes="100vw" className="object-cover object-top" />
-          <div className="absolute inset-0 bg-black/20" aria-hidden />
+        <div className="relative overflow-hidden bg-black min-h-[640px] lg:min-h-[760px] flex items-center">
+          <Image src="/hero-rocks.webp" alt="" fill priority sizes="100vw" className="object-cover object-[60%_center]" />
+          {/* Darker on the left so the text reads clearly over the rocks */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/10" aria-hidden />
 
-          {/* Headline */}
-          <div className="relative lg:absolute lg:left-[max(40px,4.6%)] lg:top-[109px] bg-black/95 lg:w-[44%] lg:max-w-[645px] px-7 md:px-8 pt-14 lg:pt-[70px] pb-10 lg:pb-[34px]">
+          <div className="relative w-full max-w-[1440px] mx-auto px-6 md:px-[84px] py-20">
+            <div className="mono text-[13px] md:text-[15px] tracking-[0.08em] text-white/85 mb-6">/ WELCOME TO LAWPOWER AI</div>
             <h1
-              className="text-white text-[34px] md:text-[clamp(36px,3.3vw,48px)] font-semibold"
-              style={{ fontFamily: "var(--font-body)", lineHeight: 1.15, letterSpacing: "-0.015em" }}
+              className="text-white text-[40px] md:text-[clamp(48px,5.6vw,84px)] font-semibold max-w-[1000px]"
+              style={{ fontFamily: "var(--font-body)", lineHeight: 1.08, letterSpacing: "-0.02em" }}
             >
               All-in-One AI Agents Workspace For Lawyers
             </h1>
-            <p className="text-[#D9D9D9] text-[17px] md:text-[20px] leading-snug mt-9 md:mt-[52px] max-w-[540px]">
-              LawPower AI made to support your daily work &ndash; built by lawyers, for lawyers.
+            <p className="text-white/80 text-[17px] md:text-[21px] leading-relaxed mt-7 max-w-[780px]">
+              From client intake and matter review to time tracking, e-signatures and secure file sharing, LawPower AI helps your firm stay organized,
+              move faster and give every client better service &ndash; built by lawyers, for lawyers.
             </p>
-            <div className="flex flex-wrap gap-3 mt-8 lg:hidden">
-              <a href="/connect" className="bg-white text-ink px-5 py-2.5 rounded-full text-[14px] font-medium">Start free trial</a>
+            <div className="flex flex-wrap gap-3 mt-9">
+              <a href="/connect" className="bg-white text-ink px-7 py-4 rounded-lg text-[16px] font-medium hover:bg-[#ECEDEF] transition-colors">
+                Start Free Trial
+              </a>
+              <a href="#in-action" className="border border-white/80 text-white px-7 py-4 rounded-lg text-[16px] font-medium hover:bg-white/10 transition-colors">
+                Explore Features
+              </a>
+            </div>
+
+            {/* Rating row: put real numbers in HERO_RATING (top of this file) once you have reviews. */}
+            <div className="flex flex-wrap items-center gap-4 mt-10">
+              <div className="flex -space-x-2" aria-hidden>
+                {["#d9d4cc", "#b9c2cf", "#cfc6d6"].map((c) => (
+                  <span key={c} className="w-9 h-9 rounded-full border-2 border-black flex items-end justify-center overflow-hidden" style={{ background: c }}>
+                    <UserRound size={30} strokeWidth={1.5} className="text-black/45 -mb-1.5" />
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center gap-1" aria-label="5 stars">
+                {[0, 1, 2, 3, 4].map((k) => (
+                  <Star key={k} size={20} fill="currentColor" strokeWidth={0} className="text-white/70" />
+                ))}
+              </div>
+              <div className="text-white text-[15px] font-medium flex gap-2.5">
+                {HERO_RATING.score && <span>{HERO_RATING.score}</span>}
+                <span>{HERO_RATING.label}</span>
+              </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* See in action */}
-          <a
-            href="#features"
-            className="group hidden lg:block absolute left-[60px] bottom-[50px] w-[240px] h-[160px] overflow-hidden ring-1 ring-white/10"
-          >
-            <Image src="/hero-rock-thumb.webp" alt="" fill sizes="240px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-            <span className="absolute inset-0 bg-black/25 group-hover:bg-black/10 transition-colors" />
-            <span className="absolute left-[46px] top-1/2 -translate-y-1/2 flex items-center gap-3 text-white text-[16px] font-medium">
-              <Play size={22} fill="currentColor" strokeWidth={0} /> See in action
-            </span>
-          </a>
-
-          {/* Product window */}
-          <div className="relative lg:absolute lg:left-[52%] lg:top-[60px] lg:w-[1120px] mx-4 lg:mx-0 mt-6 lg:mt-0 mb-6 lg:mb-0 rounded-t-[12px] lg:rounded-tr-none overflow-hidden border border-[#3a3a3a] bg-[#1c1c1c] shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
+      {/* IN ACTION — the real dashboard */}
+      <section className="pt-24 pb-8 bg-page" id="in-action">
+        <div className="max-w-[1160px] mx-auto px-8">
+          <div className="max-w-[640px] mb-10">
+            <div className="text-[13px] font-semibold text-muted mb-3.5 uppercase tracking-wide">See it in action</div>
+            <h2 className="text-[34px] md:text-[44px] font-semibold leading-tight">Your whole day, on one screen.</h2>
+            <p className="text-[16px] text-muted leading-relaxed mt-4">
+              Tasks due today, your calendar, time tracked and every board, the moment you sign in.
+            </p>
+          </div>
+          <div className="rounded-[14px] overflow-hidden border border-[#2a2a2a] bg-[#1c1c1c] shadow-[0_30px_80px_rgba(27,25,26,0.25)]">
             <div className="h-9 flex items-center gap-4 px-4 text-[#8c8c8c]" aria-hidden>
               <span className="flex gap-2">
                 <span className="w-3 h-3 rounded-full bg-[#5a5a5a]" />
                 <span className="w-3 h-3 rounded-full bg-[#5a5a5a]" />
                 <span className="w-3 h-3 rounded-full bg-[#5a5a5a]" />
               </span>
-              <svg width="16" height="14" viewBox="0 0 16 14" className="hidden sm:block"><rect x=".75" y=".75" width="14.5" height="12.5" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M5.5 1v12" stroke="currentColor" strokeWidth="1.5" /></svg>
-              <span className="hidden sm:flex gap-3 text-[15px]">‹ <span className="opacity-50">›</span></span>
               <span className="flex-1 flex justify-center">
                 <span className="flex items-center gap-1.5 text-[12px] text-[#bdbdbd]"><Lock size={11} /> lawpower.ai</span>
               </span>
@@ -189,8 +218,7 @@ export default function Home() {
               alt="The LawPower AI dashboard showing tasks due today, calendar and time tracked"
               width={2880}
               height={1800}
-              priority
-              sizes="(min-width: 1024px) 1120px, 100vw"
+              sizes="(min-width: 1160px) 1100px, 100vw"
               className="block w-full h-auto"
             />
           </div>
