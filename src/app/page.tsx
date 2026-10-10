@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LogoMark from "@/components/LogoMark";
+import SeeInAction from "@/components/home/SeeInAction";
 import Image from "next/image";
 import {
   Sparkles,
@@ -142,7 +143,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/20" aria-hidden />
 
           {/* Text */}
-          <div className="relative lg:absolute lg:left-[max(40px,5%)] lg:top-1/2 lg:-translate-y-1/2 lg:w-[44%] px-6 md:px-10 lg:px-0 pt-16 pb-10 lg:py-0">
+          <div className="relative lg:absolute lg:left-[max(40px,5%)] lg:top-1/2 lg:-translate-y-1/2 xl:top-[110px] xl:translate-y-0 lg:w-[44%] px-6 md:px-10 lg:px-0 pt-16 pb-10 lg:py-0">
             <div className="mono text-[13px] md:text-[14px] tracking-[0.08em] text-white/85 mb-5">/ WELCOME TO LAWPOWER AI</div>
             <h1
               className="text-white text-[38px] md:text-[clamp(40px,4vw,60px)] font-semibold"
@@ -162,6 +163,14 @@ export default function Home() {
                 Explore Features
               </a>
             </div>
+            <div className="mt-8 xl:hidden">
+              <SeeInAction variant="link" />
+            </div>
+          </div>
+
+          {/* See in action (video pop-up) */}
+          <div className="hidden xl:block absolute left-[max(40px,5%)] bottom-[50px]">
+            <SeeInAction />
           </div>
 
           {/* Product window */}
