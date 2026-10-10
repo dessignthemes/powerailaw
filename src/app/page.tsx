@@ -123,6 +123,9 @@ export default function Home() {
                 </a>
               ))}
             </nav>
+            <a href="/portal/login" className="text-[14px] font-medium text-muted hover:text-ink transition-colors">
+              Client login
+            </a>
             <a href="/login" className="hidden sm:inline text-[14px] font-medium text-ink hover:opacity-70 transition-opacity">
               Sign in
             </a>

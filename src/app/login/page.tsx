@@ -72,6 +72,10 @@ export default function LoginPage() {
           <a href="/terms" className="underline underline-offset-2 hover:text-ink">Terms of Service</a> and{" "}
           <a href="/privacy" className="underline underline-offset-2 hover:text-ink">Privacy Policy</a>.
         </p>
+        <p className="text-[12.5px] text-muted text-center mt-5 pt-4 border-t border-line">
+          Are you a client of a law firm?{" "}
+          <a href="/portal/login" className="font-medium text-ink underline underline-offset-2">Client portal sign in</a>
+        </p>
       </div>
     </div>
   );

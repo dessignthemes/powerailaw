@@ -1,6 +1,7 @@
 "use client";
 
 import ClientAvatar from "@/components/clientCard/ClientAvatar";
+import PortalView from "@/components/clientCard/PortalView";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -15,7 +16,7 @@ import {
   personFullTitle, type CardType, type ContactLine, type Person, type Profile,
 } from "@/lib/clients/card";
 
-type Section = "person" | "intake" | "details" | "address" | "notes" | "documents" | "mailings" | "matters";
+type Section = "person" | "intake" | "details" | "address" | "notes" | "documents" | "mailings" | "matters" | "portal";
 
 const input = "w-full border border-line rounded-lg px-3 py-2 text-[14px] bg-white outline-none focus:border-ink placeholder:text-muted/70";
 const smallSelect = "border border-line rounded-lg px-2.5 py-2 text-[13.5px] bg-white outline-none focus:border-ink";
@@ -215,6 +216,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
     ["documents", "Documents"],
     ["mailings", "Mailings"],
     ["matters", "Matters"],
+    ["portal", "Client portal"],
   ];
 
   if (!loaded) return <div className="bg-card-alt rounded-2xl py-16 text-center text-[14px] text-muted">Loading the client card…</div>;
@@ -329,6 +331,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
           {section === "documents" && <DocumentsView clientId={cardId} matters={matters.filter((m) => m.clientId === cardId)} />}
           {section === "mailings" && <MailingsView clientId={cardId} dirty={dirty} />}
           {section === "matters" && <MattersView clientId={cardId} matters={matters.filter((m) => m.clientId === cardId)} />}
+          {section === "portal" && <PortalView clientId={cardId} defaultEmail={firstEmail} />}
         </section>
       </div>
 
@@ -658,6 +661,38 @@ function DocumentsView({ clientId, matters }: { clientId: string | null; matters
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const ids = matters.map((m) => m.id).join(",");
+  const [shared, setShared] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    if (!clientId) return;
+    let live = true;
+    fetch(`/api/client-portal/${clientId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => live && setShared(d ? new Set<string>(d.sharedDocumentIds) : null))
+      .catch(() => null);
+    return () => {
+      live = false;
+    };
+  }, [clientId]);
+  async function toggleShare(docId: string) {
+    const on = !shared?.has(docId);
+    setShared((s) => {
+      const n = new Set(s ?? []);
+      if (on) n.add(docId);
+      else n.delete(docId);
+      return n;
+    });
+    const res = await fetch(`/api/client-portal/documents/${docId}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ shared: on }) });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setError(d?.error ?? "Couldn’t change sharing.");
+      setShared((s) => {
+        const n = new Set(s ?? []);
+        if (on) n.delete(docId);
+        else n.add(docId);
+        return n;
+      });
+    }
+  }
   useEffect(() => {
     if (!clientId) return;
     let cancelled = false;
@@ -710,20 +745,38 @@ function DocumentsView({ clientId, matters }: { clientId: string | null; matters
         <div className="py-12 text-center text-[14px] text-muted">No documents yet.</div>
       ) : (
         <div className="border border-line rounded-xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_180px_130px] gap-3 px-4 py-2 text-[12px] font-medium text-muted border-b border-line bg-card-alt/50">
-            <span>Document name</span><span>Matter</span><span>Added</span>
+          <div className="grid grid-cols-[1fr_170px_100px_120px] gap-3 px-4 py-2 text-[12px] font-medium text-muted border-b border-line bg-card-alt/50">
+            <span>Document name</span><span>Matter</span><span>Added</span><span>Client can see</span>
           </div>
-          {docs.map((d) => (
-            <button
-              key={d.id}
-              onClick={async () => { const v = d.versions[0]; if (v) window.open(await versionDownloadUrl(v.id), "_blank", "noopener"); }}
-              className="w-full grid grid-cols-[1fr_180px_130px] gap-3 px-4 py-2.5 text-left text-[13.5px] border-b border-line last:border-0 hover:bg-chip/40"
-            >
-              <span className="flex items-center gap-2 truncate"><FileText size={15} className="text-muted flex-shrink-0" /> <span className="truncate">{d.title}</span></span>
-              <span className="truncate text-muted">{matters.find((m) => m.id === d.matterId)?.title}</span>
-              <span className="text-muted">{new Date(d.createdAt).toLocaleDateString()}</span>
-            </button>
-          ))}
+          {docs.map((d) => {
+            const on = !!shared?.has(d.id);
+            return (
+              <div key={d.id} className="grid grid-cols-[1fr_170px_100px_120px] gap-3 px-4 py-2.5 items-center text-[13.5px] border-b border-line last:border-0 hover:bg-chip/40">
+                <button
+                  onClick={async () => { const v = d.versions[0]; if (v) window.open(await versionDownloadUrl(v.id), "_blank", "noopener"); }}
+                  className="flex items-center gap-2 truncate text-left"
+                >
+                  <FileText size={15} className="text-muted flex-shrink-0" /> <span className="truncate">{d.title}</span>
+                </button>
+                <span className="truncate text-muted">{matters.find((m) => m.id === d.matterId)?.title}</span>
+                <span className="text-muted">{new Date(d.createdAt).toLocaleDateString()}</span>
+                <button
+                  role="switch"
+                  aria-checked={on}
+                  aria-label={`Show ${d.title} in the client portal`}
+                  disabled={shared === null}
+                  onClick={() => toggleShare(d.id)}
+                  title={shared === null ? "Run the client portal database update first" : on ? "Shared in the client portal" : "Not shared"}
+                  className="flex items-center gap-2 text-[12.5px] text-muted disabled:opacity-40"
+                >
+                  <span className={`relative w-8 h-[18px] rounded-full transition-colors ${on ? "bg-[#2F9E5A]" : "bg-btn-ring"}`}>
+                    <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all ${on ? "left-[16px]" : "left-[2px]"}`} />
+                  </span>
+                  {on ? "Shared" : "Hidden"}
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

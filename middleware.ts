@@ -40,7 +40,10 @@ export async function middleware(request: NextRequest) {
   // Public APIs, each guarded by its own secret: e-signature links, Secure Files
   // links, and the daily cleanup job (which checks CRON_SECRET itself).
   const publicApi =
-    pathname.startsWith("/api/public/sign/") || pathname.startsWith("/api/public/share/") || pathname === "/api/cron/file-shares";
+    pathname.startsWith("/api/public/sign/") ||
+    pathname.startsWith("/api/public/share/") ||
+    pathname.startsWith("/api/portal/") || // client portal: checks its own client session cookie
+    pathname === "/api/cron/file-shares";
   if (!user && pathname.startsWith("/api/") && !publicApi) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
