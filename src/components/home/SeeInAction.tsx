@@ -29,7 +29,7 @@ export default function SeeInAction({ variant = "card" }: { variant?: "card" | "
           className="group relative block w-[240px] h-[160px] overflow-hidden ring-1 ring-white/10 text-left"
           aria-label="See LawPower AI in action"
         >
-          <Image src="/see-in-action.webp" alt="" fill sizes="240px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+          <Image src="/see-in-action-v2.webp" alt="" fill sizes="240px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 bg-black/85 px-4 py-2.5 text-white text-[17px] font-medium whitespace-nowrap">
             <Play size={20} fill="currentColor" strokeWidth={0} /> See in action
           </span>
@@ -54,7 +54,7 @@ export default function SeeInAction({ variant = "card" }: { variant?: "card" | "
               )
             ) : (
               <>
-                <Image src="/see-in-action.webp" alt="" fill sizes="960px" className="object-cover opacity-30" />
+                <Image src="/see-in-action-v2.webp" alt="" fill sizes="960px" className="object-cover opacity-80" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
                   <span className="w-16 h-16 rounded-full bg-white/10 ring-1 ring-white/30 flex items-center justify-center mb-5">
                     <Play size={26} fill="white" strokeWidth={0} className="ml-1" />
