@@ -20,6 +20,7 @@ import {
   Bookmark,
   CircleUser,
   Folder,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -39,6 +40,7 @@ export const toolLinks: NavLink[] = [
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
   { label: "Dropbox", href: "/dashboard/dropbox", icon: Cloud },
+  { label: "Secure Files", href: "/dashboard/secure-files", icon: ShieldCheck },
 ];
 
 export const workspaceLinks: NavLink[] = [
