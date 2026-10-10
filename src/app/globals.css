@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 :root {
+  /* Inter for everything: headings and the small "mono" labels use it too. */
+  --font-display: var(--font-body);
+  --font-mono: var(--font-body);
   /* Cool blue-grey theme. */
   --sidebar: #f5f6f8; /* left navigation */
   --cream: #fafbfd; /* raised surfaces: cards on panels, modals */
