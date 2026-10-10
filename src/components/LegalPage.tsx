@@ -1,3 +1,4 @@
+import LogoMark from "@/components/LogoMark";
 import Link from "next/link";
 
 // Shared layout for public legal pages (/privacy, /terms).
@@ -32,7 +33,7 @@ export default function LegalPage({ title, children }: { title: string; children
       <header className="border-b border-line">
         <div className="max-w-[820px] mx-auto px-6 py-5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 font-semibold text-[16px]">
-            <span className="w-8 h-8 rounded-md bg-dark text-white flex items-center justify-center text-[15px] font-bold">L</span>
+            <LogoMark size={32} />
             LawPower AI
           </Link>
           <nav className="flex gap-5 text-[14px] text-muted">

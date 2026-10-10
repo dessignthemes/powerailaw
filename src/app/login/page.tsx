@@ -1,5 +1,6 @@
 "use client";
 
+import LogoMark from "@/components/LogoMark";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { GOOGLE_FULL_SCOPES, MICROSOFT_FULL_SCOPES } from "@/lib/oauthScopes";
@@ -34,9 +35,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-page flex items-center justify-center px-4">
       <div className="w-full max-w-[400px] bg-card-alt rounded-3xl p-8">
         <div className="flex items-center gap-2.5 mb-8 justify-center">
-          <div className="w-8 h-8 rounded-md bg-dark text-white flex items-center justify-center text-[14px] font-bold font-display">
-          L
-        </div>
+          <LogoMark size={32} />
           <span className="font-display font-semibold text-[18px]">LawPower AI</span>
         </div>
 

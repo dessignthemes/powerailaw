@@ -1,5 +1,6 @@
 "use client";
 
+import LogoMark from "@/components/LogoMark";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
@@ -66,9 +67,7 @@ export default function Sidebar() {
   return (
     <aside className="w-[260px] flex-shrink-0 bg-sidebar border-r border-line h-screen sticky top-0 flex flex-col px-4 py-6">
       <div className="flex items-center gap-2.5 px-2 mb-8">
-        <div className="w-7 h-7 rounded-md bg-dark text-white flex items-center justify-center text-[13px] font-bold font-display">
-          L
-        </div>
+        <LogoMark size={28} />
         <span className="font-display font-semibold text-[16px]">LawPower AI</span>
       </div>
 

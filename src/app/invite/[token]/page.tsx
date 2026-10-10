@@ -1,5 +1,6 @@
 "use client";
 
+import LogoMark from "@/components/LogoMark";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Loader2, AlertTriangle, Users, Check } from "lucide-react";
@@ -73,7 +74,7 @@ export default function InvitePage() {
     <div className="min-h-screen bg-cream flex items-center justify-center px-6">
       <div className="w-full max-w-[440px] bg-card-alt rounded-3xl p-8">
         <div className="flex items-center gap-2.5 mb-8 justify-center">
-          <div className="w-8 h-8 rounded-md bg-dark text-white flex items-center justify-center text-[14px] font-bold font-display">L</div>
+          <LogoMark size={32} />
           <span className="font-display font-semibold text-[18px]">LawPower AI</span>
         </div>
 
