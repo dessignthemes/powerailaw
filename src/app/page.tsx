@@ -147,7 +147,7 @@ export default function Home() {
             <div className="mono text-[13px] md:text-[14px] tracking-[0.08em] text-white/85 mb-5">/ WELCOME TO LAWPOWER AI</div>
             <h1
               className="text-white text-[38px] md:text-[clamp(40px,4vw,60px)] font-semibold"
-              style={{ fontFamily: "var(--font-body)", lineHeight: 1.08, letterSpacing: "-0.02em" }}
+              style={{ lineHeight: 1.08, letterSpacing: "-0.02em" }}
             >
               All-in-One AI Agents Workspace For Lawyers
             </h1>

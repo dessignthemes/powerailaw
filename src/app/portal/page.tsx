@@ -88,7 +88,7 @@ export default function PortalHome() {
                     <section key={m.id || "other"}>
                       <div className="flex items-center gap-2 mb-2.5">
                         <Folder size={15} className="text-muted" />
-                        <h2 className="text-[15px] font-semibold" style={{ fontFamily: "var(--font-body)", letterSpacing: 0 }}>{m.title}</h2>
+                        <h2 className="text-[15px] font-semibold" style={{ letterSpacing: 0 }}>{m.title}</h2>
                         {m.status && <span className="text-[12px] text-muted bg-card-alt rounded-md px-1.5 py-0.5">{m.status}</span>}
                       </div>
                       <div className="flex flex-col gap-2">

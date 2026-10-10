@@ -59,7 +59,7 @@ export default function SeeInAction({ variant = "card" }: { variant?: "card" | "
                   <span className="w-16 h-16 rounded-full bg-white/10 ring-1 ring-white/30 flex items-center justify-center mb-5">
                     <Play size={26} fill="white" strokeWidth={0} className="ml-1" />
                   </span>
-                  <div className="text-white text-[24px] md:text-[30px] font-semibold" style={{ fontFamily: "var(--font-body)" }}>
+                  <div className="text-white text-[24px] md:text-[30px] font-semibold">
                     Video overview coming soon
                   </div>
                   <div className="text-white/70 text-[15px] mt-2 max-w-[440px]">
