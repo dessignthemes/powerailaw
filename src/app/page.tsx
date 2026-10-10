@@ -1,32 +1,43 @@
+import Link from "next/link";
+import Image from "next/image";
+import {
+  Sparkles,
+  FolderSearch,
+  UserPlus,
+  ListChecks,
+  Timer,
+  FilePen,
+  ShieldCheck,
+  Calculator,
+  Inbox,
+  Play,
+  Lock,
+} from "lucide-react";
+
 const navLinks = [
-  { label: "Product", href: "#product" },
-  { label: "Integrations", href: "#integrations" },
+  { label: "Features", href: "#features" },
+  { label: "Security", href: "#security" },
   { label: "How it works", href: "#how" },
   { label: "Pricing", href: "#pricing" },
 ];
 
-const trailSteps = [
-  {
-    icon: "✉",
-    title: "New email received",
-    meta: "09:14 AM · Client: Whitfield Estate",
-    tag: "Attachment: Petition_Draft.pdf",
-  },
-  {
-    icon: "→",
-    title: "Assigned to team member",
-    meta: "Auto-routed · Sarah Chen, Associate",
-  },
-  {
-    icon: "▤",
-    title: "Task created in Planner",
-    meta: "Board: Estate Litigation · Bucket: Intake",
-  },
-  {
-    icon: "⚖",
-    title: "Linked to Law Software matter",
-    meta: "Matter #4471 · Whitfield, R.",
-  },
+const tools = [
+  { icon: Sparkles, title: "AI Agent", desc: "Ask about any matter, client, email or deadline. It reads your workspace and drafts the next step." },
+  { icon: FolderSearch, title: "AI Matter review", desc: "One click summarizes a matter, flags what’s missing and turns next steps into tasks." },
+  { icon: UserPlus, title: "Client intake", desc: "A complete client card, then your intake sheet and engagement letter filled in automatically." },
+  { icon: ListChecks, title: "Task boards & checklists", desc: "Drag-and-drop boards with real estate workflows that set every due date from the closing date." },
+  { icon: Timer, title: "Automatic time tracking", desc: "Open a task and the clock starts. Close it and the time is on your timesheet." },
+  { icon: FilePen, title: "PDF editing & e-signature", desc: "Fill forms, add text and send for signature. Clients sign on their phone; you get a certificate." },
+  { icon: ShieldCheck, title: "Secure file sharing", desc: "Send or collect large files through private, password-protected links that delete themselves." },
+  { icon: Calculator, title: "AI Accountant", desc: "Import bank and card statements, categorize for Schedule C and keep trust money separate." },
+  { icon: Inbox, title: "Inbox & calendar", desc: "Gmail or Outlook, plus your calendar, in the same place as your matters and tasks." },
+];
+
+const security = [
+  { title: "Your firm’s data stays private", desc: "Every firm has its own isolated workspace. No other firm can ever see your clients, matters or files." },
+  { title: "Encrypted, in transit and at rest", desc: "Files and records are encrypted and only reachable through short-lived, signed links." },
+  { title: "Not used to train AI", desc: "AI features run under business terms: your firm’s data is never used to train AI models." },
+  { title: "Read-only mailbox access", desc: "LawPower reads the email folders you choose. It never moves, deletes or sends email on its own." },
 ];
 
 const integrations = ["Microsoft 365", "Outlook Mail", "Microsoft Planner", "Law Software"];
@@ -83,20 +94,26 @@ const pricingYearly = [
   "Annual usage report for your firm",
 ];
 
+function LogoMark({ size = 30 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
+      <rect width="32" height="32" rx="7" fill="#1B191A" />
+      <path
+        d="M26 5.6C17.8 6.4 11 11.6 9.4 21.9l4.9-1.3-1.5-1 5.5-2.2-1.6-.8 5.1-3.3-1.5-.6c2.6-2 4.6-4.4 5.7-7.1z"
+        fill="#fff"
+      />
+      <path d="M11.2 20.4 24 7.8" stroke="#1B191A" strokeWidth=".9" strokeLinecap="round" />
+      <path d="M6.4 25.6 11.4 20.6" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function Logo({ light = false }: { light?: boolean }) {
   return (
-    <div
-      className={`flex items-center gap-2.5 font-display font-semibold text-[19px] ${
-        light ? "text-white" : "text-ink"
-      }`}
-    >
-      <div
-        className={`w-[30px] h-[30px] rounded-lg flex items-center justify-center text-[15px] font-bold ${
-          light ? "bg-white text-dark" : "bg-dark text-white"
-        }`}
-      >
-        L
-      </div>
+    <div className={`flex items-center gap-2.5 font-display font-semibold text-[21px] ${light ? "text-white" : "text-ink"}`}>
+      <span className={light ? "rounded-[7px] ring-1 ring-white/25" : ""}>
+        <LogoMark size={32} />
+      </span>
       LawPower AI
     </div>
   );
@@ -105,92 +122,136 @@ function Logo({ light = false }: { light?: boolean }) {
 export default function Home() {
   return (
     <>
-      {/* HERO — split dark / beige, nav embedded */}
-      <section className="grid grid-cols-1 md:grid-cols-2">
-        {/* LEFT: dark panel */}
-        <div className="bg-dark text-white px-8 md:px-14 pt-8 pb-16 flex flex-col">
-          <nav className="flex items-center justify-between mb-20 md:mb-28">
-            <Logo light />
-            <div className="hidden lg:flex gap-8 text-[14px] font-medium text-muted-light">
+      {/* HEADER */}
+      <header className="bg-white border-b border-line">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-[110px] h-[76px] flex items-center justify-between">
+          <Link href="/" aria-label="LawPower AI home">
+            <Logo />
+          </Link>
+          <div className="flex items-center gap-7">
+            <nav className="hidden lg:flex gap-7 text-[14px] font-medium text-muted">
               {navLinks.map((l) => (
-                <a key={l.href} href={l.href} className="hover:text-white transition-colors">
+                <a key={l.href} href={l.href} className="hover:text-ink transition-colors">
                   {l.label}
                 </a>
               ))}
-            </div>
-          </nav>
-
-          <div className="max-w-[480px]">
-            <h1 className="text-[40px] md:text-[52px] font-semibold mb-6 text-white">
-              Legal ops automation, built for law firms.
-            </h1>
-            <p className="text-[16.5px] text-muted-light leading-relaxed mb-9">
-              LawPower AI watches your firm&rsquo;s inbox, assigns incoming
-              documents to the right team member, and keeps Microsoft Planner
-              and your law software in sync — so nothing sits unclaimed and
-              nobody has to ask &ldquo;who has this file?&rdquo;
-            </p>
-            <a
-              href="#pricing"
-              className="inline-block bg-white text-ink px-6 py-3.5 rounded-full text-[15px] font-medium hover:bg-cream transition-colors"
-            >
-              Start free trial
+            </nav>
+            <a href="/login" className="hidden sm:inline text-[14px] font-medium text-ink hover:opacity-70 transition-opacity">
+              Sign in
             </a>
-
-            <div className="flex items-center gap-3 mt-16 pt-8 border-t border-line-dark">
-              <div className="w-9 h-9 rounded-full bg-dark2 border border-line-dark flex items-center justify-center text-[13px]">
-                ▶
-              </div>
-              <div className="text-[13.5px] text-muted-light">
-                See how the intake trail works<br />
-                <span className="text-white font-medium">Watch a 2-minute walkthrough</span>
-              </div>
-            </div>
+            <a href="/connect" className="bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors">
+              Get started
+            </a>
           </div>
         </div>
+      </header>
 
-        {/* RIGHT: beige textured panel with floating trail card */}
-        <div className="texture-beige relative min-h-[420px] md:min-h-full flex items-center justify-center px-6 py-10 md:py-0">
+      {/* HERO — dark rock texture, headline box, product window */}
+      <section className="px-2 md:px-4 bg-white">
+        <div className="relative overflow-hidden bg-[#0b0b0b] lg:h-[790px] border border-[#2a2a2a]">
+          <Image src="/hero-rock.webp" alt="" fill priority sizes="100vw" className="object-cover object-top" />
+          <div className="absolute inset-0 bg-black/20" aria-hidden />
+
+          {/* Headline */}
+          <div className="relative lg:absolute lg:left-[max(40px,4.6%)] lg:top-[109px] bg-black/95 lg:w-[44%] lg:max-w-[645px] px-7 md:px-8 pt-14 lg:pt-[70px] pb-10 lg:pb-[34px]">
+            <h1
+              className="text-white text-[34px] md:text-[clamp(36px,3.3vw,48px)] font-semibold"
+              style={{ fontFamily: "var(--font-body)", lineHeight: 1.15, letterSpacing: "-0.015em" }}
+            >
+              All-in-One AI Agents Workspace For Lawyers
+            </h1>
+            <p className="text-[#D9D9D9] text-[17px] md:text-[20px] leading-snug mt-9 md:mt-[52px] max-w-[540px]">
+              LawPower AI made to support your daily work &ndash; built by lawyers, for lawyers.
+            </p>
+            <div className="flex flex-wrap gap-3 mt-8 lg:hidden">
+              <a href="/connect" className="bg-white text-ink px-5 py-2.5 rounded-full text-[14px] font-medium">Start free trial</a>
+            </div>
+          </div>
+
+          {/* See in action */}
           <a
-            href="/connect"
-            className="absolute top-8 right-8 bg-dark text-white px-5 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors"
+            href="#features"
+            className="group hidden lg:block absolute left-[60px] bottom-[50px] w-[240px] h-[160px] overflow-hidden ring-1 ring-white/10"
           >
-            Get Started
+            <Image src="/hero-rock-thumb.webp" alt="" fill sizes="240px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            <span className="absolute inset-0 bg-black/25 group-hover:bg-black/10 transition-colors" />
+            <span className="absolute left-[46px] top-1/2 -translate-y-1/2 flex items-center gap-3 text-white text-[16px] font-medium">
+              <Play size={22} fill="currentColor" strokeWidth={0} /> See in action
+            </span>
           </a>
 
-          <div className="bg-white rounded-[20px] px-7 py-8 max-w-[420px] w-full shadow-[0_20px_60px_-15px_rgba(18,17,16,0.25)]">
-            <div className="text-xs text-muted uppercase tracking-wider mb-5 font-semibold">
-              Live matter intake trail
+          {/* Product window */}
+          <div className="relative lg:absolute lg:left-[52%] lg:top-[60px] lg:w-[1120px] mx-4 lg:mx-0 mt-6 lg:mt-0 mb-6 lg:mb-0 rounded-t-[12px] lg:rounded-tr-none overflow-hidden border border-[#3a3a3a] bg-[#1c1c1c] shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
+            <div className="h-9 flex items-center gap-4 px-4 text-[#8c8c8c]" aria-hidden>
+              <span className="flex gap-2">
+                <span className="w-3 h-3 rounded-full bg-[#5a5a5a]" />
+                <span className="w-3 h-3 rounded-full bg-[#5a5a5a]" />
+                <span className="w-3 h-3 rounded-full bg-[#5a5a5a]" />
+              </span>
+              <svg width="16" height="14" viewBox="0 0 16 14" className="hidden sm:block"><rect x=".75" y=".75" width="14.5" height="12.5" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M5.5 1v12" stroke="currentColor" strokeWidth="1.5" /></svg>
+              <span className="hidden sm:flex gap-3 text-[15px]">‹ <span className="opacity-50">›</span></span>
+              <span className="flex-1 flex justify-center">
+                <span className="flex items-center gap-1.5 text-[12px] text-[#bdbdbd]"><Lock size={11} /> lawpower.ai</span>
+              </span>
             </div>
-            <div className="flex flex-col">
-              {trailSteps.map((step, i) => (
-                <div key={i} className="flex items-start gap-4 relative pb-7 last:pb-0">
-                  {i !== trailSteps.length - 1 && (
-                    <span
-                      className="absolute left-[19px] top-10 bottom-0 w-px opacity-30"
-                      style={{
-                        backgroundImage: "linear-gradient(#6e695c 40%, rgba(0,0,0,0) 0%)",
-                        backgroundPosition: "left",
-                        backgroundSize: "1px 6px",
-                        backgroundRepeat: "repeat-y",
-                      }}
-                    />
-                  )}
-                  <div className="w-10 h-10 rounded-[11px] flex-shrink-0 border border-line bg-card-alt flex items-center justify-center text-[17px]">
-                    {step.icon}
-                  </div>
-                  <div className="pt-0.5">
-                    <div className="text-[14.5px] font-semibold text-ink">{step.title}</div>
-                    <div className="mono text-[12.5px] text-muted mt-0.5">{step.meta}</div>
-                    {step.tag && (
-                      <div className="inline-block mt-2 text-[11.5px] bg-cream border border-line rounded-md px-2 py-0.5">
-                        {step.tag}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Image
+              src="/hero-dashboard.webp"
+              alt="The LawPower AI dashboard showing tasks due today, calendar and time tracked"
+              width={2880}
+              height={1800}
+              priority
+              sizes="(min-width: 1024px) 1120px, 100vw"
+              className="block w-full h-auto"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="py-24 bg-page" id="features">
+        <div className="max-w-[1160px] mx-auto px-8">
+          <div className="max-w-[640px] mb-14">
+            <div className="text-[13px] font-semibold text-muted mb-3.5 uppercase tracking-wide">One workspace</div>
+            <h2 className="text-[34px] md:text-[44px] font-semibold leading-tight">Everything your firm runs on, in one place.</h2>
+            <p className="text-[16px] text-muted leading-relaxed mt-4">
+              Clients, matters, tasks, documents, time and email, with AI agents that work across all of it. No more switching between six different programs.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {tools.map((t) => (
+              <div key={t.title} className="bg-card-alt rounded-[20px] p-6">
+                <span className="w-10 h-10 rounded-xl bg-white flex items-center justify-center mb-5">
+                  <t.icon size={18} strokeWidth={1.75} />
+                </span>
+                <h3 className="text-[16.5px] font-semibold mb-1.5">{t.title}</h3>
+                <p className="text-[13.5px] text-muted leading-relaxed">{t.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECURITY */}
+      <section className="py-24 bg-dark text-white" id="security">
+        <div className="max-w-[1160px] mx-auto px-8 grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-14">
+          <div>
+            <div className="text-[13px] font-semibold text-muted-light mb-3.5 uppercase tracking-wide">Security & confidentiality</div>
+            <h2 className="text-[32px] md:text-[40px] font-semibold leading-tight text-white">Built for client confidentiality from day one.</h2>
+            <p className="text-[15.5px] text-muted-light leading-relaxed mt-4">
+              Lawyers owe their clients confidentiality. LawPower AI is designed around that duty, so your firm can use AI without putting client information at risk.
+            </p>
+            <a href="/privacy" className="inline-block mt-6 text-[14px] font-medium text-white underline underline-offset-4 decoration-white/40 hover:decoration-white">
+              Read our privacy policy
+            </a>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {security.map((x) => (
+              <div key={x.title} className="bg-dark2 border border-line-dark rounded-[20px] p-6">
+                <ShieldCheck size={18} strokeWidth={1.75} className="text-[#CAF0D9] mb-4" />
+                <h3 className="text-[15.5px] font-semibold text-white mb-1.5">{x.title}</h3>
+                <p className="text-[13.5px] text-muted-light leading-relaxed">{x.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
