@@ -20,6 +20,7 @@ import {
   Circle,
   CheckCircle2,
   ArrowUpRight,
+  UserPlus,
 } from "lucide-react";
 
 const rangeTabs = [
@@ -220,7 +221,15 @@ export default function DashboardHome() {
           <h1 className="text-[32px] font-semibold mb-1">Good afternoon</h1>
           <div className="text-[14.5px] text-muted">{today}</div>
         </div>
-        <TaskFilterDropdown />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/client-intake"
+            className="flex items-center gap-2 bg-btn hover:bg-btn-hover transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+          >
+            <UserPlus size={14} strokeWidth={1.75} /> Client Intake
+          </Link>
+          <TaskFilterDropdown />
+        </div>
       </div>
 
       <div className="flex gap-6 mb-8 text-[14px] font-medium text-muted border-b border-line">
