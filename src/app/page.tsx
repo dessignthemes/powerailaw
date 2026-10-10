@@ -12,13 +12,7 @@ import {
   Calculator,
   Inbox,
   Lock,
-  Star,
-  UserRound,
 } from "lucide-react";
-
-// Hero rating row. Use real numbers only (e.g. score: "4.9/5", label: "120+ Reviews") —
-// made-up ratings or review counts are illegal under the FTC's 2024 fake-review rule.
-const HERO_RATING: { score: string; label: string } = { score: "", label: "Loved by attorneys" };
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -141,68 +135,37 @@ export default function Home() {
         </div>
       </header>
 
-      {/* HERO — rock background, text directly on the image */}
+      {/* HERO — rock background, text on the image, product window on the right */}
       <section className="px-2 md:px-4 bg-white">
-        <div className="relative overflow-hidden bg-black min-h-[640px] lg:min-h-[760px] flex items-center">
-          <Image src="/hero-rocks.webp" alt="" fill priority sizes="100vw" className="object-cover object-[60%_center]" />
-          {/* Darker on the left so the text reads clearly over the rocks */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/10" aria-hidden />
+        <div className="relative overflow-hidden bg-black lg:h-[790px]">
+          <Image src="/hero-rocks.webp" alt="" fill priority sizes="100vw" className="object-cover object-[35%_center]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/20" aria-hidden />
 
-          <div className="relative w-full max-w-[1440px] mx-auto px-6 md:px-[84px] py-20">
-            <div className="mono text-[13px] md:text-[15px] tracking-[0.08em] text-white/85 mb-6">/ WELCOME TO LAWPOWER AI</div>
+          {/* Text */}
+          <div className="relative lg:absolute lg:left-[max(40px,5%)] lg:top-1/2 lg:-translate-y-1/2 lg:w-[44%] px-6 md:px-10 lg:px-0 pt-16 pb-10 lg:py-0">
+            <div className="mono text-[13px] md:text-[14px] tracking-[0.08em] text-white/85 mb-5">/ WELCOME TO LAWPOWER AI</div>
             <h1
-              className="text-white text-[40px] md:text-[clamp(48px,5.6vw,84px)] font-semibold max-w-[1000px]"
+              className="text-white text-[38px] md:text-[clamp(40px,4vw,60px)] font-semibold"
               style={{ fontFamily: "var(--font-body)", lineHeight: 1.08, letterSpacing: "-0.02em" }}
             >
               All-in-One AI Agents Workspace For Lawyers
             </h1>
-            <p className="text-white/80 text-[17px] md:text-[21px] leading-relaxed mt-7 max-w-[780px]">
+            <p className="text-white/80 text-[16.5px] md:text-[18px] leading-relaxed mt-6 max-w-[580px]">
               From client intake and matter review to time tracking, e-signatures and secure file sharing, LawPower AI helps your firm stay organized,
               move faster and give every client better service &ndash; built by lawyers, for lawyers.
             </p>
-            <div className="flex flex-wrap gap-3 mt-9">
-              <a href="/connect" className="bg-white text-ink px-7 py-4 rounded-lg text-[16px] font-medium hover:bg-[#ECEDEF] transition-colors">
+            <div className="flex flex-wrap gap-3 mt-8">
+              <a href="/connect" className="bg-white text-ink px-6 py-3.5 rounded-lg text-[15.5px] font-medium hover:bg-[#ECEDEF] transition-colors">
                 Start Free Trial
               </a>
-              <a href="#in-action" className="border border-white/80 text-white px-7 py-4 rounded-lg text-[16px] font-medium hover:bg-white/10 transition-colors">
+              <a href="#features" className="border border-white/80 text-white px-6 py-3.5 rounded-lg text-[15.5px] font-medium hover:bg-white/10 transition-colors">
                 Explore Features
               </a>
             </div>
-
-            {/* Rating row: put real numbers in HERO_RATING (top of this file) once you have reviews. */}
-            <div className="flex flex-wrap items-center gap-4 mt-10">
-              <div className="flex -space-x-2" aria-hidden>
-                {["#d9d4cc", "#b9c2cf", "#cfc6d6"].map((c) => (
-                  <span key={c} className="w-9 h-9 rounded-full border-2 border-black flex items-end justify-center overflow-hidden" style={{ background: c }}>
-                    <UserRound size={30} strokeWidth={1.5} className="text-black/45 -mb-1.5" />
-                  </span>
-                ))}
-              </div>
-              <div className="flex items-center gap-1" aria-label="5 stars">
-                {[0, 1, 2, 3, 4].map((k) => (
-                  <Star key={k} size={20} fill="currentColor" strokeWidth={0} className="text-white/70" />
-                ))}
-              </div>
-              <div className="text-white text-[15px] font-medium flex gap-2.5">
-                {HERO_RATING.score && <span>{HERO_RATING.score}</span>}
-                <span>{HERO_RATING.label}</span>
-              </div>
-            </div>
           </div>
-        </div>
-      </section>
 
-      {/* IN ACTION — the real dashboard */}
-      <section className="pt-24 pb-8 bg-page" id="in-action">
-        <div className="max-w-[1160px] mx-auto px-8">
-          <div className="max-w-[640px] mb-10">
-            <div className="text-[13px] font-semibold text-muted mb-3.5 uppercase tracking-wide">See it in action</div>
-            <h2 className="text-[34px] md:text-[44px] font-semibold leading-tight">Your whole day, on one screen.</h2>
-            <p className="text-[16px] text-muted leading-relaxed mt-4">
-              Tasks due today, your calendar, time tracked and every board, the moment you sign in.
-            </p>
-          </div>
-          <div className="rounded-[14px] overflow-hidden border border-[#2a2a2a] bg-[#1c1c1c] shadow-[0_30px_80px_rgba(27,25,26,0.25)]">
+          {/* Product window */}
+          <div className="relative lg:absolute lg:left-[52%] lg:top-[60px] lg:w-[1120px] mx-4 lg:mx-0 mb-6 lg:mb-0 rounded-t-[12px] lg:rounded-tr-none overflow-hidden border border-[#3a3a3a] bg-[#1c1c1c] shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
             <div className="h-9 flex items-center gap-4 px-4 text-[#8c8c8c]" aria-hidden>
               <span className="flex gap-2">
                 <span className="w-3 h-3 rounded-full bg-[#5a5a5a]" />
@@ -218,7 +181,8 @@ export default function Home() {
               alt="The LawPower AI dashboard showing tasks due today, calendar and time tracked"
               width={2880}
               height={1800}
-              sizes="(min-width: 1160px) 1100px, 100vw"
+              priority
+              sizes="(min-width: 1024px) 1120px, 100vw"
               className="block w-full h-auto"
             />
           </div>
