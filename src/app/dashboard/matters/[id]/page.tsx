@@ -39,6 +39,7 @@ import DocumentsLibrary from "@/components/documents/DocumentsLibrary";
 import AssigneeOptions from "@/components/AssigneeOptions";
 import MatterTasks from "@/components/matters/MatterTasks";
 import MatterEmails from "@/components/matters/MatterEmails";
+import MatterDetailsPanel from "@/components/matters/MatterDetailsPanel";
 import KeyDatesCard, { useKeyDates } from "@/components/matters/KeyDatesCard";
 import { anchorDates, isCashDeal } from "@/lib/matters/keyDates";
 import { statusMeta as taskStatusMeta } from "@/components/NewTaskModal";
@@ -50,7 +51,7 @@ const tabs = [
   { key: "calendar", label: "Calendar", icon: Calendar },
   { key: "documents", label: "Documents", icon: FileText },
   { key: "emails", label: "Emails", icon: Mail },
-  { key: "parties", label: "Parties", icon: Users },
+  { key: "parties", label: "Details", icon: Users },
   { key: "activities", label: "Activities", icon: Activity },
 ] as const;
 
@@ -329,6 +330,8 @@ export default function MatterDetailPage() {
 
       {activeTab === "documents" ? (
         <DocumentsLibrary matterId={matter.id} />
+      ) : activeTab === "parties" ? (
+        <MatterDetailsPanel matter={matter} keyDates={keyDates} wide />
       ) : activeTab === "emails" ? (
         <MatterEmails matter={matter} client={client} />
       ) : activeTab === "tasks" ? (
@@ -447,6 +450,7 @@ export default function MatterDetailPage() {
           </div>
 
           <div className="flex flex-col gap-5">
+            <MatterDetailsPanel matter={matter} keyDates={keyDates} />
             <div className="rounded-2xl overflow-hidden border border-line">
               <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
                 <ClipboardList size={14} strokeWidth={1.75} className="text-muted" />
