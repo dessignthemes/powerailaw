@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CalendarClock, Loader2, RefreshCw, FileText, ChevronDown, ChevronRight, Info, PenLine } from "lucide-react";
+import { CalendarClock, Loader2, RefreshCw, RotateCcw, FileText, ChevronDown, ChevronRight, Info, PenLine } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { DOCS_CHANGED_EVENT } from "@/components/documents/DocumentsLibrary";
 import { KEY_DATE_FIELDS, ruleText, usDate, isRealEstate, type KeyDatesState, type KeyDateField } from "@/lib/matters/keyDates";
@@ -12,7 +12,12 @@ type Result = { state: KeyDatesState; stale: boolean; ran: boolean; error?: stri
 async function call(url: string, init?: RequestInit): Promise<Result> {
   const res = await fetch(url, init);
   const d = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(d?.error ?? "Something went wrong. Please try again.");
+  if (!res.ok) {
+    if (!d?.error && (res.status === 504 || res.status === 502)) {
+      throw new Error("Reading the documents took too long. Click Read documents again: documents already read are kept, so the next try is faster.");
+    }
+    throw new Error(d?.error ?? "Something went wrong. Please try again.");
+  }
   return d as Result;
 }
 
@@ -73,7 +78,7 @@ export function useKeyDates(matter: Matter | null) {
   }, [id, handle]);
 
   const save = useCallback(
-    async (changes: Partial<Record<KeyDateField, string | null>>) => {
+    async (changes: Partial<Record<KeyDateField, string | null>>) => { // "na" = not applicable (mortgage)
       if (!id) return;
       setError(null);
       try {
@@ -86,6 +91,17 @@ export function useKeyDates(matter: Matter | null) {
     [id, refreshAll]
   );
 
+  const reset = useCallback(async () => {
+    if (!id) return;
+    setError(null);
+    try {
+      setData(await call(`/api/matters/${id}/key-dates`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "reset" }) }));
+      refreshAll();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, [id, refreshAll]);
+
   const createLetter = useCallback(async () => {
     if (!id) return;
     setError(null);
@@ -96,13 +112,15 @@ export function useKeyDates(matter: Matter | null) {
     }
   }, [id]);
 
-  return { data, reading, error, refresh, save, createLetter };
+  return { data, reading, error, refresh, save, reset, createLetter };
 }
 
 export type KeyDatesApi = ReturnType<typeof useKeyDates>;
 
 export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesApi; onOpenDocuments: () => void }) {
-  const { data, reading, error, refresh, save, createLetter } = api;
+  const { data, reading, error, refresh, save, reset, createLetter } = api;
+  const [resetting, setResetting] = useState(false);
+  const manualCount = Object.values(data?.state.dates ?? {}).filter((d) => d?.manual).length;
   const [showDocs, setShowDocs] = useState(false);
   const [letterBusy, setLetterBusy] = useState(false);
   const state = data?.state;
@@ -126,10 +144,25 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
                 ? "Not read from documents yet"
                 : ""}
         </span>
+        {manualCount > 0 && (
+          <button
+            onClick={async () => {
+              if (!confirm(`Reset? The ${manualCount === 1 ? "date you entered" : `${manualCount} dates you entered`} will go back to what the documents say.`)) return;
+              setResetting(true);
+              await reset();
+              setResetting(false);
+            }}
+            disabled={reading || resetting}
+            title="Undo dates entered by hand and use the dates from the documents"
+            className="ml-auto flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
+          >
+            {resetting ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} strokeWidth={1.75} />} Reset
+          </button>
+        )}
         <button
           onClick={() => void refresh()}
           disabled={reading}
-          className="ml-auto flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
+          className={`${manualCount > 0 ? "" : "ml-auto "}flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors`}
         >
           {reading ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} strokeWidth={1.75} />}
           {state?.extractedAt ? "Read documents again" : "Read from documents"}
@@ -165,16 +198,28 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
             return (
               <div key={f.key} className={`flex flex-wrap items-center gap-x-3 gap-y-1 py-2 ${i ? "border-t border-line" : ""}`}>
                 <span className="w-[200px] text-[13.5px] font-medium">{f.label}</span>
-                <input
-                  type="date"
-                  value={d?.date ?? ""}
-                  onChange={(e) => void save({ [f.key]: e.target.value || null })}
-                  aria-label={f.label}
-                  className={`bg-white border border-line rounded-lg px-2 py-1 text-[13px] outline-none ${past ? "text-muted" : ""}`}
-                />
+                {d?.na ? (
+                  <span className="w-[134px] text-[13px] font-medium px-2 py-1">Not applicable</span>
+                ) : (
+                  <input
+                    type="date"
+                    value={d?.date ?? ""}
+                    onChange={(e) => void save({ [f.key]: e.target.value || null })}
+                    aria-label={f.label}
+                    className={`bg-white border border-line rounded-lg px-2 py-1 text-[13px] outline-none ${past ? "text-muted" : ""}`}
+                  />
+                )}
+                {f.key === "mortgage" && (
+                  <label className="flex items-center gap-1.5 text-[12.5px] font-medium cursor-pointer" title="Cash purchase: the mortgage contingency and mortgage steps don't apply">
+                    <input type="checkbox" checked={!!d?.na} onChange={(e) => void save({ mortgage: e.target.checked ? "na" : null })} className="accent-[#1b191a]" />
+                    Cash deal
+                  </label>
+                )}
                 <span className="text-[12px] text-muted min-w-0 flex-1 truncate" title={d?.quote ?? undefined}>
                   {!d ? (
                     "—"
+                  ) : d.na ? (
+                    d.manual ? "Cash deal (entered by you)" : "Cash purchase, per the documents"
                   ) : d.manual ? (
                     <span className="inline-flex items-center gap-1">
                       <PenLine size={12} /> Entered by you

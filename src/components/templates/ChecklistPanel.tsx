@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, ChevronRight, ListChecks, Plus, Trash2, X } from "lucide-react";
 import { useTemplates } from "./useTemplates";
-import { applyTemplate, progress, anchorsOf, dueState, fmtDays, alerts, type TaskChecklist, type DueState } from "@/lib/checklist";
+import { applyTemplate, progress, anchorsOf, dueState, fmtDays, alerts, hasMortgageSteps, setMortgageNa, mortgageNa, type TaskChecklist, type DueState } from "@/lib/checklist";
 
 // "Templates" button for the task's property row: pick a template to add.
 export function ChecklistPicker({
@@ -132,6 +132,23 @@ export default function ChecklistPanel({
         <div className="h-full rounded-full bg-[#2F9E5A] transition-all" style={{ width: `${pct}%` }} />
       </div>
 
+      {hasMortgageSteps(checklist) && (
+        <div className="flex flex-wrap items-center gap-2 mb-2 text-[12.5px]">
+          <span className="text-muted">Financing:</span>
+          <div className="inline-flex bg-page rounded-full p-0.5">
+            {[false, true].map((cash) => (
+              <button
+                key={String(cash)}
+                onClick={() => onChange(setMortgageNa(checklist, cash))}
+                className={`px-3 py-1 rounded-full font-medium transition-colors ${mortgageNa(checklist) === cash ? "bg-white shadow-sm text-ink" : "text-muted hover:text-ink"}`}
+              >
+                {cash ? "Cash deal (mortgage N/A)" : "Mortgage"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {anchors.length > 0 && (
         <div className="bg-page rounded-xl px-3.5 py-3 mb-2">
           <div className="flex items-center gap-2 mb-2">
@@ -162,7 +179,8 @@ export default function ChecklistPanel({
 
       <div className="flex flex-col gap-2">
         {checklist.sections.map((s) => {
-          const done = s.items.filter((i) => i.done).length;
+          const live = s.items.filter((i) => !i.na);
+          const done = live.filter((i) => i.done).length;
           const isCollapsed = collapsed[s.id] ?? false;
           return (
             <div key={s.id} className="bg-page rounded-xl px-3 py-2.5">
@@ -172,8 +190,8 @@ export default function ChecklistPanel({
               >
                 {isCollapsed ? <ChevronRight size={14} className="text-muted" /> : <ChevronDown size={14} className="text-muted" />}
                 <span className="text-[13.5px] font-semibold flex-1 truncate">{s.title || "Steps"}</span>
-                <span className={`text-[12px] flex-shrink-0 ${done === s.items.length && s.items.length ? "text-[#2F9E5A] font-medium" : "text-muted"}`}>
-                  {done}/{s.items.length}
+                <span className={`text-[12px] flex-shrink-0 ${done === live.length && live.length ? "text-[#2F9E5A] font-medium" : "text-muted"}`}>
+                  {live.length ? `${done}/${live.length}` : "N/A"}
                 </span>
               </button>
               {!isCollapsed && (
@@ -195,7 +213,16 @@ export default function ChecklistPanel({
                       >
                         {i.done && <Check size={12} strokeWidth={3} />}
                       </button>
-                      <span className={`text-[13.5px] flex-1 ${i.done ? "line-through text-muted" : ""}`}>{i.text}</span>
+                      <span className={`text-[13.5px] flex-1 ${i.done || i.na ? "line-through text-muted" : ""}`}>{i.text}</span>
+                      <button
+                        onClick={() => update(s.id, (items) => items.map((x) => (x.id === i.id ? (x.na ? { ...x, na: undefined } : { ...x, na: true }) : x)))}
+                        title={i.na ? "Not applicable to this deal: click to include it again" : "Mark as not applicable to this deal"}
+                        className={`text-[11px] font-medium rounded-md px-1.5 py-0.5 flex-shrink-0 transition-opacity ${
+                          i.na ? "bg-chip text-ink" : "opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted hover:bg-chip"
+                        }`}
+                      >
+                        N/A
+                      </button>
                       {(() => {
                         const ds = dueState(i, checklist.dates);
                         if (ds.state === "none" || ds.state === "done") return null;

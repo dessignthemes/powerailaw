@@ -147,3 +147,11 @@ export async function listOutlookFolders(token: string): Promise<MailFolder[]> {
     total: f.totalItemCount ?? null,
   }));
 }
+
+// Message ids in an Outlook conversation.
+export async function listOutlookThreadIds(token: string, conversationId: string): Promise<string[]> {
+  if (!/^[A-Za-z0-9_=+/-]+$/.test(conversationId)) return [];
+  const filter = encodeURIComponent(`conversationId eq '${conversationId.replace(/'/g, "''")}'`);
+  const d = await graph<{ value: { id: string }[] }>(token, `/me/messages?$filter=${filter}&$select=id&$top=50`);
+  return d.value.map((m) => m.id);
+}

@@ -4,6 +4,8 @@ import { listGmail } from "@/lib/mail/google";
 import { listOutlook } from "@/lib/mail/microsoft";
 import { requireUserId, parseProvider, mailErrorResponse } from "@/lib/mail/api";
 import { readMessageIds } from "@/lib/data/mailReads";
+import { matchInbox } from "@/lib/mail/matterMail";
+import { requireUserOrg } from "@/lib/data/documents";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +21,21 @@ export async function GET(request: Request) {
     const q = url.searchParams.get("q")?.slice(0, 200) ?? undefined;
     const pageToken = url.searchParams.get("pageToken") ?? undefined;
     const folder = url.searchParams.get("folder")?.slice(0, 400) ?? undefined;
-    const { token } = await getAccessToken(userId, provider);
+    const { token, email } = await getAccessToken(userId, provider);
     const page =
       provider === "google" ? await listGmail(token, { q, pageToken, folder }) : await listOutlook(token, { q, pageToken, folder });
     // Emails opened in LawPower show as read, even though the mailbox itself
     // (which LawPower never changes) may still mark them unread.
     const unreadIds = page.messages.filter((m) => m.unread).map((m) => m.id);
     const opened = await readMessageIds(userId, provider, unreadIds);
-    const messages = opened.size ? page.messages.map((m) => (opened.has(m.id) ? { ...m, unread: false } : m)) : page.messages;
+    let messages = opened.size ? page.messages.map((m) => (opened.has(m.id) ? { ...m, unread: false } : m)) : page.messages;
+    // The matter each email is on (emails carrying a matter number are filed to it).
+    try {
+      const { orgId } = await requireUserOrg();
+      messages = await matchInbox(orgId, userId, provider, email, messages);
+    } catch (e) {
+      console.error("Matching emails to matters failed:", e);
+    }
     return NextResponse.json({ ...page, messages });
   } catch (error) {
     return mailErrorResponse("GET /api/mail/messages", error);

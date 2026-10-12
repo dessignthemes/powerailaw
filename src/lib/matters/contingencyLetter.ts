@@ -25,6 +25,10 @@ export function letterLines(state: KeyDatesState): Line[] {
   for (const field of KEY_DATE_FIELDS) {
     if (field.key === "contractSigned" || field.key === "attorneyReviewCompleted") continue;
     const kd = d[field.key];
+    if (kd?.na) {
+      lines.push({ label: `${field.letter}:`, value: "None (cash purchase)" });
+      continue;
+    }
     if (!kd?.date) continue;
     const amount = field.key === "initialDeposit" ? f.initialDeposit : field.key === "secondDeposit" ? f.additionalDeposit : "";
     const rule = ruleText(kd);

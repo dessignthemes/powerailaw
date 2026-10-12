@@ -8,7 +8,7 @@ import TaskDetailModal from "@/components/TaskDetailModal";
 import AssigneeOptions from "@/components/AssigneeOptions";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useTemplates } from "@/components/templates/useTemplates";
-import { applyTemplate, anchorsOf, progress, alerts, nextStep, type TaskTemplate } from "@/lib/checklist";
+import { applyTemplate, anchorsOf, progress, alerts, nextStep, hasMortgageSteps, setMortgageNa, type TaskTemplate } from "@/lib/checklist";
 import type { Matter } from "@/components/NewMatterModal";
 import { boardForMatter } from "@/lib/matters/boards";
 
@@ -27,7 +27,18 @@ export function templatesFor(templates: TaskTemplate[], code: string | null | un
 
 // Tasks tab of a matter: create tasks from templates (they land on the Task Board, linked to this matter).
 // keyDates = the matter's dates by checklist name ("Closing date" → "2026-11-20"); new tasks start with them.
-export default function MatterTasks({ matter, clientName, keyDates = {} }: { matter: Matter; clientName: string | null; keyDates?: Record<string, string> }) {
+// cash = the matter's key dates say it's a cash deal (mortgage steps start as not applicable).
+export default function MatterTasks({
+  matter,
+  clientName,
+  keyDates = {},
+  cash = false,
+}: {
+  matter: Matter;
+  clientName: string | null;
+  keyDates?: Record<string, string>;
+  cash?: boolean;
+}) {
   const { tasks, tasksLoaded, addTask, updateTask, boards } = useWorkspaceData();
   const { templates, error: templatesError } = useTemplates();
   const [fromTemplate, setFromTemplate] = useState<TaskTemplate | "pick" | null>(null);
@@ -163,6 +174,7 @@ export default function MatterTasks({ matter, clientName, keyDates = {} }: { mat
           matter={matter}
           clientName={clientName}
           keyDates={keyDates}
+          cash={cash}
           templates={templates}
           initial={fromTemplate === "pick" ? null : fromTemplate}
           boards={boards}
@@ -194,6 +206,7 @@ function FromTemplateDialog({
   matter,
   clientName,
   keyDates,
+  cash,
   templates,
   initial,
   boards,
@@ -203,6 +216,7 @@ function FromTemplateDialog({
   matter: Matter;
   clientName: string | null;
   keyDates: Record<string, string>;
+  cash: boolean;
   templates: TaskTemplate[] | null;
   initial: TaskTemplate | null;
   boards: { id: string; name: string }[];
@@ -225,15 +239,17 @@ function FromTemplateDialog({
   const [dueDate, setDueDate] = useState("");
   // Starts with the dates read from the matter's documents.
   const [dates, setDates] = useState<Record<string, string>>(keyDates);
+  const [cashDeal, setCashDeal] = useState(cash);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
 
-  const anchors = template ? anchorsOf(applyTemplate(null, template)) : [];
+  const anchors = template ? anchorsOf(applyTemplate(null, template)).filter((a) => !(cashDeal && /mortgage/i.test(a))) : [];
 
   function submit() {
     if (!template || !title.trim()) return;
     const filled = Object.fromEntries(Object.entries(dates).filter(([k, v]) => v && anchors.includes(k)));
-    const base = applyTemplate(null, template);
+    const applied = applyTemplate(null, template);
+    const base = cashDeal ? setMortgageNa(applied, true) : applied;
     const checklist = Object.keys(filled).length ? { ...base, dates: filled } : base;
     onCreate({
       id: crypto.randomUUID(),
@@ -382,6 +398,24 @@ function FromTemplateDialog({
               />
             </span>
           </div>
+
+          {template && hasMortgageSteps(template) && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[12.5px] font-semibold text-muted">Financing</span>
+              <div className="inline-flex self-start bg-chip rounded-full p-1">
+                {[false, true].map((c) => (
+                  <button
+                    key={String(c)}
+                    type="button"
+                    onClick={() => setCashDeal(c)}
+                    className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${cashDeal === c ? "bg-white shadow-sm" : "text-muted"}`}
+                  >
+                    {c ? "Cash deal: mortgage not applicable" : "Mortgage"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {anchors.length > 0 && (
             <div className="rounded-2xl bg-card-alt p-4">

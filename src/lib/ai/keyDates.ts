@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, aiConfig } from "@/lib/ai/provider";
 import { getMatterContext, ensureVersionIndexed, usageToday, type AiCtx } from "@/lib/ai/store";
 import { firmTimezone, todayIn } from "@/lib/ai/workspaceTools";
-import { cleanChecklist, dueDateOf } from "@/lib/checklist";
+import { cleanChecklist, dueDateOf, setMortgageNa } from "@/lib/checklist";
 import { DOCUMENTS_BUCKET, newStoragePath, createDocumentFromUpload, addVersionFromUpload, AccessError } from "@/lib/data/documents";
 import { templatesAllowed } from "@/lib/clients/templates";
 import { buildContingencyLetter } from "@/lib/matters/contingencyLetter";
@@ -109,7 +109,7 @@ contractSigned = contract fully signed; attorneyReviewCompleted = attorney revie
 Reply with JSON only:
 {"documents":[{"source":"D1","type":"contract|attorney review letter|addendum|other","date":"YYYY-MM-DD or null","summary":"one line: what it is and what it changes"}],
 "dates":{"<field>":{"date":"YYYY-MM-DD or null","days":number or null,"businessDays":false,"from":"<field> or null","source":"D# of the document that sets the value now in force","quote":"short exact wording from that document","changedBy":["D# of documents after the contract that changed it"]}},
-"facts":{"property":"street address, town","buyers":["names"],"sellers":["names"],"purchasePrice":"$","initialDeposit":"$","additionalDeposit":"$","mortgageAmount":"$"},
+"facts":{"property":"street address, town","buyers":["names"],"sellers":["names"],"purchasePrice":"$","initialDeposit":"$","additionalDeposit":"$","mortgageAmount":"$","cash":true if the terms in force make it a cash purchase with no mortgage contingency, else false},
 "notes":["short, only for real uncertainty"]}
 Leave out fields the documents don't cover.`;
 
@@ -125,8 +125,14 @@ async function readWithAi(ctx: AiCtx, matterId: string, docs: Awaited<ReturnType
   const today = todayIn(tz).ymd;
 
   // Make documents readable (newest uploads first if there are many).
+  // (stops after ~40s so the reading itself still fits in the request; the rest are ready next time)
   const list = docs.slice(0, 15);
-  for (const d of list) if (!d.indexStatus) d.indexStatus = await ensureVersionIndexed(ctx, d.versionId).catch(() => null);
+  const started = Date.now();
+  for (const d of list) {
+    if (d.indexStatus) continue;
+    if (Date.now() - started > 40_000) break;
+    d.indexStatus = await ensureVersionIndexed(ctx, d.versionId).catch(() => null);
+  }
 
   let budget = 200_000;
   const parts: string[] = [];
@@ -225,7 +231,10 @@ export function parseReading(raw: Record<string, unknown>, meta: { id: string; t
     initialDeposit: str(f.initialDeposit, 40),
     additionalDeposit: str(f.additionalDeposit, 40),
     mortgageAmount: str(f.mortgageAmount, 40),
+    cash: f.cash === true,
   };
+  // Cash purchase: no mortgage contingency.
+  if (facts.cash) dates.mortgage = { date: null, na: true, source: null, quote: null, changedBy: [] };
   const notes = (Array.isArray(raw.notes) ? raw.notes : []).map((n) => str(n, 300)).filter(Boolean).slice(0, 6);
   return { documents, dates, facts, notes };
 }
@@ -241,7 +250,7 @@ function mergeManual(read: KeyDatesState["dates"], previous: KeyDatesState["date
 // task's due date to its next open step.
 export async function applyDatesToTasks(ctx: AiCtx, matterId: string, state: KeyDatesState) {
   const dates = anchorDates(state.dates);
-  if (!Object.keys(dates).length) return 0;
+  if (!Object.keys(dates).length && !state.dates.mortgage?.na) return 0;
   const s = db();
   // The matter's own due date becomes the closing date, unless one was set.
   const closing = state.dates.closing?.date;
@@ -249,13 +258,14 @@ export async function applyDatesToTasks(ctx: AiCtx, matterId: string, state: Key
   const { data } = await s.from("tasks").select("id, checklist, due_date, status").eq("org_id", ctx.orgId).eq("matter_id", matterId).limit(200);
   let n = 0;
   for (const t of (data ?? []) as { id: string; checklist: unknown; due_date: string | null; status: string }[]) {
-    const c = cleanChecklist(t.checklist);
-    if (!c) continue;
+    const c0 = cleanChecklist(t.checklist);
+    if (!c0) continue;
+    const c = state.dates.mortgage?.na ? setMortgageNa(c0, true) : c0;
     const merged = { ...(c.dates ?? {}), ...dates };
     const next = { ...c, dates: merged };
     let due: string | null = null;
     for (const sec of next.sections) for (const i of sec.items) {
-      if (i.done) continue;
+      if (i.done || i.na) continue;
       const d = dueDateOf(i, merged);
       if (d && (!due || d < due)) due = d;
     }
@@ -270,7 +280,7 @@ export async function applyDatesToTasks(ctx: AiCtx, matterId: string, state: Key
 }
 
 const letterFingerprint = (state: KeyDatesState) =>
-  JSON.stringify([KEY_DATE_FIELDS.map((f) => state.dates[f.key]?.date ?? ""), state.facts ?? {}]);
+  JSON.stringify([KEY_DATE_FIELDS.map((f) => (state.dates[f.key]?.na ? "na" : state.dates[f.key]?.date ?? "")), state.facts ?? {}]);
 
 // Creates (or updates, as a new version) the Contingency Dates Letter once attorney review has concluded.
 export async function maybeCreateLetter(ctx: AiCtx, m: MatterRow, state: KeyDatesState, force = false): Promise<KeyDatesState> {
@@ -349,7 +359,7 @@ export async function getKeyDates(ctx: AiCtx, matterId: string, auto: boolean): 
   return { state, stale, ran: false };
 }
 
-export async function refreshKeyDates(ctx: AiCtx, matterId: string): Promise<KeyDatesResult> {
+export async function refreshKeyDates(ctx: AiCtx, matterId: string, opts: { dropManual?: boolean } = {}): Promise<KeyDatesResult> {
   const m = await loadMatter(ctx, matterId);
   const previous = stateOf(m);
   const { docs, fingerprint } = await inputDocuments(ctx, matterId, previous);
@@ -360,7 +370,8 @@ export async function refreshKeyDates(ctx: AiCtx, matterId: string): Promise<Key
     const read = parseReading(raw, meta);
     let state: KeyDatesState = {
       ...previous,
-      dates: mergeManual(read.dates, previous.dates),
+      dates: opts.dropManual ? resolveDates(read.dates) : mergeManual(read.dates, previous.dates),
+      read: read.dates,
       facts: read.facts,
       documents: read.documents,
       notes: read.notes,
@@ -386,6 +397,7 @@ export async function saveManualDates(ctx: AiCtx, matterId: string, changes: Rec
   for (const [k, v] of Object.entries(changes)) {
     if (!isField(k)) continue;
     if (v === null || v === "") delete dates[k];
+    else if (v === "na" && k === "mortgage") dates[k] = { date: null, na: true, manual: true };
     else if (isYmd(v)) dates[k] = { ...(dates[k] ?? {}), date: v, manual: true, days: null, from: null } as KeyDate;
     else throw new KeyDatesError(400, "Use a valid date.");
   }
@@ -402,4 +414,17 @@ export async function createLetterNow(ctx: AiCtx, matterId: string): Promise<Key
   const state = await maybeCreateLetter(ctx, m, stateOf(m), true);
   await saveState(ctx, matterId, state);
   return { state, stale: false, ran: false };
+}
+
+// Reset: back to the dates as read from the documents (hand-entered dates are dropped).
+export async function resetKeyDates(ctx: AiCtx, matterId: string): Promise<KeyDatesResult> {
+  const m = await loadMatter(ctx, matterId);
+  const previous = stateOf(m);
+  if (!previous.read) return refreshKeyDates(ctx, matterId, { dropManual: true });
+  let state: KeyDatesState = { ...previous, dates: resolveDates(previous.read) };
+  await applyDatesToTasks(ctx, matterId, state);
+  state = await maybeCreateLetter(ctx, m, state);
+  await saveState(ctx, matterId, state);
+  const { fingerprint } = await inputDocuments(ctx, matterId, state);
+  return { state, stale: !!state.fingerprint && state.fingerprint !== fingerprint, ran: false };
 }

@@ -174,3 +174,10 @@ export async function listGmailFolders(token: string): Promise<MailFolder[]> {
     return { id: l.id, name: slash > 0 ? l.name.slice(slash + 1) : l.name, kind: "custom" as const, parentId, unread, total };
   });
 }
+
+// Message ids in a Gmail thread (newest last).
+export async function listGmailThreadIds(token: string, threadId: string): Promise<string[]> {
+  if (!/^[A-Za-z0-9_-]+$/.test(threadId)) return [];
+  const t = await gmail<{ messages?: { id: string }[] }>(token, `/threads/${threadId}?format=minimal`);
+  return (t.messages ?? []).map((m) => m.id);
+}

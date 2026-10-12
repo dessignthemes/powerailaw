@@ -38,8 +38,9 @@ import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import DocumentsLibrary from "@/components/documents/DocumentsLibrary";
 import AssigneeOptions from "@/components/AssigneeOptions";
 import MatterTasks from "@/components/matters/MatterTasks";
+import MatterEmails from "@/components/matters/MatterEmails";
 import KeyDatesCard, { useKeyDates } from "@/components/matters/KeyDatesCard";
-import { anchorDates } from "@/lib/matters/keyDates";
+import { anchorDates, isCashDeal } from "@/lib/matters/keyDates";
 import { statusMeta as taskStatusMeta } from "@/components/NewTaskModal";
 
 const tabs = [
@@ -328,8 +329,15 @@ export default function MatterDetailPage() {
 
       {activeTab === "documents" ? (
         <DocumentsLibrary matterId={matter.id} />
+      ) : activeTab === "emails" ? (
+        <MatterEmails matter={matter} client={client} />
       ) : activeTab === "tasks" ? (
-        <MatterTasks matter={matter} clientName={client?.name ?? null} keyDates={anchorDates(keyDates.data?.state.dates ?? {})} />
+        <MatterTasks
+          matter={matter}
+          clientName={client?.name ?? null}
+          keyDates={anchorDates(keyDates.data?.state.dates ?? {})}
+          cash={isCashDeal(keyDates.data?.state)}
+        />
       ) : activeTab !== "overview" ? (
         <div className="border border-line rounded-2xl min-h-[240px] flex items-center justify-center text-[14px] text-muted">
           {tabs.find((t) => t.key === activeTab)?.label} coming soon.

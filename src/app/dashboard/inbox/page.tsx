@@ -13,10 +13,12 @@ import {
   Image as ImageIcon,
   Inbox as InboxIcon,
   X,
+  Briefcase,
   PanelLeftOpen,
 } from "lucide-react";
 import type { MailFolder, MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
 import FolderPanel from "@/components/mail/FolderPanel";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 
 // Folder panel preferences live in this browser (they're just layout choices).
 const PANEL_KEY = "lawpower.inbox.foldersHidden";
@@ -113,6 +115,108 @@ function emailDocument(msg: MailMessage, showImages: boolean) {
   const csp = `default-src 'none'; ${img} style-src 'unsafe-inline' https:; font-src https: data:;`;
   const body = msg.html ?? `<pre style="white-space:pre-wrap;font:14px/1.55 -apple-system,Segoe UI,Arial,sans-serif;margin:0">${escapeHtml(msg.text ?? "")}</pre>`;
   return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}"><base target="_blank"><style>body{margin:0;padding:20px 24px;font:14px/1.55 -apple-system,"Segoe UI",Arial,sans-serif;color:#1a1917;word-wrap:break-word}img{max-width:100%;height:auto}table{max-width:100%}</style></head><body>${body}</body></html>`;
+}
+
+// Files the open email on a matter (or takes it off). Saved emails show on the matter's Emails tab.
+function FileToMatter({
+  provider,
+  messageId,
+  current,
+  onChange,
+}: {
+  provider: MailProvider;
+  messageId: string;
+  current: { id: string; number: string | null; title: string } | null;
+  onChange: (m: { id: string; number: string | null; title: string } | null) => void;
+}) {
+  const { matters } = useWorkspaceData();
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const list = matters
+    .filter((m) => m.status !== "Closed" || m.id === current?.id)
+    .filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase()))
+    .sort((a, b) => (b.matterSeq ?? 0) - (a.matterSeq ?? 0))
+    .slice(0, 50);
+
+  async function pick(matterId: string | null) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/mail/messages/${encodeURIComponent(messageId)}/matter`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, matterId }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d?.error ?? "Couldn't file the email. Please try again.");
+      const m = matterId ? matters.find((x) => x.id === matterId) : null;
+      onChange(m ? { id: m.id, number: m.matterNumber ?? null, title: m.title } : null);
+      setOpen(false);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="relative">
+      {current ? (
+        <span className="flex items-center gap-1 bg-[#E1E7F4] rounded-full pl-3 pr-1 py-0.5 text-[12.5px] font-medium">
+          <a href={`/dashboard/matters/${current.id}`} title={current.title} className="font-semibold hover:underline">
+            {current.number ?? current.title}
+          </a>
+          <button onClick={() => setOpen((o) => !o)} className="px-1.5 py-0.5 rounded-full hover:bg-[#D5DDEE] text-muted" title="Change matter">
+            Change
+          </button>
+          <button onClick={() => void pick(null)} disabled={busy} aria-label="Take off matter" className="w-5 h-5 rounded-full hover:bg-[#D5DDEE] flex items-center justify-center">
+            {busy ? <Loader2 size={11} className="animate-spin" /> : <X size={11} />}
+          </button>
+        </span>
+      ) : (
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
+        >
+          <Briefcase size={12} /> File to matter
+        </button>
+      )}
+      {error && <div className="absolute left-0 top-full mt-1 text-[12px] text-[#B42318] whitespace-nowrap">{error}</div>}
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[320px]">
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Matter number or name"
+              className="w-full bg-card-alt rounded-lg px-3 py-2 text-[13px] outline-none mb-1"
+            />
+            <div className="max-h-[300px] overflow-y-auto">
+              {list.length === 0 ? (
+                <div className="px-3 py-2.5 text-[13px] text-muted">No matching matters</div>
+              ) : (
+                list.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => void pick(m.id)}
+                    disabled={busy}
+                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] hover:bg-chip disabled:opacity-50"
+                  >
+                    {m.matterNumber && <span className="font-semibold flex-shrink-0">{m.matterNumber}</span>}
+                    <span className="truncate text-muted">{m.title}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function InboxPage() {
@@ -544,7 +648,14 @@ export default function InboxPage() {
                       {m.hasAttachments && <Paperclip size={12} className="text-muted flex-shrink-0" />}
                       <span className="text-[12px] text-muted flex-shrink-0">{when(m.date)}</span>
                     </div>
-                    <div className={`text-[13px] truncate ${m.unread ? "font-semibold" : ""}`}>{m.subject}</div>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {m.matter && (
+                        <span className="flex-shrink-0 text-[11px] font-semibold tracking-wide bg-[#E1E7F4] rounded-md px-1.5 py-px" title={m.matter.title}>
+                          {m.matter.number ?? m.matter.title}
+                        </span>
+                      )}
+                      <span className={`text-[13px] truncate ${m.unread ? "font-semibold" : ""}`}>{m.subject}</span>
+                    </div>
                     <div className="text-[12.5px] text-muted truncate">{m.snippet}</div>
                   </button>
                 ))}
@@ -611,6 +722,14 @@ export default function InboxPage() {
                       >
                         <ExternalLink size={12} /> Open in {provider ? providerLabel[provider] : "mail"}
                       </a>
+                    )}
+                    {provider && (
+                      <FileToMatter
+                        provider={provider}
+                        messageId={message.id}
+                        current={messages.find((x) => x.id === message.id)?.matter ?? null}
+                        onChange={(mt) => setMessages((list) => list.map((x) => (x.id === message.id ? { ...x, matter: mt } : x)))}
+                      />
                     )}
                   </div>
                   {message.attachments.length > 0 && (

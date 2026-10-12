@@ -36,6 +36,7 @@ export type KeyDate = {
   quote?: string | null; // short wording from the document
   changedBy?: string[]; // later documents that changed it
   manual?: boolean; // entered by hand: never overwritten by a new reading
+  na?: boolean; // not applicable (mortgage on a cash deal)
 };
 
 export type KeyFacts = {
@@ -46,6 +47,7 @@ export type KeyFacts = {
   initialDeposit?: string;
   additionalDeposit?: string;
   mortgageAmount?: string;
+  cash?: boolean; // cash purchase: no mortgage contingency
 };
 
 export type ReadDocument = { title: string; type: string; date: string | null; summary: string; readable: boolean };
@@ -55,6 +57,7 @@ export type KeyDatesState = {
   facts?: KeyFacts;
   documents?: ReadDocument[]; // in the order they were applied (oldest first)
   notes?: string[];
+  read?: Partial<Record<KeyDateField, KeyDate>>; // the dates as read from the documents (Reset goes back to these)
   fingerprint?: string; // which document versions were read
   extractedAt?: string;
   runningSince?: string | null;
@@ -119,5 +122,8 @@ export const usDate = (ymd: string | null | undefined) =>
 
 // Matter types the dates are read for automatically.
 export const AUTO_CODES = ["REP", "RES", "REF"];
+// Cash deal: the mortgage contingency is marked not applicable.
+export const isCashDeal = (s: KeyDatesState | null | undefined) => !!s?.dates.mortgage?.na;
+
 export const isRealEstate = (m: { category?: string | null; matterCode?: string | null }) =>
   m.category === "Real Estate" || AUTO_CODES.includes(m.matterCode ?? "");

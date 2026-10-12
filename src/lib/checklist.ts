@@ -7,7 +7,8 @@ export type TemplateSection = { id: string; title: string; items: TemplateItem[]
 // matterCodes = the matters it's for (e.g. ["REP"]); the matter's Tasks tab suggests it there.
 export type TaskTemplate = { id: string; name: string; sections: TemplateSection[]; matterCodes?: string[]; updatedAt?: string; example?: boolean };
 
-export type ChecklistItem = { id: string; text: string; done: boolean; doneAt?: string | null; anchor?: string; days?: number };
+// na = not applicable to this deal (e.g. mortgage steps on a cash purchase): not counted, no due date.
+export type ChecklistItem = { id: string; text: string; done: boolean; doneAt?: string | null; anchor?: string; days?: number; na?: boolean };
 export type ChecklistSection = { id: string; title: string; items: ChecklistItem[] };
 // dates = the task's critical dates ("Closing date" -> "2026-11-20"), used to work out each step's due date.
 export type TaskChecklist = { templates: string[]; sections: ChecklistSection[]; dates?: Record<string, string> };
@@ -62,9 +63,16 @@ export function cleanChecklist(input: unknown): TaskChecklist | null {
       id: clean(sec.id, 64) || newId(),
       title: clean(sec.title, 120),
       items: items.slice(0, MAX_ITEMS * 2).map((i) => {
-        const it = (i ?? {}) as { id?: unknown; text?: unknown; done?: unknown; doneAt?: unknown; anchor?: unknown; days?: unknown };
+        const it = (i ?? {}) as { id?: unknown; text?: unknown; done?: unknown; doneAt?: unknown; anchor?: unknown; days?: unknown; na?: unknown };
         const done = it.done === true;
-        return { id: clean(it.id, 64) || newId(), text: clean(it.text), done, doneAt: done ? clean(it.doneAt, 40) || null : null, ...timing(it) };
+        return {
+          id: clean(it.id, 64) || newId(),
+          text: clean(it.text),
+          done,
+          doneAt: done ? clean(it.doneAt, 40) || null : null,
+          ...timing(it),
+          ...(it.na === true ? { na: true } : {}),
+        };
       }).filter((i) => i.text),
     };
   });
@@ -98,6 +106,7 @@ export function progress(c: TaskChecklist | null | undefined) {
   let total = 0;
   let done = 0;
   for (const s of c?.sections ?? []) for (const i of s.items) {
+    if (i.na) continue;
     total++;
     if (i.done) done++;
   }
@@ -152,7 +161,7 @@ export const COMMON_ANCHORS = [
 // Critical dates used by a checklist, in the order they first appear.
 export function anchorsOf(c: TaskChecklist | null | undefined): string[] {
   const seen: string[] = [];
-  for (const s of c?.sections ?? []) for (const i of s.items) if (i.anchor && !seen.includes(i.anchor)) seen.push(i.anchor);
+  for (const s of c?.sections ?? []) for (const i of s.items) if (i.anchor && !i.na && !seen.includes(i.anchor)) seen.push(i.anchor);
   return seen;
 }
 
@@ -169,7 +178,7 @@ export type DueState = "none" | "unset" | "done" | "overdue" | "today" | "soon" 
 
 // soon = due within the next 3 days.
 export function dueState(item: ChecklistItem, dates: Record<string, string> | undefined, today = ymd(new Date())): { state: DueState; due: string | null } {
-  if (!item.anchor) return { state: "none", due: null };
+  if (!item.anchor || item.na) return { state: "none", due: null };
   const due = dueDateOf(item, dates);
   if (item.done) return { state: "done", due };
   if (!due) return { state: "unset", due: null };
@@ -317,3 +326,33 @@ export function nextStep(c: TaskChecklist | null | undefined): { text: string; d
   }
   return best;
 }
+
+// ── Mortgage steps on a cash deal ───────────────────────────────────────────
+const MORTGAGE = /mortgage/i;
+const isMortgageItem = (sectionTitle: string, i: { text: string; anchor?: string }) =>
+  MORTGAGE.test(sectionTitle) || MORTGAGE.test(i.text) || MORTGAGE.test(i.anchor ?? "");
+
+// Whether a template or checklist has mortgage steps (so "cash deal" is offered).
+export function hasMortgageSteps(c: { sections: { title: string; items: { text: string; anchor?: string }[] }[] } | null | undefined) {
+  return !!c?.sections.some((s) => s.items.some((i) => isMortgageItem(s.title, i)));
+}
+
+// Marks every mortgage step not applicable (cash deal), or applicable again.
+export function setMortgageNa(c: TaskChecklist, na: boolean): TaskChecklist {
+  return {
+    ...c,
+    sections: c.sections.map((s) => ({
+      ...s,
+      items: s.items.map((i) => {
+        if (!isMortgageItem(s.title, i)) return i;
+        if (na) return { ...i, na: true };
+        const { na: _drop, ...rest } = i;
+        void _drop;
+        return rest;
+      }),
+    })),
+  };
+}
+
+export const mortgageNa = (c: TaskChecklist | null | undefined) =>
+  !!c?.sections.some((s) => s.items.some((i) => isMortgageItem(s.title, i) && i.na));

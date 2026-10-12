@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAiCtx } from "@/lib/ai/store";
-import { getKeyDates, refreshKeyDates, saveManualDates, createLetterNow, KeyDatesError } from "@/lib/ai/keyDates";
+import { getKeyDates, refreshKeyDates, saveManualDates, createLetterNow, resetKeyDates, KeyDatesError } from "@/lib/ai/keyDates";
 import { AccessError } from "@/lib/data/documents";
 import { NoWorkspaceError } from "@/lib/data/org";
 
@@ -33,6 +33,7 @@ export async function GET(request: Request, { params }: P) {
 // POST { action: "refresh" } read the documents again
 //      { action: "save", dates: { closing: "2026-11-20", ... } } dates entered by hand
 //      { action: "letter" } create the Contingency Dates Letter now
+//      { action: "reset" } back to the dates read from the documents
 export async function POST(request: Request, { params }: P) {
   try {
     const { id } = await params;
@@ -41,6 +42,7 @@ export async function POST(request: Request, { params }: P) {
     const ctx = await getAiCtx();
     if (body.action === "refresh") return NextResponse.json(await refreshKeyDates(ctx, id));
     if (body.action === "letter") return NextResponse.json(await createLetterNow(ctx, id));
+    if (body.action === "reset") return NextResponse.json(await resetKeyDates(ctx, id));
     if (body.action === "save" && body.dates && typeof body.dates === "object") {
       return NextResponse.json(await saveManualDates(ctx, id, body.dates as Record<string, unknown>));
     }

@@ -10,6 +10,7 @@ export type MailSummary = {
   date: string; // ISO
   unread: boolean;
   hasAttachments: boolean;
+  matter?: { id: string; number: string | null; title: string } | null; // matter it's logged on
 };
 
 export type MailMessage = MailSummary & {
