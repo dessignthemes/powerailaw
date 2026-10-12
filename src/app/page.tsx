@@ -126,7 +126,7 @@ export default function Home() {
             <a href="/portal/login" className="border border-ink text-ink px-3.5 sm:px-4 py-[7px] rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-ink hover:text-white transition-colors">
               Client login
             </a>
-            <a href="/login" className="hidden sm:inline bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors">
+            <a href="/login" className="hidden sm:inline bg-[#767476] text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-[#5F5D5E] transition-colors">
               Sign in
             </a>
             <a href="/connect" className="bg-dark text-white px-3.5 sm:px-4 py-2 rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-dark2 transition-colors">
