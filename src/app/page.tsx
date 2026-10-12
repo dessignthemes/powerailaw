@@ -115,18 +115,18 @@ export default function Home() {
           <Link href="/" aria-label="LawPower AI home">
             <Logo />
           </Link>
-          <div className="flex items-center gap-4 sm:gap-7 whitespace-nowrap">
-            <nav className="hidden lg:flex gap-7 text-[14px] font-medium text-muted">
+          <div className="flex items-center gap-2 sm:gap-2.5 whitespace-nowrap">
+            <nav className="hidden lg:flex gap-7 text-[14px] font-medium text-muted mr-5">
               {navLinks.map((l) => (
                 <a key={l.href} href={l.href} className="hover:text-ink transition-colors">
                   {l.label}
                 </a>
               ))}
             </nav>
-            <a href="/portal/login" className="text-[13px] sm:text-[14px] font-medium text-muted hover:text-ink transition-colors">
+            <a href="/portal/login" className="border border-ink text-ink px-3.5 sm:px-4 py-[7px] rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-ink hover:text-white transition-colors">
               Client login
             </a>
-            <a href="/login" className="hidden sm:inline text-[14px] font-medium text-ink hover:opacity-70 transition-opacity">
+            <a href="/login" className="hidden sm:inline bg-dark text-white px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-dark2 transition-colors">
               Sign in
             </a>
             <a href="/connect" className="bg-dark text-white px-3.5 sm:px-4 py-2 rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-dark2 transition-colors">
