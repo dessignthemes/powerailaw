@@ -50,6 +50,20 @@ export default function DashboardHome() {
   const [range, setRange] = useState<RangeKey>("today");
   const [bottomTab, setBottomTab] = useState<"tasks" | "events">("tasks");
 
+  // Greeting follows the user's own clock (set in the browser, refreshed every minute).
+  const [greeting, setGreeting] = useState<string | null>(null);
+  useEffect(() => {
+    const update = () => {
+      const h = new Date().getHours();
+      setGreeting(h < 5 ? "Good evening" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening");
+    };
+    const first = setTimeout(update, 0);
+    const timer = setInterval(update, 60_000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, []);
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -218,7 +232,9 @@ export default function DashboardHome() {
     <div className="px-10 py-10">
       <div className="flex items-start justify-between mb-10">
         <div>
-          <h1 className="text-[32px] font-semibold mb-1">Good afternoon</h1>
+          <h1 className="text-[32px] font-semibold mb-1">
+            <span className={greeting ? "" : "invisible"}>{greeting ?? "Good morning"}</span>
+          </h1>
           <div className="text-[14.5px] text-muted">{today}</div>
         </div>
         <div className="flex items-center gap-2">
