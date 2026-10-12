@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider } from "@/lib/ai/provider";
 import { getMatterContext, ensureVersionIndexed, searchChunks, type AiCtx, type SearchScope, type Excerpt } from "@/lib/ai/store";
 import { firmTimezone, todayIn } from "@/lib/ai/workspaceTools";
+import { boardForMatter } from "@/lib/matters/boards";
 
 // AI Matter: a review of one matter. Fixed checks always run (no AI needed);
 // the AI adds a summary, key facts with sources, risks and next steps.
@@ -227,6 +228,16 @@ Keep lists short (max 6 items each). Facts from excerpts must cite their source.
 // Creates tasks linked to the matter (they appear on the Task Board and the matter).
 export async function createMatterTasks(ctx: AiCtx, matterId: string, tasks: { title: string; description: string; priority: string; dueDate: string | null }[]) {
   await getMatterContext(ctx, matterId); // checks access
+  // On the matter type's board (REP, RES …) when the firm has one.
+  const [{ data: row }, { data: boards }] = await Promise.all([
+    createAdminClient().from("matters").select("*").eq("id", matterId).eq("org_id", ctx.orgId).maybeSingle(),
+    createAdminClient().from("task_boards").select("id, name").eq("org_id", ctx.orgId),
+  ]);
+  const mt = (row ?? {}) as Record<string, unknown>;
+  const boardId = boardForMatter((boards ?? []) as { id: string; name: string }[], {
+    matterCode: typeof mt.matter_code === "string" ? mt.matter_code : null,
+    category: typeof mt.category === "string" ? mt.category : null,
+  });
   const rows = tasks.slice(0, 20).map((t) => ({
     id: crypto.randomUUID(),
     org_id: ctx.orgId,
@@ -237,6 +248,7 @@ export async function createMatterTasks(ctx: AiCtx, matterId: string, tasks: { t
     priority: t.priority === "High" || t.priority === "Low" ? t.priority : "Medium",
     due_date: t.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(t.dueDate) ? t.dueDate : null,
     matter_id: matterId,
+    board_id: boardId,
     comments: [],
   })).filter((r) => r.title);
   const { error } = await createAdminClient().from("tasks").insert(rows);

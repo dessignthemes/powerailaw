@@ -34,6 +34,7 @@ import NewTaskModal, {
   todayYmd,
 } from "@/components/NewTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
+import { NextStepLine } from "@/components/matters/MatterTasks";
 import ColorPicker from "@/components/ColorPicker";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -1248,7 +1249,14 @@ function TaskBoard({
                             <span className="absolute left-1 right-1 -bottom-[5.5px] h-[3px] rounded-full bg-[#3B82F6] pointer-events-none" aria-hidden />
                           )}
                           <div className="flex items-start justify-between gap-2 mb-2.5">
-                            <div className="text-[14px] font-normal leading-snug">{t.title}</div>
+                            <div className="min-w-0">
+                              <div className="text-[14px] font-normal leading-snug">{t.title}</div>
+                              {t.status !== "done" && (
+                                <div className="mt-1">
+                                  <NextStepLine task={t} />
+                                </div>
+                              )}
+                            </div>
                             <div className="relative flex-shrink-0 -mt-0.5">
                               <button
                                 onClick={(e) => {

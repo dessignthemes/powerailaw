@@ -38,6 +38,12 @@ import { ACCEPT_ATTR, ACCEPTED_SUMMARY, fileTypeLabel, type FileType } from "@/l
 import SendForSignature from "@/components/esign/SendForSignature";
 import { STATUS_LABEL, type SignRequest } from "@/lib/esign/types";
 
+// Lets the matter page know its documents changed (its key dates are re-read).
+export const DOCS_CHANGED_EVENT = "lp:documents-changed";
+const notifyDocsChanged = (matterId: string | null | undefined) => {
+  if (matterId) window.dispatchEvent(new CustomEvent(DOCS_CHANGED_EVENT, { detail: { matterId } }));
+};
+
 const typeOf = (v: DocVersion | undefined): FileType => v?.fileType ?? "pdf";
 
 function TypeIcon({ type, size = 17 }: { type: FileType; size?: number }) {
@@ -187,6 +193,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
       if (!res.ok) throw new Error(data?.error ?? "Couldn't delete the document.");
       setDocs((list) => list.filter((x) => x.id !== d.id));
       if (expanded === d.id) setExpanded(null);
+      notifyDocsChanged(d.matterId);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -204,6 +211,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
       const updated: Doc = await uploadFileAsVersion(d.id, file, d.versions[0]?.id ?? null);
       setDocs((list) => list.map((x) => (x.id === d.id ? updated : x)));
       setExpanded(d.id);
+      notifyDocsChanged(d.matterId);
       setNotice(`Saved "${file.name}" as version ${updated.versions[0]?.versionNumber}. Earlier versions are kept.`);
     } catch (e) {
       setError(e instanceof UploadError ? e.message : "The upload failed. Please try again.");
@@ -580,7 +588,10 @@ function AddDocumentModal({
       }
     }
     setRunning(false);
-    if (ok) onUploaded();
+    if (ok) {
+      onUploaded();
+      notifyDocsChanged(matterId);
+    }
     if (!failed) onClose();
   }
 

@@ -38,6 +38,8 @@ import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import DocumentsLibrary from "@/components/documents/DocumentsLibrary";
 import AssigneeOptions from "@/components/AssigneeOptions";
 import MatterTasks from "@/components/matters/MatterTasks";
+import KeyDatesCard, { useKeyDates } from "@/components/matters/KeyDatesCard";
+import { anchorDates } from "@/lib/matters/keyDates";
 import { statusMeta as taskStatusMeta } from "@/components/NewTaskModal";
 
 const tabs = [
@@ -68,6 +70,8 @@ export default function MatterDetailPage() {
   const [dateOpen, setDateOpen] = useState(false);
   const [clientOpen, setClientOpen] = useState(false);
   const [assignedOpen, setAssignedOpen] = useState(false);
+  // Key dates stay up to date on every tab (documents uploaded on the Documents tab are read).
+  const keyDates = useKeyDates(matter);
 
   if (!matter) {
     if (!mattersLoaded) {
@@ -325,7 +329,7 @@ export default function MatterDetailPage() {
       {activeTab === "documents" ? (
         <DocumentsLibrary matterId={matter.id} />
       ) : activeTab === "tasks" ? (
-        <MatterTasks matter={matter} clientName={client?.name ?? null} />
+        <MatterTasks matter={matter} clientName={client?.name ?? null} keyDates={anchorDates(keyDates.data?.state.dates ?? {})} />
       ) : activeTab !== "overview" ? (
         <div className="border border-line rounded-2xl min-h-[240px] flex items-center justify-center text-[14px] text-muted">
           {tabs.find((t) => t.key === activeTab)?.label} coming soon.
@@ -333,6 +337,7 @@ export default function MatterDetailPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 flex flex-col gap-5">
+            <KeyDatesCard api={keyDates} onOpenDocuments={() => setActiveTab("documents")} />
             <div className="rounded-2xl overflow-hidden border border-line">
               <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
                 <BookOpen size={14} strokeWidth={1.75} className="text-muted" />

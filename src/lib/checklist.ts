@@ -138,7 +138,10 @@ export const COMMON_ANCHORS = [
   "Engagement date",
   "Contract signed date",
   "Attorney review completed date",
+  "Initial deposit due date",
   "Second deposit due date",
+  "Home inspection contingency date",
+  "Appraisal contingency date",
   "Mortgage contingency date",
   "Closing Disclosure issue date",
   "Closing date",
@@ -302,4 +305,15 @@ export const EXAMPLE_TEMPLATES: TaskTemplate[] = [
 export function withExamples(own: TaskTemplate[]): TaskTemplate[] {
   const names = new Set(own.map((t) => t.name.trim().toLowerCase()));
   return [...own, ...EXAMPLE_TEMPLATES.filter((e) => !names.has(e.name.toLowerCase()))].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// The next open step that has a due date (earliest first), for task cards.
+export function nextStep(c: TaskChecklist | null | undefined): { text: string; due: string; state: DueState } | null {
+  let best: { text: string; due: string; state: DueState } | null = null;
+  for (const s of c?.sections ?? []) for (const i of s.items) {
+    if (i.done) continue;
+    const { state, due } = dueState(i, c?.dates);
+    if (due && (!best || due < best.due)) best = { text: i.text, due, state };
+  }
+  return best;
 }

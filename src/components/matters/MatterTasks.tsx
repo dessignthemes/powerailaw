@@ -8,8 +8,9 @@ import TaskDetailModal from "@/components/TaskDetailModal";
 import AssigneeOptions from "@/components/AssigneeOptions";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useTemplates } from "@/components/templates/useTemplates";
-import { applyTemplate, anchorsOf, progress, alerts, type TaskTemplate } from "@/lib/checklist";
+import { applyTemplate, anchorsOf, progress, alerts, nextStep, type TaskTemplate } from "@/lib/checklist";
 import type { Matter } from "@/components/NewMatterModal";
+import { boardForMatter } from "@/lib/matters/boards";
 
 const boardHref = (boardId: string | null | undefined) => `/dashboard/task-board?board=${boardId ?? "general"}`;
 const itemCount = (t: TaskTemplate) => t.sections.reduce((n, s) => n + s.items.length, 0);
@@ -25,7 +26,8 @@ export function templatesFor(templates: TaskTemplate[], code: string | null | un
 }
 
 // Tasks tab of a matter: create tasks from templates (they land on the Task Board, linked to this matter).
-export default function MatterTasks({ matter, clientName }: { matter: Matter; clientName: string | null }) {
+// keyDates = the matter's dates by checklist name ("Closing date" → "2026-11-20"); new tasks start with them.
+export default function MatterTasks({ matter, clientName, keyDates = {} }: { matter: Matter; clientName: string | null; keyDates?: Record<string, string> }) {
   const { tasks, tasksLoaded, addTask, updateTask, boards } = useWorkspaceData();
   const { templates, error: templatesError } = useTemplates();
   const [fromTemplate, setFromTemplate] = useState<TaskTemplate | "pick" | null>(null);
@@ -134,7 +136,10 @@ export default function MatterTasks({ matter, clientName }: { matter: Matter; cl
                 }`}
               >
                 <S.icon size={15} strokeWidth={2} className={S.color} aria-label={S.label} />
-                <span className="text-[14px] font-medium min-w-0 flex-1 truncate">{t.title}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-medium truncate">{t.title}</span>
+                  {t.status !== "done" && <NextStepLine task={t} />}
+                </span>
                 <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[160px]">{boardName(t.boardId)}</span>
                 {al.overdue > 0 && <span className="text-[11.5px] font-medium rounded-md px-1.5 py-0.5 bg-[#F9B2B3]">{al.overdue} overdue</span>}
                 {al.overdue === 0 && al.soon > 0 && <span className="text-[11.5px] font-medium rounded-md px-1.5 py-0.5 bg-[#F9E1C0]">{al.soon} due soon</span>}
@@ -157,6 +162,7 @@ export default function MatterTasks({ matter, clientName }: { matter: Matter; cl
         <FromTemplateDialog
           matter={matter}
           clientName={clientName}
+          keyDates={keyDates}
           templates={templates}
           initial={fromTemplate === "pick" ? null : fromTemplate}
           boards={boards}
@@ -173,7 +179,7 @@ export default function MatterTasks({ matter, clientName }: { matter: Matter; cl
           defaultStatus="todo"
           onClose={() => setNewTaskOpen(false)}
           onCreate={(t) => {
-            created({ ...t, matterId: matter.id });
+            created({ ...t, matterId: matter.id, boardId: t.boardId ?? boardForMatter(boards, matter) });
             setNewTaskOpen(false);
           }}
         />
@@ -187,6 +193,7 @@ export default function MatterTasks({ matter, clientName }: { matter: Matter; cl
 function FromTemplateDialog({
   matter,
   clientName,
+  keyDates,
   templates,
   initial,
   boards,
@@ -195,6 +202,7 @@ function FromTemplateDialog({
 }: {
   matter: Matter;
   clientName: string | null;
+  keyDates: Record<string, string>;
   templates: TaskTemplate[] | null;
   initial: TaskTemplate | null;
   boards: { id: string; name: string }[];
@@ -210,11 +218,13 @@ function FromTemplateDialog({
   // null = keep the automatic title (follows the template).
   const [typedTitle, setTypedTitle] = useState<string | null>(null);
   const title = typedTitle ?? defaultTitle(template);
-  const [boardId, setBoardId] = useState<string>("");
+  // The matter type's board (REP, RES …) when there is one.
+  const [boardId, setBoardId] = useState<string>(() => boardForMatter(boards, matter) ?? "");
   const [priority, setPriority] = useState<TaskPriority>("Medium");
   const [assignee, setAssignee] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState("");
-  const [dates, setDates] = useState<Record<string, string>>({});
+  // Starts with the dates read from the matter's documents.
+  const [dates, setDates] = useState<Record<string, string>>(keyDates);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
 
@@ -223,7 +233,8 @@ function FromTemplateDialog({
   function submit() {
     if (!template || !title.trim()) return;
     const filled = Object.fromEntries(Object.entries(dates).filter(([k, v]) => v && anchors.includes(k)));
-    const checklist = applyTemplate(null, template);
+    const base = applyTemplate(null, template);
+    const checklist = Object.keys(filled).length ? { ...base, dates: filled } : base;
     onCreate({
       id: crypto.randomUUID(),
       title: title.trim(),
@@ -231,11 +242,11 @@ function FromTemplateDialog({
       status: "todo",
       priority,
       assignee,
-      dueDate: dueDate || null,
+      dueDate: dueDate || nextStep(checklist)?.due || null,
       comments: [],
       boardId: boardId || null,
       matterId: matter.id,
-      checklist: Object.keys(filled).length ? { ...checklist, dates: filled } : checklist,
+      checklist,
       createdAt: new Date().toISOString(),
     });
   }
@@ -412,5 +423,18 @@ function FromTemplateDialog({
         </div>
       </div>
     </div>
+  );
+}
+
+// "Next: Mortgage Commitment Received · Nov 9" — red when overdue.
+export function NextStepLine({ task }: { task: BoardTask }) {
+  const n = nextStep(task.checklist);
+  if (!n) return null;
+  const color = n.state === "overdue" ? "text-[#B4232C]" : n.state === "today" || n.state === "soon" ? "text-[#8A4B14]" : "text-muted";
+  return (
+    <span className={`block text-[12px] truncate ${color}`} title={n.text}>
+      {n.state === "overdue" ? "Overdue: " : "Next: "}
+      {n.text} · {fmtDate(n.due)}
+    </span>
   );
 }
