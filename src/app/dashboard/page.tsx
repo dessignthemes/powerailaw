@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   ArrowUpRight,
   UserPlus,
+  FolderPlus,
 } from "lucide-react";
 
 const rangeTabs = [
@@ -243,6 +244,12 @@ export default function DashboardHome() {
             className="flex items-center gap-2 bg-btn hover:bg-btn-hover transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
           >
             <UserPlus size={14} strokeWidth={1.75} /> Client Intake
+          </Link>
+          <Link
+            href="/dashboard/matters"
+            className="flex items-center gap-2 bg-btn hover:bg-btn-hover transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+          >
+            <FolderPlus size={14} strokeWidth={1.75} /> Add Matter
           </Link>
           <TaskFilterDropdown />
         </div>
