@@ -27,7 +27,7 @@ export default function PdfPages({
     (async () => {
       const res = await openPdf(bytes);
       if ("problem" in res) {
-        if (!cancelled) setError(res.problem === "encrypted" ? "This PDF is password-protected and can't be shown." : "This PDF couldn't be read.");
+        if (!cancelled) setError(res.problem === "encrypted" ? "This PDF needs a password to open, so it can't be shown." : "This PDF couldn't be read.");
         return;
       }
       close = res.close;

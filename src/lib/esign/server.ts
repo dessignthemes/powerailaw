@@ -1,4 +1,5 @@
 import "server-only";
+import { looksEncrypted, LOCKED_PDF_MESSAGE } from "@/lib/pdf/sniff";
 import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -74,6 +75,7 @@ export async function createRequest(input: { documentId: string; versionId?: str
   const v = versions?.[0];
   if (!v || !String(v.storage_path).endsWith(".pdf")) throw new SignError(400, "Only PDFs can be sent for signature. Convert the file to PDF first.");
   const original = await versionBytes(v.storage_path);
+  if (looksEncrypted(original)) throw new SignError(400, LOCKED_PDF_MESSAGE);
 
   const token = randomBytes(32).toString("base64url");
   const days = Math.max(1, Math.min(90, Math.floor(input.expiresInDays ?? 30)));

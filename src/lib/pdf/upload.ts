@@ -3,7 +3,7 @@
 import { PDFDocument, EncryptedPDFError } from "pdf-lib";
 import { createClient } from "@/lib/supabase/client";
 import { openPdf, openProblemMessages } from "@/lib/pdf/pdfjsClient";
-import { hasPdfHeader, looksEncrypted } from "@/lib/pdf/sniff";
+import { hasPdfHeader, looksEncrypted, PASSWORD_PDF_MESSAGE } from "@/lib/pdf/sniff";
 import { FILE_TYPES, checkFileBytes, fileProblemMessages, fileTypeFromName, MAX_DOCUMENT_BYTES } from "@/lib/documents/fileTypes";
 
 export const MAX_PDF_BYTES = 25 * 1024 * 1024;
@@ -26,16 +26,18 @@ export async function precheckPdf(file: File | Blob, name?: string): Promise<Uin
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (!hasPdfHeader(bytes)) throw new UploadError("This file isn't a PDF. Please upload a .pdf file.");
-  if (looksEncrypted(bytes)) throw new UploadError(openProblemMessages.encrypted);
+  const locked = looksEncrypted(bytes);
 
   const opened = await openPdf(bytes);
-  if ("problem" in opened) throw new UploadError(openProblemMessages[opened.problem]);
+  if ("problem" in opened) throw new UploadError(opened.problem === "encrypted" ? PASSWORD_PDF_MESSAGE : openProblemMessages[opened.problem]);
   await opened.close();
+  // Opens without a password but has editing restrictions (e.g. DocuSign): keep it as-is, view only.
+  if (locked) return bytes;
 
   try {
     await PDFDocument.load(bytes, { updateMetadata: false });
   } catch (err) {
-    if (err instanceof EncryptedPDFError) throw new UploadError(openProblemMessages.encrypted);
+    if (err instanceof EncryptedPDFError) return bytes; // restricted but readable (checked above)
     throw new UploadError(openProblemMessages.damaged);
   }
   return bytes;

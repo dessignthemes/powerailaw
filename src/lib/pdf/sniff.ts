@@ -4,6 +4,13 @@ function latin1(bytes: Uint8Array, start: number, end: number) {
   return new TextDecoder("latin1").decode(bytes.subarray(Math.max(0, start), Math.min(bytes.length, end)));
 }
 
+// A PDF that opens without a password but carries editing restrictions
+// (DocuSign locks completed envelopes this way). It's stored and shown as-is.
+export const LOCKED_PDF_MESSAGE =
+  "This PDF is locked against changes by the app that created it. DocuSign and similar services do this to signed documents to protect the signatures. You can view, download and share it, but not edit it or send it for signature.";
+export const PASSWORD_PDF_MESSAGE =
+  "This PDF needs a password to open. Open it in the app that created it, remove the password, save a copy, and upload that copy.";
+
 export function hasPdfHeader(bytes: Uint8Array) {
   return latin1(bytes, 0, 1024).includes("%PDF-");
 }

@@ -1,6 +1,6 @@
 import "server-only";
 import { PDFDocument, EncryptedPDFError } from "pdf-lib";
-import { hasPdfHeader, looksEncrypted } from "@/lib/pdf/sniff";
+import { hasPdfHeader, looksEncrypted, PASSWORD_PDF_MESSAGE } from "@/lib/pdf/sniff";
 
 export const MAX_PDF_BYTES = 25 * 1024 * 1024;
 
@@ -10,14 +10,13 @@ export const pdfProblemMessages: Record<PdfProblem, string> = {
   empty: "That file is empty.",
   too_large: "PDFs must be 25 MB or smaller.",
   not_pdf: "This file isn't a PDF. Please upload a .pdf file.",
-  encrypted:
-    "This PDF is password-protected or has editing restrictions, so it can't be edited. Open it in the app that created it, remove the password or protection, save a copy, and upload that copy.",
+  encrypted: PASSWORD_PDF_MESSAGE,
   damaged:
     "This PDF appears to be damaged and can't be read. Try re-exporting or re-saving it from the original app, then upload it again.",
 };
 
 export type PdfCheck =
-  | { ok: true; pageCount: number; hasFormFields: boolean }
+  | { ok: true; pageCount: number; hasFormFields: boolean; locked?: boolean }
   | { ok: false; problem: PdfProblem };
 
 // Server-side check run on every upload and every saved version, so a bad
@@ -30,7 +29,10 @@ export async function checkPdf(bytes: Uint8Array): Promise<PdfCheck> {
   if (!hasPdfHeader(bytes)) return { ok: false, problem: "not_pdf" };
   // Check encryption before parsing: pdf-lib can fail on encrypted object
   // streams before it gets far enough to say the file is encrypted.
-  if (looksEncrypted(bytes)) return { ok: false, problem: "encrypted" };
+  // Encrypted PDFs: pdf-lib can't read them, so ask pdf.js. If it opens with no
+  // password the file only has editing restrictions (DocuSign does this):
+  // accept it, view only.
+  if (looksEncrypted(bytes)) return checkLockedPdf(bytes);
 
   let doc: PDFDocument;
   try {
@@ -51,4 +53,23 @@ export async function checkPdf(bytes: Uint8Array): Promise<PdfCheck> {
   }
 
   return { ok: true, pageCount, hasFormFields };
+}
+
+async function checkLockedPdf(bytes: Uint8Array): Promise<PdfCheck> {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const task = pdfjs.getDocument({ data: bytes.slice(), disableFontFace: true, useSystemFonts: false, stopAtErrors: false });
+  task.onPassword = () => {
+    void task.destroy();
+  };
+  try {
+    const doc = await task.promise;
+    const pageCount = doc.numPages;
+    return pageCount > 0 ? { ok: true, pageCount, hasFormFields: false, locked: true } : { ok: false, problem: "damaged" };
+  } catch (err) {
+    const name = (err as { name?: string })?.name;
+    if (name === "PasswordException" || task.destroyed) return { ok: false, problem: "encrypted" };
+    return { ok: false, problem: "damaged" };
+  } finally {
+    void task.destroy();
+  }
 }

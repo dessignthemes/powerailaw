@@ -89,7 +89,7 @@ async function extractPdf(bytes: Uint8Array): Promise<Extraction> {
     doc = await task.promise;
   } catch (err) {
     const name = (err as { name?: string })?.name;
-    if (name === "PasswordException") return { status: "failed", kind: "pdf", detail: "This PDF is password-protected. Remove the password and upload it again." };
+    if (name === "PasswordException") return { status: "failed", kind: "pdf", detail: "This PDF needs a password to open. Remove the password and upload it again." };
     return { status: "failed", kind: "pdf", detail: "This PDF appears to be damaged and couldn't be read." };
   }
 

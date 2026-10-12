@@ -29,7 +29,7 @@ export type OpenProblem = "encrypted" | "damaged";
 
 export const openProblemMessages: Record<OpenProblem, string> = {
   encrypted:
-    "This PDF is password-protected or has editing restrictions, so it can't be edited. Open it in the app that created it, remove the password or protection, save a copy, and upload that copy.",
+    "This PDF needs a password to open. Open it in the app that created it, remove the password, save a copy, and upload that copy.",
   damaged:
     "This PDF appears to be damaged and can't be read. Try re-exporting or re-saving it from the original app, then upload it again.",
 };

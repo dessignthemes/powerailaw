@@ -10,6 +10,7 @@ import {
   PenTool,
   Replace,
   Save,
+  Lock,
   ChevronLeft,
   ChevronRight,
   Minus,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { loadPdfjs, openPdf, openProblemMessages, type PdfDoc, type PdfPage } from "@/lib/pdf/pdfjsClient";
 import { fetchVersionBytes, uploadNewVersion, UploadError } from "@/lib/pdf/upload";
+import { looksEncrypted, LOCKED_PDF_MESSAGE } from "@/lib/pdf/sniff";
 import {
   buildEditedPdf,
   readFormFields,
@@ -85,6 +87,8 @@ export default function PdfEditor({
   const [fields, setFields] = useState<FormFieldInfo[]>([]);
   const [widgets, setWidgets] = useState<FormWidget[]>([]);
   const [scanned, setScanned] = useState(false);
+  // Opens without a password but has editing restrictions (e.g. DocuSign): view only.
+  const [locked, setLocked] = useState(false);
 
   // ── Editing ────────────────────────────────────────────────────────────
   const [pageIndex, setPageIndex] = useState(Math.max(0, Math.floor(initialPage) - 1));
@@ -183,6 +187,7 @@ export default function PdfEditor({
         setFields(form.fields);
         setWidgets(form.widgets);
         setScanned(!textFound && form.fields.length === 0);
+        setLocked(looksEncrypted(b));
         const avail = (scrollRef.current?.clientWidth ?? 900) - 64;
         setZoom(ZOOMS.reduce((best, z) => (gs[0].width * z <= avail && z <= 1.5 ? z : best), 0.5));
       } catch (e) {
@@ -498,6 +503,7 @@ export default function PdfEditor({
 
   async function save(note: string) {
     if (!bytes || !doc || !version) return;
+    if (locked) throw new UploadError(LOCKED_PDF_MESSAGE);
     const out = await buildEditedPdf({
       original: bytes,
       pages: geos,
@@ -572,6 +578,11 @@ export default function PdfEditor({
           </div>
         </div>
 
+        {locked ? (
+          <span className="flex items-center gap-1.5 bg-chip px-3 py-1.5 rounded-full text-[13px] font-medium">
+            <Lock size={13} /> View only
+          </span>
+        ) : (
         <div className="flex items-center gap-1.5">
           {toolBtn("select", <MousePointer2 size={13} />, "Select", "Select, move and resize items")}
           {toolBtn("text", <Type size={13} />, "Text", "Click on the page to add a text box")}
@@ -592,6 +603,7 @@ export default function PdfEditor({
               "Cover a piece of existing text and type a correction. The original stays in the file."
             )}
         </div>
+        )}
 
         <div className="flex items-center gap-1 ml-auto text-[13px]">
           <button
@@ -642,6 +654,7 @@ export default function PdfEditor({
           </button>
         </div>
 
+        {!locked && (
         <button
           onClick={() => setSaveOpen(true)}
           disabled={!dirty}
@@ -649,7 +662,12 @@ export default function PdfEditor({
         >
           <Save size={14} strokeWidth={2} /> Save as new version
         </button>
+        )}
       </div>
+
+      {locked && (
+        <div className="px-5 py-2.5 bg-[#FDF1E7] text-[#8A4B14] text-[13px] border-b border-line">{LOCKED_PDF_MESSAGE}</div>
+      )}
 
       <div className="flex flex-1 min-h-0">
         {/* Page */}
@@ -781,6 +799,8 @@ export default function PdfEditor({
                   </span>
                 </div>
               )}
+              {!locked && (
+              <>
               <div>
                 <div className="font-semibold mb-1.5">How to edit</div>
                 <ul className="text-muted flex flex-col gap-1.5 leading-snug">
@@ -805,6 +825,8 @@ export default function PdfEditor({
                       } changed.`}
                 </div>
               </div>
+              </>
+              )}
               <div>
                 <div className="font-semibold mb-1.5">Versions</div>
                 <div className="flex flex-col gap-1.5">

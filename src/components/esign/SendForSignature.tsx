@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { X, Loader2, PenLine, Type, CalendarDays, User, SquareCheck, Signature, Copy, Check, Mail } from "lucide-react";
 import PdfPages from "@/components/esign/PdfPages";
 import { fetchVersionBytes } from "@/lib/pdf/upload";
+import { looksEncrypted, LOCKED_PDF_MESSAGE } from "@/lib/pdf/sniff";
 import { FIELD_META, type FieldType, type SignField } from "@/lib/esign/types";
 
 const TOOLS: { type: FieldType; icon: typeof PenLine }[] = [
@@ -48,7 +49,11 @@ export default function SendForSignature({
   useEffect(() => {
     let cancelled = false;
     fetchVersionBytes(versionId)
-      .then((b) => !cancelled && setBytes(b))
+      .then((b) => {
+        if (cancelled) return;
+        if (looksEncrypted(b)) setLoadError(LOCKED_PDF_MESSAGE);
+        else setBytes(b);
+      })
       .catch(() => !cancelled && setLoadError("The document couldn't be loaded."));
     return () => {
       cancelled = true;
