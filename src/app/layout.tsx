@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "LawPower AI — All-in-One AI Agents Workspace for Lawyers",
+  title: "LawPower AI — All-in-One AI Automation Workspace for Lawyers",
   description:
     "Client intake, matter review, time tracking, e-signatures, secure file sharing and a client portal, with AI agents that work across all of it. Built by lawyers, for lawyers.",
 };

@@ -146,10 +146,11 @@ export default function Home() {
           <div className="relative lg:absolute lg:left-[max(40px,5%)] lg:top-1/2 lg:-translate-y-1/2 xl:top-[110px] xl:translate-y-0 lg:w-[44%] px-6 md:px-10 lg:px-0 pt-16 pb-10 lg:py-0">
             <div className="mono text-[13px] md:text-[14px] tracking-[0.08em] text-white/85 mb-5">/ WELCOME TO LAWPOWER AI</div>
             <h1
-              className="text-white text-[38px] md:text-[clamp(40px,4vw,60px)] font-semibold"
-              style={{ lineHeight: 1.08, letterSpacing: "-0.02em" }}
+              className="text-white text-[27px] sm:text-[36px] lg:text-[clamp(34px,3.15vw,52px)] font-semibold"
+              style={{ lineHeight: 1.12, letterSpacing: "-0.02em" }}
             >
-              All-in-One AI Agents Workspace For Lawyers
+              <span className="block sm:whitespace-nowrap">All-in-One AI Automation</span>
+              <span className="block sm:whitespace-nowrap">Workspace For Lawyers</span>
             </h1>
             <p className="text-white/80 text-[16.5px] md:text-[18px] leading-relaxed mt-6 max-w-[580px]">
               From client intake and matter review to time tracking, e-signatures and secure file sharing, LawPower AI helps your firm stay organized,
