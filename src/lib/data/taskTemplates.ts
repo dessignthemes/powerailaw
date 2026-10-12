@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId, NoWorkspaceError } from "@/lib/data/org";
 import { getSessionUserId } from "@/lib/auth";
 import { cleanSections, withExamples, type TaskTemplate } from "@/lib/checklist";
+import { parseCodes } from "@/lib/matters/numbering";
 
 export class TemplateError extends Error {
   constructor(public status: 400 | 404, message: string) {
@@ -11,9 +12,21 @@ export class TemplateError extends Error {
   }
 }
 
-type Row = { id: string; name: string; sections: unknown; updated_at: string };
-const toTemplate = (r: Row): TaskTemplate => ({ id: r.id, name: r.name, sections: cleanSections(r.sections), updatedAt: r.updated_at });
-const COLS = "id, name, sections, updated_at";
+type Row = { id: string; name: string; sections: unknown; matter_codes?: string[] | null; updated_at: string };
+const toTemplate = (r: Row): TaskTemplate => ({
+  id: r.id,
+  name: r.name,
+  sections: cleanSections(r.sections),
+  matterCodes: parseCodes(r.matter_codes ?? []),
+  updatedAt: r.updated_at,
+});
+const COLS = "id, name, sections, matter_codes, updated_at";
+const COLS_OLD = "id, name, sections, updated_at"; // before migration 0025
+// Runs a query with matter_codes, and again without it if 0025 hasn't been run yet.
+async function withCodes<R extends { error: { message?: string } | null }>(run: (cols: string, codes: boolean) => PromiseLike<R>): Promise<R> {
+  const r = await run(COLS, true);
+  return r.error && /matter_codes/.test(r.error.message ?? "") ? run(COLS_OLD, false) : r;
+}
 
 function cleanName(name: unknown) {
   const n = String(name ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
@@ -28,37 +41,43 @@ function checkSections(sections: unknown) {
 
 export async function listTemplates(): Promise<TaskTemplate[]> {
   const orgId = await getCurrentOrgId();
-  const { data, error } = await createAdminClient().from("task_templates").select(COLS).eq("org_id", orgId).order("name");
+  const db = createAdminClient();
+  const { data, error } = await withCodes((cols) => db.from("task_templates").select(cols).eq("org_id", orgId).order("name"));
   if (error) throw error;
-  return withExamples(((data ?? []) as Row[]).map(toTemplate));
+  return withExamples(((data ?? []) as unknown as Row[]).map(toTemplate));
 }
 
-export async function createTemplate(input: { name?: unknown; sections?: unknown }): Promise<TaskTemplate> {
+export async function createTemplate(input: { name?: unknown; sections?: unknown; matterCodes?: unknown }): Promise<TaskTemplate> {
   const orgId = await getCurrentOrgId();
   const db = createAdminClient();
   const { count } = await db.from("task_templates").select("*", { count: "exact", head: true }).eq("org_id", orgId);
   if ((count ?? 0) >= 100) throw new TemplateError(400, "You can have up to 100 templates.");
-  const { data, error } = await db
-    .from("task_templates")
-    .insert({ org_id: orgId, name: cleanName(input.name), sections: checkSections(input.sections), created_by: await getSessionUserId() })
-    .select(COLS)
-    .single();
+  const fields: Record<string, unknown> = { org_id: orgId, name: cleanName(input.name), sections: checkSections(input.sections), created_by: await getSessionUserId() };
+  const codes = parseCodes(input.matterCodes);
+  const { data, error } = await withCodes((cols, has) =>
+    db.from("task_templates").insert(has ? { ...fields, matter_codes: codes } : fields).select(cols).single()
+  );
   if (error) throw error;
-  return toTemplate(data as Row);
+  return toTemplate(data as unknown as Row);
 }
 
-export async function updateTemplate(id: string, input: { name?: unknown; sections?: unknown }): Promise<TaskTemplate> {
+export async function updateTemplate(id: string, input: { name?: unknown; sections?: unknown; matterCodes?: unknown }): Promise<TaskTemplate> {
   const orgId = await getCurrentOrgId();
-  const { data, error } = await createAdminClient()
-    .from("task_templates")
-    .update({ name: cleanName(input.name), sections: checkSections(input.sections), updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("org_id", orgId)
-    .select(COLS)
-    .maybeSingle();
+  const db = createAdminClient();
+  const fields: Record<string, unknown> = { name: cleanName(input.name), sections: checkSections(input.sections), updated_at: new Date().toISOString() };
+  const codes = parseCodes(input.matterCodes);
+  const { data, error } = await withCodes((cols, has) =>
+    db
+      .from("task_templates")
+      .update(has && input.matterCodes !== undefined ? { ...fields, matter_codes: codes } : fields)
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .select(cols)
+      .maybeSingle()
+  );
   if (error) throw error;
   if (!data) throw new TemplateError(404, "Template not found.");
-  return toTemplate(data as Row);
+  return toTemplate(data as unknown as Row);
 }
 
 export async function deleteTemplate(id: string): Promise<void> {

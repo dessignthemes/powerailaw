@@ -253,7 +253,7 @@ function TaskBoard({
   const { tasks: workspaceTasks, tasksLoaded, tasksError, clearTasksError, addTask: addWorkspaceTask, updateTask, deleteTasks } =
     useWorkspaceData();
   // Only this board's tasks; new tasks land on this board.
-  const { teamMembers } = useWorkspaceData();
+  const { teamMembers, matters } = useWorkspaceData();
   const creator = createdBy ? teamMembers.find((m) => m.id === createdBy) ?? null : null;
   const allTasks = createdBy
     ? workspaceTasks.filter((t) => t.createdBy === createdBy)
@@ -319,15 +319,25 @@ function TaskBoard({
     }
   };
   const advCount = countFilters(adv);
+  // Matter filter: only tasks linked to one matter.
+  const [matterFilter, setMatterFilter] = useState<string | null>(null);
+  const [matterMenuOpen, setMatterMenuOpen] = useState(false);
+  const filterMatter = matterFilter ? matters.find((m) => m.id === matterFilter) ?? null : null;
+  // Matters that have tasks here first, newest number first.
+  const matterIdsHere = new Set(allTasks.map((t) => t.matterId).filter(Boolean));
+  const matterOptions = [...matters].sort(
+    (a, b) => Number(matterIdsHere.has(b.id)) - Number(matterIdsHere.has(a.id)) || (b.matterSeq ?? 0) - (a.matterSeq ?? 0) || a.title.localeCompare(b.title)
+  );
 
   const tasks = sortTasks(
     allTasks
+      .filter((t) => !matterFilter || t.matterId === matterFilter)
       .filter((t) => activeTests.length === 0 || activeTests.some((test) => test(t)))
       .filter((t) => matchesSearch(t, query))
       .filter((t) => matchesFilters(t, adv)),
     display.sort
   );
-  const narrowing = activeTests.length > 0 || !!query.trim() || advCount > 0;
+  const narrowing = activeTests.length > 0 || !!query.trim() || advCount > 0 || !!matterFilter;
 
   const shownColumns = columns.filter((c) => !(display.hideDone && !c.custom && c.status === "done"));
   const customIds = new Set(columns.filter((c) => c.custom).map((c) => c.id));
@@ -858,9 +868,52 @@ function TaskBoard({
             {f}
           </button>
         ))}
-        <button className="flex items-center gap-1.5 bg-chip px-3.5 py-1.5 rounded-full text-[13.5px] font-medium text-muted">
-          Matter <ChevronDown size={12} strokeWidth={1.75} />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setMatterMenuOpen((o) => !o)}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
+              filterMatter ? "bg-btn text-ink" : "bg-chip text-muted hover:text-ink"
+            }`}
+          >
+            {filterMatter ? filterMatter.matterNumber ?? filterMatter.title : "Matter"} <ChevronDown size={12} strokeWidth={1.75} />
+          </button>
+          {matterMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMatterMenuOpen(false)} />
+              <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[300px] max-h-[360px] overflow-y-auto">
+                {matterFilter && (
+                  <button
+                    onClick={() => {
+                      setMatterFilter(null);
+                      setMatterMenuOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-[13.5px] font-medium text-muted hover:bg-chip"
+                  >
+                    All matters
+                  </button>
+                )}
+                {matterOptions.length === 0 ? (
+                  <div className="px-3 py-2.5 text-[13px] text-muted">No matters yet</div>
+                ) : (
+                  matterOptions.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        setMatterFilter(m.id);
+                        setMatterMenuOpen(false);
+                      }}
+                      className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] hover:bg-chip ${m.id === matterFilter ? "bg-chip" : ""}`}
+                    >
+                      {m.matterNumber && <span className="font-semibold flex-shrink-0">{m.matterNumber}</span>}
+                      <span className="truncate text-muted">{m.title}</span>
+                      {matterIdsHere.has(m.id) && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#3B82F6] flex-shrink-0" title="Has tasks here" />}
+                    </button>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {narrowing && (
@@ -869,6 +922,7 @@ function TaskBoard({
             Showing {tasks.length} of {allTasks.length} {allTasks.length === 1 ? "task" : "tasks"}
             {(() => {
               const parts = [
+                ...(filterMatter ? [filterMatter.matterNumber ?? filterMatter.title] : []),
                 ...activeFilters.filter((f) => tests[f]),
                 ...(query.trim() ? [`“${query.trim()}”`] : []),
                 ...(advCount ? [`${advCount} ${advCount === 1 ? "filter" : "filters"}`] : []),
@@ -883,6 +937,7 @@ function TaskBoard({
           <button
             onClick={() => {
               setActiveFilters([]);
+              setMatterFilter(null);
               setQuery("");
               setSearchOpen(false);
               setAdv(NO_FILTERS);
@@ -1282,6 +1337,21 @@ function TaskBoard({
                                   {cp.done}/{cp.total}
                                 </span>
                                 </>
+                              );
+                            })()}
+                            {(() => {
+                              const m = t.matterId ? matters.find((x) => x.id === t.matterId) : null;
+                              if (!m) return null;
+                              return (
+                                <Link
+                                  href={`/dashboard/matters/${m.id}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  draggable={false}
+                                  title={`Matter: ${m.title}`}
+                                  className="text-[11.5px] font-semibold tracking-wide bg-[#E1E7F4] hover:bg-[#D5DDEE] rounded-md px-1.5 py-0.5 truncate max-w-[140px]"
+                                >
+                                  {m.matterNumber ?? m.title}
+                                </Link>
                               );
                             })()}
                             {boardId === null && !createdBy && (

@@ -4,10 +4,12 @@ import { useState } from "react";
 import { X, Plus, Trash2, ListChecks, Loader2, ClipboardPaste } from "lucide-react";
 import { useTemplates } from "./useTemplates";
 import { parseOutline, toOutline, COMMON_ANCHORS, type TemplateSection } from "@/lib/checklist";
+import { parseCodes } from "@/lib/matters/numbering";
 
-type Draft = { id?: string; name: string; sections: TemplateSection[]; example?: boolean };
+// codes = matter abbreviations it's for, as typed ("REP, RES").
+type Draft = { id?: string; name: string; sections: TemplateSection[]; codes: string; example?: boolean };
 const uid = () => crypto.randomUUID();
-const blank = (): Draft => ({ name: "", sections: [{ id: uid(), title: "", items: [{ id: uid(), text: "" }] }] });
+const blank = (): Draft => ({ name: "", codes: "", sections: [{ id: uid(), title: "", items: [{ id: uid(), text: "" }] }] });
 
 // Create and edit checklist templates (e.g. "Real Estate Purchase").
 export default function TemplatesModal({ onClose }: { onClose: () => void }) {
@@ -37,8 +39,8 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const saved = await save({ id: draft.example ? undefined : draft.id, name: draft.name.trim(), sections: draft.sections });
-      setDraft({ id: saved.id, name: saved.name, sections: saved.sections });
+      const saved = await save({ id: draft.example ? undefined : draft.id, name: draft.name.trim(), sections: draft.sections, matterCodes: parseCodes(draft.codes) });
+      setDraft({ id: saved.id, name: saved.name, sections: saved.sections, codes: (saved.matterCodes ?? []).join(", ") });
       setNotice(draft.example ? "Saved as your firm’s own copy. The example stays available." : "Template saved.");
     } catch (e) {
       setError((e as Error).message);
@@ -90,13 +92,16 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
               templates.map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => open({ id: t.id, name: t.name, sections: t.sections, example: t.example })}
+                  onClick={() => open({ id: t.id, name: t.name, sections: t.sections, codes: (t.matterCodes ?? []).join(", "), example: t.example })}
                   className={`text-left px-3 py-[7px] rounded-lg text-[13px] font-medium transition-colors ${
                     draft?.id === t.id ? "bg-nav text-ink" : "text-muted hover:bg-nav hover:text-ink"
                   }`}
                 >
                   <span className="flex items-center gap-1.5 min-w-0">
                     <span className="truncate" title={t.name}>{t.name}</span>
+                    {(t.matterCodes ?? []).map((c) => (
+                      <span key={c} className="flex-shrink-0 text-[10.5px] font-semibold tracking-wide text-ink bg-chip rounded px-1 py-px">{c}</span>
+                    ))}
                     {t.example && <span className="flex-shrink-0 text-[10.5px] font-semibold uppercase tracking-wide text-muted bg-white/70 rounded px-1 py-px">Example</span>}
                   </span>
                 </button>
@@ -147,6 +152,18 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                   maxLength={80}
                   className="w-full text-[22px] font-semibold bg-transparent outline-none placeholder:text-muted-light mb-3"
                 />
+
+                <label className="flex flex-wrap items-center gap-2 mb-3 text-[12.5px] text-muted">
+                  <span className="font-medium text-ink">Use for matters</span>
+                  <input
+                    value={draft.codes}
+                    onChange={(e) => setDraft({ ...draft, codes: e.target.value.toUpperCase() })}
+                    placeholder="e.g. REP"
+                    maxLength={80}
+                    className="w-[160px] bg-white border border-line rounded-full px-3 py-1 text-[12.5px] font-semibold tracking-wide text-ink outline-none placeholder:font-normal placeholder:text-muted"
+                  />
+                  <span>Matter abbreviations, separated by commas. The matter&apos;s Tasks tab suggests this template for them.</span>
+                </label>
 
                 <div className="flex items-center gap-2 mb-4">
                   <button

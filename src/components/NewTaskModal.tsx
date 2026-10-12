@@ -29,6 +29,7 @@ export type BoardTask = {
   dueDate: string | null;
   comments?: TaskComment[];
   boardId?: string | null; // null/undefined = main Task Board
+  matterId?: string | null; // the matter this task belongs to, if any
   columnId?: string | null; // a custom column on the board, if any
   position?: number | null; // manual order inside its column (null = order added)
   checklist?: import("@/lib/checklist").TaskChecklist | null; // ticked-off items from applied templates

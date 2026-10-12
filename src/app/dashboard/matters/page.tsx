@@ -236,6 +236,9 @@ export default function MattersPage() {
                                 <ChevronRight size={13} strokeWidth={1.75} className="text-muted flex-shrink-0" />
                               </>
                             )}
+                            {m.matterNumber && (
+                              <span className="text-[12px] font-semibold tracking-wide bg-chip rounded-md px-1.5 py-0.5 flex-shrink-0">{m.matterNumber}</span>
+                            )}
                             <span className="text-[14.5px] font-semibold truncate">{m.title}</span>
                           </div>
 

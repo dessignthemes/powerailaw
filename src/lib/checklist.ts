@@ -4,7 +4,8 @@
 export type TemplateItem = { id: string; text: string; anchor?: string; days?: number };
 export type TemplateSection = { id: string; title: string; items: TemplateItem[] };
 // example = built-in template every firm gets (read-only; saving makes the firm its own copy).
-export type TaskTemplate = { id: string; name: string; sections: TemplateSection[]; updatedAt?: string; example?: boolean };
+// matterCodes = the matters it's for (e.g. ["REP"]); the matter's Tasks tab suggests it there.
+export type TaskTemplate = { id: string; name: string; sections: TemplateSection[]; matterCodes?: string[]; updatedAt?: string; example?: boolean };
 
 export type ChecklistItem = { id: string; text: string; done: boolean; doneAt?: string | null; anchor?: string; days?: number };
 export type ChecklistSection = { id: string; title: string; items: ChecklistItem[] };
@@ -294,8 +295,8 @@ Not Proceeding
 
 // Built-in examples every firm sees (a firm's own template with the same name takes its place).
 export const EXAMPLE_TEMPLATES: TaskTemplate[] = [
-  { id: "example-re-purchase", name: "Real Estate Purchase Workflow", sections: parseOutline(RE_PURCHASE_NJ), example: true },
-  { id: "example-re-sale", name: "Real Estate Sale Workflow", sections: parseOutline(RE_SALE_NJ), example: true },
+  { id: "example-re-purchase", name: "Real Estate Purchase Workflow", sections: parseOutline(RE_PURCHASE_NJ), matterCodes: ["REP"], example: true },
+  { id: "example-re-sale", name: "Real Estate Sale Workflow", sections: parseOutline(RE_SALE_NJ), matterCodes: ["RES"], example: true },
 ];
 
 export function withExamples(own: TaskTemplate[]): TaskTemplate[] {

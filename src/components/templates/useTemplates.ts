@@ -40,10 +40,9 @@ export function useTemplates() {
     };
   }, []);
 
-  const save = useCallback(async (t: { id?: string; name: string; sections: TemplateSection[] }) => {
-    const d = t.id
-      ? await call(`/api/task-templates/${t.id}`, "PATCH", { name: t.name, sections: t.sections })
-      : await call("/api/task-templates", "POST", { name: t.name, sections: t.sections });
+  const save = useCallback(async (t: { id?: string; name: string; sections: TemplateSection[]; matterCodes?: string[] }) => {
+    const body = { name: t.name, sections: t.sections, matterCodes: t.matterCodes ?? [] };
+    const d = t.id ? await call(`/api/task-templates/${t.id}`, "PATCH", body) : await call("/api/task-templates", "POST", body);
     const saved = d.template as TaskTemplate;
     setTemplates((list) => withExamples([...(list ?? []).filter((x) => x.id !== saved.id && !x.example), saved]));
     return saved;

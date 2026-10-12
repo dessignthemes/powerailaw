@@ -4,6 +4,8 @@ import AssigneeOptions from "@/components/AssigneeOptions";
 import { useCallback, useState, useEffect, useRef } from "react";
 import ChecklistPanel, { ChecklistPicker } from "@/components/templates/ChecklistPanel";
 import type { TaskChecklist } from "@/lib/checklist";
+import Link from "next/link";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import {
   formatMinutes,
   getAutoTimer,
@@ -80,6 +82,8 @@ export default function TaskDetailModal({
   onClose: () => void;
   onUpdate: (task: BoardTask) => void;
 }) {
+  const { matters } = useWorkspaceData();
+  const matter = task.matterId ? matters.find((m) => m.id === task.matterId) ?? null : null;
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [expanded, setExpanded] = useState(false);
@@ -248,6 +252,18 @@ export default function TaskDetailModal({
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
             <span className="bg-card-alt px-2.5 py-1 rounded-full">Task board</span>
             <span>›</span>
+            {matter && (
+              <>
+                <Link
+                  href={`/dashboard/matters/${matter.id}`}
+                  title={`Matter: ${matter.title}`}
+                  className="bg-[#E1E7F4] hover:bg-[#D5DDEE] text-ink px-2.5 py-1 rounded-full font-semibold truncate max-w-[200px] transition-colors"
+                >
+                  {matter.matterNumber ?? matter.title}
+                </Link>
+                <span>›</span>
+              </>
+            )}
             <span className="text-ink font-semibold truncate max-w-[240px]">{title}</span>
           </div>
           <div className="flex items-center gap-3 text-muted">

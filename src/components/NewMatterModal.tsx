@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   X,
   Check,
@@ -20,10 +20,15 @@ import {
 } from "lucide-react";
 import { GenericDropdown } from "@/components/NewTaskModal";
 import { Client, getInitials, getAvatarColor } from "@/components/NewClientModal";
+import { SUGGESTED_CODES, cleanCode, isValidCode, formatMatterNumber } from "@/lib/matters/numbering";
+
+// Matter types shown first when creating a matter.
+const MAIN_TYPES: MatterCategory[] = ["Real Estate", "Litigation", "Estate Planning"];
 
 export type MatterStatus = "Lead" | "Consultation" | "Engaged" | "Active" | "Closed";
 export type MatterCategory =
   | "None"
+  | "Litigation"
   | "Family Law"
   | "Immigration"
   | "Personal Injury"
@@ -49,9 +54,19 @@ export type Matter = {
   hourlyRate: number | null;
   assignedTo: string | null;
   privateNotes: string;
+  // Matter number, e.g. REP-2026-0001. The code is picked by the firm; the
+  // number is given by the database when the matter is saved.
+  matterCode?: string | null;
+  matterNumber?: string | null;
+  matterSeq?: number | null;
   createdAt: string;
   updatedAt: string;
 };
+
+// "REP-2026-0001 · Smith purchase" (or just the title before a number exists).
+export function matterLabel(m: Pick<Matter, "title" | "matterNumber">): string {
+  return m.matterNumber ? `${m.matterNumber} · ${m.title}` : m.title;
+}
 
 export const matterStatusOrder: MatterStatus[] = ["Lead", "Consultation", "Engaged", "Active", "Closed"];
 
@@ -65,6 +80,7 @@ export const matterStatusMeta: Record<MatterStatus, { icon: typeof Circle; color
 
 export const matterCategories: MatterCategory[] = [
   "None",
+  "Litigation",
   "Family Law",
   "Immigration",
   "Personal Injury",
@@ -161,6 +177,25 @@ export default function NewMatterModal({
     matter?.hourlyRate != null ? String(matter.hourlyRate) : null
   );
 
+  const [matterCode, setMatterCode] = useState(matter?.matterCode ?? "");
+  const numbered = !!matter?.matterNumber;
+  // New matters (and older matters without a number) pick a type + abbreviation.
+  const needsNumber = !numbered;
+  const codeOk = isValidCode(matterCode);
+  const [nextNo, setNextNo] = useState<{ next: number; year: number } | null>(null);
+  useEffect(() => {
+    if (!needsNumber) return;
+    let live = true;
+    fetch("/api/matters/next-number")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => live && d && typeof d.next === "number" && setNextNo({ next: d.next, year: d.year }))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [needsNumber]);
+  const canSave = !!title.trim() && (isEdit ? !matterCode || codeOk : !!category && codeOk);
+
   const [statusOpen, setStatusOpen] = useState(false);
   const [clientOpen, setClientOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
@@ -171,7 +206,7 @@ export default function NewMatterModal({
   const selectedClient = clients.find((c) => c.id === clientId) ?? null;
 
   function handleSubmit() {
-    if (!title.trim()) return;
+    if (!canSave) return;
     onSubmit({
       id: matter?.id ?? crypto.randomUUID(),
       title: title.trim(),
@@ -187,6 +222,9 @@ export default function NewMatterModal({
       hourlyRate: hourlyRate ? Number(hourlyRate) : null,
       assignedTo: matter?.assignedTo ?? null,
       privateNotes: matter?.privateNotes ?? "",
+      matterCode: numbered ? matter?.matterCode ?? null : codeOk ? cleanCode(matterCode) : null,
+      matterNumber: matter?.matterNumber ?? null,
+      matterSeq: matter?.matterSeq ?? null,
       createdAt: matter?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -213,6 +251,80 @@ export default function NewMatterModal({
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>
+
+        {needsNumber ? (
+          <div className="px-7 pt-3 flex flex-col gap-4">
+            <div>
+              <div className="text-[12.5px] font-semibold text-muted mb-2">Matter type</div>
+              <div className="flex flex-wrap gap-1.5">
+                {[...MAIN_TYPES, ...matterCategories.filter((c) => c !== "None" && !MAIN_TYPES.includes(c))].map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      setCategory(t);
+                      const first = SUGGESTED_CODES[t]?.[0]?.code;
+                      // Fill in the usual abbreviation unless one was typed for this type already.
+                      if (first && !SUGGESTED_CODES[t].some((x) => x.code === matterCode)) setMatterCode(first);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
+                      category === t ? "bg-btn-hover text-ink font-semibold" : "bg-chip hover:bg-btn"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-[12.5px] font-semibold text-muted mb-2">Abbreviation</div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {(category ? SUGGESTED_CODES[category] ?? [] : []).map((c) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => setMatterCode(c.code)}
+                    className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
+                      matterCode === c.code ? "bg-btn-hover text-ink font-semibold" : "bg-chip hover:bg-btn"
+                    }`}
+                  >
+                    {c.code} <span className={"text-muted"}>· {c.label}</span>
+                  </button>
+                ))}
+                <input
+                  value={matterCode}
+                  onChange={(e) => setMatterCode(cleanCode(e.target.value))}
+                  placeholder="e.g. REP"
+                  aria-label="Abbreviation"
+                  className="w-[110px] bg-white border border-line rounded-full px-3.5 py-1.5 text-[13px] font-semibold tracking-wide outline-none placeholder:text-muted placeholder:font-normal"
+                />
+              </div>
+              <div className="text-[12.5px] text-muted mt-2">
+                {matterCode && !codeOk ? (
+                  <span className="text-[#B4232C]">Use 2–6 letters or numbers, starting with a letter.</span>
+                ) : codeOk ? (
+                  <>
+                    Matter number:{" "}
+                    <span className="font-semibold text-ink">
+                      {nextNo ? formatMatterNumber(cleanCode(matterCode), nextNo.year, nextNo.next) : `${cleanCode(matterCode)}-${new Date().getFullYear()}-…`}
+                    </span>{" "}
+                    (given when you click {isEdit ? "Save" : "Create"})
+                  </>
+                ) : isEdit ? (
+                  "Add an abbreviation to give this matter a number."
+                ) : (
+                  "Pick a matter type, then the abbreviation (REP = purchase, RES = sale)."
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="px-7 pt-3">
+            <span className="inline-flex items-center gap-1.5 bg-card-alt rounded-full px-3 py-1 text-[13px] font-semibold">
+              {matter?.matterNumber}
+            </span>
+          </div>
+        )}
 
         <div className="px-7 pt-4 pb-2">
           <input
@@ -332,6 +444,7 @@ export default function NewMatterModal({
             </div>
           </GenericDropdown>
 
+          {!needsNumber && (
           <GenericDropdown
             open={categoryOpen}
             setOpen={setCategoryOpen}
@@ -358,6 +471,7 @@ export default function NewMatterModal({
               </button>
             ))}
           </GenericDropdown>
+          )}
 
           <InlineField
             icon={<Handshake size={13} strokeWidth={1.75} />}
@@ -423,7 +537,7 @@ export default function NewMatterModal({
         <div className="flex items-center justify-end px-7 py-5 border-t border-line">
           <button
             onClick={handleSubmit}
-            disabled={!title.trim()}
+            disabled={!canSave}
             className="bg-btn text-ink px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-btn-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isEdit ? "Save" : "Create"}

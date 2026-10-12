@@ -16,6 +16,7 @@ type TaskRow = {
   due_date: string | null;
   comments: TaskComment[] | null;
   board_id?: string | null;
+  matter_id?: string | null;
   created_by?: string | null;
   updated_by?: string | null;
   column_id?: string | null;
@@ -36,6 +37,7 @@ function toTask(row: TaskRow): BoardTask {
     dueDate: row.due_date,
     comments: Array.isArray(row.comments) ? row.comments : [],
     boardId: row.board_id ?? null,
+    matterId: row.matter_id ?? null,
     createdBy: row.created_by ?? null,
     columnId: row.column_id ?? null,
     position: typeof row.position === "number" ? row.position : null,
@@ -62,6 +64,19 @@ function toColumns(task: BoardTask) {
   };
 }
 
+// A matter id from the browser, kept only when that matter is in this workspace.
+async function matterInOrg(orgId: string, matterId: string | null | undefined): Promise<string | null> {
+  if (!matterId) return null;
+  const { data } = await createAdminClient().from("matters").select("id").eq("id", matterId).eq("org_id", orgId).maybeSingle();
+  return data ? (data.id as string) : null;
+}
+
+// Adds matter_id only when the browser sent one (undefined = leave as is).
+async function withMatter<T extends Record<string, unknown>>(orgId: string, task: BoardTask, fields: T): Promise<T> {
+  if (task.matterId === undefined) return fields;
+  return { ...fields, matter_id: await matterInOrg(orgId, task.matterId) };
+}
+
 // Adds column_id only when the task names a custom column in this workspace.
 async function withColumn<T extends Record<string, unknown>>(orgId: string, task: BoardTask, fields: T): Promise<T> {
   if (task.columnId === undefined) return fields;
@@ -86,15 +101,16 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
   const supabase = createAdminClient();
   const orgId = await getCurrentOrgId();
 
+  const row = await withMatter(orgId, task, { id: task.id, org_id: orgId, created_by: userId, ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId) });
   const { data, error } = await supabase
     .from("tasks")
-    .insert(await withColumn(orgId, task, { id: task.id, org_id: orgId, created_by: userId, ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId) }))
+    .insert(await withColumn(orgId, task, row))
     .select("*")
     .single()
     .then(async (r) =>
       // Before 0010 is run there's no column_id; save without it.
       r.error && /column_id/.test(r.error.message ?? "")
-        ? supabase.from("tasks").insert({ id: task.id, org_id: orgId, created_by: userId, ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId) }).select("*").single()
+        ? supabase.from("tasks").insert(row).select("*").single()
         : r
     );
 
@@ -106,7 +122,11 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   const supabase = createAdminClient();
   const orgId = await getCurrentOrgId();
 
-  const base = await withColumn(orgId, task, { ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId), updated_at: new Date().toISOString() });
+  const base = await withColumn(
+    orgId,
+    task,
+    await withMatter(orgId, task, { ...toColumns(task), board_id: await boardInOrg(orgId, task.boardId), updated_at: new Date().toISOString() })
+  );
   const run = (fields: Record<string, unknown>) =>
     supabase.from("tasks").update(fields).eq("id", id).eq("org_id", orgId).select("*").single();
 

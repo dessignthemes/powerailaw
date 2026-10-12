@@ -37,6 +37,8 @@ import { GenericDropdown } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import DocumentsLibrary from "@/components/documents/DocumentsLibrary";
 import AssigneeOptions from "@/components/AssigneeOptions";
+import MatterTasks from "@/components/matters/MatterTasks";
+import { statusMeta as taskStatusMeta } from "@/components/NewTaskModal";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutGrid },
@@ -54,7 +56,7 @@ type TabKey = (typeof tabs)[number]["key"];
 export default function MatterDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { matters, mattersLoaded, clients, updateMatter, deleteMatters } = useWorkspaceData();
+  const { matters, mattersLoaded, clients, tasks, updateMatter, deleteMatters } = useWorkspaceData();
 
   const matter = matters.find((m) => m.id === params.id) ?? null;
 
@@ -87,6 +89,10 @@ export default function MatterDetailPage() {
 
   const client = matter.clientId ? clients.find((c) => c.id === matter.clientId) ?? null : null;
   const StatusIcon = matterStatusMeta[matter.status].icon;
+  // Open tasks on this matter, soonest due first (for the Overview card).
+  const openTasks = tasks
+    .filter((t) => t.matterId === matter.id && t.status !== "done")
+    .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
 
   function patch(fields: Partial<Matter>) {
     if (!matter) return;
@@ -104,7 +110,12 @@ export default function MatterDetailPage() {
       </div>
 
       <div className="flex items-start justify-between mb-6">
-        <h1 className="text-[30px] font-semibold">{matter.title}</h1>
+        <div>
+          {matter.matterNumber && (
+            <div className="inline-flex items-center bg-chip rounded-full px-2.5 py-0.5 text-[12.5px] font-semibold tracking-wide mb-1.5">{matter.matterNumber}</div>
+          )}
+          <h1 className="text-[30px] font-semibold">{matter.title}</h1>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setEditModalOpen(true)}
@@ -313,6 +324,8 @@ export default function MatterDetailPage() {
 
       {activeTab === "documents" ? (
         <DocumentsLibrary matterId={matter.id} />
+      ) : activeTab === "tasks" ? (
+        <MatterTasks matter={matter} clientName={client?.name ?? null} />
       ) : activeTab !== "overview" ? (
         <div className="border border-line rounded-2xl min-h-[240px] flex items-center justify-center text-[14px] text-muted">
           {tabs.find((t) => t.key === activeTab)?.label} coming soon.
@@ -424,12 +437,34 @@ export default function MatterDetailPage() {
             <div className="rounded-2xl overflow-hidden border border-line">
               <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
                 <ClipboardList size={14} strokeWidth={1.75} className="text-muted" />
-                <span className="text-[14px] font-semibold">Upcoming tasks</span>
+                <span className="text-[14px] font-semibold">Open tasks</span>
+                <button onClick={() => setActiveTab("tasks")} className="ml-auto text-[12.5px] font-medium text-muted hover:text-ink">
+                  {openTasks.length ? "View all" : "Add from template"}
+                </button>
               </div>
-              <div className="p-6 flex flex-col items-center justify-center text-center gap-2">
-                <ListChecks size={20} strokeWidth={1.5} className="text-muted" />
-                <div className="text-[13px] text-muted">No tasks due in the next 3 days.</div>
-              </div>
+              {openTasks.length === 0 ? (
+                <div className="p-6 flex flex-col items-center justify-center text-center gap-2">
+                  <ListChecks size={20} strokeWidth={1.5} className="text-muted" />
+                  <div className="text-[13px] text-muted">No open tasks on this matter.</div>
+                </div>
+              ) : (
+                <div className="p-2 flex flex-col">
+                  {openTasks.slice(0, 5).map((t) => {
+                    const S = taskStatusMeta[t.status];
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setActiveTab("tasks")}
+                        className="flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-card-alt text-left"
+                      >
+                        <S.icon size={14} strokeWidth={2} className={S.color} />
+                        <span className="text-[13px] font-medium truncate flex-1">{t.title}</span>
+                        <span className="text-[12px] text-muted flex-shrink-0">{t.dueDate ?? ""}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="rounded-2xl overflow-hidden border border-line">

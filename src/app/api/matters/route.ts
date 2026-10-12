@@ -1,6 +1,6 @@
 import { NoWorkspaceError } from "@/lib/data/org";
 import { NextResponse } from "next/server";
-import { listMatters, createMatterRow, deleteMatterRows } from "@/lib/data/matters";
+import { listMatters, createMatterRow, deleteMatterRows, MatterInputError } from "@/lib/data/matters";
 import type { Matter } from "@/components/NewMatterModal";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const created = await createMatterRow(matter);
     return NextResponse.json({ matter: created }, { status: 201 });
   } catch (error) {
-    if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
+    if (error instanceof NoWorkspaceError || error instanceof MatterInputError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("POST /api/matters failed:", error);
     return NextResponse.json({ error: "Failed to create matter" }, { status: 500 });
   }

@@ -9,7 +9,7 @@ export async function PATCH(request: Request, { params }: P) {
   try {
     const { id } = await params;
     if (!validId(id)) return NextResponse.json({ error: "Template not found." }, { status: 404 });
-    const body = (await request.json().catch(() => ({}))) as { name?: unknown; sections?: unknown };
+    const body = (await request.json().catch(() => ({}))) as { name?: unknown; sections?: unknown; matterCodes?: unknown };
     return NextResponse.json({ template: await updateTemplate(id, body) });
   } catch (e) {
     return templateError("PATCH /api/task-templates/[id]", e);
