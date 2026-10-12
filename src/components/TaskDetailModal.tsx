@@ -3,7 +3,7 @@
 import AssigneeOptions from "@/components/AssigneeOptions";
 import { useCallback, useState, useEffect, useRef } from "react";
 import ChecklistPanel, { ChecklistPicker } from "@/components/templates/ChecklistPanel";
-import type { TaskChecklist } from "@/lib/checklist";
+import { autoStatus, type TaskChecklist } from "@/lib/checklist";
 import Link from "next/link";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import {
@@ -100,9 +100,16 @@ export default function TaskDetailModal({
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<TaskComment[]>(task.comments ?? []);
   const [checklist, setChecklist] = useState<TaskChecklist | null>(task.checklist ?? null);
+  // Ticking steps can move the task to another column (see autoStatus); moving it by hand always works too.
+  const [autoNote, setAutoNote] = useState<string | null>(null);
   const changeChecklist = (next: TaskChecklist | null) => {
+    const moved = autoStatus(status, checklist, next);
     setChecklist(next);
-    commit({ checklist: next });
+    if (moved) {
+      setStatus(moved);
+      setAutoNote(`Moved to ${statusMeta[moved].label} automatically.`);
+      commit({ checklist: next, status: moved });
+    } else commit({ checklist: next });
   };
   const [taskEntries, setTaskEntries] = useState<{ id: string; minutes: number; date: string; description: string; source: string }[] | null>(null);
 
@@ -463,6 +470,14 @@ export default function TaskDetailModal({
             </GenericDropdown>
           </div>
 
+          {autoNote && (
+            <div className="mb-3 flex items-center gap-2 rounded-xl bg-[#E8F6EE] px-3.5 py-2 text-[13px]">
+              {autoNote}
+              <button onClick={() => setAutoNote(null)} aria-label="Dismiss" className="ml-auto text-muted hover:text-ink">
+                <X size={13} />
+              </button>
+            </div>
+          )}
           {checklist && <ChecklistPanel checklist={checklist} onChange={changeChecklist} />}
 
           <div className="flex items-center gap-6 border-b border-line mb-5">

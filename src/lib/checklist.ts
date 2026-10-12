@@ -1,17 +1,21 @@
 // Checklist templates and task checklists (shared by browser and server).
 
 // anchor = the critical date the step hangs off (e.g. "Closing date"); days = +/- days from it.
-export type TemplateItem = { id: string; text: string; anchor?: string; days?: number };
+// moveTo = when this step is ticked, the task moves to that column (e.g. "Review Letter Sent Out" → Waiting).
+export type MoveTo = "inprogress" | "waiting" | "done";
+export const MOVE_LABEL: Record<MoveTo, string> = { inprogress: "In progress", waiting: "Waiting", done: "Done" };
+export type TemplateItem = { id: string; text: string; anchor?: string; days?: number; moveTo?: MoveTo };
 export type TemplateSection = { id: string; title: string; items: TemplateItem[] };
 // example = built-in template every firm gets (read-only; saving makes the firm its own copy).
 // matterCodes = the matters it's for (e.g. ["REP"]); the matter's Tasks tab suggests it there.
 export type TaskTemplate = { id: string; name: string; sections: TemplateSection[]; matterCodes?: string[]; updatedAt?: string; example?: boolean };
 
 // na = not applicable to this deal (e.g. mortgage steps on a cash purchase): not counted, no due date.
-export type ChecklistItem = { id: string; text: string; done: boolean; doneAt?: string | null; anchor?: string; days?: number; na?: boolean };
+export type ChecklistItem = { id: string; text: string; done: boolean; doneAt?: string | null; anchor?: string; days?: number; na?: boolean; moveTo?: MoveTo };
 export type ChecklistSection = { id: string; title: string; items: ChecklistItem[] };
 // dates = the task's critical dates ("Closing date" -> "2026-11-20"), used to work out each step's due date.
-export type TaskChecklist = { templates: string[]; sections: ChecklistSection[]; dates?: Record<string, string> };
+// auto = false turns automatic moving off for this task (on by default).
+export type TaskChecklist = { templates: string[]; sections: ChecklistSection[]; dates?: Record<string, string>; auto?: boolean };
 
 export const MAX_SECTIONS = 30;
 export const MAX_ITEMS = 60; // per section
@@ -27,6 +31,12 @@ const cleanDays = (v: unknown) => {
   return Number.isFinite(n) ? Math.max(-730, Math.min(730, n)) : 0;
 };
 // Optional date fields on an item: only kept when a critical date is named.
+const MOVES: MoveTo[] = ["inprogress", "waiting", "done"];
+const moveOf = (v: unknown) => (MOVES.includes(v as MoveTo) ? { moveTo: v as MoveTo } : {});
+const moveFromText = (v: string | undefined): MoveTo | undefined => {
+  const t = (v ?? "").toLowerCase().replace(/^move\s*:?\s*(to\s*)?/, "").replace(/[^a-z]/g, "");
+  return t === "inprogress" ? "inprogress" : t === "waiting" ? "waiting" : t === "done" ? "done" : undefined;
+};
 const timing = (it: { anchor?: unknown; days?: unknown }) => {
   const anchor = cleanAnchor(it.anchor);
   return anchor ? { anchor, days: cleanDays(it.days) } : {};
@@ -44,8 +54,8 @@ export function cleanSections(input: unknown): TemplateSection[] {
       items: items
         .slice(0, MAX_ITEMS)
         .map((i) => {
-          const it = (i ?? {}) as { id?: unknown; text?: unknown; anchor?: unknown; days?: unknown };
-          return { id: clean(it.id, 64) || newId(), text: clean(it.text), ...timing(it) };
+          const it = (i ?? {}) as { id?: unknown; text?: unknown; anchor?: unknown; days?: unknown; moveTo?: unknown };
+          return { id: clean(it.id, 64) || newId(), text: clean(it.text), ...timing(it), ...moveOf(it.moveTo) };
         })
         .filter((i) => i.text),
     };
@@ -63,7 +73,7 @@ export function cleanChecklist(input: unknown): TaskChecklist | null {
       id: clean(sec.id, 64) || newId(),
       title: clean(sec.title, 120),
       items: items.slice(0, MAX_ITEMS * 2).map((i) => {
-        const it = (i ?? {}) as { id?: unknown; text?: unknown; done?: unknown; doneAt?: unknown; anchor?: unknown; days?: unknown; na?: unknown };
+        const it = (i ?? {}) as { id?: unknown; text?: unknown; done?: unknown; doneAt?: unknown; anchor?: unknown; days?: unknown; na?: unknown; moveTo?: unknown };
         const done = it.done === true;
         return {
           id: clean(it.id, 64) || newId(),
@@ -72,6 +82,7 @@ export function cleanChecklist(input: unknown): TaskChecklist | null {
           doneAt: done ? clean(it.doneAt, 40) || null : null,
           ...timing(it),
           ...(it.na === true ? { na: true } : {}),
+          ...moveOf(it.moveTo),
         };
       }).filter((i) => i.text),
     };
@@ -85,7 +96,8 @@ export function cleanChecklist(input: unknown): TaskChecklist | null {
       if (key && typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)) dates[key] = v;
     }
   }
-  return { templates, sections, ...(Object.keys(dates).length ? { dates } : {}) };
+  const auto = (c as { auto?: unknown }).auto === false ? { auto: false } : {};
+  return { templates, sections, ...(Object.keys(dates).length ? { dates } : {}), ...auto };
 }
 
 // Adds a template's sections to a task's checklist (fresh, unticked items).
@@ -93,12 +105,20 @@ export function applyTemplate(current: TaskChecklist | null | undefined, t: Task
   const added: ChecklistSection[] = t.sections.map((s) => ({
     id: newId(),
     title: s.title,
-    items: s.items.map((i) => ({ id: newId(), text: i.text, done: false, doneAt: null, ...(i.anchor ? { anchor: i.anchor, days: i.days ?? 0 } : {}) })),
+    items: s.items.map((i) => ({
+      id: newId(),
+      text: i.text,
+      done: false,
+      doneAt: null,
+      ...(i.anchor ? { anchor: i.anchor, days: i.days ?? 0 } : {}),
+      ...(i.moveTo ? { moveTo: i.moveTo } : {}),
+    })),
   }));
   return {
     templates: [...(current?.templates ?? []), t.name],
     sections: [...(current?.sections ?? []), ...added],
     ...(current?.dates ? { dates: current.dates } : {}),
+    ...(current?.auto === false ? { auto: false } : {}),
   };
 }
 
@@ -122,9 +142,18 @@ export function parseOutline(text: string): TemplateSection[] {
     const item = /^([*\-•▪◦]|\[ ?\]|\d+[.)])\s+(.*)$/.exec(line);
     if (item) {
       if (!sections.length) sections.push({ id: newId(), title: "", items: [] });
-      const [text, anchor, days] = item[2].split("|").map((x) => x.trim());
+      const parts = item[2].split("|").map((x) => x.trim());
+      const moveIdx = parts.findIndex((x, i) => i > 0 && /^move\b/i.test(x));
+      const moveTo = moveIdx > 0 ? moveFromText(parts.splice(moveIdx, 1)[0]) : undefined;
+      const [text, anchor, days] = parts;
       const t = clean(text);
-      if (t) sections[sections.length - 1].items.push({ id: newId(), text: t, ...timing({ anchor, days: days?.replace(/[\u2212\u2013\u2014]/g, "-").replace(/[^\d-]/g, "") }) });
+      if (t)
+        sections[sections.length - 1].items.push({
+          id: newId(),
+          text: t,
+          ...timing({ anchor, days: days?.replace(/[\u2212\u2013\u2014]/g, "-").replace(/[^\d-]/g, "") }),
+          ...(moveTo ? { moveTo } : {}),
+        });
     } else if (!/^checklist$/i.test(line)) {
       sections.push({ id: newId(), title: clean(line, 120), items: [] });
     }
@@ -134,7 +163,14 @@ export function parseOutline(text: string): TemplateSection[] {
 
 export function toOutline(sections: TemplateSection[]): string {
   return sections
-    .map((s) => [s.title, ...s.items.map((i) => (i.anchor ? `* ${i.text} | ${i.anchor} | ${fmtDays(i.days ?? 0)}` : `* ${i.text}`))].join("\n"))
+    .map((s) =>
+      [
+        s.title,
+        ...s.items.map(
+          (i) => (i.anchor ? `* ${i.text} | ${i.anchor} | ${fmtDays(i.days ?? 0)}` : `* ${i.text}`) + (i.moveTo ? ` | move: ${MOVE_LABEL[i.moveTo]}` : "")
+        ),
+      ].join("\n")
+    )
     .join("\n\n");
 }
 
@@ -247,10 +283,10 @@ Closing
 Post Closing
 * Owners Title Policy | Closing date | +90
 * Recorded Deed | Closing date | +90
-* File Completed | File complete date | 0
+* File Completed | File complete date | 0 | move: Done
 
 Not Proceeding
-* Not Proceeding | Not proceeding date | 0`;
+* Not Proceeding | Not proceeding date | 0 | move: Done`;
 
 export const RE_SALE_NJ = `Engagement
 * Intake Form Completed | Engagement date | 0
@@ -300,10 +336,10 @@ Closing
 * Escrow Held? | Closing date | 0
 
 Post Closing
-* File Completed | File complete date | 0
+* File Completed | File complete date | 0 | move: Done
 
 Not Proceeding
-* Not Proceeding | Not proceeding date | 0`;
+* Not Proceeding | Not proceeding date | 0 | move: Done`;
 
 // Built-in examples every firm sees (a firm's own template with the same name takes its place).
 export const EXAMPLE_TEMPLATES: TaskTemplate[] = [
@@ -356,3 +392,42 @@ export function setMortgageNa(c: TaskChecklist, na: boolean): TaskChecklist {
 
 export const mortgageNa = (c: TaskChecklist | null | undefined) =>
   !!c?.sections.some((s) => s.items.some((i) => isMortgageItem(s.title, i) && i.na));
+
+// ── Moving tasks automatically ──────────────────────────────────────────────
+// After steps are ticked or unticked, the column the task should be in:
+//  • a ticked step with "move to" moves it there (the most recently ticked one wins);
+//  • every step done → Done;
+//  • first step ticked on a To do task → In progress;
+//  • a step unticked on a Done task → In progress.
+// Returns null when the task stays where it is (moving by hand is always allowed).
+export function autoStatus(
+  current: "todo" | "inprogress" | "waiting" | "done",
+  before: TaskChecklist | null | undefined,
+  after: TaskChecklist | null | undefined
+): "todo" | "inprogress" | "waiting" | "done" | null {
+  if (!after || after.auto === false) return null;
+  const was = new Map<string, boolean>();
+  for (const s of before?.sections ?? []) for (const i of s.items) was.set(i.id, i.done);
+  const ticked: ChecklistItem[] = [];
+  let unticked = false;
+  for (const s of after.sections) for (const i of s.items) {
+    const prev = was.get(i.id) ?? false;
+    if (i.done && !prev) ticked.push(i);
+    if (!i.done && prev) unticked = true;
+  }
+  const p = progress(after);
+  const pb = progress(before);
+  const nowComplete = p.total > 0 && p.done === p.total;
+  const wasComplete = pb.total > 0 && pb.done === pb.total;
+  // Marking the last open steps N/A completes the checklist too.
+  if (!ticked.length && !unticked) return nowComplete && !wasComplete && current !== "done" ? "done" : null;
+  let target: "todo" | "inprogress" | "waiting" | "done" | null = null;
+  if (nowComplete) target = "done";
+  else {
+    const rule = [...ticked].reverse().find((i) => i.moveTo)?.moveTo;
+    if (rule) target = rule;
+    else if (ticked.length && current === "todo") target = "inprogress";
+    else if (unticked && current === "done") target = "inprogress";
+  }
+  return target && target !== current ? target : null;
+}

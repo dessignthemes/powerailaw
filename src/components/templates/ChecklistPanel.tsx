@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, ChevronRight, ListChecks, Plus, Trash2, X } from "lucide-react";
 import { useTemplates } from "./useTemplates";
-import { applyTemplate, progress, anchorsOf, dueState, fmtDays, alerts, hasMortgageSteps, setMortgageNa, mortgageNa, type TaskChecklist, type DueState } from "@/lib/checklist";
+import { applyTemplate, progress, anchorsOf, dueState, fmtDays, alerts, hasMortgageSteps, setMortgageNa, mortgageNa, MOVE_LABEL, type TaskChecklist, type DueState } from "@/lib/checklist";
 
 // "Templates" button for the task's property row: pick a template to add.
 export function ChecklistPicker({
@@ -124,7 +124,19 @@ export default function ChecklistPanel({
         <ListChecks size={15} strokeWidth={1.75} className="text-muted" />
         <div className="text-[14px] font-semibold">Checklist</div>
         {checklist.templates.length > 0 && <div className="text-[12.5px] text-muted truncate">{checklist.templates.join(" + ")}</div>}
-        <div className="ml-auto text-[12.5px] text-muted flex-shrink-0">
+        <label
+          className="ml-auto flex items-center gap-1.5 text-[12.5px] text-muted flex-shrink-0 cursor-pointer"
+          title="Ticking steps moves the task: first step → In progress, steps marked 'move to' → their column, all done → Done. You can still move it by hand."
+        >
+          <input
+            type="checkbox"
+            checked={checklist.auto !== false}
+            onChange={(e) => onChange({ ...checklist, auto: e.target.checked ? undefined : false })}
+            className="accent-[#1b191a]"
+          />
+          Move automatically
+        </label>
+        <div className="text-[12.5px] text-muted flex-shrink-0">
           <span className="text-ink font-medium">{p.done}</span> of {p.total} done
         </div>
       </div>
@@ -214,6 +226,11 @@ export default function ChecklistPanel({
                         {i.done && <Check size={12} strokeWidth={3} />}
                       </button>
                       <span className={`text-[13.5px] flex-1 ${i.done || i.na ? "line-through text-muted" : ""}`}>{i.text}</span>
+                      {i.moveTo && !i.done && !i.na && checklist.auto !== false && (
+                        <span title="Ticking this step moves the task" className="text-[11px] text-muted bg-chip rounded-md px-1.5 py-0.5 flex-shrink-0">
+                          → {MOVE_LABEL[i.moveTo]}
+                        </span>
+                      )}
                       <button
                         onClick={() => update(s.id, (items) => items.map((x) => (x.id === i.id ? (x.na ? { ...x, na: undefined } : { ...x, na: true }) : x)))}
                         title={i.na ? "Not applicable to this deal: click to include it again" : "Mark as not applicable to this deal"}

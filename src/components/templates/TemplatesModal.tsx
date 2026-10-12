@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Plus, Trash2, ListChecks, Loader2, ClipboardPaste } from "lucide-react";
 import { useTemplates } from "./useTemplates";
-import { parseOutline, toOutline, COMMON_ANCHORS, type TemplateSection } from "@/lib/checklist";
+import { parseOutline, toOutline, COMMON_ANCHORS, MOVE_LABEL, type MoveTo, type TemplateSection } from "@/lib/checklist";
 import { parseCodes } from "@/lib/matters/numbering";
 
 // codes = matter abbreviations it's for, as typed ("REP, RES").
@@ -182,7 +182,8 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                   <div className="mb-4">
                     <div className="text-[12.5px] text-muted mb-2">
                       One section name per line, with its steps underneath starting with <b>*</b> or <b>-</b>. Leave a blank line between sections.
-                      To give a step a due date, add the critical date and days after a bar, e.g. <b>* Title Binder Received | Closing date | -14</b>
+                      To give a step a due date, add the critical date and days after a bar, e.g. <b>* Title Binder Received | Closing date | -14</b>.
+                      To move the task when a step is ticked, add <b>| move: Waiting</b> (or In progress, Done).
                     </div>
                     <textarea
                       value={pasteText}
@@ -265,6 +266,24 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                                 title="Days after (+) or before (−) the critical date"
                                 className="w-[64px] bg-white/70 focus:bg-white rounded-lg px-2 py-1.5 text-[12.5px] outline-none text-right disabled:opacity-40"
                               />
+                              <select
+                                value={i.moveTo ?? ""}
+                                onChange={(e) =>
+                                  setSection(s.id, {
+                                    items: s.items.map((x) => (x.id === i.id ? { ...x, moveTo: (e.target.value || undefined) as MoveTo | undefined } : x)),
+                                  })
+                                }
+                                title="When this step is ticked, move the task to this column"
+                                aria-label="Then move task to"
+                                className={`w-[118px] bg-white/70 focus:bg-white rounded-lg px-1.5 py-1.5 text-[12.5px] outline-none ${i.moveTo ? "text-ink" : "text-muted"}`}
+                              >
+                                <option value="">Then move to…</option>
+                                {(Object.keys(MOVE_LABEL) as MoveTo[]).map((m) => (
+                                  <option key={m} value={m}>
+                                    → {MOVE_LABEL[m]}
+                                  </option>
+                                ))}
+                              </select>
                               <button
                                 onClick={() => setSection(s.id, { items: s.items.filter((x) => x.id !== i.id) })}
                                 aria-label="Remove step"
