@@ -75,7 +75,8 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
         <div className={wide ? "p-4 grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-1" : "py-1"}>
           {filled === 0 && (
             <div className={`${wide ? "lg:col-span-2" : ""} px-4 py-2 text-[12.5px] text-muted`}>
-              Upload the contract and attorney review letters, then click <b>Fill from documents</b>, or type the details in.
+              {layoutFor(matter).side ? "Upload the contract and attorney review letters" : "Upload this matter's documents"} (Documents tab), then click{" "}
+              <b>Fill from documents</b>, or type the details in.
             </div>
           )}
           {layout.map((sec) => {

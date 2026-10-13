@@ -40,7 +40,8 @@ const db = () => createAdminClient();
 const str = (v: unknown, max = 400) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
 export class KeyDatesError extends Error {
-  constructor(public status: 400 | 404 | 429 | 503, message: string) {
+  // code lets the page offer the right next step (e.g. "no_documents" → Go to Documents).
+  constructor(public status: 400 | 404 | 429 | 503, message: string, public code?: string) {
     super(message);
   }
 }
@@ -505,7 +506,15 @@ export async function refreshKeyDates(ctx: AiCtx, matterId: string, opts: { drop
   const m = await loadMatter(ctx, matterId);
   const previous = stateOf(m);
   const { docs, fingerprint } = await inputDocuments(ctx, matterId, previous);
-  if (!docs.length) throw new KeyDatesError(400, "Upload the contract and attorney review letters to this matter first.");
+  if (!docs.length) {
+    throw new KeyDatesError(
+      400,
+      isRealEstate({ category: m.category, matterCode: m.matter_code })
+        ? "Upload the contract and attorney review letters to this matter first."
+        : "Upload this matter's documents first.",
+      "no_documents"
+    );
+  }
   await saveState(ctx, matterId, { ...previous, runningSince: new Date().toISOString() });
   try {
     const { side } = layoutFor({ matterCode: m.matter_code, category: m.category });

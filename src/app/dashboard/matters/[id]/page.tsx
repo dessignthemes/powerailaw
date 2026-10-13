@@ -74,6 +74,8 @@ export default function MatterDetailPage() {
   const [assignedOpen, setAssignedOpen] = useState(false);
   // Key dates stay up to date on every tab (documents uploaded on the Documents tab are read).
   const keyDates = useKeyDates(matter);
+  // "Go to Documents" from Key dates: open the Documents tab with the Add documents window.
+  const [uploadNow, setUploadNow] = useState(false);
   // Unread client replies in the secure portal (cleared when the Emails tab is opened).
   const [unreadReplies, setUnreadReplies] = useState(0);
   const matterIdForCount = matter?.id;
@@ -327,6 +329,7 @@ export default function MatterDetailPage() {
               key={t.key}
               onClick={() => {
                 setActiveTab(t.key);
+                setUploadNow(false); // only "Go to Documents" opens the upload window
                 if (t.key === "emails") setUnreadReplies(0);
               }}
               className={`flex items-center gap-1.5 px-3.5 py-3 text-[13.5px] font-medium border-b-2 transition-colors whitespace-nowrap ${
@@ -346,7 +349,7 @@ export default function MatterDetailPage() {
       </div>
 
       {activeTab === "documents" ? (
-        <DocumentsLibrary matterId={matter.id} />
+        <DocumentsLibrary key={uploadNow ? "upload" : "list"} matterId={matter.id} openAdd={uploadNow} />
       ) : activeTab === "parties" ? (
         <MatterDetailsPanel matter={matter} keyDates={keyDates} wide />
       ) : activeTab === "emails" ? (
@@ -365,7 +368,13 @@ export default function MatterDetailPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 flex flex-col gap-5">
-            <KeyDatesCard api={keyDates} onOpenDocuments={() => setActiveTab("documents")} />
+            <KeyDatesCard
+              api={keyDates}
+              onOpenDocuments={(opts) => {
+                setUploadNow(!!opts?.upload);
+                setActiveTab("documents");
+              }}
+            />
             <div className="rounded-2xl overflow-hidden border border-line">
               <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
                 <BookOpen size={14} strokeWidth={1.75} className="text-muted" />

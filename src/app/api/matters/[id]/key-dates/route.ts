@@ -17,7 +17,8 @@ type P = { params: Promise<{ id: string }> };
 const validId = (id: string) => /^[0-9a-f-]{36}$/i.test(id);
 
 function fail(where: string, error: unknown) {
-  if (error instanceof KeyDatesError || error instanceof AccessError || error instanceof NoWorkspaceError) {
+  if (error instanceof KeyDatesError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status });
+  if (error instanceof AccessError || error instanceof NoWorkspaceError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
   console.error(`${where} failed:`, error);

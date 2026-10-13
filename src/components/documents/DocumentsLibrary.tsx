@@ -72,7 +72,8 @@ const beigeBtn =
 const blackBtn =
   "bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-60";
 
-export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId?: string }) {
+// openAdd: open the Add documents window right away (e.g. from "Go to Documents").
+export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = false }: { matterId?: string; openAdd?: boolean }) {
   const router = useRouter();
   const { matters, mattersLoaded, clients } = useWorkspaceData();
   // E-signature requests for this workspace, grouped by document.
@@ -126,7 +127,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
   const [notice, setNotice] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(openAdd);
   const [busy, setBusy] = useState<string | null>(null); // doc id with an action running
   const [converting, setConverting] = useState<{ doc: Doc; version: DocVersion } | null>(null);
   const versionInput = useRef<HTMLInputElement>(null);

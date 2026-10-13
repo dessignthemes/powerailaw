@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CalendarClock, Loader2, RefreshCw, RotateCcw, FileText, ChevronDown, ChevronRight, Info, PenLine, Settings2, ArrowUp, ArrowDown, Trash2, Plus } from "lucide-react";
+import { CalendarClock, Loader2, RefreshCw, RotateCcw, FileText, ChevronDown, ChevronRight, Info, PenLine, Settings2, ArrowUp, ArrowDown, Trash2, Plus, Upload } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { DOCS_CHANGED_EVENT } from "@/components/documents/DocumentsLibrary";
 import {
@@ -26,7 +26,9 @@ async function call(url: string, init?: RequestInit): Promise<Result> {
     if (!d?.error && (res.status === 504 || res.status === 502)) {
       throw new Error("Reading the documents took too long. Click Read documents again: documents already read are kept, so the next try is faster.");
     }
-    throw new Error(d?.error ?? "Something went wrong. Please try again.");
+    const err = new Error(d?.error ?? "Something went wrong. Please try again.") as Error & { code?: string };
+    err.code = d?.code;
+    throw err;
   }
   return d as Result;
 }
@@ -37,7 +39,18 @@ export function useKeyDates(matter: Matter | null) {
   const { refreshAll } = useWorkspaceData();
   const [data, setData] = useState<Result | null>(null);
   const [reading, setReading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setErrorText] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  // Message plus its code (e.g. "no_documents"), from an Error or plain text.
+  const setError = useCallback((e: string | (Error & { code?: string }) | null) => {
+    if (e === null || typeof e === "string") {
+      setErrorText(e);
+      setErrorCode(null);
+    } else {
+      setErrorText(e.message);
+      setErrorCode(e.code ?? null);
+    }
+  }, []);
   const busy = useRef(false);
   const auto = !!matter && isRealEstate(matter);
   const id = matter?.id ?? null;
@@ -51,12 +64,12 @@ export function useKeyDates(matter: Matter | null) {
       setData(await call(`/api/matters/${id}/key-dates`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "refresh" }) }));
       refreshAll(); // task checklists and due dates changed
     } catch (e) {
-      setError((e as Error).message);
+      setError(e as Error);
     } finally {
       busy.current = false;
       setReading(false);
     }
-  }, [id, refreshAll]);
+  }, [id, refreshAll, setError]);
 
   // Saved dates; if the documents changed, a real estate matter's documents are read again.
   const handle = useCallback(
@@ -67,7 +80,7 @@ export function useKeyDates(matter: Matter | null) {
       const running = r.state.runningSince && Date.now() - Date.parse(r.state.runningSince) < 150_000;
       if (r.stale && auto && !running) void refresh();
     },
-    [auto, refresh, refreshAll]
+    [auto, refresh, refreshAll, setError]
   );
 
   useEffect(() => {
@@ -76,7 +89,7 @@ export function useKeyDates(matter: Matter | null) {
     const load = () =>
       call(`/api/matters/${id}/key-dates`)
         .then((r) => live && handle(r))
-        .catch((e: Error) => live && setError(e.message));
+        .catch((e: Error) => live && setError(e));
     load();
     const onDocs = (e: Event) => {
       if ((e as CustomEvent<{ matterId: string }>).detail?.matterId === id) load();
@@ -86,7 +99,7 @@ export function useKeyDates(matter: Matter | null) {
       live = false;
       window.removeEventListener(DOCS_CHANGED_EVENT, onDocs);
     };
-  }, [id, handle]);
+  }, [id, handle, setError]);
 
   const save = useCallback(
     async (changes: Record<string, string | null>) => { // "na" = not applicable (mortgage)
@@ -96,10 +109,10 @@ export function useKeyDates(matter: Matter | null) {
         setData(await call(`/api/matters/${id}/key-dates`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save", dates: changes }) }));
         refreshAll();
       } catch (e) {
-        setError((e as Error).message);
+        setError(e as Error);
       }
     },
-    [id, refreshAll]
+    [id, refreshAll, setError]
   );
 
   const reset = useCallback(async () => {
@@ -109,9 +122,9 @@ export function useKeyDates(matter: Matter | null) {
       setData(await call(`/api/matters/${id}/key-dates`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "reset" }) }));
       refreshAll();
     } catch (e) {
-      setError((e as Error).message);
+      setError(e as Error);
     }
-  }, [id, refreshAll]);
+  }, [id, refreshAll, setError]);
 
   const createLetter = useCallback(async () => {
     if (!id) return;
@@ -119,9 +132,9 @@ export function useKeyDates(matter: Matter | null) {
     try {
       setData(await call(`/api/matters/${id}/key-dates`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "letter" }) }));
     } catch (e) {
-      setError((e as Error).message);
+      setError(e as Error);
     }
-  }, [id]);
+  }, [id, setError]);
 
   // Renamed / removed / added fields for this matter type (null = standard fields).
   const saveFields = useCallback(
@@ -132,20 +145,21 @@ export function useKeyDates(matter: Matter | null) {
         setData(await call(`/api/matters/${id}/key-dates`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "fields", fields }) }));
         return true;
       } catch (e) {
-        setError((e as Error).message);
+        setError(e as Error);
         return false;
       }
     },
-    [id]
+    [id, setError]
   );
 
-  return { data, reading, error, refresh, save, reset, createLetter, saveFields, matter };
+  return { data, reading, error, errorCode, refresh, save, reset, createLetter, saveFields, matter };
 }
 
 export type KeyDatesApi = ReturnType<typeof useKeyDates>;
 
-export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesApi; onOpenDocuments: () => void }) {
-  const { data, reading, error, refresh, save, reset, createLetter, saveFields, matter } = api;
+// onOpenDocuments({ upload: true }) also opens the Add documents window.
+export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesApi; onOpenDocuments: (opts?: { upload?: boolean }) => void }) {
+  const { data, reading, error, errorCode, refresh, save, reset, createLetter, saveFields, matter } = api;
   const realEstate = !!matter && isRealEstate(matter);
   // The fields this matter shows (its type's list, or the firm's own).
   const fields: FieldDef[] = data?.fields ?? (matter ? standardFields(matter) : []);
@@ -209,7 +223,19 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
       </div>
 
       <div className="p-4 flex flex-col gap-3">
-        {error && <div className="rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-3.5 py-2.5 text-[13px]">{error}</div>}
+        {error && (
+          <div className="rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-3.5 py-2.5 text-[13px] flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="flex-1 min-w-[200px]">{error}</span>
+            {errorCode === "no_documents" && (
+              <button
+                onClick={() => onOpenDocuments({ upload: true })}
+                className="flex items-center gap-1.5 bg-white hover:bg-chip text-ink px-3.5 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
+              >
+                <Upload size={13} strokeWidth={1.75} /> Go to Documents
+              </button>
+            )}
+          </div>
+        )}
         {data?.stale && !reading && !error && (
           <div className="rounded-xl bg-[#EEF3FB] px-3.5 py-2.5 text-[13px]">The matter&apos;s documents changed since the dates were read.</div>
         )}
@@ -305,7 +331,7 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
                 created {new Date(state.letter.generatedAt).toLocaleDateString()}
                 {state.letter.version > 1 ? ` (version ${state.letter.version})` : ""}
               </span>
-              <button onClick={onOpenDocuments} className="font-medium underline underline-offset-2">
+              <button onClick={() => onOpenDocuments()} className="font-medium underline underline-offset-2">
                 Open in Documents
               </button>
               {!!state.letter.missing?.length && (
