@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAiCtx } from "@/lib/ai/store";
-import { getKeyDates, refreshKeyDates, saveManualDates, createLetterNow, resetKeyDates, matterFields, saveMatterFields, KeyDatesError } from "@/lib/ai/keyDates";
+import { getKeyDates, refreshKeyDates, saveManualDates, createLetterNow, resetKeyDates, matterFields, saveMatterFields, fieldLibrary, forgetLibraryField, KeyDatesError } from "@/lib/ai/keyDates";
 import type { AiCtx } from "@/lib/ai/store";
 
 // Every answer also carries the fields this matter shows.
 async function withFields<T extends object>(ctx: AiCtx, id: string, r: T) {
-  return { ...r, fields: await matterFields(ctx, id) };
+  const [fields, library] = await Promise.all([matterFields(ctx, id), fieldLibrary(ctx)]);
+  return { ...r, fields, library };
 }
 import { AccessError } from "@/lib/data/documents";
 import { NoWorkspaceError } from "@/lib/data/org";
@@ -55,6 +56,11 @@ export async function POST(request: Request, { params }: P) {
       return NextResponse.json(await withFields(ctx, id, await saveManualDates(ctx, id, body.dates as Record<string, unknown>)));
     }
     // { action: "fields", fields: [{ key, label }] | null } → this matter type's field list
+    // { action: "forget", key } → take a field off the reusable list
+    if (body.action === "forget" && typeof (body as { key?: unknown }).key === "string") {
+      await forgetLibraryField(ctx, (body as { key: string }).key);
+      return NextResponse.json(await withFields(ctx, id, await getKeyDates(ctx, id, false)));
+    }
     if (body.action === "fields") {
       await saveMatterFields(ctx, id, (body as { fields?: unknown }).fields ?? null);
       return NextResponse.json(await withFields(ctx, id, await getKeyDates(ctx, id, false)));

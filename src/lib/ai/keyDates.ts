@@ -611,6 +611,36 @@ export async function matterFields(ctx: AiCtx, matterId: string): Promise<FieldD
 }
 
 // Saves the field list for this matter's type (null = back to the standard fields).
+// Every field the firm has added (on any matter type), so it can be reused like a template.
+const LIBRARY = "_library";
+
+export async function fieldLibrary(ctx: AiCtx): Promise<FieldDef[]> {
+  const layouts = await loadLayouts(ctx.orgId);
+  const out: FieldDef[] = [];
+  const add = (f: FieldDef) => {
+    if (isCustomKey(f.key) && !out.some((o) => o.key === f.key || o.label.toLowerCase() === f.label.toLowerCase())) out.push(f);
+  };
+  const hidden = new Set((cleanFields(layouts["_hidden"]) ?? []).map((f) => f.key));
+  for (const f of cleanFields(layouts[LIBRARY]) ?? []) if (!hidden.has(f.key)) add(f);
+  for (const [k, list] of Object.entries(layouts)) {
+    if (k.startsWith("_")) continue;
+    for (const f of cleanFields(list) ?? []) if (!hidden.has(f.key)) add(f);
+  }
+  return out.sort((a, b) => a.label.localeCompare(b.label));
+}
+
+// Takes a field off the reusable list (matter types using it keep it).
+export async function forgetLibraryField(ctx: AiCtx, fieldKey: string): Promise<void> {
+  const layouts = await loadLayouts(ctx.orgId);
+  layouts[LIBRARY] = (cleanFields(layouts[LIBRARY]) ?? []).filter((f) => f.key !== fieldKey);
+  // Hidden from the list even while a matter type still uses it.
+  const hidden = new Set((cleanFields(layouts["_hidden"]) ?? []).map((f) => f.key));
+  hidden.add(fieldKey);
+  layouts["_hidden"] = [...hidden].map((k) => ({ key: k, label: "hidden" }));
+  const { error } = await db().from("organizations").update({ key_date_layouts: layouts }).eq("id", ctx.orgId);
+  if (error) throw error;
+}
+
 export async function saveMatterFields(ctx: AiCtx, matterId: string, input: unknown): Promise<FieldDef[]> {
   const m = await loadMatter(ctx, matterId);
   const key = layoutKey({ category: m.category, matterCode: m.matter_code });
@@ -620,6 +650,17 @@ export async function saveMatterFields(ctx: AiCtx, matterId: string, input: unkn
     const fields = cleanFields(input);
     if (!fields) throw new KeyDatesError(400, "The field list couldn't be read.");
     layouts[key] = fields;
+    // Remember the firm's own fields for reuse (latest name wins); un-hide reused ones.
+    const lib = cleanFields(layouts[LIBRARY]) ?? [];
+    const hidden = (cleanFields(layouts["_hidden"]) ?? []).filter((h) => !fields.some((f) => f.key === h.key));
+    for (const f of fields) {
+      if (!isCustomKey(f.key)) continue;
+      const i = lib.findIndex((x) => x.key === f.key);
+      if (i >= 0) lib[i] = f;
+      else lib.push(f);
+    }
+    layouts[LIBRARY] = lib.slice(-100);
+    layouts["_hidden"] = hidden;
   }
   const { error } = await db().from("organizations").update({ key_date_layouts: layouts }).eq("id", ctx.orgId);
   if (error) {

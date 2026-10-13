@@ -155,7 +155,8 @@ export const OTHER_FIELDS = std(["contractSigned", "attorneyReviewCompleted", "i
 // The matter type a field list belongs to ("Real Estate", "Family Law", … or "Other").
 export function layoutKey(m: { category?: string | null; matterCode?: string | null }): string {
   if (isRealEstate(m)) return "Real Estate";
-  return m.category && m.category !== "None" ? m.category.slice(0, 60) : "Other";
+  // ("_…" keys are reserved for the firm's reusable field list.)
+  return m.category && m.category !== "None" && !m.category.startsWith("_") ? m.category.slice(0, 60) : "Other";
 }
 
 export function standardFields(m: { category?: string | null; matterCode?: string | null }): FieldDef[] {

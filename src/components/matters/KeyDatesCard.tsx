@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CalendarClock, Loader2, RefreshCw, RotateCcw, FileText, ChevronDown, ChevronRight, Info, PenLine, Settings2, ArrowUp, ArrowDown, Trash2, Plus, Upload } from "lucide-react";
+import { CalendarClock, Loader2, RefreshCw, RotateCcw, FileText, ChevronDown, ChevronRight, Info, PenLine, Settings2, ArrowUp, ArrowDown, Trash2, Plus, Upload, History, X } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { DOCS_CHANGED_EVENT } from "@/components/documents/DocumentsLibrary";
 import {
@@ -17,7 +17,7 @@ import {
 } from "@/lib/matters/keyDates";
 import type { Matter } from "@/components/NewMatterModal";
 
-type Result = { state: KeyDatesState; stale: boolean; ran: boolean; error?: string | null; linked?: number; fields?: FieldDef[] };
+type Result = { state: KeyDatesState; stale: boolean; ran: boolean; error?: string | null; linked?: number; fields?: FieldDef[]; library?: FieldDef[] };
 
 async function call(url: string, init?: RequestInit): Promise<Result> {
   const res = await fetch(url, init);
@@ -152,14 +152,27 @@ export function useKeyDates(matter: Matter | null) {
     [id, setError]
   );
 
-  return { data, reading, error, errorCode, refresh, save, reset, createLetter, saveFields, matter };
+  // Takes a field off the firm's reusable list.
+  const forgetField = useCallback(
+    async (key: string) => {
+      if (!id) return;
+      try {
+        setData(await call(`/api/matters/${id}/key-dates`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "forget", key }) }));
+      } catch (e) {
+        setError(e as Error);
+      }
+    },
+    [id, setError]
+  );
+
+  return { data, reading, error, errorCode, refresh, save, reset, createLetter, saveFields, forgetField, matter };
 }
 
 export type KeyDatesApi = ReturnType<typeof useKeyDates>;
 
 // onOpenDocuments({ upload: true }) also opens the Add documents window.
 export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesApi; onOpenDocuments: (opts?: { upload?: boolean }) => void }) {
-  const { data, reading, error, errorCode, refresh, save, reset, createLetter, saveFields, matter } = api;
+  const { data, reading, error, errorCode, refresh, save, reset, createLetter, saveFields, forgetField, matter } = api;
   const realEstate = !!matter && isRealEstate(matter);
   // The fields this matter shows (its type's list, or the firm's own).
   const fields: FieldDef[] = data?.fields ?? (matter ? standardFields(matter) : []);
@@ -260,6 +273,8 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
             <FieldEditor
               typeName={matter ? layoutKey(matter) : "this matter type"}
               fields={editing}
+              library={data?.library ?? []}
+              onForget={(key) => void forgetField(key)}
               onChange={setEditing}
               saving={savingFields}
               onCancel={() => setEditing(null)}
@@ -403,6 +418,8 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
 function FieldEditor({
   typeName,
   fields,
+  library,
+  onForget,
   onChange,
   onSave,
   onCancel,
@@ -410,11 +427,21 @@ function FieldEditor({
 }: {
   typeName: string;
   fields: FieldDef[];
+  library: FieldDef[]; // fields the firm added before, on any matter type
+  onForget: (key: string) => void;
   onChange: (f: FieldDef[]) => void;
-  onSave: (f: FieldDef[] | null) => void;
+  onSave: (f: FieldDef[]) => void;
   onCancel: () => void;
   saving: boolean;
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const present = (key: string, label: string) => fields.some((f) => f.key === key || f.label.trim().toLowerCase() === label.toLowerCase());
+  const reusable = library.filter((f) => !present(f.key, f.label));
+  const standardLeft = KEY_DATE_FIELDS.filter((b) => !present(b.key, b.label));
+  const addField = (f: FieldDef) => {
+    onChange([...fields, { key: f.key, label: f.label }]);
+    setPickerOpen(false);
+  };
   const set = (i: number, patch: Partial<FieldDef>) => onChange(fields.map((f, j) => (j === i ? { ...f, ...patch } : f)));
   const move = (i: number, d: -1 | 1) => {
     const j = i + d;
@@ -423,7 +450,6 @@ function FieldEditor({
     [next[i], next[j]] = [next[j], next[i]];
     onChange(next);
   };
-  const removed = KEY_DATE_FIELDS.filter((b) => !fields.some((f) => f.key === b.key));
   const valid = fields.every((f) => f.label.trim());
   return (
     <div className="rounded-xl bg-card-alt p-3.5 flex flex-col gap-2">
@@ -458,21 +484,44 @@ function FieldEditor({
         >
           <Plus size={13} /> Add field
         </button>
-        {removed.map((b) => (
+        <div className="relative">
           <button
-            key={b.key}
-            onClick={() => onChange([...fields, { key: b.key, label: b.label }])}
-            title="Add this standard field back"
-            className="flex items-center gap-1 text-[12px] text-muted hover:text-ink bg-white/60 hover:bg-white px-2.5 py-1 rounded-full"
+            onClick={() => setPickerOpen((o) => !o)}
+            disabled={fields.length >= 30 || (!reusable.length && !standardLeft.length)}
+            title={!reusable.length && !standardLeft.length ? "Fields you add are remembered here for every matter type" : undefined}
+            className="flex items-center gap-1.5 bg-white hover:bg-chip disabled:opacity-50 px-3 py-1.5 rounded-full text-[12.5px] font-medium"
           >
-            <Plus size={11} /> {b.label}
+            <History size={13} /> Use a field from before <ChevronDown size={12} />
           </button>
-        ))}
+        </div>
       </div>
+      {pickerOpen && (
+<div className="bg-white border border-line rounded-2xl p-1.5 max-w-[360px] max-h-[280px] overflow-y-auto">
+                {reusable.length > 0 && <div className="px-3 pt-1.5 pb-1 text-[11.5px] font-semibold text-muted">Fields your firm added</div>}
+                {reusable.map((f) => (
+                  <div key={f.key} className="flex items-center rounded-xl hover:bg-chip">
+                    <button onClick={() => addField(f)} className="flex-1 text-left px-3 py-2 text-[13.5px] truncate">
+                      {f.label}
+                    </button>
+                    <button
+                      onClick={() => onForget(f.key)}
+                      title="Remove from this list (matter types using it keep it)"
+                      aria-label={`Remove ${f.label} from the list`}
+                      className="w-7 h-7 mr-1 rounded-full hover:bg-white text-muted hover:text-[#B42318] flex items-center justify-center flex-shrink-0"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+                {standardLeft.length > 0 && <div className="px-3 pt-2 pb-1 text-[11.5px] font-semibold text-muted">Standard fields</div>}
+                {standardLeft.map((b) => (
+                  <button key={b.key} onClick={() => addField({ key: b.key, label: b.label })} className="w-full text-left px-3 py-2 rounded-xl text-[13.5px] hover:bg-chip">
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+      )}
       <div className="flex flex-wrap items-center gap-2 pt-1">
-        <button onClick={() => onSave(null)} disabled={saving} className="text-[12.5px] text-muted hover:text-ink underline underline-offset-2">
-          Use the standard fields
-        </button>
         <button onClick={onCancel} disabled={saving} className="ml-auto px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-white">
           Cancel
         </button>
