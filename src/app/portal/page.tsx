@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, FileText, Eye, Download, LogOut, Folder } from "lucide-react";
+import { Loader2, FileText, Eye, Download, LogOut, Folder, ClipboardList } from "lucide-react";
+import Link from "next/link";
 import PortalHeader from "./PortalHeader";
 import PortalMessages from "./PortalMessages";
 
@@ -74,6 +75,16 @@ export default function PortalHome() {
             <p className="text-[14px] text-muted mt-1 mb-8">Your secure messages and the documents {home.firm} has shared with you.</p>
             {missing && <div className="mb-5 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13.5px]">That document isn’t available anymore. Your law firm may have stopped sharing it.</div>}
 
+            <div className="mb-8 bg-card-alt rounded-2xl px-5 py-4 flex flex-wrap items-center gap-3">
+              <ClipboardList size={20} className="text-muted flex-shrink-0" />
+              <div className="flex-1 min-w-[220px]">
+                <div className="text-[15px] font-semibold">Your intake sheet</div>
+                <div className="text-[13px] text-muted">Check your details and fill in anything that&apos;s missing, so {home.firm} has everything up to date.</div>
+              </div>
+              <Link href="/portal/intake" className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium">
+                Complete intake sheet
+              </Link>
+            </div>
             <PortalMessages firm={home.firm} matters={home.matters} />
 
             {home.documents.length === 0 ? (

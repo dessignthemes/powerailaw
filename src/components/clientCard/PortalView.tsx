@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, Check, Mail, Loader2, KeyRound, ShieldCheck, UserX, UserCheck, ExternalLink } from "lucide-react";
+import { Copy, Check, Mail, Loader2, KeyRound, ShieldCheck, UserX, UserCheck, ExternalLink, ClipboardList } from "lucide-react";
 
 type Status = {
   clientEmail: string | null;
@@ -11,7 +11,29 @@ type Status = {
 };
 
 const when = (s: string) => new Date(s).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-const eventText: Record<string, string> = { invited: "Invite link created", joined: "Created their password", login: "Signed in", viewed: "Viewed", downloaded: "Downloaded" };
+const eventText: Record<string, string> = {
+  invited: "Invite link created",
+  joined: "Created their password",
+  login: "Signed in",
+  viewed: "Viewed",
+  downloaded: "Downloaded",
+  message_read: "Read your secure messages",
+  replied: "Sent a secure message",
+  uploaded: "Sent a file",
+  intake_updated: "Updated their intake sheet",
+};
+
+// Asks the client (already on the portal) to complete their intake sheet.
+function intakeRequestEmail(to: string, clientName: string) {
+  const first = clientName.split(" ")[0] || "";
+  const subject = "Please complete your intake sheet";
+  const body =
+    `Hello${first ? ` ${first}` : ""},\n\n` +
+    `Please sign in to your secure client portal and complete your intake sheet, so we have all your details up to date:\n` +
+    `${window.location.origin}/portal/intake\n\n` +
+    `Fill in anything that's missing or has changed and click Save.\n\nThank you.`;
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 async function api(clientId: string, body?: unknown) {
   const res = await fetch(`/api/client-portal/${clientId}`, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : undefined);
@@ -28,12 +50,12 @@ function inviteEmail(to: string, firm: string, clientName: string, link: string,
     `Hello${first ? ` ${first}` : ""},\n\n` +
     (existing
       ? `Use this link to set a new password for your client portal:\n${link}\n\n`
-      : `We've set up a secure client portal where you can view and download the documents we share with you.\n\nTo get started, open this link and create your password:\n${link}\n\n`) +
+      : `We've set up a secure client portal where you can view and download the documents we share with you, and complete your intake sheet.\n\nTo get started, open this link and create your password:\n${link}\n\n`) +
     `Your sign-in email is: ${to}\nThe link works until ${date}.\n\nAfter that, you can always sign in at:\n${window.location.origin}/portal/login\n\nBest regards,\n${firm}`;
   return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-export default function PortalView({ clientId, defaultEmail }: { clientId: string | null; defaultEmail?: string }) {
+export default function PortalView({ clientId, defaultEmail, defaultName }: { clientId: string | null; defaultEmail?: string; defaultName?: string }) {
   const [status, setStatus] = useState<Status | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState(defaultEmail ?? "");
@@ -120,6 +142,15 @@ export default function PortalView({ clientId, defaultEmail }: { clientId: strin
                 {busy === "invite" ? <Loader2 size={13} className="animate-spin" /> : a?.hasPassword ? <KeyRound size={13} /> : <Mail size={13} />}
                 {!a ? "Invite to portal" : a.hasPassword ? "Send password reset link" : "Create a new invite link"}
               </button>
+              {a?.status === "active" && (
+                <a
+                  href={intakeRequestEmail(a.email, defaultName ?? "")}
+                  title="Opens an email asking the client to complete their intake sheet in the portal"
+                  className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors"
+                >
+                  <ClipboardList size={13} /> Ask to complete intake sheet
+                </a>
+              )}
               {a && a.status !== "disabled" && (
                 <button onClick={() => toggle(false)} disabled={!!busy} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors">
                   <UserX size={13} /> Turn off access

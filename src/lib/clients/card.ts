@@ -175,3 +175,125 @@ export function ageFrom(dob: string, until?: string) {
   if (months < 0) return "";
   return `${Math.floor(months / 12)} y ${months % 12} m`;
 }
+
+// ── What a client sees and may change in the portal ("Complete intake sheet") ─
+// Their own details, contacts, address and intake answers. Firm-only parts
+// (notes, bank, labels, letter settings, photo, practice area) and sensitive
+// ID numbers (SSN, driver's license) are never shown to or changed by the client.
+
+export type PortalPerson = Pick<
+  Person,
+  | "id" | "title" | "first" | "middle" | "last" | "suffix" | "previousNames" | "gender" | "relationship"
+  | "dob" | "placeOfBirth" | "countryOfBirth" | "nationality" | "occupation" | "employer" | "preferredLanguage"
+> & { email: string; phone: string; cell: string };
+
+export type PortalIntake = {
+  cardType: CardType;
+  people: PortalPerson[];
+  company: { name: string; legalName: string; entityType: string; website: string; email: string; phone: string };
+  address: Pick<Address, "street" | "aptType" | "aptNo" | "city" | "county" | "state" | "zip" | "country">;
+  poBox: { box: string; city: string; state: string; zip: string };
+  intake: Pick<Profile["intake"], "referredBy" | "reason" | "contactPreference" | "contactPreferenceOther" | "mailingAddress" | "marriageDate" | "children" | "childrenDetails">;
+};
+
+const contactOf = (lines: ContactLine[], kind: ContactKind) => lines.find((c) => c.kind === kind)?.value ?? "";
+
+export function portalIntakeOf(type: CardType, pr: Profile): PortalIntake {
+  const a = pr.address.street;
+  return {
+    cardType: type,
+    people: pr.people.map((p) => ({
+      id: p.id, title: p.title, first: p.first, middle: p.middle, last: p.last, suffix: p.suffix, previousNames: p.previousNames,
+      gender: p.gender, relationship: p.relationship, dob: p.dob, placeOfBirth: p.placeOfBirth, countryOfBirth: p.countryOfBirth,
+      nationality: p.nationality, occupation: p.occupation, employer: p.employer, preferredLanguage: p.preferredLanguage,
+      email: contactOf(p.contacts, "Email"), phone: contactOf(p.contacts, "Phone"), cell: contactOf(p.contacts, "Cell"),
+    })),
+    company: {
+      name: pr.company.name, legalName: pr.company.legalName, entityType: pr.company.entityType, website: pr.company.website,
+      email: contactOf(pr.company.contacts, "Email"), phone: contactOf(pr.company.contacts, "Phone"),
+    },
+    address: { street: a.street, aptType: a.aptType, aptNo: a.aptNo, city: a.city, county: a.county, state: a.state, zip: a.zip, country: a.country },
+    poBox: { box: pr.address.poBox.box, city: pr.address.poBox.city, state: pr.address.poBox.state, zip: pr.address.poBox.zip },
+    intake: {
+      referredBy: pr.intake.referredBy, reason: pr.intake.reason, contactPreference: pr.intake.contactPreference,
+      contactPreferenceOther: pr.intake.contactPreferenceOther, mailingAddress: pr.intake.mailingAddress,
+      marriageDate: pr.intake.marriageDate, children: pr.intake.children, childrenDetails: pr.intake.childrenDetails,
+    },
+  };
+}
+
+const txt = (v: unknown, max = 200) => (typeof v === "string" ? v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim().slice(0, max) : "");
+const ymdOrEmpty = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
+const oneOf = <T extends string>(v: unknown, list: readonly T[], fallback: T): T => (list.includes(v as T) ? (v as T) : fallback);
+
+// Puts one contact value in place (first line of that kind), adding the line if needed.
+function setContact(lines: ContactLine[], kind: ContactKind, value: string): ContactLine[] {
+  const i = lines.findIndex((c) => c.kind === kind);
+  if (i >= 0) return lines.map((c, j) => (j === i ? { ...c, value } : c));
+  return value ? [...lines, { kind, value }] : lines;
+}
+
+// The client's edits merged into the full card (everything else stays as the firm left it).
+export function mergePortalIntake(type: CardType, pr: Profile, raw: unknown): Profile {
+  const e = (raw ?? {}) as Partial<PortalIntake> & Record<string, unknown>;
+  const next: Profile = JSON.parse(JSON.stringify(pr));
+  const peopleIn = Array.isArray(e.people) ? (e.people as unknown[]).slice(0, 6) : [];
+  for (const rp of peopleIn) {
+    const p = (rp ?? {}) as Record<string, unknown>;
+    let target = next.people.find((x) => x.id === p.id);
+    if (!target) {
+      if (next.people.length >= 6) continue;
+      target = { ...newPerson() };
+      next.people.push(target);
+    }
+    target.title = oneOf(txt(p.title, 10), TITLES, "");
+    target.first = txt(p.first, 80);
+    target.middle = txt(p.middle, 80);
+    target.last = txt(p.last, 80);
+    target.suffix = txt(p.suffix, 20);
+    target.previousNames = txt(p.previousNames, 200);
+    target.gender = oneOf(txt(p.gender, 10), ["", "Male", "Female", "Other"] as const, "");
+    target.relationship = oneOf(txt(p.relationship, 30), RELATIONSHIP, "");
+    target.dob = ymdOrEmpty(p.dob);
+    target.placeOfBirth = txt(p.placeOfBirth, 120);
+    target.countryOfBirth = txt(p.countryOfBirth, 80);
+    target.nationality = txt(p.nationality, 80);
+    target.occupation = txt(p.occupation, 120);
+    target.employer = txt(p.employer, 120);
+    target.preferredLanguage = txt(p.preferredLanguage, 60);
+    target.contacts = setContact(setContact(setContact(target.contacts, "Email", txt(p.email, 200)), "Phone", txt(p.phone, 40)), "Cell", txt(p.cell, 40));
+  }
+  // A person added in the portal but left without a name isn't kept.
+  next.people = next.people.filter((x, i) => i === 0 || x.first || x.last || pr.people.some((o) => o.id === x.id));
+  if (type === "company" && e.company && typeof e.company === "object") {
+    const c = e.company as Record<string, unknown>;
+    next.company.name = txt(c.name, 160);
+    next.company.legalName = txt(c.legalName, 160);
+    next.company.entityType = oneOf(txt(c.entityType, 40), ENTITY_TYPES, "");
+    next.company.website = txt(c.website, 200);
+    next.company.contacts = setContact(setContact(next.company.contacts, "Email", txt(c.email, 200)), "Phone", txt(c.phone, 40));
+  }
+  if (e.address && typeof e.address === "object") {
+    const a = e.address as Record<string, unknown>;
+    Object.assign(next.address.street, {
+      street: txt(a.street, 160), aptType: oneOf(txt(a.aptType, 10), ["", ...APT_TYPES], ""), aptNo: txt(a.aptNo, 20),
+      city: txt(a.city, 80), county: txt(a.county, 80), state: txt(a.state, 40), zip: txt(a.zip, 12), country: txt(a.country, 80) || "United States",
+    });
+  }
+  if (e.poBox && typeof e.poBox === "object") {
+    const b = e.poBox as Record<string, unknown>;
+    Object.assign(next.address.poBox, { box: txt(b.box, 30), city: txt(b.city, 80), state: txt(b.state, 40), zip: txt(b.zip, 12) });
+  }
+  if (e.intake && typeof e.intake === "object") {
+    const i = e.intake as Record<string, unknown>;
+    next.intake.referredBy = txt(i.referredBy, 200);
+    next.intake.reason = txt(i.reason, 3000);
+    next.intake.contactPreference = oneOf(txt(i.contactPreference, 20), CONTACT_PREFERENCES, "");
+    next.intake.contactPreferenceOther = txt(i.contactPreferenceOther, 120);
+    next.intake.mailingAddress = txt(i.mailingAddress, 300);
+    next.intake.marriageDate = ymdOrEmpty(i.marriageDate);
+    next.intake.children = oneOf(txt(i.children, 5), ["", "Yes", "No"] as const, "");
+    next.intake.childrenDetails = txt(i.childrenDetails, 2000);
+  }
+  return next;
+}

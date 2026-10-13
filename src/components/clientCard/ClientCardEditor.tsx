@@ -331,7 +331,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
           {section === "documents" && <DocumentsView clientId={cardId} matters={matters.filter((m) => m.clientId === cardId)} />}
           {section === "mailings" && <MailingsView clientId={cardId} dirty={dirty} />}
           {section === "matters" && <MattersView clientId={cardId} matters={matters.filter((m) => m.clientId === cardId)} />}
-          {section === "portal" && <PortalView clientId={cardId} defaultEmail={firstEmail} />}
+          {section === "portal" && <PortalView clientId={cardId} defaultEmail={firstEmail} defaultName={profile.people[0]?.first || name} />}
         </section>
       </div>
 
