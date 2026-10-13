@@ -400,7 +400,9 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      <div className="bg-card-alt rounded-2xl p-6 mt-5">
+      {/* Tasks / Events on the left, Recent activity on the right (stacked on narrow screens). */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] gap-5 mt-5 items-start">
+      <div className="bg-card-alt rounded-2xl p-6 min-w-0">
         <div className="flex gap-6 text-[14px] font-medium text-muted mb-6">
           <button
             onClick={() => setBottomTab("tasks")}
@@ -523,12 +525,12 @@ export default function DashboardHome() {
         )}
       </div>
 
-      <div className="bg-card-alt rounded-2xl p-6 mt-5">
+      <div className="bg-card-alt rounded-2xl p-6 min-w-0">
         <div className="text-[14px] font-medium text-ink mb-6 flex items-center gap-1.5">
           <Activity size={15} strokeWidth={1.75} /> Recent activity
         </div>
         {recent.length === 0 ? (
-          <div className="bg-cream rounded-xl flex flex-col items-center justify-center min-h-[420px] text-center">
+          <div className="bg-cream rounded-xl flex flex-col items-center justify-center min-h-[240px] text-center">
             <Activity size={20} strokeWidth={1.5} className="text-muted mb-3" />
             <div className="text-[15px] font-medium text-muted">No activity yet</div>
           </div>
@@ -557,6 +559,7 @@ export default function DashboardHome() {
             })}
           </div>
         )}
+      </div>
       </div>
 
       {selectedTask && (

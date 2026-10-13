@@ -5,6 +5,7 @@ import { getCurrentOrgId } from "@/lib/data/org";
 import { boardInOrg } from "@/lib/data/boards";
 import { columnInOrg } from "@/lib/data/boardColumns";
 import { WAITING_ON, type WaitingOn } from "@/lib/tasks/waitingOn";
+import { notifyAssigned } from "@/lib/data/notifications";
 import type { BoardTask, TaskComment } from "@/components/NewTaskModal";
 
 type TaskRow = {
@@ -121,7 +122,9 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
     });
 
   if (error) throw error;
-  return toTask(data as TaskRow);
+  const created = toTask(data as TaskRow);
+  await notifyAssigned({ orgId, actorId: userId, kind: "task_assigned", refId: created.id, boardId: created.boardId, title: created.title, to: created.assignee });
+  return created;
 }
 
 export async function updateTaskRow(id: string, task: BoardTask, userId: string | null = null): Promise<BoardTask> {
@@ -135,6 +138,8 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   );
   const run = (fields: Record<string, unknown>) =>
     supabase.from("tasks").update(fields).eq("id", id).eq("org_id", orgId).select("*").single();
+  // Who it was assigned to before (to alert only a newly assigned person).
+  const { data: before } = await supabase.from("tasks").select("assignee").eq("id", id).eq("org_id", orgId).maybeSingle();
 
   // Columns added by later migrations; if one isn't there yet, save without it.
   let fields: Record<string, unknown> = userId ? { ...base, updated_by: userId } : { ...base };
@@ -148,7 +153,18 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   }
 
   if (error) throw error;
-  return toTask(data as TaskRow);
+  const updated = toTask(data as TaskRow);
+  await notifyAssigned({
+    orgId,
+    actorId: userId,
+    kind: "task_assigned",
+    refId: updated.id,
+    boardId: updated.boardId,
+    title: updated.title,
+    to: updated.assignee,
+    before: (before as { assignee?: string | null } | null)?.assignee ?? null,
+  });
+  return updated;
 }
 
 export async function deleteTaskRows(ids: string[]): Promise<void> {

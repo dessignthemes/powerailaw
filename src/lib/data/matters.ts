@@ -3,6 +3,20 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import type { Matter } from "@/components/NewMatterModal";
 import { cleanCode, isValidCode } from "@/lib/matters/numbering";
+import { getSessionUserId } from "@/lib/auth";
+import { notifyAssigned } from "@/lib/data/notifications";
+
+// "Assigned to" is stored as the team member's profile id and shown as their email.
+async function teamEmails(orgId: string): Promise<Map<string, string>> {
+  const { data } = await createAdminClient().from("profiles").select("id, email").eq("org_id", orgId);
+  return new Map(((data ?? []) as { id: string; email: string }[]).map((p) => [p.id, p.email]));
+}
+function assigneeId(emails: Map<string, string>, email: string | null | undefined): string | null {
+  if (!email) return null;
+  const want = email.trim().toLowerCase();
+  for (const [id, e] of emails) if (e.toLowerCase() === want) return id;
+  return null;
+}
 
 export class MatterInputError extends Error {
   status = 400 as const;
@@ -10,6 +24,7 @@ export class MatterInputError extends Error {
 
 type MatterRow = {
   id: string;
+  assigned_to?: string | null;
   client_id: string | null;
   title: string;
   description: string | null;
@@ -29,7 +44,7 @@ type MatterRow = {
   updated_at: string;
 };
 
-function toMatter(row: MatterRow): Matter {
+function toMatter(row: MatterRow, emails?: Map<string, string>): Matter {
   return {
     id: row.id,
     title: row.title,
@@ -43,9 +58,7 @@ function toMatter(row: MatterRow): Matter {
     value: row.value,
     billingType: row.billing_type,
     hourlyRate: row.hourly_rate,
-    // Not persisted yet — there's no logged-in user/profile to reference
-    // until real auth exists. Always comes back unassigned for now.
-    assignedTo: null,
+    assignedTo: (row.assigned_to && emails?.get(row.assigned_to)) || null,
     privateNotes: row.private_notes ?? "",
     matterCode: row.matter_code ?? null,
     matterNumber: row.matter_number ?? null,
@@ -66,7 +79,8 @@ export async function listMatters(): Promise<Matter[]> {
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data as MatterRow[]).map(toMatter);
+  const emails = await teamEmails(orgId);
+  return (data as MatterRow[]).map((r) => toMatter(r, emails));
 }
 
 // The abbreviation sent from the browser (null = none). The number itself is
@@ -84,6 +98,8 @@ export async function createMatterRow(matter: Matter): Promise<Matter> {
   const supabase = createAdminClient();
   const orgId = await getCurrentOrgId();
   const code = codeOf(matter);
+  const emails = await teamEmails(orgId);
+  const actorId = await getSessionUserId();
 
   const fields = {
       id: matter.id,
@@ -100,12 +116,15 @@ export async function createMatterRow(matter: Matter): Promise<Matter> {
       billing_type: matter.billingType,
       hourly_rate: matter.hourlyRate,
       private_notes: matter.privateNotes,
+      assigned_to: assigneeId(emails, matter.assignedTo),
   };
   let { data, error } = await supabase.from("matters").insert({ ...fields, matter_code: code }).select("*").single();
   if (missingNumberCols(error)) ({ data, error } = await supabase.from("matters").insert(fields).select("*").single());
 
   if (error) throw error;
-  return toMatter(data as MatterRow);
+  const saved = toMatter(data as MatterRow, emails);
+  await notifyAssigned({ orgId, actorId, kind: "matter_assigned", refId: saved.id, title: saved.matterNumber ? `${saved.matterNumber} · ${saved.title}` : saved.title, to: (data as MatterRow).assigned_to });
+  return saved;
 }
 
 // Next running number and the current year (for the preview in New matter).
@@ -132,6 +151,9 @@ export async function updateMatterRow(id: string, matter: Matter): Promise<Matte
   const orgId = await getCurrentOrgId();
 
   const code = codeOf(matter);
+  const emails = await teamEmails(orgId);
+  const actorId = await getSessionUserId();
+  const { data: before } = await supabase.from("matters").select("assigned_to").eq("id", id).eq("org_id", orgId).maybeSingle();
   const fields = {
       client_id: matter.clientId,
       title: matter.title,
@@ -145,6 +167,7 @@ export async function updateMatterRow(id: string, matter: Matter): Promise<Matte
       billing_type: matter.billingType,
       hourly_rate: matter.hourlyRate,
       private_notes: matter.privateNotes,
+      assigned_to: assigneeId(emails, matter.assignedTo),
       updated_at: new Date().toISOString(),
   };
   const run = (f: Record<string, unknown>) => supabase.from("matters").update(f).eq("id", id).eq("org_id", orgId).select("*").single();
@@ -153,7 +176,17 @@ export async function updateMatterRow(id: string, matter: Matter): Promise<Matte
   if (code && missingNumberCols(error)) ({ data, error } = await run(fields));
 
   if (error) throw error;
-  return toMatter(data as MatterRow);
+  const saved = toMatter(data as MatterRow, emails);
+  await notifyAssigned({
+    orgId,
+    actorId,
+    kind: "matter_assigned",
+    refId: saved.id,
+    title: saved.matterNumber ? `${saved.matterNumber} · ${saved.title}` : saved.title,
+    to: (data as MatterRow).assigned_to,
+    before: (before as { assigned_to?: string | null } | null)?.assigned_to ?? null,
+  });
+  return saved;
 }
 
 export async function deleteMatterRows(ids: string[]): Promise<void> {
