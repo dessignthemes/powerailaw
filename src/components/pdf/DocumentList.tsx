@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { FileText, Upload, ChevronDown, ChevronRight, Download, PenLine, Loader2, X, Folder, Check, Search, Layers, Trash2 } from "lucide-react";
+import { FileText, Upload, ChevronDown, ChevronRight, Download, PenLine, Loader2, X, Folder, Check, Search, Layers, Trash2, Eye } from "lucide-react";
+import PdfPreview from "@/components/pdf/PdfPreview";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { uploadNewDocument, versionDownloadUrl, UploadError } from "@/lib/pdf/upload";
 import type { FileType } from "@/lib/documents/fileTypes";
@@ -63,6 +64,8 @@ export default function DocumentList({
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  // Read-only preview of one version.
+  const [preview, setPreview] = useState<{ doc: Doc; versionId: string; versionNumber: number } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const fetchDocs = useCallback(async (): Promise<Doc[]> => {
@@ -155,6 +158,15 @@ export default function DocumentList({
 
   return (
     <div>
+      {preview && preview.doc.versions.length > 0 && (
+        <PdfPreview
+          documentId={preview.doc.id}
+          versionId={preview.versionId}
+          title={preview.doc.title}
+          subtitle={`${preview.doc.matterTitle ?? ""}${preview.doc.matterTitle ? " · " : ""}version ${preview.versionNumber} of ${preview.doc.versions.length}`}
+          onClose={() => setPreview(null)}
+        />
+      )}
       <div className="flex items-center gap-3 mb-5 flex-wrap">
         {!fixedMatterId && (
           <MatterPicker
@@ -244,6 +256,14 @@ export default function DocumentList({
                       </div>
                     </div>
                     {latest && (
+                      <button
+                        onClick={() => setPreview({ doc: d, versionId: latest.id, versionNumber: latest.versionNumber })}
+                        className="bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+                      >
+                        <Eye size={13} strokeWidth={2} /> Preview
+                      </button>
+                    )}
+                    {latest && (
                       <Link
                         href={`/dashboard/power-pdf/${d.id}?version=${latest.id}`}
                         className="bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
@@ -280,6 +300,12 @@ export default function DocumentList({
                               {v.createdByEmail ? `, ${v.createdByEmail}` : ""}. {v.pageCount}{" "}
                               {v.pageCount === 1 ? "page" : "pages"}, {formatSize(v.sizeBytes)}
                             </span>
+                            <button
+                              onClick={() => setPreview({ doc: d, versionId: v.id, versionNumber: v.versionNumber })}
+                              className="text-[12.5px] font-medium text-muted hover:text-ink underline underline-offset-2"
+                            >
+                              Preview
+                            </button>
                             <Link
                               href={`/dashboard/power-pdf/${d.id}?version=${v.id}`}
                               className="text-[12.5px] font-medium text-muted hover:text-ink underline underline-offset-2"

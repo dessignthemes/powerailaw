@@ -18,6 +18,7 @@ import {
   Search,
   X,
   ShieldCheck,
+  Eye,
   ChevronDown,
   ChevronRight,
   FileUp,
@@ -38,6 +39,7 @@ import {
 import { ACCEPT_ATTR, ACCEPTED_SUMMARY, fileTypeLabel, type FileType } from "@/lib/documents/fileTypes";
 import SendForSignature from "@/components/esign/SendForSignature";
 import SecureMessages from "@/components/matters/SecureMessages";
+import PdfPreview from "@/components/pdf/PdfPreview";
 import { STATUS_LABEL, type SignRequest } from "@/lib/esign/types";
 
 // Lets the matter page know its documents changed (its key dates are re-read).
@@ -75,6 +77,8 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
   const { matters, mattersLoaded, clients } = useWorkspaceData();
   // E-signature requests for this workspace, grouped by document.
   const [signing, setSigning] = useState<{ doc: Doc; version: DocVersion } | null>(null);
+  // Read-only preview of one PDF version.
+  const [preview, setPreview] = useState<{ doc: Doc; versionId: string; versionNumber: number } | null>(null);
   // Send securely: through the client portal, to the client of the document's matter.
   const [secureFor, setSecureFor] = useState<Doc | null>(null);
   const clientOfDoc = (d: Doc) => {
@@ -374,6 +378,11 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
                       </div>
                     </div>
                     {latest && type === "pdf" && (
+                      <button onClick={() => setPreview({ doc: d, versionId: latest.id, versionNumber: latest.versionNumber })} className={beigeBtn}>
+                        <Eye size={13} strokeWidth={2} /> Preview
+                      </button>
+                    )}
+                    {latest && type === "pdf" && (
                       <Link href={`/dashboard/power-pdf/${d.id}?version=${latest.id}`} className={blackBtn}>
                         <PenLine size={13} strokeWidth={2} /> Open in Power PDF
                       </Link>
@@ -455,6 +464,14 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
                                 {formatSize(v.sizeBytes)}
                               </span>
                               {vt === "pdf" && (
+                                <button
+                                  onClick={() => setPreview({ doc: d, versionId: v.id, versionNumber: v.versionNumber })}
+                                  className="text-[12.5px] font-medium text-muted hover:text-ink underline underline-offset-2"
+                                >
+                                  Preview
+                                </button>
+                              )}
+                              {vt === "pdf" && (
                                 <Link
                                   href={`/dashboard/power-pdf/${d.id}?version=${v.id}`}
                                   className="text-[12.5px] font-medium text-muted hover:text-ink underline underline-offset-2"
@@ -510,6 +527,15 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
           initialMatterId={matterFilter}
           onClose={() => setAdding(false)}
           onUploaded={() => reload()}
+        />
+      )}
+      {preview && (
+        <PdfPreview
+          documentId={preview.doc.id}
+          versionId={preview.versionId}
+          title={preview.doc.title}
+          subtitle={`${preview.doc.matterTitle ?? ""}${preview.doc.matterTitle ? " · " : ""}version ${preview.versionNumber} of ${preview.doc.versions.length}`}
+          onClose={() => setPreview(null)}
         />
       )}
       {secureFor && (() => {
