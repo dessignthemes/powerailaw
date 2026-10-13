@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { boardInOrg } from "@/lib/data/boards";
 import { columnInOrg } from "@/lib/data/boardColumns";
+import { WAITING_ON, type WaitingOn } from "@/lib/tasks/waitingOn";
 import type { BoardTask, TaskComment } from "@/components/NewTaskModal";
 
 type TaskRow = {
@@ -20,6 +21,7 @@ type TaskRow = {
   created_by?: string | null;
   updated_by?: string | null;
   column_id?: string | null;
+  waiting_on?: string | null;
   position?: number | null;
   checklist?: unknown;
   created_at: string;
@@ -40,6 +42,7 @@ function toTask(row: TaskRow): BoardTask {
     matterId: row.matter_id ?? null,
     createdBy: row.created_by ?? null,
     columnId: row.column_id ?? null,
+    waitingOn: (WAITING_ON as readonly string[]).includes(row.waiting_on ?? "") ? (row.waiting_on as WaitingOn) : null,
     position: typeof row.position === "number" ? row.position : null,
     checklist: cleanChecklist(row.checklist),
     updatedBy: row.updated_by ?? row.created_by ?? null,
@@ -61,6 +64,8 @@ function toColumns(task: BoardTask) {
     ...(typeof task.position === "number" && Number.isFinite(task.position) ? { position: task.position } : {}),
     // Only sent when the task's checklist was changed (null removes it).
     ...(task.checklist !== undefined ? { checklist: cleanChecklist(task.checklist) } : {}),
+    // Who the task is waiting on (only sent when the browser set it; null = nobody).
+    ...(task.waitingOn !== undefined ? { waiting_on: (WAITING_ON as readonly string[]).includes(task.waitingOn ?? "") ? task.waitingOn : null } : {}),
   };
 }
 
@@ -107,12 +112,13 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
     .insert(await withColumn(orgId, task, row))
     .select("*")
     .single()
-    .then(async (r) =>
-      // Before 0010 is run there's no column_id; save without it.
-      r.error && /column_id/.test(r.error.message ?? "")
-        ? supabase.from("tasks").insert(row).select("*").single()
-        : r
-    );
+    .then(async (r) => {
+      // Before 0010 / 0031 are run there's no column_id / waiting_on; save without them.
+      if (!r.error || !/column_id|waiting_on/.test(r.error.message ?? "")) return r;
+      const { waiting_on: _w, ...plain } = row as typeof row & { waiting_on?: unknown };
+      void _w;
+      return supabase.from("tasks").insert(plain).select("*").single();
+    });
 
   if (error) throw error;
   return toTask(data as TaskRow);
@@ -133,7 +139,7 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   // Columns added by later migrations; if one isn't there yet, save without it.
   let fields: Record<string, unknown> = userId ? { ...base, updated_by: userId } : { ...base };
   let { data, error } = await run(fields);
-  for (const col of ["updated_by", "column_id", "position", "checklist"]) {
+  for (const col of ["updated_by", "column_id", "position", "checklist", "waiting_on"]) {
     if (!error || !new RegExp(col).test(error.message ?? "") || !(col in fields)) continue;
     const { [col]: _drop, ...rest } = fields;
     void _drop;

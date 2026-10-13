@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireUserOrg, AccessError } from "@/lib/data/documents";
 import { getDetails, saveDetails, DetailsError } from "@/lib/data/matterDetails";
+import { getAiCtx } from "@/lib/ai/store";
+import { updateLetterAfterDetails } from "@/lib/ai/keyDates";
 
 export const dynamic = "force-dynamic";
 type P = { params: Promise<{ id: string }> };
@@ -31,7 +33,10 @@ export async function PATCH(request: Request, { params }: P) {
     if (!validId(id)) return NextResponse.json({ error: "Matter not found." }, { status: 404 });
     const body = (await request.json().catch(() => ({}))) as { values?: unknown };
     if (!body.values || typeof body.values !== "object") return NextResponse.json({ error: "Nothing to save." }, { status: 400 });
-    return NextResponse.json({ details: await saveDetails(orgId, id, body.values as Record<string, unknown>) });
+    const details = await saveDetails(orgId, id, body.values as Record<string, unknown>);
+    // The Contingency Dates Letter uses these details: keep it up to date.
+    await updateLetterAfterDetails(await getAiCtx(), id).catch((e) => console.error("Letter update after details failed:", e));
+    return NextResponse.json({ details });
   } catch (error) {
     return fail("PATCH /api/matters/[id]/details", error);
   }

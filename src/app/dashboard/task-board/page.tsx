@@ -35,6 +35,7 @@ import NewTaskModal, {
 } from "@/components/NewTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { NextStepLine } from "@/components/matters/MatterTasks";
+import { WAITING_ON, WAITING_LABEL, type WaitingOn } from "@/lib/tasks/waitingOn";
 import ColorPicker from "@/components/ColorPicker";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -106,7 +107,8 @@ const initialColumns: Column[] = [
   { id: "done", title: "Done", color: "#22C55E", status: "done" },
 ];
 
-const filterPills = ["Me", "Overdue", "Due today", "Due this week", "Due this month", "Next week", "Waiting on client"];
+const waitingPill = (w: WaitingOn) => `Waiting on ${WAITING_LABEL[w].toLowerCase()}`;
+const filterPills = ["Me", "Overdue", "Due today", "Due this week", "Due this month", "Next week", ...WAITING_ON.map(waitingPill)];
 
 // Pills that actually narrow the task list. A task is shown if it matches
 // any active one. "Me" (tasks assigned to the signed-in person) is added in TaskBoard.
@@ -116,7 +118,10 @@ const filterTests: Record<string, (t: BoardTask) => boolean> = {
   "Due this week": (t) => isDueIn(t, "week"),
   "Next week": (t) => isDueIn(t, "nextweek"),
   "Due this month": (t) => isDueIn(t, "month"),
-  "Waiting on client": (t) => t.status === "waiting",
+  // Tasks marked as waiting on someone; older tasks in the Waiting column count as waiting on the client.
+  ...Object.fromEntries(
+    WAITING_ON.map((w) => [waitingPill(w), (t: BoardTask) => t.waitingOn === w || (w === "client" && !t.waitingOn && t.status === "waiting")])
+  ),
 };
 
 const dueParamToPill: Record<string, string> = {
@@ -1347,6 +1352,11 @@ function TaskBoard({
                                 </>
                               );
                             })()}
+                            {t.waitingOn && (
+                              <span className="text-[11.5px] font-medium bg-[#FCEFD9] text-[#8A4B14] rounded-md px-1.5 py-0.5" title="Who this task is waiting on">
+                                Waiting on {WAITING_LABEL[t.waitingOn]}
+                              </span>
+                            )}
                             {(() => {
                               const m = t.matterId ? matters.find((x) => x.id === t.matterId) : null;
                               if (!m) return null;

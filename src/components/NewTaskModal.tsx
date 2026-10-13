@@ -1,5 +1,7 @@
 "use client";
 
+import type { WaitingOn } from "@/lib/tasks/waitingOn";
+
 import AssigneeOptions from "@/components/AssigneeOptions";
 import { useState } from "react";
 import {
@@ -30,6 +32,7 @@ export type BoardTask = {
   comments?: TaskComment[];
   boardId?: string | null; // null/undefined = main Task Board
   matterId?: string | null; // the matter this task belongs to, if any
+  waitingOn?: WaitingOn | null; // who we're waiting on (client, lender, title company, seller, buyer)
   columnId?: string | null; // a custom column on the board, if any
   position?: number | null; // manual order inside its column (null = order added)
   checklist?: import("@/lib/checklist").TaskChecklist | null; // ticked-off items from applied templates

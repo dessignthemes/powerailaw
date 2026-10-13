@@ -6,10 +6,10 @@ import { firmTimezone, todayIn } from "@/lib/ai/workspaceTools";
 import { cleanChecklist, dueDateOf, setMortgageNa } from "@/lib/checklist";
 import { DOCUMENTS_BUCKET, newStoragePath, createDocumentFromUpload, addVersionFromUpload, AccessError } from "@/lib/data/documents";
 import { templatesAllowed } from "@/lib/clients/templates";
-import { buildContingencyLetter } from "@/lib/matters/contingencyLetter";
+import { buildContingencyLetter, letterValues, type LetterClient } from "@/lib/matters/contingencyLetter";
+import { normalizeProfile, autoLetter, type CardType } from "@/lib/clients/card";
 import { AI_FIELDS, cleanDetails, layoutFor, type MatterDetails } from "@/lib/matters/details";
 import {
-  KEY_DATE_FIELDS,
   FIELD_KEYS,
   isField,
   isYmd,
@@ -106,7 +106,7 @@ const SYSTEM = (today: string, side: "buyer" | "seller" | null = null) => `${SID
 
 How to decide:
 1. Work out each document's own date: for a contract, the date it was fully signed (last signature); for a letter, the date on the letter. Ignore the order the documents are listed in.
-2. Apply the documents in date order. The contract is only the starting point. Each later attorney review letter, addendum or amendment changes what is in force, and the LAST document in time controls. A later letter that accepts, rejects or replaces an earlier proposal must be followed as written.
+2. The contract is the basis for every date and figure. Change a term ONLY if it was modified during the attorney review process by an attorney review letter, rider or addendum. Apply those documents in date order: for any term modified more than once, the LAST in time letter / rider / addendum controls. A later letter that accepts, rejects or replaces an earlier proposal must be followed as written. Terms nobody modified stay exactly as the contract states them.
 3. Attorney review is completed on the date the last attorney review letter was accepted or attorney review was declared concluded. If no review letters were sent, it ends 3 business days after the contract was fully signed (give that as a rule).
 4. For a date stated as a period ("within 10 days after completion of attorney review"), give the rule (days, businessDays, from) and leave date null unless an exact calendar date is written. "Business days" = businessDays true.
 5. Never invent a date. If something is unclear, leave it null and say why in notes.
@@ -115,13 +115,13 @@ Fields (use these keys only): ${FIELD_KEYS.join(", ")}.
 contractSigned = contract fully signed; attorneyReviewCompleted = attorney review concluded; initialDeposit = initial deposit due; secondDeposit = additional/second deposit due; inspection = home inspection contingency deadline; appraisal = appraisal contingency deadline; mortgage = mortgage commitment contingency deadline; closing = closing date.
 
 Reply with JSON only:
-{"documents":[{"source":"D1","type":"contract|attorney review letter|addendum|other","date":"YYYY-MM-DD or null","summary":"one line: what it is and what it changes"}],
+{"documents":[{"source":"D1","type":"contract|attorney review letter|rider|addendum|other","date":"YYYY-MM-DD or null","summary":"one line: what it is and what it changes"}],
 "dates":{"<field>":{"date":"YYYY-MM-DD or null","days":number or null,"businessDays":false,"from":"<field> or null","source":"D# of the document that sets the value now in force","quote":"short exact wording from that document","changedBy":["D# of documents after the contract that changed it"]}},
 "facts":{"property":"street address, town","buyers":["names"],"sellers":["names"],"purchasePrice":"$","initialDeposit":"$","additionalDeposit":"$","mortgageAmount":"$","cash":true if the terms in force make it a cash purchase with no mortgage contingency, else false},
 "details":{"<detail field>":{"value":"as written","source":"D#"}},
 "notes":["short, only for real uncertainty"]}
 Detail fields (use these keys only; the value in force after the last attorney review letter): ${AI_FIELDS.join(", ")}.
-buyerNames/sellerNames = full names, comma separated; buyerAgent* = the buyer's realtor (Firm = brokerage); listingAgent* = the seller's listing agent (Firm = brokerage); buyerAttorney*/sellerAttorney* = each side's attorney (Firm = law firm), with email/phone from their letterhead or signature; price/deposit1/deposit2/mortgageAmount/amountToClose (cash the client brings to closing) = dollar amounts; county = the property's county; settlementAgent, lender, inspector, surveyor, titleCompany = company or person names.
+buyerNames/sellerNames = full names, comma separated; buyerAgent* = the buyer's realtor (Firm = brokerage); listingAgent* = the seller's listing agent (Firm = brokerage); buyerAttorney*/sellerAttorney* = each side's attorney (Firm = law firm), with email/phone from their letterhead or signature; totalDeposit = total of all deposits; depositPayableTo = who the deposit checks are payable to (the escrow holder named in the contract, e.g. the listing broker's trust account or an attorney trust account); depositMailedTo = that escrow holder's mailing address; price/deposit1/deposit2/mortgageAmount/amountToClose (cash the client brings to closing) = dollar amounts; county = the property's county; settlementAgent, lender, inspector, surveyor, titleCompany = company or person names.
 Leave out fields the documents don't cover.`;
 
 async function readWithAi(ctx: AiCtx, matterId: string, docs: Awaited<ReturnType<typeof inputDocuments>>["docs"], side: "buyer" | "seller" | null = null) {
@@ -299,8 +299,27 @@ export async function applyDatesToTasks(ctx: AiCtx, matterId: string, state: Key
   return n;
 }
 
-const letterFingerprint = (state: KeyDatesState) =>
-  JSON.stringify([KEY_DATE_FIELDS.map((f) => (state.dates[f.key]?.na ? "na" : state.dates[f.key]?.date ?? "")), state.facts ?? {}]);
+// Who the letter is to: the client card's letter title, address and "Dear …".
+async function letterClient(orgId: string, clientId: string | null): Promise<LetterClient> {
+  if (!clientId) return null;
+  const { data } = await db().from("clients").select("*").eq("id", clientId).eq("org_id", orgId).maybeSingle();
+  if (!data) return null;
+  const c = data as { name: string; address?: string | null; card_type?: string | null; profile?: unknown };
+  const type = (c.card_type === "company" ? "company" : "person") as CardType;
+  const pr = c.profile ? normalizeProfile(c.profile) : null;
+  const auto = pr ? autoLetter(type, pr) : null;
+  const addressee = (pr && !pr.letter.titleAuto && pr.letter.title.trim()) || auto?.title || c.name;
+  const dear = (pr && !pr.letter.dearAuto && pr.letter.dear.trim()) || auto?.dear || c.name;
+  let addressLines: string[] = [];
+  if (pr) {
+    const a = pr.address.street;
+    const line1 = [a.street, a.aptNo ? `${a.aptType || "Apt."} ${a.aptNo}` : ""].filter((x) => x.trim()).join(" ");
+    const line2 = [a.city, [a.state, a.zip].filter((x) => x.trim()).join(" ")].filter((x) => x.trim()).join(", ");
+    addressLines = [a.building, line1, line2].map((x) => x.trim()).filter(Boolean);
+  }
+  if (!addressLines.length && c.address) addressLines = [c.address];
+  return { addressee, addressLines, dear };
+}
 
 // Creates (or updates, as a new version) the Contingency Dates Letter once attorney review has concluded.
 export async function maybeCreateLetter(ctx: AiCtx, m: MatterRow, state: KeyDatesState, force = false): Promise<KeyDatesState> {
@@ -316,11 +335,19 @@ export async function maybeCreateLetter(ctx: AiCtx, m: MatterRow, state: KeyDate
   const tz = await firmTimezone(ctx.orgId);
   const today = todayIn(tz).ymd;
   if (!force && (ar > today || !isRealEstate({ category: m.category, matterCode: m.matter_code }))) return state;
-  const fp = letterFingerprint(state);
+
+  // Fresh details and client (the AI may just have filled them in).
+  const { data: fresh } = await db().from("matters").select("*").eq("id", m.id).eq("org_id", ctx.orgId).maybeSingle();
+  const row = (fresh ?? m) as MatterRow & { details?: unknown; client_id?: string | null };
+  const details = cleanDetails(row.details);
+  const client = await letterClient(ctx.orgId, row.client_id ?? null);
+  const opts = { fileNo: m.matter_number ?? m.title, date: "", client };
+  // Rebuilt only when something in the letter changes (not the date line).
+  const fp = JSON.stringify(letterValues(state, details, opts).values);
   if (!force && state.letter?.fingerprint === fp) return state;
 
-  const bytes = await buildContingencyLetter(state, {
-    ourRef: m.matter_number ?? m.title,
+  const { bytes, missing } = await buildContingencyLetter(state, details, {
+    ...opts,
     date: new Intl.DateTimeFormat("en-US", { timeZone: tz, month: "long", day: "numeric", year: "numeric" }).format(new Date()),
   });
   const s = db();
@@ -335,7 +362,7 @@ export async function maybeCreateLetter(ctx: AiCtx, m: MatterRow, state: KeyDate
     const { data: still } = await s.from("documents").select("id").eq("id", documentId).eq("org_id", ctx.orgId).maybeSingle();
     if (!still) documentId = null; // the letter was deleted: start a new one
   }
-  const note = `Contingency dates as of ${usDate(today)} (attorney review concluded ${usDate(ar)})`;
+  const note = `Contingency dates as of ${usDate(today)} (attorney review concluded ${usDate(ar)})${missing.length ? `. Still blank: ${missing.join(", ")}` : ""}`;
   const doc = documentId
     ? await addVersionFromUpload({ orgId: ctx.orgId, matterId: m.id, documentId, userId: ctx.userId, userEmail: ctx.email, path: pathName, basedOnVersionId: null, note })
     : await createDocumentFromUpload({
@@ -347,7 +374,19 @@ export async function maybeCreateLetter(ctx: AiCtx, m: MatterRow, state: KeyDate
         path: pathName,
         note,
       });
-  return { ...state, letter: { documentId: doc.id, fingerprint: fp, generatedAt: new Date().toISOString(), version: doc.versions[0]?.versionNumber ?? 1 } };
+  return {
+    ...state,
+    letter: { documentId: doc.id, fingerprint: fp, generatedAt: new Date().toISOString(), version: doc.versions[0]?.versionNumber ?? 1, missing },
+  };
+}
+
+// After Details are edited by hand: bring the letter up to date if it exists.
+export async function updateLetterAfterDetails(ctx: AiCtx, matterId: string) {
+  const m = await loadMatter(ctx, matterId);
+  const state = stateOf(m);
+  if (!state.letter) return;
+  const next = await maybeCreateLetter(ctx, m, state);
+  if (next.letter?.fingerprint !== state.letter.fingerprint) await saveState(ctx, matterId, next);
 }
 
 export type KeyDatesResult = { state: KeyDatesState; stale: boolean; ran: boolean; error?: string | null };

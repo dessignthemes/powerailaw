@@ -128,7 +128,7 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
   const facts = state?.facts;
   const ar = dates.attorneyReviewCompleted?.date ?? null;
   const today = new Date().toISOString().slice(0, 10);
-  const latestLetter = [...(state?.documents ?? [])].reverse().find((d) => /review/i.test(d.type));
+  const latestLetter = [...(state?.documents ?? [])].reverse().find((d) => /review|rider|addendum/i.test(d.type));
 
   return (
     <div className="rounded-2xl overflow-hidden border border-line">
@@ -254,6 +254,11 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
               <button onClick={onOpenDocuments} className="font-medium underline underline-offset-2">
                 Open in Documents
               </button>
+              {!!state.letter.missing?.length && (
+                <span className="basis-full text-[12.5px] text-[#8A4B14]">
+                  Still blank in the letter: {state.letter.missing.join(", ")}. Fill these in under Details and the letter updates itself.
+                </span>
+              )}
             </>
           ) : ar && ar <= today ? (
             <span className="text-muted">being prepared…</span>

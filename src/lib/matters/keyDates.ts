@@ -61,7 +61,7 @@ export type KeyDatesState = {
   fingerprint?: string; // which document versions were read
   extractedAt?: string;
   runningSince?: string | null;
-  letter?: { documentId: string; fingerprint: string; generatedAt: string; version: number } | null;
+  letter?: { documentId: string; fingerprint: string; generatedAt: string; version: number; missing?: string[] } | null;
 };
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;

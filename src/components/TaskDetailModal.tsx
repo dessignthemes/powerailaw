@@ -4,6 +4,7 @@ import AssigneeOptions from "@/components/AssigneeOptions";
 import { useCallback, useState, useEffect, useRef } from "react";
 import ChecklistPanel, { ChecklistPicker } from "@/components/templates/ChecklistPanel";
 import { autoStatus, type TaskChecklist } from "@/lib/checklist";
+import { WAITING_ON, WAITING_LABEL, type WaitingOn } from "@/lib/tasks/waitingOn";
 import Link from "next/link";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import {
@@ -41,6 +42,7 @@ import {
   User,
   CalendarDays,
   Check,
+  Hourglass,
   Flag,
   Play,
   Plus,
@@ -93,6 +95,9 @@ export default function TaskDetailModal({
   const [dueDate, setDueDate] = useState<string | null>(task.dueDate);
 
   const [statusOpen, setStatusOpen] = useState(false);
+  // Who the task is waiting on (Task Board filters "Waiting on lender" etc.).
+  const [waitingOn, setWaitingOn] = useState<WaitingOn | null>(task.waitingOn ?? null);
+  const [waitingOpen, setWaitingOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
@@ -241,7 +246,7 @@ export default function TaskDetailModal({
 
   function commit(patch: Partial<BoardTask>) {
     if (!(patch.title ?? title).trim()) return;
-    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, ...patch });
+    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, ...patch });
   }
 
   return (
@@ -391,6 +396,31 @@ export default function TaskDetailModal({
                   </button>
                 );
               })}
+            </GenericDropdown>
+            <GenericDropdown
+              open={waitingOpen}
+              setOpen={setWaitingOpen}
+              trigger={
+                <span className={waitingOn ? "text-[#8A4B14]" : "text-muted"}>
+                  <Hourglass size={13} strokeWidth={1.75} className="inline -mt-0.5 mr-1.5" />
+                  {waitingOn ? `Waiting on ${WAITING_LABEL[waitingOn]}` : "Waiting on…"}
+                </span>
+              }
+            >
+              {[null, ...WAITING_ON].map((w) => (
+                <button
+                  key={w ?? "none"}
+                  onClick={() => {
+                    setWaitingOn(w);
+                    commit({ waitingOn: w });
+                    setWaitingOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
+                >
+                  {w ? WAITING_LABEL[w] : "Not waiting on anyone"}
+                  {waitingOn === w && <Check size={14} />}
+                </button>
+              ))}
             </GenericDropdown>
 
             <div className="flex items-center gap-1.5 bg-card-alt px-3 py-1.5 rounded-full text-[13px] font-medium text-muted">
