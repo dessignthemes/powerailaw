@@ -1,6 +1,8 @@
 import "server-only";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireUserOrg } from "@/lib/data/documents";
+import { requireUserOrg, newStoragePath, createUploadUrl, createDocumentFromUpload, DOCUMENTS_BUCKET } from "@/lib/data/documents";
+import { fileTypeFromName, MAX_DOCUMENT_BYTES, type FileType } from "@/lib/documents/fileTypes";
 import { currentPortalUser, logEvent, firmName, PortalError } from "@/lib/portal/server";
 
 // Secure messages through the client portal (0029_portal_messages.sql). The
@@ -141,23 +143,108 @@ export async function portalMessages() {
   return { messages: await withAttachments(u.org_id, rows), newCount: unread.length };
 }
 
-export async function portalReply(input: { matterId?: unknown; body?: unknown }) {
+// ── Client uploads ────────────────────────────────────────────────────────
+// Files a client may send: documents and photos/scans.
+export const CLIENT_UPLOAD_TYPES: FileType[] = ["pdf", "doc", "docx", "xls", "xlsx", "csv", "txt", "png", "jpg"];
+const MAX_UPLOADS_PER_DAY = 60;
+
+// A ticket ties an upload slot to the client who asked for it, so a reply can
+// only attach files that client just uploaded (never an existing file's path).
+const ticketKey = () => process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.PORTAL_SECRET || "";
+function ticketFor(portalUserId: string, path: string) {
+  return createHmac("sha256", ticketKey()).update(`portal-upload:${portalUserId}:${path}`).digest("base64url");
+}
+function validTicket(portalUserId: string, path: string, ticket: unknown) {
+  if (typeof ticket !== "string" || !ticketKey()) return false;
+  const a = Buffer.from(ticket);
+  const b = Buffer.from(ticketFor(portalUserId, path));
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+async function clientMatter(u: { org_id: string; client_id: string }, matterId: unknown) {
+  if (!uuid(matterId)) throw new PortalError(400, "Choose which matter this is for.");
+  const { data } = await db().from("matters").select("id").eq("id", matterId as string).eq("org_id", u.org_id).eq("client_id", u.client_id).maybeSingle();
+  if (!data) throw new PortalError(404, "Matter not found.");
+  return data.id as string;
+}
+
+// Step 1: a one-time link the browser uploads the file to (straight to storage).
+export async function portalUploadUrl(input: { matterId?: unknown; name?: unknown; size?: unknown }) {
+  const u = await currentPortalUser();
+  const matterId = await clientMatter(u, input.matterId);
+  const name = typeof input.name === "string" ? input.name.slice(0, 200) : "";
+  const type = fileTypeFromName(name);
+  if (!type || !CLIENT_UPLOAD_TYPES.includes(type)) throw new PortalError(400, `"${name || "This file"}" can't be sent. Use PDF, Word, Excel, text, JPG or PNG.`);
+  const size = Number(input.size);
+  if (!Number.isFinite(size) || size <= 0) throw new PortalError(400, `"${name}" is empty.`);
+  if (size > MAX_DOCUMENT_BYTES) throw new PortalError(400, `"${name}" is larger than 25 MB.`);
+  const since = new Date(Date.now() - 86_400_000).toISOString();
+  const { count } = await db().from("client_portal_events").select("id", { count: "exact", head: true }).eq("portal_user_id", u.id).eq("type", "uploaded").gte("at", since);
+  if ((count ?? 0) >= MAX_UPLOADS_PER_DAY) throw new PortalError(429, "You've sent a lot of files today. Please try again tomorrow or contact your law firm.");
+  const path = newStoragePath(u.org_id, matterId, type);
+  const up = await createUploadUrl(path);
+  return { ...up, ticket: ticketFor(u.id, up.path) };
+}
+
+// Step 2: the reply, with the uploaded files. Each file is checked, saved to the
+// matter's Documents (marked as from the client) and attached to the message.
+export async function portalReply(input: { matterId?: unknown; body?: unknown; uploads?: unknown }) {
   const u = await currentPortalUser();
   const body = typeof input.body === "string" ? input.body.trim().slice(0, 20000) : "";
-  if (!body) throw new PortalError(400, "Write your message first.");
+  const uploads = (Array.isArray(input.uploads) ? input.uploads : [])
+    .slice(0, 10)
+    .map((x) => x as { path?: unknown; name?: unknown; ticket?: unknown })
+    .filter((x) => typeof x.path === "string" && typeof x.name === "string") as { path: string; name: string; ticket?: unknown }[];
+  if (!body && !uploads.length) throw new PortalError(400, "Write your message or attach a file first.");
   let matterId: string | null = null;
-  if (uuid(input.matterId)) {
-    const { data } = await db().from("matters").select("id").eq("id", input.matterId as string).eq("org_id", u.org_id).eq("client_id", u.client_id).maybeSingle();
-    if (!data) throw new PortalError(404, "Matter not found.");
-    matterId = data.id as string;
-  }
+  if (uuid(input.matterId)) matterId = await clientMatter(u, input.matterId);
+  if (uploads.length && !matterId) throw new PortalError(400, "Choose which matter these files are for.");
   const { data: client } = await db().from("clients").select("name").eq("id", u.client_id).maybeSingle();
+  const clientName = ((client?.name as string | undefined) ?? u.email).slice(0, 120);
+
+  const docIds: string[] = [];
+  const failed: string[] = [];
+  for (const f of uploads) {
+    // Only files this client uploaded just now, into a slot nothing else uses.
+    if (!validTicket(u.id, f.path, f.ticket)) {
+      failed.push(f.name);
+      continue;
+    }
+    const { count: used } = await db().from("document_versions").select("id", { count: "exact", head: true }).eq("storage_path", f.path);
+    if (used) {
+      failed.push(f.name);
+      continue;
+    }
+    try {
+      const doc = await createDocumentFromUpload({
+        orgId: u.org_id,
+        matterId: matterId!,
+        userId: null,
+        userEmail: `${u.email} (client portal)`,
+        title: f.name.replace(/[\\/:*?"<>|]+/g, "-").slice(0, 200),
+        path: f.path,
+        note: `Uploaded by ${clientName} through the client portal`,
+      });
+      // The client can see what they sent; the firm sees it came from the client.
+      const shared = { portal_shared: true, portal_shared_at: new Date().toISOString() };
+      const { error: fe } = await db().from("documents").update({ ...shared, from_client: true }).eq("id", doc.id);
+      if (fe) await db().from("documents").update(shared).eq("id", doc.id); // before 0030: no from_client column
+      docIds.push(doc.id);
+      await logEvent(u, "uploaded", doc.title);
+    } catch (e) {
+      console.error("Client portal upload rejected:", (e as Error)?.message);
+      await db().storage.from(DOCUMENTS_BUCKET).remove([f.path]).catch(() => null);
+      failed.push(f.name);
+    }
+  }
+  if (!body && !docIds.length) throw new PortalError(400, `${failed.join(", ")} couldn't be read. Please check the file and try again.`);
+
   const { data, error } = await db()
     .from("portal_messages")
-    .insert({ org_id: u.org_id, client_id: u.client_id, matter_id: matterId, direction: "client", body, sender_name: ((client?.name as string | undefined) ?? u.email).slice(0, 120) })
+    .insert({ org_id: u.org_id, client_id: u.client_id, matter_id: matterId, direction: "client", body, document_ids: docIds, sender_name: clientName })
     .select("*")
     .single();
   if (error) throw missing(error) ? setup() : error;
   await logEvent(u, "replied");
-  return (await withAttachments(u.org_id, [data as Row]))[0];
+  return { message: (await withAttachments(u.org_id, [data as Row]))[0], failed };
 }

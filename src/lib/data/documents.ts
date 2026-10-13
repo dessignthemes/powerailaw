@@ -276,7 +276,7 @@ export async function getDocument(orgId: string, documentId: string): Promise<Ma
 export async function createDocumentFromUpload(opts: {
   orgId: string;
   matterId: string;
-  userId: string;
+  userId: string | null; // null = uploaded by a client through the client portal
   userEmail: string | null;
   title: string;
   path: string;

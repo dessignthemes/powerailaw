@@ -118,6 +118,20 @@ export default function SecureMessages({ matter, client, preselect = [], compact
     }
   }
 
+  // Opens an attached file (the client's uploads are saved in the matter's Documents too).
+  async function openFile(a: Attachment) {
+    if (!a.versionId) return;
+    const w = window.open("", "_blank");
+    try {
+      const d = await getJson<{ url: string }>(`/api/documents/versions/${a.versionId}`);
+      if (w) w.location.href = d.url;
+      else window.location.assign(d.url);
+    } catch (e) {
+      w?.close();
+      setError((e as Error).message);
+    }
+  }
+
   // A client who never set a password needs a (fresh) invite link in the notice.
   const needsInviteLink = access?.status === "invited" && !inviteLink;
   const links = sent ? notice({ client, matter, firm: sent.firm, docs: sent.docs, inviteLink }) : null;
@@ -175,9 +189,14 @@ export default function SecureMessages({ matter, client, preselect = [], compact
                     {m.attachments.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {m.attachments.map((a) => (
-                          <span key={a.id} className="flex items-center gap-1 bg-white/80 rounded-lg px-2 py-1 text-[12px]">
+                          <button
+                            key={a.id}
+                            onClick={() => void openFile(a)}
+                            title={mine ? "Open" : "Sent by the client: open"}
+                            className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] hover:underline ${mine ? "bg-white/80" : "bg-[#E8F6EE]"}`}
+                          >
                             <FileText size={12} className="text-muted" /> {a.title}
-                          </span>
+                          </button>
                         ))}
                       </div>
                     )}

@@ -13,11 +13,11 @@ export async function GET() {
   }
 }
 
-// POST { matterId, body } → the client's reply.
+// POST { matterId, body, uploads: [{ path, name }] } → the client's reply (files uploaded first via /api/portal/uploads).
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => ({}))) as { matterId?: unknown; body?: unknown };
-    return NextResponse.json({ message: await portalReply(body) }, { status: 201 });
+    const body = (await request.json().catch(() => ({}))) as { matterId?: unknown; body?: unknown; uploads?: unknown };
+    return NextResponse.json(await portalReply(body), { status: 201 });
   } catch (e) {
     return portalFail("POST /api/portal/messages", e);
   }
