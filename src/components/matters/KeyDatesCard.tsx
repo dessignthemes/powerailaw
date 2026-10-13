@@ -5,7 +5,6 @@ import { CalendarClock, Loader2, RefreshCw, RotateCcw, FileText, ChevronDown, Ch
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { DOCS_CHANGED_EVENT } from "@/components/documents/DocumentsLibrary";
 import {
-  KEY_DATE_FIELDS,
   ruleText,
   usDate,
   isRealEstate,
@@ -435,9 +434,27 @@ function FieldEditor({
   saving: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Clicking anywhere outside the button or the list closes the list.
+  const pickerButton = useRef<HTMLDivElement>(null);
+  const pickerList = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      const t = e.target as Node;
+      if (!pickerButton.current?.contains(t) && !pickerList.current?.contains(t)) setPickerOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPickerOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [pickerOpen]);
   const present = (key: string, label: string) => fields.some((f) => f.key === key || f.label.trim().toLowerCase() === label.toLowerCase());
   const reusable = library.filter((f) => !present(f.key, f.label));
-  const standardLeft = KEY_DATE_FIELDS.filter((b) => !present(b.key, b.label));
   const addField = (f: FieldDef) => {
     onChange([...fields, { key: f.key, label: f.label }]);
     setPickerOpen(false);
@@ -484,11 +501,10 @@ function FieldEditor({
         >
           <Plus size={13} /> Add field
         </button>
-        <div className="relative">
+        <div className="relative" ref={pickerButton}>
           <button
             onClick={() => setPickerOpen((o) => !o)}
-            disabled={fields.length >= 30 || (!reusable.length && !standardLeft.length)}
-            title={!reusable.length && !standardLeft.length ? "Fields you add are remembered here for every matter type" : undefined}
+            disabled={fields.length >= 30}
             className="flex items-center gap-1.5 bg-white hover:bg-chip disabled:opacity-50 px-3 py-1.5 rounded-full text-[12.5px] font-medium"
           >
             <History size={13} /> Use a field from before <ChevronDown size={12} />
@@ -496,8 +512,14 @@ function FieldEditor({
         </div>
       </div>
       {pickerOpen && (
-<div className="bg-white border border-line rounded-2xl p-1.5 max-w-[360px] max-h-[280px] overflow-y-auto">
-                {reusable.length > 0 && <div className="px-3 pt-1.5 pb-1 text-[11.5px] font-semibold text-muted">Fields your firm added</div>}
+<div ref={pickerList} className="bg-white border border-line rounded-2xl p-1.5 max-w-[360px] max-h-[280px] overflow-y-auto">
+                {reusable.length > 0 ? (
+                  <div className="px-3 pt-1.5 pb-1 text-[11.5px] font-semibold text-muted">Fields your firm added</div>
+                ) : (
+                  <div className="px-3 py-2.5 text-[12.5px] text-muted">
+                    Nothing here yet. Fields you create with <b className="text-ink">+ Add field</b> are kept here, so you can reuse them on any matter type.
+                  </div>
+                )}
                 {reusable.map((f) => (
                   <div key={f.key} className="flex items-center rounded-xl hover:bg-chip">
                     <button onClick={() => addField(f)} className="flex-1 text-left px-3 py-2 text-[13.5px] truncate">
@@ -513,12 +535,7 @@ function FieldEditor({
                     </button>
                   </div>
                 ))}
-                {standardLeft.length > 0 && <div className="px-3 pt-2 pb-1 text-[11.5px] font-semibold text-muted">Standard fields</div>}
-                {standardLeft.map((b) => (
-                  <button key={b.key} onClick={() => addField({ key: b.key, label: b.label })} className="w-full text-left px-3 py-2 rounded-xl text-[13.5px] hover:bg-chip">
-                    {b.label}
-                  </button>
-                ))}
+
               </div>
       )}
       <div className="flex flex-wrap items-center gap-2 pt-1">
