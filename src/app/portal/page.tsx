@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2, FileText, Eye, Download, LogOut, Folder } from "lucide-react";
 import PortalHeader from "./PortalHeader";
+import PortalMessages from "./PortalMessages";
 
 type Home = {
   firm: string;
@@ -70,8 +71,10 @@ export default function PortalHome() {
         ) : (
           <>
             <h1 className="text-[28px] font-semibold">Hello{home.clientName ? `, ${home.clientName.split(" ")[0]}` : ""}</h1>
-            <p className="text-[14px] text-muted mt-1 mb-8">Here are the documents {home.firm} has shared with you.</p>
+            <p className="text-[14px] text-muted mt-1 mb-8">Your secure messages and the documents {home.firm} has shared with you.</p>
             {missing && <div className="mb-5 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13.5px]">That document isn’t available anymore. Your law firm may have stopped sharing it.</div>}
+
+            <PortalMessages firm={home.firm} matters={home.matters} />
 
             {home.documents.length === 0 ? (
               <div className="bg-card-alt rounded-2xl px-6 py-14 text-center">

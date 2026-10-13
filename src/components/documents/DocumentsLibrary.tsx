@@ -17,6 +17,7 @@ import {
   PenLine,
   Search,
   X,
+  ShieldCheck,
   ChevronDown,
   ChevronRight,
   FileUp,
@@ -36,6 +37,7 @@ import {
 } from "@/lib/pdf/upload";
 import { ACCEPT_ATTR, ACCEPTED_SUMMARY, fileTypeLabel, type FileType } from "@/lib/documents/fileTypes";
 import SendForSignature from "@/components/esign/SendForSignature";
+import SecureMessages from "@/components/matters/SecureMessages";
 import { STATUS_LABEL, type SignRequest } from "@/lib/esign/types";
 
 // Lets the matter page know its documents changed (its key dates are re-read).
@@ -73,6 +75,12 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
   const { matters, mattersLoaded, clients } = useWorkspaceData();
   // E-signature requests for this workspace, grouped by document.
   const [signing, setSigning] = useState<{ doc: Doc; version: DocVersion } | null>(null);
+  // Send securely: through the client portal, to the client of the document's matter.
+  const [secureFor, setSecureFor] = useState<Doc | null>(null);
+  const clientOfDoc = (d: Doc) => {
+    const m = matters.find((x) => x.id === d.matterId);
+    return m?.clientId ? clients.find((c) => c.id === m.clientId) ?? null : null;
+  };
   const [signReqs, setSignReqs] = useState<SignRequest[]>([]);
   const [signTick, setSignTick] = useState(0);
   useEffect(() => {
@@ -375,6 +383,11 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
                         <FileSignature size={13} strokeWidth={2} /> Send for signature
                       </button>
                     )}
+                    {latest && clientOfDoc(d) && (
+                      <button onClick={() => setSecureFor(d)} className={beigeBtn} title="Send to the client through the secure client portal">
+                        <ShieldCheck size={13} strokeWidth={2} /> Send securely
+                      </button>
+                    )}
                     {latest && type === "docx" && (
                       <button onClick={() => setConverting({ doc: d, version: latest })} disabled={working} className={blackBtn}>
                         <FileOutput size={13} strokeWidth={2} /> Convert to PDF
@@ -499,6 +512,24 @@ export default function DocumentsLibrary({ matterId: fixedMatterId }: { matterId
           onUploaded={() => reload()}
         />
       )}
+      {secureFor && (() => {
+        const m = matters.find((x) => x.id === secureFor.matterId);
+        const c = clientOfDoc(secureFor);
+        if (!m) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={() => setSecureFor(null)}>
+            <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Send securely" className="bg-cream rounded-3xl w-full max-w-[640px] max-h-[90vh] overflow-y-auto p-4">
+              <div className="flex items-center justify-between px-1 pb-3">
+                <div className="text-[15px] font-semibold">Send securely to {c?.name ?? "client"}</div>
+                <button onClick={() => setSecureFor(null)} aria-label="Close" className="text-muted hover:text-ink">
+                  <X size={18} strokeWidth={1.75} />
+                </button>
+              </div>
+              <SecureMessages matter={m} client={c} preselect={[secureFor.id]} compact />
+            </div>
+          </div>
+        );
+      })()}
       {signing && (
         <SendForSignature
           documentId={signing.doc.id}

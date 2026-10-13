@@ -55,10 +55,10 @@ type UserRow = {
   invite_expires_at: string | null; invited_at: string | null; failed_attempts: number; locked_until: string | null; last_login_at: string | null;
 };
 
-async function logEvent(u: { id: string; org_id: string }, type: string, documentTitle: string | null = null) {
+export async function logEvent(u: { id: string; org_id: string }, type: string, documentTitle: string | null = null) {
   await db().from("client_portal_events").insert({ org_id: u.org_id, portal_user_id: u.id, type, document_title: documentTitle });
 }
-async function firmName(orgId: string) {
+export async function firmName(orgId: string) {
   const { data } = await db().from("organizations").select("name").eq("id", orgId).maybeSingle();
   return (data?.name as string | undefined) ?? "Your law firm";
 }

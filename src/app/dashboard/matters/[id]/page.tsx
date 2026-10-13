@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -74,6 +74,20 @@ export default function MatterDetailPage() {
   const [assignedOpen, setAssignedOpen] = useState(false);
   // Key dates stay up to date on every tab (documents uploaded on the Documents tab are read).
   const keyDates = useKeyDates(matter);
+  // Unread client replies in the secure portal (cleared when the Emails tab is opened).
+  const [unreadReplies, setUnreadReplies] = useState(0);
+  const matterIdForCount = matter?.id;
+  useEffect(() => {
+    if (!matterIdForCount || activeTab === "emails") return;
+    let live = true;
+    fetch(`/api/matters/${matterIdForCount}/portal-messages?count=1`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => live && typeof d?.unread === "number" && setUnreadReplies(d.unread))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [matterIdForCount, activeTab]);
 
   if (!matter) {
     if (!mattersLoaded) {
@@ -311,16 +325,19 @@ export default function MatterDetailPage() {
           return (
             <button
               key={t.key}
-              onClick={() => setActiveTab(t.key)}
+              onClick={() => {
+                setActiveTab(t.key);
+                if (t.key === "emails") setUnreadReplies(0);
+              }}
               className={`flex items-center gap-1.5 px-3.5 py-3 text-[13.5px] font-medium border-b-2 transition-colors whitespace-nowrap ${
                 active ? "border-dark text-ink" : "border-transparent text-muted hover:text-ink"
               }`}
             >
               <Icon size={14} strokeWidth={1.75} />
               {t.label}
-              {t.key === "activities" && (
-                <span className="bg-card-alt text-muted text-[11px] font-medium px-1.5 py-0.5 rounded-full">
-                  1 Unread
+              {t.key === "emails" && unreadReplies > 0 && (
+                <span className="bg-[#3B82F6] text-white text-[11px] font-semibold px-1.5 py-0.5 rounded-full" title="Unread replies from the client portal">
+                  {unreadReplies}
                 </span>
               )}
             </button>

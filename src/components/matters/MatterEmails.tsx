@@ -5,6 +5,7 @@ import { Mail, MessageSquare, ArrowDownLeft, ArrowUpRight, Loader2, RefreshCw, X
 import { subjectWithTag, composeLinks, smsLink } from "@/lib/mail/matterTag";
 import type { Matter } from "@/components/NewMatterModal";
 import type { Client } from "@/components/NewClientModal";
+import SecureMessages from "@/components/matters/SecureMessages";
 
 type Msg = {
   id: string;
@@ -127,7 +128,8 @@ export default function MatterEmails({ matter, client }: { matter: Matter; clien
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <SecureMessages matter={matter} client={client} />
+      <div className="flex flex-wrap items-center gap-2 mt-2">
         <div className="text-[15px] font-semibold mr-auto">
           Emails &amp; texts{matter.matterNumber ? <span className="text-muted font-medium"> · {matter.matterNumber}</span> : null}
         </div>
