@@ -5,6 +5,7 @@ import { getUserConnections } from "@/lib/data/oauth";
 import { listGmail, getGmail, listGmailThreadIds } from "@/lib/mail/google";
 import { listOutlook, getOutlook, listOutlookThreadIds } from "@/lib/mail/microsoft";
 import { matterTag } from "@/lib/mail/matterTag";
+import { matterNumberOf } from "@/lib/ai/keyDates";
 import type { MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
 
 // Emails and text messages logged on a matter (see 0027_matter_messages.sql).
@@ -127,7 +128,7 @@ async function orgMatters(orgId: string) {
   return ((data ?? []) as { id: string; title: string; matter_number?: string | null }[]).map((m) => ({
     id: m.id,
     title: m.title,
-    number: m.matter_number ?? null,
+    number: matterNumberOf(m),
   }));
 }
 
@@ -135,7 +136,7 @@ async function matterOf(orgId: string, matterId: string) {
   const { data } = await db().from("matters").select("*").eq("id", matterId).eq("org_id", orgId).maybeSingle();
   if (!data) throw new MatterMailError(404, "Matter not found.");
   const m = data as { id: string; title: string; matter_number?: string | null };
-  return { id: m.id, title: m.title, number: m.matter_number ?? null };
+  return { id: m.id, title: m.title, number: matterNumberOf(m) };
 }
 
 async function findRow(orgId: string, provider: MailProvider, messageId: string) {

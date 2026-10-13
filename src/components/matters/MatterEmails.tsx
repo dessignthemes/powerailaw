@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Mail, MessageSquare, ArrowDownLeft, ArrowUpRight, Loader2, RefreshCw, X, ExternalLink, Trash2, Paperclip, Send, Info } from "lucide-react";
 import { subjectWithTag, composeLinks, smsLink } from "@/lib/mail/matterTag";
-import type { Matter } from "@/components/NewMatterModal";
+import { numberOf, type Matter } from "@/components/NewMatterModal";
 import type { Client } from "@/components/NewClientModal";
 import SecureMessages from "@/components/matters/SecureMessages";
 
@@ -287,7 +287,7 @@ function EmailComposer({ matter, client, conns, onClose, onOpened }: { matter: M
   const [to, setTo] = useState(client?.email ?? "");
   const [subject, setSubject] = useState(matter.title);
   const [body, setBody] = useState("");
-  const finalSubject = subjectWithTag(subject, matter.matterNumber);
+  const finalSubject = subjectWithTag(subject, numberOf(matter));
   const links = composeLinks(to, finalSubject, body);
   const providers = [...new Set(conns.map((c) => c.provider))];
   const go = (href: string, newTab: boolean) => {
@@ -305,7 +305,7 @@ function EmailComposer({ matter, client, conns, onClose, onOpened }: { matter: M
         <label className="flex flex-col gap-1">
           <span className="text-[12.5px] font-semibold text-muted">Subject</span>
           <input value={subject} onChange={(e) => setSubject(e.target.value)} className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none" />
-          {matter.matterNumber && (
+          {numberOf(matter) && (
             <span className="text-[12px] text-muted">
               Sent as: <b className="text-ink">{finalSubject}</b>. Keep the matter number in the subject and every reply is filed here automatically.
             </span>
@@ -315,7 +315,7 @@ function EmailComposer({ matter, client, conns, onClose, onOpened }: { matter: M
           <span className="text-[12.5px] font-semibold text-muted">Message</span>
           <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={8} className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none resize-y" />
         </label>
-        {!matter.matterNumber && (
+        {!numberOf(matter) && (
           <div className="flex gap-2 text-[12.5px] text-[#8A4B14] bg-[#FDF1E7] rounded-xl px-3 py-2">
             <Info size={14} className="flex-shrink-0 mt-0.5" /> This matter has no number yet, so replies can&apos;t be filed automatically. Give it an abbreviation (pencil icon) first.
           </div>

@@ -5,7 +5,7 @@ import { AccessError } from "@/lib/data/documents";
 import { NoWorkspaceError } from "@/lib/data/org";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300; // scanned contracts are read page by page
 
 type P = { params: Promise<{ id: string }> };
 const validId = (id: string) => /^[0-9a-f-]{36}$/i.test(id);

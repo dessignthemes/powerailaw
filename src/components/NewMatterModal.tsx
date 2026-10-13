@@ -63,6 +63,11 @@ export type Matter = {
   updatedAt: string;
 };
 
+// The matter's number: its own, or one written in its title (matters brought over from LEAP).
+export function numberOf(m: Pick<Matter, "title" | "matterNumber">): string | null {
+  return m.matterNumber ?? (m.title.toUpperCase().match(/\b[A-Z][A-Z0-9]{1,5}-\d{4}-\d{4,}\b/)?.[0] ?? null);
+}
+
 // "REP-2026-0001 · Smith purchase" (or just the title before a number exists).
 export function matterLabel(m: Pick<Matter, "title" | "matterNumber">): string {
   return m.matterNumber ? `${m.matterNumber} · ${m.title}` : m.title;

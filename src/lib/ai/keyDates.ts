@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, aiConfig } from "@/lib/ai/provider";
+import type { ContentBlock } from "@/lib/ai/provider/types";
 import { getMatterContext, ensureVersionIndexed, usageToday, type AiCtx } from "@/lib/ai/store";
 import { firmTimezone, todayIn } from "@/lib/ai/workspaceTools";
 import { cleanChecklist, dueDateOf, setMortgageNa } from "@/lib/checklist";
@@ -109,7 +110,8 @@ How to decide:
 2. The contract is the basis for every date and figure. Change a term ONLY if it was modified during the attorney review process by an attorney review letter, rider or addendum. Apply those documents in date order: for any term modified more than once, the LAST in time letter / rider / addendum controls. A later letter that accepts, rejects or replaces an earlier proposal must be followed as written. Terms nobody modified stay exactly as the contract states them.
 3. Attorney review is completed on the date the last attorney review letter was accepted or attorney review was declared concluded. If no review letters were sent, it ends 3 business days after the contract was fully signed (give that as a rule).
 4. For a date stated as a period ("within 10 days after completion of attorney review"), give the rule (days, businessDays, from) and leave date null unless an exact calendar date is written. "Business days" = businessDays true.
-5. Never invent a date. If something is unclear, leave it null and say why in notes.
+5. Documents are handed over in the order they were added (oldest first), but each document's own date decides its place. Some are scanned pages (attached as PDFs or images): read them fully, including handwritten or typed entries in blanks, ticked checkboxes (e.g. whether there is a mortgage contingency), and the dates beside signatures.
+6. Never invent a date. If something is unclear, leave it null and say why in notes.
 
 Fields (use these keys only): ${FIELD_KEYS.join(", ")}.
 contractSigned = contract fully signed; attorneyReviewCompleted = attorney review concluded; initialDeposit = initial deposit due; secondDeposit = additional/second deposit due; inspection = home inspection contingency deadline; appraisal = appraisal contingency deadline; mortgage = mortgage commitment contingency deadline; closing = closing date.
@@ -135,41 +137,62 @@ async function readWithAi(ctx: AiCtx, matterId: string, docs: Awaited<ReturnType
   const tz = await firmTimezone(ctx.orgId);
   const today = todayIn(tz).ymd;
 
-  // Make documents readable (newest uploads first if there are many).
-  // (stops after ~40s so the reading itself still fits in the request; the rest are ready next time)
-  const list = docs.slice(0, 15);
+  // The 15 most recent documents, handed over oldest first.
+  // Getting their text ready stops after ~25s so the reading itself still fits in the request.
+  const list = docs.slice(0, 15).reverse();
   const started = Date.now();
   for (const d of list) {
     if (d.indexStatus) continue;
-    if (Date.now() - started > 40_000) break;
+    if (Date.now() - started > 25_000) break;
     d.indexStatus = await ensureVersionIndexed(ctx, d.versionId).catch(() => null);
   }
 
-  let budget = 200_000;
-  const parts: string[] = [];
+  // Each document goes in as text, or, when it has little or no text (a scan, a
+  // DocuSign'd image PDF, a photo), as the PDF/image itself for the AI to read.
+  let budget = 200_000; // characters of text
+  let fileBudget = 22 * 1024 * 1024; // bytes of scanned files (the request limit is 32 MB after encoding)
+  const content: ContentBlock[] = [];
   const meta: { id: string; title: string; readable: boolean }[] = [];
   for (const [i, d] of list.entries()) {
     const id = `D${i + 1}`;
+    const name = d.title.replace(/"/g, "'");
     const text = d.indexStatus === "ready" || d.indexStatus === "needs_ocr" ? await versionText(d.versionId, Math.min(70_000, budget)) : "";
-    budget -= text.length;
-    meta.push({ id, title: d.title, readable: !!text.trim() });
-    parts.push(
-      text.trim()
-        ? `<document source="${id}" name="${d.title.replace(/"/g, "'")}">\n${text}\n</document>`
-        : `<document source="${id}" name="${d.title.replace(/"/g, "'")}">(no readable text: scanned or not a text document)</document>`
-    );
+    const pages = Math.max(1, d.pageCount || 1);
+    const scanned = text.trim().length / pages < 300;
+    if (!scanned) {
+      budget -= text.length;
+      meta.push({ id, title: d.title, readable: true });
+      content.push({ type: "text", text: `<document source="${id}" name="${name}">\n${text}\n</document>` });
+    } else {
+      const file = await scannedFile(ctx, d.versionId, fileBudget);
+      if (file) {
+        fileBudget -= file.size;
+        meta.push({ id, title: d.title, readable: true });
+        content.push({ type: "text", text: `<document source="${id}" name="${name}"> (scanned; its pages follow)` });
+        content.push(file.block);
+        content.push({ type: "text", text: "</document>" });
+      } else {
+        meta.push({ id, title: d.title, readable: !!text.trim() });
+        content.push({
+          type: "text",
+          text: text.trim()
+            ? `<document source="${id}" name="${name}">\n${text}\n</document>`
+            : `<document source="${id}" name="${name}">(no readable text and not a PDF or image that can be read)</document>`,
+        });
+      }
+    }
     if (budget <= 5_000) break;
   }
-  if (!meta.some((m) => m.readable)) throw new KeyDatesError(400, "None of this matter's documents have readable text yet (scanned PDFs can't be read).");
+  if (!meta.some((m) => m.readable)) throw new KeyDatesError(400, "None of this matter's documents could be read.");
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 100_000);
+  const timer = setTimeout(() => controller.abort(), 230_000);
   let text = "";
   let usage = { inputTokens: 0, outputTokens: 0 };
   try {
     for await (const ev of provider.stream({
       system: SYSTEM(today, side),
-      messages: [{ role: "user", content: [{ type: "text", text: parts.join("\n\n") }] }],
+      messages: [{ role: "user", content }],
       tools: [],
       maxTokens: 5000,
       signal: controller.signal,
@@ -194,6 +217,24 @@ async function readWithAi(ctx: AiCtx, matterId: string, docs: Awaited<ReturnType
   }
   void matterId;
   return { raw, meta };
+}
+
+// The original file of a scanned document, as a block the AI reads (PDF ≤ 100 pages, or JPG/PNG).
+async function scannedFile(ctx: AiCtx, versionId: string, maxBytes: number): Promise<{ block: ContentBlock; size: number } | null> {
+  const { data: v } = await db().from("document_versions").select("storage_path, page_count, size_bytes").eq("id", versionId).eq("org_id", ctx.orgId).maybeSingle();
+  const row = v as { storage_path: string; page_count: number | null; size_bytes: number | null } | null;
+  if (!row) return null;
+  const ext = row.storage_path.toLowerCase().split(".").pop();
+  const kind = ext === "pdf" ? "pdf" : ext === "jpg" || ext === "jpeg" ? "jpg" : ext === "png" ? "png" : null;
+  if (!kind || (row.size_bytes ?? 0) > maxBytes || (kind === "pdf" && (row.page_count ?? 0) > 100)) return null;
+  const { data, error } = await db().storage.from(DOCUMENTS_BUCKET).download(row.storage_path);
+  if (error || !data) return null;
+  const bytes = Buffer.from(await data.arrayBuffer());
+  if (bytes.length > maxBytes) return null;
+  const b64 = bytes.toString("base64");
+  const block: ContentBlock =
+    kind === "pdf" ? { type: "document", mediaType: "application/pdf", data: b64 } : { type: "image", mediaType: kind === "png" ? "image/png" : "image/jpeg", data: b64 };
+  return { block, size: bytes.length };
 }
 
 export function parseReading(raw: Record<string, unknown>, meta: { id: string; title: string; readable: boolean }[]) {
@@ -268,7 +309,31 @@ function mergeManual(read: KeyDatesState["dates"], previous: KeyDatesState["date
 
 // Fills every checklist on the matter's tasks with the key dates, and sets each
 // task's due date to its next open step.
+// The matter's number: its own, or one written in its title (e.g. a matter
+// brought over from LEAP and titled "REP-2026-3695").
+export function matterNumberOf(m: { matter_number?: string | null; title?: string | null }): string | null {
+  if (m.matter_number) return m.matter_number;
+  return (m.title ?? "").toUpperCase().match(/\b[A-Z][A-Z0-9]{1,5}-\d{4}-\d{4,}\b/)?.[0] ?? null;
+}
+
+// Tasks made before tasks could belong to a matter: any task whose title carries
+// this matter's number (e.g. "Walsh: REP-2026-3695") is linked to it.
+export async function linkTasksByNumber(ctx: AiCtx, matterId: string) {
+  const { data } = await db().from("matters").select("*").eq("id", matterId).eq("org_id", ctx.orgId).maybeSingle();
+  const num = data ? matterNumberOf(data as { matter_number?: string | null; title?: string | null }) : null;
+  if (!num) return 0;
+  const { data: linked } = await db()
+    .from("tasks")
+    .update({ matter_id: matterId })
+    .eq("org_id", ctx.orgId)
+    .is("matter_id", null)
+    .ilike("title", `%${num}%`)
+    .select("id");
+  return (linked ?? []).length;
+}
+
 export async function applyDatesToTasks(ctx: AiCtx, matterId: string, state: KeyDatesState) {
+  await linkTasksByNumber(ctx, matterId).catch(() => 0);
   const dates = anchorDates(state.dates);
   if (!Object.keys(dates).length && !state.dates.mortgage?.na) return 0;
   const s = db();
@@ -341,7 +406,7 @@ export async function maybeCreateLetter(ctx: AiCtx, m: MatterRow, state: KeyDate
   const row = (fresh ?? m) as MatterRow & { details?: unknown; client_id?: string | null };
   const details = cleanDetails(row.details);
   const client = await letterClient(ctx.orgId, row.client_id ?? null);
-  const opts = { fileNo: m.matter_number ?? m.title, date: "", client };
+  const opts = { fileNo: matterNumberOf(m) ?? m.title, date: "", client };
   // Rebuilt only when something in the letter changes (not the date line).
   const fp = JSON.stringify(letterValues(state, details, opts).values);
   if (!force && state.letter?.fingerprint === fp) return state;
@@ -389,11 +454,14 @@ export async function updateLetterAfterDetails(ctx: AiCtx, matterId: string) {
   if (next.letter?.fingerprint !== state.letter.fingerprint) await saveState(ctx, matterId, next);
 }
 
-export type KeyDatesResult = { state: KeyDatesState; stale: boolean; ran: boolean; error?: string | null };
+export type KeyDatesResult = { state: KeyDatesState; stale: boolean; ran: boolean; error?: string | null; linked?: number };
 
 // GET: the saved dates. With auto, read the documents again if they changed (real estate matters).
 export async function getKeyDates(ctx: AiCtx, matterId: string, auto: boolean): Promise<KeyDatesResult> {
   const m = await loadMatter(ctx, matterId);
+  // Link older tasks carrying this matter's number, and give them the dates already known.
+  const linked = await linkTasksByNumber(ctx, matterId).catch(() => 0);
+  if (linked > 0) await applyDatesToTasks(ctx, matterId, stateOf(m)).catch(() => 0);
   let state = stateOf(m);
   const { docs, fingerprint } = await inputDocuments(ctx, matterId, state);
   const stale = docs.length > 0 && state.fingerprint !== fingerprint;
@@ -415,7 +483,7 @@ export async function getKeyDates(ctx: AiCtx, matterId: string, auto: boolean): 
     });
     if (state.letter?.fingerprint !== before) await saveState(ctx, matterId, state);
   }
-  return { state, stale, ran: false };
+  return { state, stale, ran: false, linked };
 }
 
 export async function refreshKeyDates(ctx: AiCtx, matterId: string, opts: { dropManual?: boolean } = {}): Promise<KeyDatesResult> {

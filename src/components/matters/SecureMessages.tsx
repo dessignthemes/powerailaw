@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ShieldCheck, Loader2, Paperclip, Send, FileText, X, Check, Mail, UserPlus, CheckCheck } from "lucide-react";
 import { composeLinks, subjectWithTag } from "@/lib/mail/matterTag";
-import type { Matter } from "@/components/NewMatterModal";
+import { numberOf, type Matter } from "@/components/NewMatterModal";
 import type { Client } from "@/components/NewClientModal";
 
 type Attachment = { id: string; title: string; versionId: string | null; fileType: string };
@@ -42,7 +42,7 @@ function notice(opts: { client: Client | null; matter: Matter; firm: string; doc
     "Thank you,",
     opts.firm,
   ].join("\n");
-  const subject = subjectWithTag(`New secure message from ${opts.firm}`, opts.matter.matterNumber);
+  const subject = subjectWithTag(`New secure message from ${opts.firm}`, numberOf(opts.matter));
   return composeLinks(opts.client?.email ?? "", subject, body);
 }
 

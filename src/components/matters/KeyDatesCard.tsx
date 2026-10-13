@@ -7,7 +7,7 @@ import { DOCS_CHANGED_EVENT } from "@/components/documents/DocumentsLibrary";
 import { KEY_DATE_FIELDS, ruleText, usDate, isRealEstate, type KeyDatesState, type KeyDateField } from "@/lib/matters/keyDates";
 import type { Matter } from "@/components/NewMatterModal";
 
-type Result = { state: KeyDatesState; stale: boolean; ran: boolean; error?: string | null };
+type Result = { state: KeyDatesState; stale: boolean; ran: boolean; error?: string | null; linked?: number };
 
 async function call(url: string, init?: RequestInit): Promise<Result> {
   const res = await fetch(url, init);
@@ -53,10 +53,11 @@ export function useKeyDates(matter: Matter | null) {
     (r: Result) => {
       setData(r);
       setError(r.error ?? null);
+      if (r.linked) refreshAll(); // older tasks were just linked to this matter
       const running = r.state.runningSince && Date.now() - Date.parse(r.state.runningSince) < 150_000;
       if (r.stale && auto && !running) void refresh();
     },
-    [auto, refresh]
+    [auto, refresh, refreshAll]
   );
 
   useEffect(() => {

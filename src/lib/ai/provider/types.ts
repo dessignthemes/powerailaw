@@ -6,7 +6,10 @@
 export type TextBlock = { type: "text"; text: string };
 export type ToolUseBlock = { type: "tool_use"; id: string; name: string; input: Record<string, unknown> };
 export type ToolResultBlock = { type: "tool_result"; toolUseId: string; content: string; isError?: boolean };
-export type ContentBlock = TextBlock | ToolUseBlock | ToolResultBlock;
+// A whole PDF or an image the model reads itself (scanned pages, photos).
+export type DocumentBlock = { type: "document"; mediaType: "application/pdf"; data: string; title?: string }; // data = base64
+export type ImageBlock = { type: "image"; mediaType: "image/jpeg" | "image/png"; data: string };
+export type ContentBlock = TextBlock | ToolUseBlock | ToolResultBlock | DocumentBlock | ImageBlock;
 
 export type ChatMessage = { role: "user" | "assistant"; content: ContentBlock[] };
 

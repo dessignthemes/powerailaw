@@ -16,6 +16,8 @@ function toAnthropicContent(blocks: ContentBlock[]): Anthropic.ContentBlockParam
   return blocks.map((b) => {
     if (b.type === "text") return { type: "text", text: b.text };
     if (b.type === "tool_use") return { type: "tool_use", id: b.id, name: b.name, input: b.input };
+    if (b.type === "document") return { type: "document", source: { type: "base64", media_type: b.mediaType, data: b.data }, ...(b.title ? { title: b.title } : {}) };
+    if (b.type === "image") return { type: "image", source: { type: "base64", media_type: b.mediaType, data: b.data } };
     return { type: "tool_result", tool_use_id: b.toolUseId, content: b.content, is_error: b.isError ?? false };
   });
 }

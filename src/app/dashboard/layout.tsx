@@ -2,6 +2,7 @@ import Sidebar from "@/components/Sidebar";
 import PageSwitcher from "@/components/PageSwitcher";
 import { IntegrationsModalProvider } from "@/context/IntegrationsModalContext";
 import { WorkspaceDataProvider } from "@/context/WorkspaceDataContext";
+import UpdateBanner from "@/components/UpdateBanner";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {children}
           </main>
         </div>
+        <UpdateBanner />
       </IntegrationsModalProvider>
     </WorkspaceDataProvider>
   );
