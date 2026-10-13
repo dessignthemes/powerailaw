@@ -93,7 +93,7 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
                   <span className="text-[11.5px] text-muted">{count ? `${count}/${sec.fields.length}` : ""}</span>
                 </button>
                 {!isCollapsed && (
-                  <div className={wide ? "pb-3 flex flex-col gap-1" : "px-4 pb-3 flex flex-col gap-1"}>
+                  <div className={wide ? "pb-3 flex flex-col gap-1.5" : "px-4 pb-3 flex flex-col gap-1.5"}>
                     {sec.fields.map((f) => (
                       <FieldRow
                         key={f.key}
@@ -123,6 +123,14 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
   );
 }
 
+// "Add email", "Add phone", "Add purchase price" … so empty boxes say what goes in them.
+function addHint(f: DetailField) {
+  if (f.kind === "email") return "Add email";
+  if (f.kind === "phone") return "Add phone";
+  if (f.kind === "money") return "$0.00";
+  return `Add ${f.label.toLowerCase()}`;
+}
+
 function FieldRow({ field, value, hint, onSave }: { field: DetailField; value?: { value: string; source?: string | null; manual?: boolean }; hint?: string; onSave: (v: string) => void }) {
   const [draft, setDraft] = useState<string | null>(null);
   const shown = draft ?? value?.value ?? "";
@@ -149,9 +157,12 @@ function FieldRow({ field, value, hint, onSave }: { field: DetailField; value?: 
             if (e.key === "Escape") setDraft(null);
           }}
           type={field.kind === "email" ? "email" : field.kind === "phone" ? "tel" : "text"}
-          placeholder={hint ?? field.placeholder ?? ""}
+          placeholder={hint ?? field.placeholder ?? addHint(field)}
           aria-label={field.label}
-          className={`w-full min-w-0 bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-line focus:border-line rounded-lg px-2 py-1 text-[13px] outline-none placeholder:text-muted-light ${
+          autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          className={`w-full min-w-0 bg-white border border-line hover:border-[#C2C9D4] focus:border-[#AEB8C6] rounded-lg px-2.5 py-1.5 text-[13px] outline-none placeholder:text-muted-light transition-colors ${
             fromDocs ? "pr-6" : ""
           }`}
         />
