@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAiCtx } from "@/lib/ai/store";
-import { getKeyDates, refreshKeyDates, saveManualDates, createLetterNow, resetKeyDates, KeyDatesError } from "@/lib/ai/keyDates";
+import { getKeyDates, refreshKeyDates, saveManualDates, createLetterNow, resetKeyDates, matterFields, saveMatterFields, KeyDatesError } from "@/lib/ai/keyDates";
+import type { AiCtx } from "@/lib/ai/store";
+
+// Every answer also carries the fields this matter shows.
+async function withFields<T extends object>(ctx: AiCtx, id: string, r: T) {
+  return { ...r, fields: await matterFields(ctx, id) };
+}
 import { AccessError } from "@/lib/data/documents";
 import { NoWorkspaceError } from "@/lib/data/org";
 
@@ -24,7 +30,8 @@ export async function GET(request: Request, { params }: P) {
     const { id } = await params;
     if (!validId(id)) return NextResponse.json({ error: "Matter not found." }, { status: 404 });
     const auto = new URL(request.url).searchParams.get("auto") === "1";
-    return NextResponse.json(await getKeyDates(await getAiCtx(), id, auto));
+    const ctx = await getAiCtx();
+    return NextResponse.json(await withFields(ctx, id, await getKeyDates(ctx, id, auto)));
   } catch (error) {
     return fail("GET /api/matters/[id]/key-dates", error);
   }
@@ -40,11 +47,16 @@ export async function POST(request: Request, { params }: P) {
     if (!validId(id)) return NextResponse.json({ error: "Matter not found." }, { status: 404 });
     const body = (await request.json().catch(() => ({}))) as { action?: unknown; dates?: unknown };
     const ctx = await getAiCtx();
-    if (body.action === "refresh") return NextResponse.json(await refreshKeyDates(ctx, id));
-    if (body.action === "letter") return NextResponse.json(await createLetterNow(ctx, id));
-    if (body.action === "reset") return NextResponse.json(await resetKeyDates(ctx, id));
+    if (body.action === "refresh") return NextResponse.json(await withFields(ctx, id, await refreshKeyDates(ctx, id)));
+    if (body.action === "letter") return NextResponse.json(await withFields(ctx, id, await createLetterNow(ctx, id)));
+    if (body.action === "reset") return NextResponse.json(await withFields(ctx, id, await resetKeyDates(ctx, id)));
     if (body.action === "save" && body.dates && typeof body.dates === "object") {
-      return NextResponse.json(await saveManualDates(ctx, id, body.dates as Record<string, unknown>));
+      return NextResponse.json(await withFields(ctx, id, await saveManualDates(ctx, id, body.dates as Record<string, unknown>)));
+    }
+    // { action: "fields", fields: [{ key, label }] | null } → this matter type's field list
+    if (body.action === "fields") {
+      await saveMatterFields(ctx, id, (body as { fields?: unknown }).fields ?? null);
+      return NextResponse.json(await withFields(ctx, id, await getKeyDates(ctx, id, false)));
     }
     return NextResponse.json({ error: "Nothing to do." }, { status: 400 });
   } catch (error) {

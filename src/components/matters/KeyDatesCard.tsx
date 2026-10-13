@@ -1,13 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CalendarClock, Loader2, RefreshCw, RotateCcw, FileText, ChevronDown, ChevronRight, Info, PenLine } from "lucide-react";
+import { CalendarClock, Loader2, RefreshCw, RotateCcw, FileText, ChevronDown, ChevronRight, Info, PenLine, Settings2, ArrowUp, ArrowDown, Trash2, Plus } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { DOCS_CHANGED_EVENT } from "@/components/documents/DocumentsLibrary";
-import { KEY_DATE_FIELDS, ruleText, usDate, isRealEstate, type KeyDatesState, type KeyDateField } from "@/lib/matters/keyDates";
+import {
+  KEY_DATE_FIELDS,
+  ruleText,
+  usDate,
+  isRealEstate,
+  standardFields,
+  layoutKey,
+  newCustomKey,
+  type KeyDatesState,
+  type FieldDef,
+} from "@/lib/matters/keyDates";
 import type { Matter } from "@/components/NewMatterModal";
 
-type Result = { state: KeyDatesState; stale: boolean; ran: boolean; error?: string | null; linked?: number };
+type Result = { state: KeyDatesState; stale: boolean; ran: boolean; error?: string | null; linked?: number; fields?: FieldDef[] };
 
 async function call(url: string, init?: RequestInit): Promise<Result> {
   const res = await fetch(url, init);
@@ -79,7 +89,7 @@ export function useKeyDates(matter: Matter | null) {
   }, [id, handle]);
 
   const save = useCallback(
-    async (changes: Partial<Record<KeyDateField, string | null>>) => { // "na" = not applicable (mortgage)
+    async (changes: Record<string, string | null>) => { // "na" = not applicable (mortgage)
       if (!id) return;
       setError(null);
       try {
@@ -113,13 +123,34 @@ export function useKeyDates(matter: Matter | null) {
     }
   }, [id]);
 
-  return { data, reading, error, refresh, save, reset, createLetter };
+  // Renamed / removed / added fields for this matter type (null = standard fields).
+  const saveFields = useCallback(
+    async (fields: FieldDef[] | null) => {
+      if (!id) return false;
+      setError(null);
+      try {
+        setData(await call(`/api/matters/${id}/key-dates`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "fields", fields }) }));
+        return true;
+      } catch (e) {
+        setError((e as Error).message);
+        return false;
+      }
+    },
+    [id]
+  );
+
+  return { data, reading, error, refresh, save, reset, createLetter, saveFields, matter };
 }
 
 export type KeyDatesApi = ReturnType<typeof useKeyDates>;
 
 export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesApi; onOpenDocuments: () => void }) {
-  const { data, reading, error, refresh, save, reset, createLetter } = api;
+  const { data, reading, error, refresh, save, reset, createLetter, saveFields, matter } = api;
+  const realEstate = !!matter && isRealEstate(matter);
+  // The fields this matter shows (its type's list, or the firm's own).
+  const fields: FieldDef[] = data?.fields ?? (matter ? standardFields(matter) : []);
+  const [editing, setEditing] = useState<FieldDef[] | null>(null);
+  const [savingFields, setSavingFields] = useState(false);
   const [resetting, setResetting] = useState(false);
   const manualCount = Object.values(data?.state.dates ?? {}).filter((d) => d?.manual).length;
   const [showDocs, setShowDocs] = useState(false);
@@ -145,6 +176,13 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
                 ? "Not read from documents yet"
                 : ""}
         </span>
+        <button
+          onClick={() => setEditing(editing ? null : fields.map((f) => ({ ...f })))}
+          title="Rename, remove or add key date fields for this matter type"
+          className="ml-auto flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
+        >
+          <Settings2 size={13} strokeWidth={1.75} /> Edit fields
+        </button>
         {manualCount > 0 && (
           <button
             onClick={async () => {
@@ -155,7 +193,7 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
             }}
             disabled={reading || resetting}
             title="Undo dates entered by hand and use the dates from the documents"
-            className="ml-auto flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
+            className="flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
           >
             {resetting ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} strokeWidth={1.75} />} Reset
           </button>
@@ -163,7 +201,7 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
         <button
           onClick={() => void refresh()}
           disabled={reading}
-          className={`${manualCount > 0 ? "" : "ml-auto "}flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors`}
+          className="flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
         >
           {reading ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} strokeWidth={1.75} />}
           {state?.extractedAt ? "Read documents again" : "Read from documents"}
@@ -192,7 +230,21 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
         )}
 
         <div className="flex flex-col">
-          {KEY_DATE_FIELDS.map((f, i) => {
+          {editing && (
+            <FieldEditor
+              typeName={matter ? layoutKey(matter) : "this matter type"}
+              fields={editing}
+              onChange={setEditing}
+              saving={savingFields}
+              onCancel={() => setEditing(null)}
+              onSave={async (list) => {
+                setSavingFields(true);
+                if (await saveFields(list)) setEditing(null);
+                setSavingFields(false);
+              }}
+            />
+          )}
+          {!editing && fields.map((f, i) => {
             const d = dates[f.key];
             const rule = d ? ruleText(d) : null;
             const past = d?.date && d.date < today;
@@ -243,6 +295,7 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
           })}
         </div>
 
+{realEstate && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl bg-card-alt px-3.5 py-2.5 text-[13px]">
           <FileText size={14} strokeWidth={1.75} className="text-muted" />
           <span className="font-medium">Contingency Dates Letter:</span>
@@ -282,6 +335,7 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
             </button>
           )}
         </div>
+        )}
 
         {!!state?.notes?.length && (
           <div className="flex gap-2 text-[12.5px] text-muted">
@@ -315,6 +369,96 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Rename, reorder, remove and add key date fields for a matter type.
+function FieldEditor({
+  typeName,
+  fields,
+  onChange,
+  onSave,
+  onCancel,
+  saving,
+}: {
+  typeName: string;
+  fields: FieldDef[];
+  onChange: (f: FieldDef[]) => void;
+  onSave: (f: FieldDef[] | null) => void;
+  onCancel: () => void;
+  saving: boolean;
+}) {
+  const set = (i: number, patch: Partial<FieldDef>) => onChange(fields.map((f, j) => (j === i ? { ...f, ...patch } : f)));
+  const move = (i: number, d: -1 | 1) => {
+    const j = i + d;
+    if (j < 0 || j >= fields.length) return;
+    const next = [...fields];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+  const removed = KEY_DATE_FIELDS.filter((b) => !fields.some((f) => f.key === b.key));
+  const valid = fields.every((f) => f.label.trim());
+  return (
+    <div className="rounded-xl bg-card-alt p-3.5 flex flex-col gap-2">
+      <div className="text-[12.5px] text-muted">
+        Fields for <b className="text-ink">{typeName}</b> matters. Changes apply to every {typeName} matter; dates already entered are kept.
+      </div>
+      {fields.map((f, i) => (
+        <div key={f.key} className="flex items-center gap-2">
+          <input
+            value={f.label}
+            onChange={(e) => set(i, { label: e.target.value.slice(0, 60) })}
+            aria-label={`Name of field ${i + 1}`}
+            className="flex-1 min-w-0 bg-white border border-line rounded-lg px-2.5 py-1.5 text-[13.5px] outline-none"
+          />
+          <span className="text-[11px] text-muted w-[60px] flex-shrink-0">{f.key.startsWith("c_") ? "Your field" : "Standard"}</span>
+          <button onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up" className="w-7 h-7 rounded-full hover:bg-white disabled:opacity-30 flex items-center justify-center">
+            <ArrowUp size={13} />
+          </button>
+          <button onClick={() => move(i, 1)} disabled={i === fields.length - 1} aria-label="Move down" className="w-7 h-7 rounded-full hover:bg-white disabled:opacity-30 flex items-center justify-center">
+            <ArrowDown size={13} />
+          </button>
+          <button onClick={() => onChange(fields.filter((_, j) => j !== i))} aria-label={`Remove ${f.label}`} className="w-7 h-7 rounded-full hover:bg-white text-muted hover:text-[#B42318] flex items-center justify-center">
+            <Trash2 size={13} />
+          </button>
+        </div>
+      ))}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <button
+          onClick={() => onChange([...fields, { key: newCustomKey(), label: "" }])}
+          disabled={fields.length >= 30}
+          className="flex items-center gap-1.5 bg-white hover:bg-chip px-3 py-1.5 rounded-full text-[12.5px] font-medium"
+        >
+          <Plus size={13} /> Add field
+        </button>
+        {removed.map((b) => (
+          <button
+            key={b.key}
+            onClick={() => onChange([...fields, { key: b.key, label: b.label }])}
+            title="Add this standard field back"
+            className="flex items-center gap-1 text-[12px] text-muted hover:text-ink bg-white/60 hover:bg-white px-2.5 py-1 rounded-full"
+          >
+            <Plus size={11} /> {b.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <button onClick={() => onSave(null)} disabled={saving} className="text-[12.5px] text-muted hover:text-ink underline underline-offset-2">
+          Use the standard fields
+        </button>
+        <button onClick={onCancel} disabled={saving} className="ml-auto px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-white">
+          Cancel
+        </button>
+        <button
+          onClick={() => onSave(fields.map((f) => ({ ...f, label: f.label.trim() })))}
+          disabled={saving || !valid}
+          className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-1.5 rounded-full text-[13px] font-medium"
+        >
+          {saving && <Loader2 size={12} className="animate-spin" />} Save fields
+        </button>
+      </div>
+      {!valid && <div className="text-[12px] text-[#B42318]">Give every field a name, or remove it.</div>}
     </div>
   );
 }

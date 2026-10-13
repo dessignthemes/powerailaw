@@ -355,7 +355,7 @@ export default function MatterDetailPage() {
         <MatterTasks
           matter={matter}
           clientName={client?.name ?? null}
-          keyDates={anchorDates(keyDates.data?.state.dates ?? {})}
+          keyDates={anchorDates(keyDates.data?.state.dates ?? {}, keyDates.data?.fields ?? [])}
           cash={isCashDeal(keyDates.data?.state)}
         />
       ) : activeTab !== "overview" ? (

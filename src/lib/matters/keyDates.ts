@@ -24,7 +24,10 @@ export const KEY_DATE_FIELDS: { key: KeyDateField; label: string; anchor: string
   { key: "closing", label: "Closing", anchor: "Closing date", letter: "Closing date (on or about)" },
 ];
 export const FIELD_KEYS = KEY_DATE_FIELDS.map((f) => f.key);
-export const isField = (k: unknown): k is KeyDateField => typeof k === "string" && (FIELD_KEYS as string[]).includes(k);
+export const isField = (k: unknown): k is KeyDateField => typeof k === "string" && (FIELD_KEYS as string[]).includes(k)
+// Fields a firm adds itself ("Custody hearing", "Mediation"): key c_xxxx, entered by hand or read by the AI by name.
+export const isCustomKey = (k: unknown): k is string => typeof k === "string" && /^c_[a-z0-9]{4,24}$/.test(k);
+export const isDateKey = (k: unknown): k is string => isField(k) || isCustomKey(k);;
 
 export type KeyDate = {
   date: string | null; // YYYY-MM-DD (explicit, or worked out from the rule)
@@ -52,12 +55,15 @@ export type KeyFacts = {
 
 export type ReadDocument = { title: string; type: string; date: string | null; summary: string; readable: boolean };
 
+// Built-in fields (contractSigned, closing …) and the firm's own (c_xxxx).
+export type DatesMap = Record<string, KeyDate | undefined>;
+
 export type KeyDatesState = {
-  dates: Partial<Record<KeyDateField, KeyDate>>;
+  dates: DatesMap;
   facts?: KeyFacts;
   documents?: ReadDocument[]; // in the order they were applied (oldest first)
   notes?: string[];
-  read?: Partial<Record<KeyDateField, KeyDate>>; // the dates as read from the documents (Reset goes back to these)
+  read?: DatesMap; // the dates as read from the documents (Reset goes back to these)
   fingerprint?: string; // which document versions were read
   extractedAt?: string;
   runningSince?: string | null;
@@ -87,9 +93,10 @@ function addDays(ymd: string, days: number, business: boolean): string {
 // Explicit and hand-entered dates are kept as they are.
 export function resolveDates(dates: KeyDatesState["dates"]): KeyDatesState["dates"] {
   const out: KeyDatesState["dates"] = {};
-  for (const k of FIELD_KEYS) if (dates[k]) out[k] = { ...dates[k]! };
-  for (let pass = 0; pass < FIELD_KEYS.length; pass++) {
-    for (const k of FIELD_KEYS) {
+  const keys = Object.keys(dates).filter((k) => dates[k] && isDateKey(k));
+  for (const k of keys) out[k] = { ...dates[k]! };
+  for (let pass = 0; pass < keys.length; pass++) {
+    for (const k of keys) {
       const d = out[k];
       if (!d || d.manual || !d.from || typeof d.days !== "number") continue;
       const base = out[d.from]?.date;
@@ -100,11 +107,16 @@ export function resolveDates(dates: KeyDatesState["dates"]): KeyDatesState["date
 }
 
 // Dates in the form task checklists use: { "Closing date": "2026-11-20", ... }.
-export function anchorDates(dates: KeyDatesState["dates"]): Record<string, string> {
+// The firm's own fields use their name ("Custody hearing").
+export function anchorDates(dates: KeyDatesState["dates"], fields: FieldDef[] = []): Record<string, string> {
   const out: Record<string, string> = {};
   for (const f of KEY_DATE_FIELDS) {
     const v = dates[f.key]?.date;
     if (isYmd(v)) out[f.anchor] = v;
+  }
+  for (const f of fields) {
+    const v = dates[f.key]?.date;
+    if (isCustomKey(f.key) && isYmd(v)) out[f.label] = v;
   }
   return out;
 }
@@ -127,3 +139,44 @@ export const isCashDeal = (s: KeyDatesState | null | undefined) => !!s?.dates.mo
 
 export const isRealEstate = (m: { category?: string | null; matterCode?: string | null }) =>
   m.category === "Real Estate" || AUTO_CODES.includes(m.matterCode ?? "");
+
+// ── Which fields a matter shows ──────────────────────────────────────────────
+// Real estate matters show every built-in field; other matter types start with
+// contract signed, attorney review completed and initial deposit. A firm can
+// rename, remove and add fields per matter type (organizations.key_date_layouts).
+
+export type FieldDef = { key: string; label: string };
+export type Layouts = Record<string, FieldDef[]>;
+
+const std = (keys: KeyDateField[]): FieldDef[] => keys.map((k) => ({ key: k, label: KEY_DATE_FIELDS.find((f) => f.key === k)!.label }));
+export const REAL_ESTATE_FIELDS = std(FIELD_KEYS);
+export const OTHER_FIELDS = std(["contractSigned", "attorneyReviewCompleted", "initialDeposit"]);
+
+// The matter type a field list belongs to ("Real Estate", "Family Law", … or "Other").
+export function layoutKey(m: { category?: string | null; matterCode?: string | null }): string {
+  if (isRealEstate(m)) return "Real Estate";
+  return m.category && m.category !== "None" ? m.category.slice(0, 60) : "Other";
+}
+
+export function standardFields(m: { category?: string | null; matterCode?: string | null }): FieldDef[] {
+  return isRealEstate(m) ? REAL_ESTATE_FIELDS : OTHER_FIELDS;
+}
+
+export function cleanFields(input: unknown): FieldDef[] | null {
+  if (!Array.isArray(input)) return null;
+  const out: FieldDef[] = [];
+  for (const x of input.slice(0, 30)) {
+    const f = (x ?? {}) as { key?: unknown; label?: unknown };
+    const label = typeof f.label === "string" ? f.label.replace(/\s+/g, " ").trim().slice(0, 60) : "";
+    if (!label || !isDateKey(f.key) || out.some((o) => o.key === f.key)) continue;
+    out.push({ key: f.key as string, label });
+  }
+  return out;
+}
+
+export function fieldsFor(m: { category?: string | null; matterCode?: string | null }, layouts: Layouts | null | undefined): FieldDef[] {
+  const custom = cleanFields(layouts?.[layoutKey(m)]);
+  return custom ?? standardFields(m);
+}
+
+export const newCustomKey = () => `c_${Math.random().toString(36).slice(2, 10)}`;
