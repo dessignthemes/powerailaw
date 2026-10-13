@@ -424,6 +424,7 @@ function CreateTaskFromEmail({
   onClose: () => void;
   onCreate: (task: Parameters<ReturnType<typeof useWorkspaceData>["addTask"]>[0], boardId: string | null) => void;
 }) {
+  const { generalName } = useWorkspaceData();
   const [title, setTitle] = useState(email.subject?.trim() || `Email from ${email.from || email.fromEmail}`);
   const [assignee, setAssignee] = useState<string>("");
   const [board, setBoard] = useState<string>(() => {
@@ -518,7 +519,7 @@ function CreateTaskFromEmail({
           <div>
             <label className="block text-[12.5px] font-medium text-muted mb-1">Board</label>
             <SelectBox label="Board" value={board} onChange={(v) => setBoard(v)}>
-              <option value="general">General</option>
+              <option value="general">{generalName}</option>
               {boards.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}

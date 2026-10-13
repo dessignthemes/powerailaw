@@ -39,7 +39,7 @@ export default function MatterTasks({
   keyDates?: Record<string, string>;
   cash?: boolean;
 }) {
-  const { tasks, tasksLoaded, addTask, updateTask, boards } = useWorkspaceData();
+  const { tasks, tasksLoaded, addTask, updateTask, boards, generalName } = useWorkspaceData();
   const { templates, error: templatesError } = useTemplates();
   const [fromTemplate, setFromTemplate] = useState<TaskTemplate | "pick" | null>(null);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
@@ -53,7 +53,7 @@ export default function MatterTasks({
   }, [tasks, matter.id]);
   const { suggested } = templatesFor(templates ?? [], matter.matterCode);
   const openTask = matterTasks.find((t) => t.id === openTaskId) ?? null;
-  const boardName = (id: string | null | undefined) => (id ? boards.find((b) => b.id === id)?.name ?? "Board" : "Main Task Board");
+  const boardName = (id: string | null | undefined) => (id ? boards.find((b) => b.id === id)?.name ?? "Board" : generalName);
 
   function created(t: BoardTask) {
     addTask(t);
@@ -223,6 +223,7 @@ function FromTemplateDialog({
   onClose: () => void;
   onCreate: (t: BoardTask) => void;
 }) {
+  const { generalName } = useWorkspaceData();
   const { suggested, others } = templatesFor(templates ?? [], matter.matterCode);
   const defaultTitle = (t: TaskTemplate | null) => (t ? `${t.name}: ${clientName ?? matter.title}` : "");
   // "" = the first suggested template (templates may still be loading when this opens).
@@ -338,7 +339,7 @@ function FromTemplateDialog({
           <label className="flex flex-col gap-1.5">
             <span className="text-[12.5px] font-semibold text-muted">Put it on</span>
             <select value={boardId} onChange={(e) => setBoardId(e.target.value)} className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none">
-              <option value="">Main Task Board</option>
+              <option value="">{generalName}</option>
               {boards.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}

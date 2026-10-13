@@ -21,7 +21,7 @@ export default function TaskBoardNav() {
   const pathname = usePathname();
   const search = useSearchParams();
   const router = useRouter();
-  const { boards, createBoard, tasks } = useWorkspaceData();
+  const { boards, createBoard, tasks, generalName } = useWorkspaceData();
   // Tasks that aren't on any board (older tasks, or ones the AI Agent created).
   const generalCount = tasks.filter((t) => !t.boardId && t.status !== "done").length;
   const [open, setOpen] = useState(readOpen);
@@ -82,7 +82,7 @@ export default function TaskBoardNav() {
           {(generalCount > 0 || current === "general") && (
             <Link href="/dashboard/task-board?board=general" className={`${item(current === "general")} px-2.5 py-[5px] text-[12.5px]`} title="Tasks that aren't on a board">
               <Hash size={13} strokeWidth={1.75} className="flex-shrink-0" />
-              <span className="truncate flex-1">General</span>
+              <span className="truncate flex-1">{generalName}</span>
               {generalCount > 0 && <span className="text-[11.5px] text-muted tabular-nums">{generalCount}</span>}
             </Link>
           )}

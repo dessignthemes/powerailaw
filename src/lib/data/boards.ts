@@ -71,3 +71,54 @@ export async function boardInOrg(orgId: string, boardId: string | null | undefin
   const { data } = await createAdminClient().from("task_boards").select("id").eq("id", boardId).eq("org_id", orgId).maybeSingle();
   return data ? (data.id as string) : null;
 }
+
+// ── The built-in "General" board (tasks not on any sub board) ────────────────
+
+export const DEFAULT_GENERAL_NAME = "General";
+
+export async function getGeneralName(): Promise<string> {
+  const orgId = await getCurrentOrgId();
+  const { data } = await createAdminClient().from("organizations").select("*").eq("id", orgId).maybeSingle();
+  const name = (data as { general_board_name?: string | null } | null)?.general_board_name;
+  return name?.trim() || DEFAULT_GENERAL_NAME;
+}
+
+export async function renameGeneral(name: unknown): Promise<string> {
+  const orgId = await getCurrentOrgId();
+  const clean = cleanName(name);
+  const { error } = await createAdminClient()
+    .from("organizations")
+    .update({ general_board_name: clean === DEFAULT_GENERAL_NAME ? null : clean })
+    .eq("id", orgId);
+  if (error) {
+    if (/general_board_name/.test(error.message ?? "")) {
+      throw new BoardError(400, "Renaming this board needs a database update: run supabase/migrations/0032_general_board_name.sql in the Supabase SQL editor.");
+    }
+    throw error;
+  }
+  return clean;
+}
+
+// "Deleting" General: its tasks move to another board (General shows again only
+// if a task is ever saved without a board).
+export async function moveGeneralTasks(toBoardId: unknown): Promise<number> {
+  const orgId = await getCurrentOrgId();
+  const target = await boardInOrg(orgId, typeof toBoardId === "string" ? toBoardId : null);
+  if (!target) throw new BoardError(400, "Choose the board its tasks should move to.");
+  const { data, error } = await createAdminClient()
+    .from("tasks")
+    .update({ board_id: target, column_id: null, updated_at: new Date().toISOString() })
+    .eq("org_id", orgId)
+    .is("board_id", null)
+    .select("id");
+  if (error) {
+    // Before migration 0010 there is no column_id.
+    if (/column_id/.test(error.message ?? "")) {
+      const r = await createAdminClient().from("tasks").update({ board_id: target }).eq("org_id", orgId).is("board_id", null).select("id");
+      if (r.error) throw r.error;
+      return (r.data ?? []).length;
+    }
+    throw error;
+  }
+  return (data ?? []).length;
+}

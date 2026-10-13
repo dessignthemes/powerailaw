@@ -170,7 +170,9 @@ function TaskBoard({
   initialTaskId: string | null;
 }) {
   const router = useRouter();
-  const { boards, createBoard, renameBoard, deleteBoard, refreshAll } = useWorkspaceData();
+  const { boards, createBoard, renameBoard, deleteBoard, refreshAll, generalName, renameGeneral, moveGeneralTasks } = useWorkspaceData();
+  // Removing General: its tasks move to the board picked here.
+  const [moveGeneral, setMoveGeneral] = useState<{ to: string; busy: boolean; error: string | null } | null>(null);
   const isGeneral = boardId === "general";
   const realBoardId = boardId && !isGeneral ? boardId : null;
   const board = realBoardId ? boards.find((b) => b.id === realBoardId) ?? null : null;
@@ -278,6 +280,9 @@ function TaskBoard({
         const b = await createBoard(boardDialog.name);
         setBoardDialog(null);
         router.push(`/dashboard/task-board?board=${b.id}`);
+      } else if (isGeneral) {
+        await renameGeneral(boardDialog.name);
+        setBoardDialog(null);
       } else if (realBoardId) {
         await renameBoard(realBoardId, boardDialog.name);
         setBoardDialog(null);
@@ -292,7 +297,7 @@ function TaskBoard({
   async function removeBoard() {
     if (!realBoardId || !board) return;
     const n = allTasks.length;
-    if (!confirm(`Delete the "${board.name}" board?${n ? ` Its ${n} ${n === 1 ? "task moves" : "tasks move"} to General.` : ""}`)) return;
+    if (!confirm(`Delete the "${board.name}" board?${n ? ` Its ${n} ${n === 1 ? "task moves" : "tasks move"} to ${generalName}.` : ""}`)) return;
     try {
       await deleteBoard(realBoardId);
       router.push("/dashboard/task-board");
@@ -548,7 +553,7 @@ function TaskBoard({
             {createdBy
               ? `Tasks created by ${creator ? displayName(creator.fullName, creator.email) : "a former member"}`
               : isGeneral
-                ? "General"
+                ? generalName
                 : realBoardId
                   ? board?.name ?? "Board"
                   : "All tasks"}
@@ -558,7 +563,7 @@ function TaskBoard({
               Show all tasks
             </Link>
           )}
-          {realBoardId && board && (
+          {((realBoardId && board) || isGeneral) && (
             <div className="relative">
               <button
                 onClick={() => setBoardMenu((o) => !o)}
@@ -570,12 +575,12 @@ function TaskBoard({
               {boardMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setBoardMenu(false)} />
-                  <div className="absolute left-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[190px]">
+                  <div className="absolute left-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[230px] whitespace-nowrap">
                     <button
                       onClick={() => {
                         setBoardMenu(false);
                         setBoardError(null);
-                        setBoardDialog({ mode: "rename", name: board.name });
+                        setBoardDialog({ mode: "rename", name: isGeneral ? generalName : board?.name ?? "" });
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip"
                     >
@@ -584,11 +589,12 @@ function TaskBoard({
                     <button
                       onClick={() => {
                         setBoardMenu(false);
-                        removeBoard();
+                        if (isGeneral) setMoveGeneral({ to: boards[0]?.id ?? "", busy: false, error: null });
+                        else removeBoard();
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-red-500 hover:bg-red-50"
                     >
-                      <Trash2 size={14} strokeWidth={1.75} /> Delete board
+                      <Trash2 size={14} strokeWidth={1.75} /> {isGeneral ? "Move tasks & remove" : "Delete board"}
                     </button>
                   </div>
                 </>
@@ -605,6 +611,59 @@ function TaskBoard({
         <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{boardError}</div>
       )}
 
+      {moveGeneral && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={() => !moveGeneral.busy && setMoveGeneral(null)}>
+          <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Remove ${generalName}`} className="bg-cream rounded-3xl w-full max-w-[440px] p-6">
+            <h2 className="text-[19px] font-semibold mb-1">Remove {generalName}</h2>
+            <p className="text-[13.5px] text-muted mb-4">
+              {generalName} holds the tasks that aren&apos;t on another board, so it can&apos;t be deleted while it has tasks. Move its{" "}
+              {allTasks.length} {allTasks.length === 1 ? "task" : "tasks"} to another board and it disappears from the sidebar. It only comes back if a task is
+              ever saved without a board.
+            </p>
+            {boards.length === 0 ? (
+              <div className="text-[13.5px] text-[#8A4B14] bg-[#FDF1E7] rounded-xl px-3.5 py-2.5">Create another board first (+ New board in the sidebar).</div>
+            ) : (
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[12.5px] font-semibold text-muted">Move the tasks to</span>
+                <select
+                  value={moveGeneral.to}
+                  onChange={(e) => setMoveGeneral({ ...moveGeneral, to: e.target.value })}
+                  className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none"
+                >
+                  {boards.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {moveGeneral.error && <div className="text-[13px] text-[#B42318] mt-3">{moveGeneral.error}</div>}
+            <div className="flex justify-end gap-2 mt-5">
+              <button onClick={() => setMoveGeneral(null)} disabled={moveGeneral.busy} className="px-4 py-2.5 rounded-full text-[14px] font-medium hover:bg-chip">
+                Cancel
+              </button>
+              <button
+                disabled={moveGeneral.busy || !moveGeneral.to}
+                onClick={async () => {
+                  setMoveGeneral({ ...moveGeneral, busy: true, error: null });
+                  try {
+                    await moveGeneralTasks(moveGeneral.to);
+                    const to = moveGeneral.to;
+                    setMoveGeneral(null);
+                    router.push(`/dashboard/task-board?board=${to}`);
+                  } catch (e) {
+                    setMoveGeneral({ ...moveGeneral, busy: false, error: (e as Error).message });
+                  }
+                }}
+                className="bg-btn hover:bg-btn-hover disabled:opacity-50 px-5 py-2.5 rounded-full text-[14px] font-medium"
+              >
+                {moveGeneral.busy ? "Moving…" : "Move tasks & remove"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {boardDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={() => !boardBusy && setBoardDialog(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-cream rounded-3xl w-full max-w-[420px] p-6">
@@ -997,7 +1056,7 @@ function TaskBoard({
                     </span>
                     {boardId === null && (
                       <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[140px]">
-                        {t.boardId ? boards.find((b) => b.id === t.boardId)?.name ?? "Board" : "General"}
+                        {t.boardId ? boards.find((b) => b.id === t.boardId)?.name ?? "Board" : generalName}
                       </span>
                     )}
                   </div>
@@ -1374,7 +1433,7 @@ function TaskBoard({
                             })()}
                             {boardId === null && !createdBy && (
                               <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[130px]">
-                                {t.boardId ? boards.find((b) => b.id === t.boardId)?.name ?? "Board" : "General"}
+                                {t.boardId ? boards.find((b) => b.id === t.boardId)?.name ?? "Board" : generalName}
                               </span>
                             )}
                           </div>

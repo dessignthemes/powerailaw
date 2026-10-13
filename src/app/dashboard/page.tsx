@@ -155,8 +155,8 @@ export default function DashboardHome() {
   const fmtTime = (e: DashEvent) =>
     e.allDay ? "All day" : eventStart(e).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(" ", "").toLowerCase();
 
-  const { tasks, tasksLoaded, updateTask, boards } = useWorkspaceData();
-  const boardName = (id: string | null | undefined) => (id ? boards.find((b) => b.id === id)?.name ?? "Board" : "General");
+  const { tasks, tasksLoaded, updateTask, boards, generalName } = useWorkspaceData();
+  const boardName = (id: string | null | undefined) => (id ? boards.find((b) => b.id === id)?.name ?? "Board" : generalName);
   const [selectedTask, setSelectedTask] = useState<BoardTask | null>(null);
 
   const { dueTasks, undatedTasks, openCount, recent } = useMemo(() => {
@@ -310,7 +310,7 @@ export default function DashboardHome() {
                     className="group/row flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium bg-[#E1E7F4] hover:bg-[#D5DDEE] transition-colors"
                   >
                     <span className="font-semibold tabular-nums w-5 text-right">{n}</span>
-                    <span className="truncate flex-1">{key === "general" ? "General" : boardName(key)}</span>
+                    <span className="truncate flex-1">{key === "general" ? generalName : boardName(key)}</span>
                     <span className="text-muted group-hover/row:text-ink">→</span>
                   </Link>
                 ))}

@@ -35,6 +35,10 @@ type WorkspaceDataContextValue = {
 
   // Sub boards under the Task Board.
   boards: { id: string; name: string }[];
+  // The firm's name for the built-in board of tasks not on a sub board ("General").
+  generalName: string;
+  renameGeneral: (name: string) => Promise<void>;
+  moveGeneralTasks: (toBoardId: string) => Promise<number>;
   boardsError: string | null;
   createBoard: (name: string) => Promise<{ id: string; name: string }>;
   renameBoard: (id: string, name: string) => Promise<void>;
@@ -60,6 +64,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const [teamMembers, setTeamMembers] = useState<{ id: string; email: string; fullName?: string | null; role: string }[]>([]);
   const [meEmail, setMeEmail] = useState<string | null>(null);
   const [boards, setBoards] = useState<{ id: string; name: string }[]>([]);
+  const [generalName, setGeneralName] = useState("General");
   const [boardsError, setBoardsError] = useState<string | null>(null);
 
   // Re-fetch shared data (e.g. after the AI Agent creates a client or task).
@@ -84,7 +89,10 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
 
     fetch("/api/boards")
       .then(readJson)
-      .then((d) => setBoards(d.boards ?? []))
+      .then((d) => {
+        setBoards(d.boards ?? []);
+        if (typeof d.generalName === "string" && d.generalName.trim()) setGeneralName(d.generalName);
+      })
       .catch((e: Error) => setBoardsError(e.message));
 
     fetch("/api/team")
@@ -121,6 +129,22 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       await fetch(`/api/boards/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) })
     );
     setBoards((bs) => bs.map((b) => (b.id === id ? d.board : b)));
+  }, []);
+
+  const renameGeneral = useCallback(async (name: string) => {
+    const d = await readJson(
+      await fetch(`/api/boards/general`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) })
+    );
+    setGeneralName(d.board?.name ?? name);
+  }, []);
+
+  // Moves every task on General to another board.
+  const moveGeneralTasks = useCallback(async (toBoardId: string) => {
+    const d = await readJson(
+      await fetch(`/api/boards/general`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "move", toBoardId }) })
+    );
+    setTasks((ts) => ts.map((t) => (t.boardId ? t : { ...t, boardId: toBoardId, columnId: null })));
+    return (d.moved as number) ?? 0;
   }, []);
 
   // Its tasks move back to the main Task Board (same as the database does).
@@ -338,6 +362,9 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         teamMembers,
         meEmail,
         boards,
+        generalName,
+        renameGeneral,
+        moveGeneralTasks,
         boardsError,
         createBoard,
         renameBoard,
