@@ -335,8 +335,9 @@ export default function DashboardHome() {
                           setBottomTab("tasks");
                         }}
                         disabled={!count && !active}
-                        style={{ backgroundColor: priorityMeta[p].bg, color: priorityMeta[p].text }}
-                        className={`group/row flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium transition-[filter,box-shadow] hover:brightness-95 disabled:opacity-45 disabled:hover:brightness-100 ${
+                        // Same row colour as the other cards, with the priority colour as a strip on the left.
+                        style={{ borderLeftColor: priorityMeta[p].bg }}
+                        className={`group/row flex items-center gap-2 pl-2.5 pr-3 py-2 rounded-xl border-l-[8px] text-[13.5px] font-medium text-ink bg-[#CCD7EA] hover:bg-[#BFCCE3] transition-colors disabled:opacity-45 disabled:hover:bg-[#CCD7EA] ${
                           active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""
                         }`}
                         title={count ? `Show only ${p.toLowerCase()} priority tasks below` : undefined}
