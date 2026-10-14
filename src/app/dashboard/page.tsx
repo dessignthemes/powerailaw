@@ -318,12 +318,12 @@ export default function DashboardHome() {
             return (
               <>
                 <div className="text-[24px] leading-tight font-display font-semibold mb-1">
-                  {tasksLoaded ? high : "–"} high priority
+                  {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"} by priority
                 </div>
                 <div className="text-[13px] text-muted mb-3">
                   {activeRange.due.toLowerCase()}
-                  {dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length > 0 &&
-                    ` · ${dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length} overdue`}
+                  {high > 0 && dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length > 0 &&
+                    ` · ${dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length} high priority overdue`}
                 </div>
                 {/* How the work splits: red / orange / green. */}
                 <div className="flex h-2 rounded-full overflow-hidden bg-[#E9EAEE] mb-3" aria-hidden>
