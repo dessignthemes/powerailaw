@@ -2,20 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import TimeSlider from "@/components/TimeSlider";
 import TaskFilterDropdown from "@/components/TaskFilterDropdown";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { BoardTask, priorityMeta, statusMeta } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MemberAvatar from "@/components/MemberAvatar";
 import EventDetailModal from "@/components/EventDetailModal";
-import { formatMinutes } from "@/lib/taskTimer";
-import { rangeBounds, isDueIn, ymd } from "@/lib/taskDates";
+import { isDueIn, isOverdue, ymd } from "@/lib/taskDates";
 import {
   ListChecks,
   Calendar,
-  Timer,
   Activity,
+  Flag,
+  ArrowRight,
   CalendarCheck,
   Circle,
   CheckCircle2,
@@ -47,9 +46,14 @@ function timeAgo(iso: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+const PRIORITY_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
+const PRIORITIES = ["High", "Medium", "Low"] as const;
+
 export default function DashboardHome() {
   const [range, setRange] = useState<RangeKey>("today");
   const [bottomTab, setBottomTab] = useState<"tasks" | "events">("tasks");
+  // Clicking a priority on the "By priority" card shows only those tasks below.
+  const [priorityFilter, setPriorityFilter] = useState<(typeof PRIORITIES)[number] | null>(null);
 
   // Greeting follows the user's own clock (set in the browser, refreshed every minute).
   const [greeting, setGreeting] = useState<string | null>(null);
@@ -121,36 +125,6 @@ export default function DashboardHome() {
   const cal = { ...calAll, events: eventsIn(periodKey) };
   const [openEvent, setOpenEvent] = useState<DashEvent | null>(null);
 
-  // Your tracked time: the selected period, and this week so far.
-  const [tracked, setTracked] = useState({ range: 0, week: 0, billable: 0, loaded: false });
-  useEffect(() => {
-    let cancelled = false;
-    const b = rangeBounds(range);
-    const wk = rangeBounds("week");
-    const today = new Date();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-    const weekFrom = ymd(monday);
-    const from = b.start < weekFrom ? b.start : weekFrom;
-    const to = b.end > wk.end ? b.end : wk.end;
-    fetch(`/api/time-entries?${new URLSearchParams({ from, to })}`)
-      .then((r) => (r.ok ? r.json() : { entries: [] }))
-      .then((d: { entries?: { date: string; minutes: number; billable: boolean }[] }) => {
-        if (cancelled) return;
-        const list = d.entries ?? [];
-        const inRange = list.filter((e) => e.date >= b.start && e.date <= b.end);
-        setTracked({
-          range: inRange.reduce((n, e) => n + e.minutes, 0),
-          billable: inRange.filter((e) => e.billable).reduce((n, e) => n + e.minutes, 0),
-          week: list.filter((e) => e.date >= weekFrom && e.date <= wk.end).reduce((n, e) => n + e.minutes, 0),
-          loaded: true,
-        });
-      })
-      .catch(() => !cancelled && setTracked({ range: 0, week: 0, billable: 0, loaded: true }));
-    return () => {
-      cancelled = true;
-    };
-  }, [range]);
   const eventStart = (e: DashEvent) => (e.allDay ? new Date(`${e.start}T00:00:00`) : new Date(e.start));
   const fmtTime = (e: DashEvent) =>
     e.allDay ? "All day" : eventStart(e).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(" ", "").toLowerCase();
@@ -161,9 +135,10 @@ export default function DashboardHome() {
 
   const { dueTasks, undatedTasks, openCount, recent } = useMemo(() => {
     const open = tasks.filter((t) => t.status !== "done");
+    // Most important first: High → Medium → Low, then the oldest due date.
     const due = tasks
       .filter((t) => isDueIn(t, range))
-      .sort((a, z) => (a.dueDate! < z.dueDate! ? -1 : 1));
+      .sort((a, z) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[z.priority] || (a.dueDate! < z.dueDate! ? -1 : a.dueDate! > z.dueDate! ? 1 : 0));
     const undated = open.filter((t) => !t.dueDate);
     const rec = [...tasks]
       .filter((t) => t.updatedAt || t.createdAt)
@@ -326,6 +301,69 @@ export default function DashboardHome() {
 
         <div className="bg-card-alt rounded-2xl p-6 relative">
           <div className="text-[13.5px] font-medium text-muted mb-4 flex items-center gap-1.5">
+            <Flag size={15} strokeWidth={1.75} /> By priority
+          </div>
+          {priorityFilter && (
+            <button
+              onClick={() => setPriorityFilter(null)}
+              className="absolute top-5 right-5 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium text-ink bg-[#E8EFF7] hover:bg-[#DCE4F0] transition-colors"
+            >
+              Show all
+            </button>
+          )}
+          {(() => {
+            const n = (p: string) => dueTasks.filter((t) => t.priority === p).length;
+            const total = dueTasks.length || 1;
+            const high = n("High");
+            return (
+              <>
+                <div className="text-[24px] leading-tight font-display font-semibold mb-1">
+                  {tasksLoaded ? high : "–"} high priority
+                </div>
+                <div className="text-[13px] text-muted mb-3">
+                  {activeRange.due.toLowerCase()}
+                  {dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length > 0 &&
+                    ` · ${dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length} overdue`}
+                </div>
+                {/* How the work splits: red / orange / green. */}
+                <div className="flex h-2 rounded-full overflow-hidden bg-[#E9EAEE] mb-3" aria-hidden>
+                  {PRIORITIES.map((p) => (
+                    <span key={p} style={{ width: `${(n(p) / total) * 100}%`, backgroundColor: priorityMeta[p].bg }} />
+                  ))}
+                </div>
+                <div className="flex flex-col gap-2">
+                  {PRIORITIES.map((p) => {
+                    const count = n(p);
+                    const active = priorityFilter === p;
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => {
+                          setPriorityFilter(active ? null : p);
+                          setBottomTab("tasks");
+                        }}
+                        disabled={!count && !active}
+                        style={{ backgroundColor: priorityMeta[p].bg, color: priorityMeta[p].text }}
+                        className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-[14px] font-medium transition-[filter,box-shadow] hover:brightness-95 disabled:opacity-45 disabled:hover:brightness-100 ${
+                          active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""
+                        }`}
+                        title={count ? `Show only ${p.toLowerCase()} priority tasks below` : undefined}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <span className="font-semibold w-5 text-left">{tasksLoaded ? count : "–"}</span> {p}
+                        </span>
+                        <ArrowRight size={14} strokeWidth={1.75} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()}
+        </div>
+
+        <div className="bg-card-alt rounded-2xl p-6 relative">
+          <div className="text-[13.5px] font-medium text-muted mb-4 flex items-center gap-1.5">
             <Calendar size={15} strokeWidth={1.75} /> Calendar
           </div>
           <Link
@@ -360,44 +398,28 @@ export default function DashboardHome() {
                 })
             )}
           </div>
-          <TimeSlider />
+          {/* The events themselves, with their times (click one to open it). */}
+          {cal.loaded && cal.connected && cal.events.length > 0 && (
+            <div className="mt-3 flex flex-col gap-1.5">
+              {cal.events.slice(0, 4).map((e) => (
+                <button
+                  key={e.id}
+                  onClick={() => setOpenEvent(e)}
+                  className="w-full text-left flex items-center gap-3 bg-[#E8EFF7] hover:bg-[#DCE4F0] rounded-xl px-3.5 py-2 transition-colors"
+                >
+                  <span className="mono text-[12px] text-muted w-[58px] flex-shrink-0">{range === "today" ? fmtTime(e) : eventStart(e).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                  <span className="text-[13.5px] font-medium truncate">{e.title}</span>
+                </button>
+              ))}
+              {cal.events.length > 4 && (
+                <button onClick={() => setBottomTab("events")} className="self-start text-[12.5px] font-medium text-muted hover:text-ink mt-0.5">
+                  +{cal.events.length - 4} more
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="bg-card-alt rounded-2xl p-6 relative">
-          <div className="text-[13.5px] font-medium text-muted mb-4 flex items-center gap-1.5">
-            <Timer size={15} strokeWidth={1.75} /> Tracked
-          </div>
-          <Link
-            href="/dashboard/time-tracking"
-            className="group/time absolute top-5 right-5 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium text-ink bg-[#E8EFF7] hover:bg-[#DCE4F0] transition-colors"
-          >
-            Open time tracking
-            <span className="flex items-center">
-              <ArrowUpRight size={12} strokeWidth={2} />
-            </span>
-          </Link>
-          <div className="text-[24px] leading-tight font-display font-semibold mb-1">{tracked.loaded ? formatMinutes(tracked.range) : "–"}</div>
-          <div className="text-[13px] text-muted mb-2 flex flex-col gap-0.5">
-            {tracked.loaded ? (
-              <>
-                {range !== "week" && (
-                  <span>
-                    <span className="text-ink font-medium">{formatMinutes(tracked.week)}</span> this week
-                  </span>
-                )}
-                <span>
-                  <span className="text-ink font-medium">{formatMinutes(tracked.billable)}</span> billable
-                </span>
-                <span>
-                  <span className="text-ink font-medium">{formatMinutes(Math.max(0, tracked.range - tracked.billable))}</span> non-billable
-                </span>
-              </>
-            ) : (
-              "Loading…"
-            )}
-          </div>
-          <TimeSlider />
-        </div>
       </div>
 
       {/* Tasks / Events on the left, Recent activity on the right (stacked on narrow screens). */}
@@ -478,8 +500,20 @@ export default function DashboardHome() {
                     View all {dueTasks.length} →
                   </Link>
                 </div>
+                {priorityFilter && (
+                  <div className="px-5 pb-1 flex items-center gap-2 text-[12.5px] text-muted">
+                    Showing{" "}
+                    <span className="font-medium rounded-md px-1.5 py-0.5" style={{ backgroundColor: priorityMeta[priorityFilter].bg, color: priorityMeta[priorityFilter].text }}>
+                      {priorityFilter}
+                    </span>{" "}
+                    priority only ·
+                    <button onClick={() => setPriorityFilter(null)} className="underline underline-offset-2 hover:text-ink">
+                      show all
+                    </button>
+                  </div>
+                )}
                 <div className="divide-y divide-line">
-                  {dueTasks.map(renderTaskRow)}
+                  {(priorityFilter ? dueTasks.filter((t) => t.priority === priorityFilter) : dueTasks).map(renderTaskRow)}
                 </div>
               </>
             )}
