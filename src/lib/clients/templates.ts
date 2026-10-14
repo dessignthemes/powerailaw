@@ -15,9 +15,7 @@ const FILES: Record<TemplateKind, string> = {
 
 // These templates carry one firm's letterhead and terms, so they're only
 // offered to that firm's workspace (by email domain).
-export const TEMPLATE_DOMAINS = ["rapciewiczlaw.com"];
-export const templatesAllowed = (email: string | null | undefined) =>
-  !!email && TEMPLATE_DOMAINS.includes(email.split("@").pop()?.toLowerCase() ?? "");
+export { templatesAllowed } from "@/lib/firmFeatures";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 

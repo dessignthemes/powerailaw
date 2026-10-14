@@ -1,5 +1,8 @@
 "use client";
 
+import ImportLeapModal from "@/components/matters/ImportLeapModal";
+import { templatesAllowed } from "@/lib/firmFeatures";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -13,8 +16,10 @@ import {
   Trash2,
   MoreHorizontal,
   X,
+  Upload,
 } from "lucide-react";
 import NewMatterModal, {
+  numberOf,
   Matter,
   MatterStatus,
   matterStatusOrder,
@@ -86,7 +91,12 @@ export default function MattersPage() {
     deleteMatters,
     bulkSetMatterStatus,
     clients,
+    meEmail,
+    refreshAll,
   } = useWorkspaceData();
+  // Import from LEAP (The Law Office of Piotr Rapciewicz only).
+  const [importOpen, setImportOpen] = useState(false);
+  const canImport = templatesAllowed(meEmail);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMatter, setEditingMatter] = useState<Matter | null>(null);
@@ -145,13 +155,30 @@ export default function MattersPage() {
         <h1 className="text-[28px] font-semibold">
           Matters <span className="text-muted font-normal text-[18px]">/ {matters.length}</span>
         </h1>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
-        >
-          + Add matter
-        </button>
+        <div className="flex items-center gap-2">
+          {canImport && (
+            <button
+              onClick={() => setImportOpen(true)}
+              className="flex items-center gap-1.5 bg-chip text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors"
+            >
+              <Upload size={14} strokeWidth={1.75} /> Import from LEAP
+            </button>
+          )}
+          <button
+            onClick={() => setModalOpen(true)}
+            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
+          >
+            + Add matter
+          </button>
+        </div>
       </div>
+      {importOpen && (
+        <ImportLeapModal
+          existingNumbers={new Set(matters.map((m) => numberOf(m)).filter((n): n is string => !!n))}
+          onClose={() => setImportOpen(false)}
+          onDone={() => refreshAll()}
+        />
+      )}
 
       {!mattersLoaded ? (
         <div className="border border-line rounded-2xl min-h-[320px] flex items-center justify-center text-[14px] text-muted">
