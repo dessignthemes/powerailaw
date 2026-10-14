@@ -4,7 +4,6 @@
 
 import {
   Home,
-  Users,
   Sparkles,
   Calculator,
   FolderSearch,
@@ -17,7 +16,6 @@ import {
   BarChart3,
   Copy,
   Bookmark,
-  CircleUser,
   Folder,
   ShieldCheck,
   type LucideIcon,
@@ -26,9 +24,13 @@ import {
 export type NavLink = { label: string; href: string; icon: LucideIcon };
 export type NavSection = { title: string | null; links: NavLink[] };
 
+// Community and Clients are off the menu for now (their pages still exist).
 export const mainLinks: NavLink[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
-  { label: "Community", href: "/dashboard/community", icon: Users },
+  { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
+  { label: "Matters", href: "/dashboard/matters", icon: Folder },
+  { label: "Records", href: "/dashboard/records", icon: Bookmark },
+  { label: "Documents", href: "/dashboard/documents", icon: Copy },
 ];
 
 export const toolLinks: NavLink[] = [
@@ -36,7 +38,6 @@ export const toolLinks: NavLink[] = [
   { label: "AI Accountant", href: "/dashboard/ai-accountant", icon: Calculator },
   { label: "AI Matter", href: "/dashboard/ai-matter", icon: FolderSearch },
   { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
-  { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
   { label: "Secure Files", href: "/dashboard/secure-files", icon: ShieldCheck },
 ];
@@ -46,10 +47,6 @@ export const workspaceLinks: NavLink[] = [
   { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
   { label: "Task Folder", href: "/dashboard/task-folder", icon: ListChecks },
   { label: "Task Board", href: "/dashboard/task-board", icon: BarChart3 },
-  { label: "Documents", href: "/dashboard/documents", icon: Copy },
-  { label: "Records", href: "/dashboard/records", icon: Bookmark },
-  { label: "Clients", href: "/dashboard/clients", icon: CircleUser },
-  { label: "Matters", href: "/dashboard/matters", icon: Folder },
 ];
 
 export const navSections: NavSection[] = [
