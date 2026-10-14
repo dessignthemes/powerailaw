@@ -299,7 +299,7 @@ export default function DashboardHome() {
 
         <div className="bg-card-alt rounded-2xl p-6 relative">
           <div className="text-[13.5px] font-medium text-muted mb-4 flex items-center gap-1.5">
-            <Flag size={15} strokeWidth={1.75} /> By priority
+            <Flag size={15} strokeWidth={1.75} /> {activeRange.due} by priority
           </div>
           {priorityFilter && (
             <button
@@ -318,9 +318,10 @@ export default function DashboardHome() {
                   {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"} by priority
                 </div>
                 <div className="text-[13px] text-muted">
-                  {activeRange.due.toLowerCase()}
-                  {high > 0 && dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length > 0 &&
-                    ` · ${dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length} high priority overdue`}
+                  {(() => {
+                    const late = high > 0 ? dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length : 0;
+                    return late ? `${late} high priority overdue` : "No high priority overdue";
+                  })()}
                 </div>
                 <div className="mt-4 flex flex-col gap-1.5">
                   {PRIORITIES.map((p) => {
