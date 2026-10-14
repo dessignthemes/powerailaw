@@ -14,7 +14,6 @@ import {
   Calendar,
   Activity,
   Flag,
-  ArrowRight,
   CalendarCheck,
   Circle,
   CheckCircle2,
@@ -277,23 +276,19 @@ export default function DashboardHome() {
             const rows = [...counts.entries()].sort((x, y) => y[1] - x[1]);
             if (!rows.length) return null;
             return (
-              <div className="mt-4 flex flex-col gap-1.5">
-                {rows.slice(0, 5).map(([key, n]) => (
+              // Three rows show; more scroll inside the box (scrollbar on hover).
+              <div className="mt-4 flex flex-col gap-1.5 max-h-[120px] scroll-on-hover pr-0.5">
+                {rows.map(([key, n]) => (
                   <Link
                     key={key}
                     href={`/dashboard/task-board?board=${key}&due=${range}`}
-                    className="group/row flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium bg-[#E1E7F4] hover:bg-[#D5DDEE] transition-colors"
+                    className="group/row flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium bg-[#E1E7F4] hover:bg-[#D5DDEE] transition-colors"
                   >
                     <span className="font-semibold tabular-nums w-5 text-right">{n}</span>
                     <span className="truncate flex-1">{key === "general" ? generalName : boardName(key)}</span>
                     <span className="text-muted group-hover/row:text-ink">→</span>
                   </Link>
                 ))}
-                {rows.length > 5 && (
-                  <Link href={`/dashboard/task-board?due=${range}`} className="text-[12.5px] text-muted hover:text-ink px-0 py-1">
-                    + {rows.length - 5} more boards
-                  </Link>
-                )}
               </div>
             );
           })()}
@@ -313,25 +308,18 @@ export default function DashboardHome() {
           )}
           {(() => {
             const n = (p: string) => dueTasks.filter((t) => t.priority === p).length;
-            const total = dueTasks.length || 1;
             const high = n("High");
             return (
               <>
                 <div className="text-[24px] leading-tight font-display font-semibold mb-1">
                   {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"} by priority
                 </div>
-                <div className="text-[13px] text-muted mb-3">
+                <div className="text-[13px] text-muted">
                   {activeRange.due.toLowerCase()}
                   {high > 0 && dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length > 0 &&
                     ` · ${dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length} high priority overdue`}
                 </div>
-                {/* How the work splits: red / orange / green. */}
-                <div className="flex h-2 rounded-full overflow-hidden bg-[#E9EAEE] mb-3" aria-hidden>
-                  {PRIORITIES.map((p) => (
-                    <span key={p} style={{ width: `${(n(p) / total) * 100}%`, backgroundColor: priorityMeta[p].bg }} />
-                  ))}
-                </div>
-                <div className="flex flex-col gap-2">
+                <div className="mt-4 flex flex-col gap-1.5">
                   {PRIORITIES.map((p) => {
                     const count = n(p);
                     const active = priorityFilter === p;
@@ -344,15 +332,14 @@ export default function DashboardHome() {
                         }}
                         disabled={!count && !active}
                         style={{ backgroundColor: priorityMeta[p].bg, color: priorityMeta[p].text }}
-                        className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-[14px] font-medium transition-[filter,box-shadow] hover:brightness-95 disabled:opacity-45 disabled:hover:brightness-100 ${
+                        className={`group/row flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium transition-[filter,box-shadow] hover:brightness-95 disabled:opacity-45 disabled:hover:brightness-100 ${
                           active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""
                         }`}
                         title={count ? `Show only ${p.toLowerCase()} priority tasks below` : undefined}
                       >
-                        <span className="flex items-center gap-2.5">
-                          <span className="font-semibold w-5 text-left">{tasksLoaded ? count : "–"}</span> {p}
-                        </span>
-                        <ArrowRight size={14} strokeWidth={1.75} />
+                        <span className="font-semibold tabular-nums w-5 text-right">{tasksLoaded ? count : "–"}</span>
+                        <span className="truncate flex-1 text-left">{p}</span>
+                        <span className="opacity-70 group-hover/row:opacity-100">→</span>
                       </button>
                     );
                   })}
@@ -378,7 +365,7 @@ export default function DashboardHome() {
           <div className="text-[24px] leading-tight font-display font-semibold mb-1">
             {cal.loaded ? cal.events.length : "–"} {cal.events.length === 1 ? "event" : "events"}
           </div>
-          <div className="text-[13px] text-muted mb-2 flex flex-col gap-0.5">
+          <div className="text-[13px] text-muted flex flex-wrap gap-x-1">
             {!cal.loaded ? (
               "Loading your calendar…"
             ) : !cal.connected ? (
@@ -391,8 +378,8 @@ export default function DashboardHome() {
                 .map((k) => {
                   const n = eventsIn(k).length;
                   return (
-                    <span key={k}>
-                      <span className="text-ink font-medium">{n}</span> {n === 1 ? "event" : "events"} {k === "today" ? "today" : `this ${k}`}
+                    <span key={k} className="after:content-['·'] after:ml-1 last:after:content-none">
+                      <span className="text-ink font-medium">{n}</span> {k === "today" ? "today" : `this ${k}`}
                     </span>
                   );
                 })
@@ -400,22 +387,17 @@ export default function DashboardHome() {
           </div>
           {/* The events themselves, with their times (click one to open it). */}
           {cal.loaded && cal.connected && cal.events.length > 0 && (
-            <div className="mt-3 flex flex-col gap-1.5">
-              {cal.events.slice(0, 4).map((e) => (
+            <div className="mt-4 flex flex-col gap-1.5 max-h-[120px] scroll-on-hover pr-0.5">
+              {cal.events.map((e) => (
                 <button
                   key={e.id}
                   onClick={() => setOpenEvent(e)}
-                  className="w-full text-left flex items-center gap-3 bg-[#E8EFF7] hover:bg-[#DCE4F0] rounded-xl px-3.5 py-2 transition-colors"
+                  className="flex-shrink-0 w-full text-left flex items-center gap-2 bg-[#E1E7F4] hover:bg-[#D5DDEE] rounded-xl px-3 py-2 text-[13.5px] transition-colors"
                 >
-                  <span className="mono text-[12px] text-muted w-[58px] flex-shrink-0">{range === "today" ? fmtTime(e) : eventStart(e).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-                  <span className="text-[13.5px] font-medium truncate">{e.title}</span>
+                  <span className="mono text-[12px] text-muted w-[54px] flex-shrink-0">{range === "today" ? fmtTime(e) : eventStart(e).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                  <span className="font-medium truncate">{e.title}</span>
                 </button>
               ))}
-              {cal.events.length > 4 && (
-                <button onClick={() => setBottomTab("events")} className="self-start text-[12.5px] font-medium text-muted hover:text-ink mt-0.5">
-                  +{cal.events.length - 4} more
-                </button>
-              )}
             </div>
           )}
         </div>

@@ -100,3 +100,24 @@ a {
   60% { transform: rotate(-8deg); }
   80% { transform: rotate(5deg); }
 }
+
+/* Lists that scroll inside their box: a thin scrollbar shows on hover. */
+.scroll-on-hover {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  overscroll-behavior: contain;
+}
+.scroll-on-hover:hover {
+  scrollbar-color: #c2c9d4 transparent;
+}
+.scroll-on-hover::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-on-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+.scroll-on-hover:hover::-webkit-scrollbar-thumb {
+  background: #c2c9d4;
+}
