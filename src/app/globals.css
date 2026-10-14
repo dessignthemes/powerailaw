@@ -101,23 +101,26 @@ a {
   80% { transform: rotate(5deg); }
 }
 
-/* Lists that scroll inside their box: a thin scrollbar shows on hover. */
+/* Lists that scroll inside their box (more than 3 rows): the scrollbar is always
+   visible, in its own lane beside the rows, so it's clear there is more. */
 .scroll-on-hover {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
+  scrollbar-color: #aeb8c6 #e9eaee;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
-}
-.scroll-on-hover:hover {
-  scrollbar-color: #c2c9d4 transparent;
 }
 .scroll-on-hover::-webkit-scrollbar {
   width: 6px;
 }
-.scroll-on-hover::-webkit-scrollbar-thumb {
-  background: transparent;
+.scroll-on-hover::-webkit-scrollbar-track {
+  background: #e9eaee;
   border-radius: 999px;
 }
-.scroll-on-hover:hover::-webkit-scrollbar-thumb {
-  background: #c2c9d4;
+.scroll-on-hover::-webkit-scrollbar-thumb {
+  background: #aeb8c6;
+  border-radius: 999px;
+}
+.scroll-on-hover::-webkit-scrollbar-thumb:hover {
+  background: #8e99a8;
 }

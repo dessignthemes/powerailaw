@@ -273,7 +273,7 @@ export default function DashboardHome() {
             if (!rows.length) return null;
             return (
               // Three rows show; more scroll inside the box (scrollbar on hover).
-              <div className="mt-4 flex flex-col gap-1.5 max-h-[120px] scroll-on-hover pr-0.5">
+              <div className={`mt-4 flex flex-col gap-1.5 ${rows.length > 3 ? "max-h-[120px] scroll-on-hover pr-2" : ""}`}>
                 {rows.map(([key, n]) => (
                   <Link
                     key={key}
@@ -383,7 +383,7 @@ export default function DashboardHome() {
           </div>
           {/* The events themselves, with their times (click one to open it). */}
           {cal.loaded && cal.connected && cal.events.length > 0 && (
-            <div className="mt-4 flex flex-col gap-1.5 max-h-[120px] scroll-on-hover pr-0.5">
+            <div className={`mt-4 flex flex-col gap-1.5 ${cal.events.length > 3 ? "max-h-[120px] scroll-on-hover pr-2" : ""}`}>
               {cal.events.map((e) => (
                 <button
                   key={e.id}
