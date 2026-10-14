@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import ScrollHint from "@/components/ScrollHint";
 import PriorityDot from "@/components/PriorityDot";
 import Link from "next/link";
 import TaskFilterDropdown from "@/components/TaskFilterDropdown";
@@ -52,6 +53,9 @@ const PRIORITIES = ["High", "Medium", "Low"] as const;
 export default function DashboardHome() {
   const [range, setRange] = useState<RangeKey>("today");
   const [bottomTab, setBottomTab] = useState<"tasks" | "events">("tasks");
+  // The scrolling lists in the top cards (for the "Scroll for N more" hint).
+  const boardsList = useRef<HTMLDivElement>(null);
+  const eventsList = useRef<HTMLDivElement>(null);
   // Clicking a priority on the "By priority" card shows only those tasks below.
   const [priorityFilter, setPriorityFilter] = useState<(typeof PRIORITIES)[number] | null>(null);
 
@@ -273,7 +277,8 @@ export default function DashboardHome() {
             if (!rows.length) return null;
             return (
               // Three rows show; more scroll inside the box (scrollbar on hover).
-              <div className={`mt-4 flex flex-col gap-1.5 ${rows.length > 3 ? "max-h-[120px] scroll-on-hover pr-2" : ""}`}>
+              <>
+              <div ref={boardsList} className={`mt-4 flex flex-col gap-1.5 ${rows.length > 3 ? "max-h-[120px] scroll-on-hover pr-2" : ""}`}>
                 {rows.map(([key, n]) => (
                   <Link
                     key={key}
@@ -286,6 +291,8 @@ export default function DashboardHome() {
                   </Link>
                 ))}
               </div>
+              <ScrollHint list={boardsList} total={rows.length} />
+              </>
             );
           })()}
         </div>
@@ -383,7 +390,8 @@ export default function DashboardHome() {
           </div>
           {/* The events themselves, with their times (click one to open it). */}
           {cal.loaded && cal.connected && cal.events.length > 0 && (
-            <div className={`mt-4 flex flex-col gap-1.5 ${cal.events.length > 3 ? "max-h-[120px] scroll-on-hover pr-2" : ""}`}>
+            <>
+            <div ref={eventsList} className={`mt-4 flex flex-col gap-1.5 ${cal.events.length > 3 ? "max-h-[120px] scroll-on-hover pr-2" : ""}`}>
               {cal.events.map((e) => (
                 <button
                   key={e.id}
@@ -395,6 +403,8 @@ export default function DashboardHome() {
                 </button>
               ))}
             </div>
+            <ScrollHint list={eventsList} total={cal.events.length} />
+            </>
           )}
         </div>
 
