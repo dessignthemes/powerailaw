@@ -410,8 +410,9 @@ function Avatar({ kind, name }: { kind: Kind; name: string }) {
     );
   }
   return (
-    <span className="w-8 h-8 rounded-full bg-card-alt flex items-center justify-center flex-shrink-0">
-      {kind === "matter" ? <Briefcase size={15} strokeWidth={1.75} className="text-muted" /> : <Building2 size={15} strokeWidth={1.75} className="text-muted" />}
+    // Matters and companies: dark slate circle with a white icon (as visible as the people's initials).
+    <span className="w-8 h-8 rounded-full bg-[#5E6E8C] flex items-center justify-center flex-shrink-0">
+      {kind === "matter" ? <Briefcase size={15} strokeWidth={1.9} className="text-white" /> : <Building2 size={15} strokeWidth={1.9} className="text-white" />}
     </span>
   );
 }
