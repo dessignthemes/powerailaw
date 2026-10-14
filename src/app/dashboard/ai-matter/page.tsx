@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { priorityMeta } from "@/components/NewTaskModal";
 import Link from "next/link";
 import { Search, X, Sparkles, Loader2, RefreshCw, AlertTriangle, AlertCircle, Info, Check, Plus, CalendarDays, Users, FileText, Clock, ListChecks, ArrowUpRight } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
@@ -269,7 +270,12 @@ export default function AiMatterPage() {
                               <div className="text-[14px] font-medium">{n.title}</div>
                               <div className="text-[12.5px] text-muted">{[n.why, n.dueDate ? `by ${n.dueDate}` : ""].filter(Boolean).join(" · ")}</div>
                             </div>
-                            <span className={`text-[12px] px-2 py-0.5 rounded-full ${n.priority === "High" ? "bg-[#F9B2B3]" : n.priority === "Low" ? "bg-[#CAF0D9]" : "bg-[#F9E1C0]"}`}>{n.priority}</span>
+                            <span
+                              className="text-[12px] font-medium px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: priorityMeta[n.priority === "High" || n.priority === "Low" ? n.priority : "Medium"].bg, color: priorityMeta[n.priority === "High" || n.priority === "Low" ? n.priority : "Medium"].text }}
+                            >
+                              {n.priority}
+                            </span>
                             <button onClick={() => createTasks([stepItem(n, i)])} disabled={created.has(`step-${i}`)} className="bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium disabled:opacity-50">
                               {created.has(`step-${i}`) ? "Task created" : "Create task"}
                             </button>
