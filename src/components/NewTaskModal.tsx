@@ -59,10 +59,10 @@ export function todayYmd() {
 
 // Priority chips: soft colors with black text (far more readable than white).
 export const priorityMeta: Record<TaskPriority, { bg: string; text: string }> = {
-  // Strong colours: white text on red and green; dark text on orange (white on #FF9300 is hard to read).
-  Low: { bg: "#009C75", text: "#FFFFFF" },
-  Medium: { bg: "#FF9300", text: "#1B191A" },
-  High: { bg: "#FF4F2E", text: "#FFFFFF" },
+  // Dark text on all three reads best on these colours.
+  Low: { bg: "#00C271", text: "#1B191A" },
+  Medium: { bg: "#FFB341", text: "#1B191A" },
+  High: { bg: "#FB5D67", text: "#1B191A" },
 };
 
 export const statusMeta: Record<TaskStatus, { label: string; icon: typeof Circle; color: string }> = {
