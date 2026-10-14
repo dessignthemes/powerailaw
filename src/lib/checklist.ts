@@ -134,14 +134,23 @@ export function progress(c: TaskChecklist | null | undefined) {
 }
 
 // Turns pasted text into sections: a plain line starts a section, "* item" / "- item" / "• item" lines are its items.
+// A step line starts with a bullet or checkbox as people paste them from Word,
+// Outlook or a website: * - + • ◦ ▪ ▫ ● ○ ■ □ ☐ ☑ ☒ ✓ ✔ – — ➢ ➤ ►, [ ] / [x] / - [ ],
+// or a number / letter ("1." "1)" "a)").
+const STEP_LINE = /^(?:[*\-+•◦▪▫●○■□☐☑☒✓✔–—➢➤►‣⁃]\s*(?:\[[ xX✓]?\]\s*)?|\[[ xX✓]?\]|\d{1,3}[.)]|[a-zA-Z][.)](?=\s))\s*(.+)$/;
+
 export function parseOutline(text: string): TemplateSection[] {
   const sections: TemplateSection[] = [];
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line) continue;
-    const item = /^([*\-•▪◦]|\[ ?\]|\d+[.)])\s+(.*)$/.exec(line);
+  const lines = text.split(/\r?\n/).map((l) => l.replace(/\u00a0/g, " ").trim()).filter(Boolean);
+  // A plain list (no bullets, no blank-line sections): every line is a step.
+  const anyBullet = lines.some((l) => STEP_LINE.test(l));
+  const hasBlankSeparatedSections = /\n\s*\n/.test(text.trim());
+  const plainList = !anyBullet && !hasBlankSeparatedSections && lines.length > 1;
+  for (const line of lines) {
+    const m = STEP_LINE.exec(line);
+    const item = m ? [line, "", m[1]] : plainList ? [line, "", line] : null;
     if (item) {
-      if (!sections.length) sections.push({ id: newId(), title: "", items: [] });
+      if (!sections.length) sections.push({ id: newId(), title: "Steps", items: [] }); // steps before any heading
       const parts = item[2].split("|").map((x) => x.trim());
       const moveIdx = parts.findIndex((x, i) => i > 0 && /^move\b/i.test(x));
       const moveTo = moveIdx > 0 ? moveFromText(parts.splice(moveIdx, 1)[0]) : undefined;

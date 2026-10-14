@@ -320,7 +320,15 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                   </button>
                 )}
                 <div className="flex-1 text-[12.5px] truncate">
-                  {error ? <span className="text-[#B42318]">{error}</span> : notice ? <span className="text-muted">{notice}</span> : null}
+                  {error ? (
+                    <span className="text-[#B42318]">{error}</span>
+                  ) : notice ? (
+                    <span className="text-muted">{notice}</span>
+                  ) : !draft.name.trim() ? (
+                    <span className="text-muted">Give the template a name to save it.</span>
+                  ) : itemCount(draft) === 0 ? (
+                    <span className="text-muted">Add at least one step to save it (in the text view, steps start with ☐, •, *, - or a number).</span>
+                  ) : null}
                 </div>
                 <button
                   onClick={onSave}
