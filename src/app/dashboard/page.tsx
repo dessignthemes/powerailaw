@@ -261,7 +261,7 @@ export default function DashboardHome() {
             </span>
           </Link>
           <div className="text-[24px] leading-tight font-display font-semibold mb-1">
-            {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"}
+            {tasksLoaded ? dueTasks.length : "–"} {dueTasks.length === 1 ? "task" : "tasks"} {activeRange.due.toLowerCase()}
           </div>
           <div className="text-[13px] text-muted">
             {openCount} open in total · {undatedTasks.length} with no due date
