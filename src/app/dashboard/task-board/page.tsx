@@ -1,6 +1,7 @@
 "use client";
 
 import TemplatesModal from "@/components/templates/TemplatesModal";
+import PriorityDot from "@/components/PriorityDot";
 import { progress as checklistProgress, alerts as checklistAlerts } from "@/lib/checklist";
 import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -30,7 +31,6 @@ import NewTaskModal, {
   BoardTask,
   TaskStatus,
   statusMeta,
-  priorityMeta,
   todayYmd,
 } from "@/components/NewTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
@@ -1110,15 +1110,7 @@ function TaskBoard({
                       <Icon size={15} strokeWidth={2} className={statusMeta[t.status].color} />
                       <span className="text-[14.5px] font-medium">{t.title}</span>
                     </div>
-                    <span
-                      className="text-[12px] font-medium px-2.5 py-1 rounded-full"
-                      style={{
-                        backgroundColor: priorityMeta[t.priority].bg,
-                        color: priorityMeta[t.priority].text,
-                      }}
-                    >
-                      {t.priority}
-                    </span>
+                    <PriorityDot priority={t.priority} />
                     {boardId === null && (
                       <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[140px]">
                         {t.boardId ? boards.find((b) => b.id === t.boardId)?.name ?? "Board" : generalName}
@@ -1440,15 +1432,7 @@ function TaskBoard({
                                 <User size={12} strokeWidth={1.75} className="text-muted" />
                               </span>
                             )}
-                            <span
-                              className="text-[12px] font-medium px-2.5 py-1 rounded-full"
-                              style={{
-                                backgroundColor: priorityMeta[t.priority].bg,
-                                color: priorityMeta[t.priority].text,
-                              }}
-                            >
-                              {t.priority}
-                            </span>
+                            <PriorityDot priority={t.priority} />
                             {(() => {
                               const cp = checklistProgress(t.checklist);
                               if (!cp.total) return null;

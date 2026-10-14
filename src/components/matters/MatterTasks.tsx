@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import PriorityDot from "@/components/PriorityDot";
 import Link from "next/link";
 import { ListChecks, Plus, X, Loader2, ArrowRight, CalendarDays, User, Flag, LayoutList } from "lucide-react";
-import NewTaskModal, { GenericDropdown, priorityMeta, statusMeta, type BoardTask, type TaskPriority } from "@/components/NewTaskModal";
+import NewTaskModal, { GenericDropdown, statusMeta, type BoardTask, type TaskPriority } from "@/components/NewTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import AssigneeOptions from "@/components/AssigneeOptions";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
@@ -159,9 +160,7 @@ export default function MatterTasks({
                     <ListChecks size={12} strokeWidth={1.75} /> {cp.done}/{cp.total}
                   </span>
                 )}
-                <span className="text-[12px] font-medium px-2.5 py-0.5 rounded-full" style={{ backgroundColor: priorityMeta[t.priority].bg, color: priorityMeta[t.priority].text }}>
-                  {t.priority}
-                </span>
+                <PriorityDot priority={t.priority} />
                 <span className="text-[12.5px] text-muted w-[96px] text-right">{t.dueDate ? fmtDate(t.dueDate) : "No due date"}</span>
               </button>
             );

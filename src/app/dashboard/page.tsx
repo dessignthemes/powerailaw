@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import PriorityDot from "@/components/PriorityDot";
 import Link from "next/link";
 import TaskFilterDropdown from "@/components/TaskFilterDropdown";
 import TaskDetailModal from "@/components/TaskDetailModal";
@@ -191,12 +192,7 @@ export default function DashboardHome() {
               {formatDue(t.dueDate)}
             </span>
           )}
-          <span
-            className="text-[12px] font-medium px-2.5 py-1 rounded-full"
-            style={{ backgroundColor: priorityMeta[t.priority].bg, color: priorityMeta[t.priority].text }}
-          >
-            {t.priority}
-          </span>
+          <PriorityDot priority={t.priority} />
           <MemberAvatar userId={t.createdBy} />
         </div>
       </div>
