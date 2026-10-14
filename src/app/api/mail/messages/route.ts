@@ -3,7 +3,7 @@ import { getAccessToken } from "@/lib/mail/tokens";
 import { listGmail } from "@/lib/mail/google";
 import { listOutlook } from "@/lib/mail/microsoft";
 import { requireUserId, parseProvider, mailErrorResponse } from "@/lib/mail/api";
-import { readMessageIds } from "@/lib/data/mailReads";
+import { readMessageIds, mailMarks } from "@/lib/data/mailReads";
 import { matchInbox } from "@/lib/mail/matterMail";
 import { requireUserOrg } from "@/lib/data/documents";
 
@@ -29,6 +29,14 @@ export async function GET(request: Request) {
     const unreadIds = page.messages.filter((m) => m.unread).map((m) => m.id);
     const opened = await readMessageIds(userId, provider, unreadIds);
     let messages = opened.size ? page.messages.map((m) => (opened.has(m.id) ? { ...m, unread: false } : m)) : page.messages;
+    // Flagged / marked unread in LawPower.
+    const marks = await mailMarks(userId, provider, messages.map((m) => m.id));
+    if (marks.size) {
+      messages = messages.map((m) => {
+        const mk = marks.get(m.id);
+        return mk ? { ...m, flagged: mk.flagged, unread: mk.unread ? true : m.unread } : m;
+      });
+    }
     // The matter each email is on (emails carrying a matter number are filed to it).
     try {
       const { orgId } = await requireUserOrg();

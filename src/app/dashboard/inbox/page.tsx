@@ -15,7 +15,14 @@ import {
   X,
   Briefcase,
   PanelLeftOpen,
+  Flag,
+  Mail as MailIcon,
+  ListChecks,
+  Forward,
+  PenSquare,
 } from "lucide-react";
+import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/ComposeEmail";
+import CreateTaskFromEmail, { htmlToText } from "@/components/mail/CreateTaskFromEmail";
 import type { MailFolder, MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
 import FolderPanel from "@/components/mail/FolderPanel";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
@@ -52,6 +59,10 @@ function rememberOpened(p: MailProvider, id: string) {
   const ids = [...openedIds(p)].filter((x) => x !== id);
   ids.push(id);
   writePref(openedKey(p), JSON.stringify(ids.slice(-1500)));
+}
+// "Mark as unread": this browser forgets it was opened too.
+function forgetOpened(p: MailProvider, id: string) {
+  writePref(openedKey(p), JSON.stringify([...openedIds(p)].filter((x) => x !== id)));
 }
 function withOpened(p: MailProvider, list: MailSummary[]) {
   const opened = openedIds(p);
@@ -220,6 +231,11 @@ function FileToMatter({
 }
 
 export default function InboxPage() {
+  const { teamMembers, boards, addTask } = useWorkspaceData();
+  // New email / forward (opens in the person's Gmail or Outlook) and "Turn into task".
+  const [composing, setComposing] = useState<"new" | "forward" | null>(null);
+  const [taskFrom, setTaskFrom] = useState<MailSummary | null>(null);
+  const [actionNote, setActionNote] = useState<string | null>(null);
   const [conns, setConns] = useState<Conn[] | null>(null);
   const [statusError, setStatusError] = useState<Problem | null>(null);
   const [provider, setProvider] = useState<MailProvider | null>(null);
@@ -504,6 +520,46 @@ export default function InboxPage() {
   // ── Connected ───────────────────────────────────────────────────────────
   return (
     <div ref={rootRef} className="px-6 lg:px-10 pt-4" style={{ height: height ?? "calc(100vh - 100px)" }}>
+      {composing && (() => {
+        const summary = message ? messages.find((x) => x.id === message.id) : null;
+        const fwd = composing === "forward" && message;
+        const text = fwd ? (message.text?.trim() ? message.text : message.html ? htmlToText(message.html) : "") : "";
+        return (
+          <ComposeEmail
+            title={fwd ? "Forward email" : "New email"}
+            initialSubject={fwd ? fwdSubject(message.subject || "(no subject)") : ""}
+            initialBody={fwd ? forwardBody({ from: message.from, fromEmail: message.fromEmail, to: message.to, date: message.date, subject: message.subject, text }) : ""}
+            matterNumber={fwd ? summary?.matter?.number ?? null : null}
+            providers={(conns ?? []).map((c) => c.provider)}
+            forwardOriginal={fwd && message.webLink && provider ? { provider, url: message.webLink } : null}
+            onClose={() => setComposing(null)}
+            onOpened={() => setComposing(null)}
+          />
+        );
+      })()}
+      {taskFrom && provider && (
+        <CreateTaskFromEmail
+          email={taskFrom}
+          provider={provider}
+          members={teamMembers}
+          boards={boards}
+          onClose={() => setTaskFrom(null)}
+          onCreate={(task) => {
+            // A task from an email filed to a matter belongs to that matter.
+            addTask(taskFrom.matter ? { ...task, matterId: taskFrom.matter.id } : task);
+            setTaskFrom(null);
+            setActionNote(`Task created: "${task.title}". It's on the Task Board.`);
+          }}
+        />
+      )}
+      {actionNote && (
+        <div className="mb-2 flex items-center gap-2 rounded-xl bg-[#EEF3FB] px-4 py-2 text-[13px]">
+          {actionNote}
+          <button onClick={() => setActionNote(null)} aria-label="Dismiss" className="ml-auto text-muted hover:text-ink">
+            <X size={13} />
+          </button>
+        </div>
+      )}
       <div className="flex flex-col h-full border border-line rounded-2xl overflow-hidden bg-cream">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-line flex-wrap">
@@ -572,6 +628,12 @@ export default function InboxPage() {
               </button>
             )}
           </form>
+          <button
+            onClick={() => setComposing("new")}
+            className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap"
+          >
+            <PenSquare size={13} /> New email
+          </button>
           <button
             onClick={reload}
             disabled={listLoading}
@@ -645,6 +707,7 @@ export default function InboxPage() {
                     <div className="flex items-center gap-2 mb-0.5">
                       {m.unread && <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0" aria-label="Unread" />}
                       <span className={`text-[13.5px] truncate flex-1 ${m.unread ? "font-semibold" : "font-medium"}`}>{m.from}</span>
+                      {m.flagged && <Flag size={12} className="text-[#E5484D] fill-current flex-shrink-0" aria-label="Flagged as important" />}
                       {m.hasAttachments && <Paperclip size={12} className="text-muted flex-shrink-0" />}
                       <span className="text-[12px] text-muted flex-shrink-0">{when(m.date)}</span>
                     </div>
@@ -723,6 +786,67 @@ export default function InboxPage() {
                         <ExternalLink size={12} /> Open in {provider ? providerLabel[provider] : "mail"}
                       </a>
                     )}
+                    {provider && (() => {
+                      const summary = messages.find((x) => x.id === message.id);
+                      const flagged = !!summary?.flagged;
+                      const mark = async (patch: { flagged?: boolean; unread?: boolean }) => {
+                        try {
+                          const r = await fetch(`/api/mail/messages/${encodeURIComponent(message.id)}/mark`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ provider, ...patch }),
+                          });
+                          const d = await r.json().catch(() => ({}));
+                          if (!r.ok) throw new Error(d?.error ?? "That didn't save. Please try again.");
+                          setActionNote(null);
+                          return true;
+                        } catch (e) {
+                          setActionNote((e as Error).message);
+                          return false;
+                        }
+                      };
+                      return (
+                        <>
+                          <button
+                            onClick={async () => {
+                              setMessages((list) => list.map((x) => (x.id === message.id ? { ...x, flagged: !flagged } : x)));
+                              if (!(await mark({ flagged: !flagged })))
+                                setMessages((list) => list.map((x) => (x.id === message.id ? { ...x, flagged } : x)));
+                            }}
+                            aria-pressed={flagged}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium transition-colors ${
+                              flagged ? "bg-[#FDE8E8] text-[#B42318] hover:bg-[#FBD5D5]" : "bg-chip hover:bg-btn"
+                            }`}
+                          >
+                            <Flag size={12} className={flagged ? "fill-current" : ""} /> {flagged ? "Flagged as important" : "Flag as important"}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!(await mark({ unread: true }))) return;
+                              forgetOpened(provider, message.id);
+                              setMessages((list) => list.map((x) => (x.id === message.id ? { ...x, unread: true } : x)));
+                              const current = folderId ?? folders.find((f) => f.kind === "inbox")?.id;
+                              setFolders((fs) => fs.map((f) => (f.id === current ? { ...f, unread: f.unread + 1 } : f)));
+                              setSelectedId(null);
+                              setMessage(null);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
+                          >
+                            <MailIcon size={12} /> Mark as unread
+                          </button>
+                          <button
+                            onClick={() => summary && setTaskFrom(summary)}
+                            disabled={!summary}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn disabled:opacity-50"
+                          >
+                            <ListChecks size={12} /> Turn into task
+                          </button>
+                          <button onClick={() => setComposing("forward")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn">
+                            <Forward size={12} /> Forward
+                          </button>
+                        </>
+                      );
+                    })()}
                     {provider && (
                       <FileToMatter
                         provider={provider}

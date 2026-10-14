@@ -3,7 +3,7 @@ import { getAccessToken } from "@/lib/mail/tokens";
 import { getGmail } from "@/lib/mail/google";
 import { getOutlook } from "@/lib/mail/microsoft";
 import { requireUserId, parseProvider, mailErrorResponse } from "@/lib/mail/api";
-import { markMailRead } from "@/lib/data/mailReads";
+import { markMailRead, clearUnreadMark } from "@/lib/data/mailReads";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { token, email } = await getAccessToken(userId, provider);
     const message = provider === "google" ? await getGmail(token, id, email) : await getOutlook(token, id);
     await markMailRead(userId, provider, id);
+    await clearUnreadMark(userId, provider, id);
     return NextResponse.json({ message });
   } catch (error) {
     return mailErrorResponse("GET /api/mail/messages/[id]", error);

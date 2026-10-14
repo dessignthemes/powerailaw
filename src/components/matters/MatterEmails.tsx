@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mail, MessageSquare, ArrowDownLeft, ArrowUpRight, Loader2, RefreshCw, X, ExternalLink, Trash2, Paperclip, Send, Info } from "lucide-react";
-import { subjectWithTag, composeLinks, smsLink } from "@/lib/mail/matterTag";
+import { Mail, MessageSquare, ArrowDownLeft, ArrowUpRight, Loader2, RefreshCw, X, ExternalLink, Trash2, Paperclip, Forward } from "lucide-react";
+import { smsLink } from "@/lib/mail/matterTag";
 import { numberOf, type Matter } from "@/components/NewMatterModal";
 import type { Client } from "@/components/NewClientModal";
 import SecureMessages from "@/components/matters/SecureMessages";
+import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/ComposeEmail";
 
 type Msg = {
   id: string;
@@ -53,6 +54,7 @@ export default function MatterEmails({ matter, client }: { matter: Matter; clien
   const [syncNote, setSyncNote] = useState<string | null>(null);
   const [open, setOpen] = useState<Msg | null>(null);
   const [compose, setCompose] = useState<"email" | "sms" | null>(null);
+  const [forwarding, setForwarding] = useState<Msg | null>(null);
   const [conns, setConns] = useState<Conn[]>([]);
   const awaitingReturn = useRef(false);
   const base = `/api/matters/${matter.id}/messages`;
@@ -196,16 +198,39 @@ export default function MatterEmails({ matter, client }: { matter: Matter; clien
         )}
       </div>
 
-      {open && <MessageView m={open} onClose={() => setOpen(null)} onRemove={() => void remove(open)} />}
-      {compose === "email" && (
-        <EmailComposer
-          matter={matter}
-          client={client}
-          conns={conns}
-          onClose={() => setCompose(null)}
+      {open && (
+        <MessageView
+          m={open}
+          onClose={() => setOpen(null)}
+          onRemove={() => void remove(open)}
+          onForward={() => {
+            setForwarding(open);
+            setOpen(null);
+          }}
+        />
+      )}
+      {(compose === "email" || forwarding) && (
+        <ComposeEmail
+          title={forwarding ? "Forward email" : "New email"}
+          initialTo={forwarding ? "" : client?.email ?? ""}
+          initialSubject={forwarding ? fwdSubject(forwarding.subject || "(no subject)") : matter.title}
+          initialBody={
+            forwarding
+              ? forwardBody({ from: forwarding.fromName, fromEmail: forwarding.fromEmail, to: forwarding.to, date: forwarding.sentAt, subject: forwarding.subject, text: forwarding.bodyText ?? forwarding.snippet })
+              : ""
+          }
+          matterNumber={numberOf(matter)}
+          providers={conns.map((c) => c.provider)}
+          forwardOriginal={forwarding?.webLink && forwarding.mine && forwarding.provider ? { provider: forwarding.provider, url: forwarding.webLink } : null}
+          footnote="The email opens in your own mailbox, ready to send. Once sent, it's saved to this matter."
+          onClose={() => {
+            setCompose(null);
+            setForwarding(null);
+          }}
           onOpened={() => {
             awaitingReturn.current = true;
             setCompose(null);
+            setForwarding(null);
             setSyncNote("Once you send the email, it appears here automatically (click Check mailbox if it doesn't show up in a minute).");
           }}
         />
@@ -241,7 +266,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-function MessageView({ m, onClose, onRemove }: { m: Msg; onClose: () => void; onRemove: () => void }) {
+function MessageView({ m, onClose, onRemove, onForward }: { m: Msg; onClose: () => void; onRemove: () => void; onForward: () => void }) {
   return (
     <Modal title={m.channel === "sms" ? (m.direction === "out" ? "Text sent" : "Text received") : m.subject || "(no subject)"} onClose={onClose}>
       <div className="px-6 pb-5 flex flex-col gap-3">
@@ -269,6 +294,11 @@ function MessageView({ m, onClose, onRemove }: { m: Msg; onClose: () => void; on
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {m.channel === "email" && (
+            <button onClick={onForward} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium">
+              <Forward size={12} /> Forward
+            </button>
+          )}
           {m.webLink && m.mine && (
             <a href={m.webLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium">
               <ExternalLink size={12} /> Open in {m.provider === "google" ? "Gmail" : "Outlook"}
@@ -278,63 +308,6 @@ function MessageView({ m, onClose, onRemove }: { m: Msg; onClose: () => void; on
             <Trash2 size={13} /> Take off this matter
           </button>
         </div>
-      </div>
-    </Modal>
-  );
-}
-
-function EmailComposer({ matter, client, conns, onClose, onOpened }: { matter: Matter; client: Client | null; conns: Conn[]; onClose: () => void; onOpened: () => void }) {
-  const [to, setTo] = useState(client?.email ?? "");
-  const [subject, setSubject] = useState(matter.title);
-  const [body, setBody] = useState("");
-  const finalSubject = subjectWithTag(subject, numberOf(matter));
-  const links = composeLinks(to, finalSubject, body);
-  const providers = [...new Set(conns.map((c) => c.provider))];
-  const go = (href: string, newTab: boolean) => {
-    if (newTab) window.open(href, "_blank", "noopener");
-    else window.location.assign(href);
-    onOpened();
-  };
-  return (
-    <Modal title="New email" onClose={onClose}>
-      <div className="px-6 pb-5 flex flex-col gap-3">
-        <label className="flex flex-col gap-1">
-          <span className="text-[12.5px] font-semibold text-muted">To</span>
-          <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="name@example.com" className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none" />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-[12.5px] font-semibold text-muted">Subject</span>
-          <input value={subject} onChange={(e) => setSubject(e.target.value)} className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none" />
-          {numberOf(matter) && (
-            <span className="text-[12px] text-muted">
-              Sent as: <b className="text-ink">{finalSubject}</b>. Keep the matter number in the subject and every reply is filed here automatically.
-            </span>
-          )}
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-[12.5px] font-semibold text-muted">Message</span>
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={8} className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none resize-y" />
-        </label>
-        {!numberOf(matter) && (
-          <div className="flex gap-2 text-[12.5px] text-[#8A4B14] bg-[#FDF1E7] rounded-xl px-3 py-2">
-            <Info size={14} className="flex-shrink-0 mt-0.5" /> This matter has no number yet, so replies can&apos;t be filed automatically. Give it an abbreviation (pencil icon) first.
-          </div>
-        )}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          {(providers.length ? providers : (["google", "microsoft"] as const)).map((p) => (
-            <button
-              key={p}
-              onClick={() => go(links[p], true)}
-              className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium"
-            >
-              <Send size={13} /> Write in {p === "google" ? "Gmail" : "Outlook"}
-            </button>
-          ))}
-          <button onClick={() => go(links.app, false)} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium">
-            Open in mail app
-          </button>
-        </div>
-        <div className="text-[12px] text-muted">The email opens in your own mailbox, ready to send. Once sent, it&apos;s saved to this matter.</div>
       </div>
     </Modal>
   );

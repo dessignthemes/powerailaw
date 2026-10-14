@@ -64,7 +64,7 @@ export default function SecureMessages({ matter, client, preselect = [], compact
   const load = useCallback(
     () =>
       getJson<Thread>(base)
-        .then((t) => (setThread(t), setError(null)))
+        .then((t) => (setThread({ messages: t.messages ?? [], access: t.access ?? null, hasClient: !!t.hasClient, unreadFromClient: t.unreadFromClient ?? 0 }), setError(null)))
         .catch((e: Error) => setError(e.message)),
     [base]
   );

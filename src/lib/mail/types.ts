@@ -11,6 +11,7 @@ export type MailSummary = {
   unread: boolean;
   hasAttachments: boolean;
   matter?: { id: string; number: string | null; title: string } | null; // matter it's logged on
+  flagged?: boolean; // flagged as important in LawPower
 };
 
 export type MailMessage = MailSummary & {
