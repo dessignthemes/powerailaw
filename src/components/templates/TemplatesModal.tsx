@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Plus, Trash2, ListChecks, Loader2, ClipboardPaste } from "lucide-react";
 import { useTemplates } from "./useTemplates";
-import { parseOutline, toOutline, COMMON_ANCHORS, MOVE_LABEL, type MoveTo, type TemplateSection } from "@/lib/checklist";
+import { parseOutline, toOutline, outlineName, COMMON_ANCHORS, MOVE_LABEL, type MoveTo, type TemplateSection } from "@/lib/checklist";
 import { parseCodes } from "@/lib/matters/numbering";
 
 // codes = matter abbreviations it's for, as typed ("REP, RES").
@@ -21,7 +21,15 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
 
-  const itemCount = (d: Draft) => d.sections.reduce((n, s) => n + s.items.filter((i) => i.text.trim()).length, 0);
+  // While the text view is open, the pasted text counts (no need to click "Use this list" first).
+  const liveSections = (d: Draft) => (pasteOpen ? parseOutline(pasteText) : d.sections);
+  const itemCount = (d: Draft) => liveSections(d).reduce((n, s) => n + s.items.filter((i) => i.text.trim()).length, 0);
+  // Pasted text into the draft; an empty name takes the first heading ("INITIAL INTAKE & MATTER SETUP").
+  function applyText(d: Draft): Draft {
+    const parsed = parseOutline(pasteText);
+    if (!parsed.length) return d;
+    return { ...d, sections: parsed, name: d.name.trim() ? d.name : outlineName(parsed) };
+  }
 
   function open(d: Draft) {
     setDraft(d);
@@ -36,12 +44,19 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
 
   async function onSave() {
     if (!draft) return;
+    let d = draft;
+    if (pasteOpen) {
+      d = applyText(draft);
+      setDraft(d);
+      setPasteOpen(false);
+    }
+    if (!d.name.trim()) return setError("Give the template a name.");
     setBusy(true);
     setError(null);
     try {
-      const saved = await save({ id: draft.example ? undefined : draft.id, name: draft.name.trim(), sections: draft.sections, matterCodes: parseCodes(draft.codes) });
+      const saved = await save({ id: d.example ? undefined : d.id, name: d.name.trim(), sections: d.sections, matterCodes: parseCodes(d.codes) });
       setDraft({ id: saved.id, name: saved.name, sections: saved.sections, codes: (saved.matterCodes ?? []).join(", ") });
-      setNotice(draft.example ? "Saved as your firm’s own copy. The example stays available." : "Template saved.");
+      setNotice(d.example ? "Saved as your firm’s own copy. The example stays available." : "Template saved.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -168,8 +183,13 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                 <div className="flex items-center gap-2 mb-4">
                   <button
                     onClick={() => {
-                      setPasteText(toOutline(draft.sections.filter((s) => s.title || s.items.some((i) => i.text))));
-                      setPasteOpen((o) => !o);
+                      if (pasteOpen) {
+                        setDraft(applyText(draft)); // closing keeps what was typed / pasted
+                        setPasteOpen(false);
+                      } else {
+                        setPasteText(toOutline(draft.sections.filter((s) => s.title || s.items.some((i) => i.text))));
+                        setPasteOpen(true);
+                      }
                     }}
                     className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
                   >
@@ -181,7 +201,8 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                 {pasteOpen ? (
                   <div className="mb-4">
                     <div className="text-[12.5px] text-muted mb-2">
-                      One section name per line, with its steps underneath starting with <b>*</b> or <b>-</b>. Leave a blank line between sections.
+                      Paste your checklist: section names on their own line (e.g. <b>1. INITIAL INTAKE</b>), steps underneath starting with{" "}
+                      <b>☐</b>, <b>•</b>, <b>*</b> or <b>-</b>. Lines like &quot;Notes: ____&quot; are skipped.
                       To give a step a due date, add the critical date and days after a bar, e.g. <b>* Title Binder Received | Closing date | -14</b>.
                       To move the task when a step is ticked, add <b>| move: Waiting</b> (or In progress, Done).
                     </div>
@@ -193,8 +214,7 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                     />
                     <button
                       onClick={() => {
-                        const parsed = parseOutline(pasteText);
-                        if (parsed.length) setDraft({ ...draft, sections: parsed });
+                        setDraft(applyText(draft));
                         setPasteOpen(false);
                       }}
                       className="mt-2 bg-btn hover:bg-btn-hover px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors"
@@ -324,7 +344,7 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                     <span className="text-[#B42318]">{error}</span>
                   ) : notice ? (
                     <span className="text-muted">{notice}</span>
-                  ) : !draft.name.trim() ? (
+                  ) : !draft.name.trim() && !(pasteOpen && outlineName(parseOutline(pasteText))) ? (
                     <span className="text-muted">Give the template a name to save it.</span>
                   ) : itemCount(draft) === 0 ? (
                     <span className="text-muted">Add at least one step to save it (in the text view, steps start with ☐, •, *, - or a number).</span>
@@ -332,7 +352,7 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                 </div>
                 <button
                   onClick={onSave}
-                  disabled={busy || !draft.name.trim() || itemCount(draft) === 0}
+                  disabled={busy || (!draft.name.trim() && !(pasteOpen && outlineName(parseOutline(pasteText)))) || itemCount(draft) === 0}
                   className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {busy && <Loader2 size={13} className="animate-spin" />} {draft.example ? "Save my copy" : "Save template"}

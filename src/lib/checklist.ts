@@ -135,27 +135,35 @@ export function progress(c: TaskChecklist | null | undefined) {
 
 // Turns pasted text into sections: a plain line starts a section, "* item" / "- item" / "• item" lines are its items.
 // A step line starts with a bullet or checkbox as people paste them from Word,
-// Outlook or a website: * - + • ◦ ▪ ▫ ● ○ ■ □ ☐ ☑ ☒ ✓ ✔ – — ➢ ➤ ►, [ ] / [x] / - [ ],
-// or a number / letter ("1." "1)" "a)").
-const STEP_LINE = /^(?:[*\-+•◦▪▫●○■□☐☑☒✓✔–—➢➤►‣⁃]\s*(?:\[[ xX✓]?\]\s*)?|\[[ xX✓]?\]|\d{1,3}[.)]|[a-zA-Z][.)](?=\s))\s*(.+)$/;
+// Outlook or a website (* - + • ◦ ▪ ● ○ ■ □ ☐ ☑ ☒ ✓ ✔ – — ➢ ➤ ►, [ ] / [x] / - [ ]),
+// or with a number / letter ("1." "1)" "a)").
+const SYMBOL_STEP = /^(?:[*\-+•◦▪▫●○■□☐☑☒✓✔–—➢➤►‣⁃]\s*(?:\[[ xX✓]?\]\s*)?|\[[ xX✓]?\])\s*(.+)$/;
+const NUMBERED = /^(?:\d{1,3}[.)]|[a-zA-Z][.)](?=\s))\s*(.+)$/;
+const FILL_IN = /_{4,}/; // "Notes / follow-up: ________" — a blank to write on, not a step
 
 export function parseOutline(text: string): TemplateSection[] {
   const sections: TemplateSection[] = [];
-  const lines = text.split(/\r?\n/).map((l) => l.replace(/\u00a0/g, " ").trim()).filter(Boolean);
-  // A plain list (no bullets, no blank-line sections): every line is a step.
-  const anyBullet = lines.some((l) => STEP_LINE.test(l));
-  const hasBlankSeparatedSections = /\n\s*\n/.test(text.trim());
-  const plainList = !anyBullet && !hasBlankSeparatedSections && lines.length > 1;
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.replace(/\u00a0/g, " ").trim())
+    .filter((l) => l && !(FILL_IN.test(l) && !SYMBOL_STEP.test(l)));
+  // When steps use bullets / checkboxes, numbered and lettered lines are headings
+  // ("1. INITIAL INTAKE", "A. Probate Matter"). Otherwise numbered lines are steps.
+  const symbolSteps = lines.some((l) => SYMBOL_STEP.test(l));
+  const anyNumbered = lines.some((l) => NUMBERED.test(l));
+  // A plain list (no bullets, numbers or blank-line sections): every line is a step.
+  const plainList = !symbolSteps && !anyNumbered && !/\n\s*\n/.test(text.trim()) && lines.length > 1;
   for (const line of lines) {
-    const m = STEP_LINE.exec(line);
-    const item = m ? [line, "", m[1]] : plainList ? [line, "", line] : null;
-    if (item) {
+    const sym = SYMBOL_STEP.exec(line);
+    const num = !symbolSteps ? NUMBERED.exec(line) : null;
+    const stepText = sym ? sym[1] : num ? num[1] : plainList ? line : null;
+    if (stepText !== null) {
       if (!sections.length) sections.push({ id: newId(), title: "Steps", items: [] }); // steps before any heading
-      const parts = item[2].split("|").map((x) => x.trim());
+      const parts = stepText.split("|").map((x) => x.trim());
       const moveIdx = parts.findIndex((x, i) => i > 0 && /^move\b/i.test(x));
       const moveTo = moveIdx > 0 ? moveFromText(parts.splice(moveIdx, 1)[0]) : undefined;
-      const [text, anchor, days] = parts;
-      const t = clean(text);
+      const [t0, anchor, days] = parts;
+      const t = clean(t0.replace(FILL_IN, "").trim());
       if (t)
         sections[sections.length - 1].items.push({
           id: newId(),
@@ -164,10 +172,20 @@ export function parseOutline(text: string): TemplateSection[] {
           ...(moveTo ? { moveTo } : {}),
         });
     } else if (!/^checklist$/i.test(line)) {
-      sections.push({ id: newId(), title: clean(line, 120), items: [] });
+      const title = clean(line.replace(/[:：]\s*$/, ""), 120);
+      const last = sections[sections.length - 1];
+      // A sub-heading right under a heading joins it ("2. OPEN THE ESTATE — A. Probate Matter").
+      if (last && !last.items.length && last.title && last.title !== "Steps") last.title = clean(`${last.title} — ${title}`, 120);
+      else sections.push({ id: newId(), title, items: [] });
     }
   }
   return sections.filter((s) => s.items.length || s.title).slice(0, MAX_SECTIONS);
+}
+
+// The first heading without its numbering ("1. INITIAL INTAKE" → "INITIAL INTAKE"), for a template name.
+export function outlineName(sections: TemplateSection[]): string {
+  const t = sections.find((s) => s.title && s.title !== "Steps")?.title ?? "";
+  return t.replace(/^(?:\d{1,3}|[a-zA-Z])[.)]\s*/, "").split(" — ")[0].trim().slice(0, 120);
 }
 
 export function toOutline(sections: TemplateSection[]): string {
