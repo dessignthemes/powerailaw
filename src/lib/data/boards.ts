@@ -1,4 +1,5 @@
 import "server-only";
+import { cleanFilters, type CustomFilter } from "@/lib/tasks/customFilters";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { getSessionUserId } from "@/lib/auth";
@@ -121,4 +122,33 @@ export async function moveGeneralTasks(toBoardId: unknown): Promise<number> {
     throw error;
   }
   return (data ?? []).length;
+}
+
+// ── Each board's own quick filters ("+ Add more") ───────────────────────────
+// { "<board id>" | "general" | "all": [ { id, kind, value } ] }
+
+export async function getBoardFilters(): Promise<Record<string, CustomFilter[]>> {
+  const orgId = await getCurrentOrgId();
+  const { data } = await createAdminClient().from("organizations").select("*").eq("id", orgId).maybeSingle();
+  const raw = (data as { board_filters?: unknown } | null)?.board_filters;
+  const out: Record<string, CustomFilter[]> = {};
+  if (raw && typeof raw === "object") for (const [k, v] of Object.entries(raw as Record<string, unknown>)) out[k] = cleanFilters(v);
+  return out;
+}
+
+export async function setBoardFilters(board: unknown, filters: unknown): Promise<Record<string, CustomFilter[]>> {
+  const orgId = await getCurrentOrgId();
+  const key = typeof board === "string" && (board === "general" || board === "all" || /^[0-9a-f-]{36}$/i.test(board)) ? board : null;
+  if (!key) throw new BoardError(400, "Unknown board.");
+  if (key !== "general" && key !== "all" && !(await boardInOrg(orgId, key))) throw new BoardError(404, "Board not found.");
+  const all = await getBoardFilters();
+  all[key] = cleanFilters(filters);
+  const { error } = await createAdminClient().from("organizations").update({ board_filters: all }).eq("id", orgId);
+  if (error) {
+    if (/board_filters/.test(error.message ?? "")) {
+      throw new BoardError(400, "Adding filters needs a database update: run supabase/migrations/0036_board_filters.sql in the Supabase SQL editor.");
+    }
+    throw error;
+  }
+  return all;
 }

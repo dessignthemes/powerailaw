@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import type { CustomFilter } from "@/lib/tasks/customFilters";
 import type { Client, ClientStatus } from "@/components/NewClientModal";
 import type { Matter, MatterStatus } from "@/components/NewMatterModal";
 import type { BoardTask } from "@/components/NewTaskModal";
@@ -37,6 +38,9 @@ type WorkspaceDataContextValue = {
   boards: { id: string; name: string }[];
   // The firm's name for the built-in board of tasks not on a sub board ("General").
   generalName: string;
+  // Each board's own quick filters ("+ Add more"), keyed by board id / "general" / "all".
+  boardFilters: Record<string, CustomFilter[]>;
+  saveBoardFilters: (board: string, filters: CustomFilter[]) => Promise<void>;
   renameGeneral: (name: string) => Promise<void>;
   moveGeneralTasks: (toBoardId: string) => Promise<number>;
   boardsError: string | null;
@@ -65,6 +69,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const [meEmail, setMeEmail] = useState<string | null>(null);
   const [boards, setBoards] = useState<{ id: string; name: string }[]>([]);
   const [generalName, setGeneralName] = useState("General");
+  const [boardFilters, setBoardFilters] = useState<Record<string, CustomFilter[]>>({});
   const [boardsError, setBoardsError] = useState<string | null>(null);
 
   // Re-fetch shared data (e.g. after the AI Agent creates a client or task).
@@ -92,6 +97,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       .then((d) => {
         setBoards(d.boards ?? []);
         if (typeof d.generalName === "string" && d.generalName.trim()) setGeneralName(d.generalName);
+        if (d.boardFilters && typeof d.boardFilters === "object") setBoardFilters(d.boardFilters);
       })
       .catch((e: Error) => setBoardsError(e.message));
 
@@ -130,6 +136,20 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     );
     setBoards((bs) => bs.map((b) => (b.id === id ? d.board : b)));
   }, []);
+
+  const saveBoardFilters = useCallback(async (board: string, filters: CustomFilter[]) => {
+    const prev = boardFilters;
+    setBoardFilters((all) => ({ ...all, [board]: filters })); // show it right away
+    try {
+      const d = await readJson(
+        await fetch(`/api/boards/filters`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ board, filters }) })
+      );
+      if (d.boardFilters) setBoardFilters(d.boardFilters);
+    } catch (e) {
+      setBoardFilters(prev);
+      throw e;
+    }
+  }, [boardFilters]);
 
   const renameGeneral = useCallback(async (name: string) => {
     const d = await readJson(
@@ -363,6 +383,8 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         meEmail,
         boards,
         generalName,
+        boardFilters,
+        saveBoardFilters,
         renameGeneral,
         moveGeneralTasks,
         boardsError,

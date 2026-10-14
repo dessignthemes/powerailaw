@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { boardInOrg } from "@/lib/data/boards";
 import { columnInOrg } from "@/lib/data/boardColumns";
-import { WAITING_ON, type WaitingOn } from "@/lib/tasks/waitingOn";
+import type { WaitingOn } from "@/lib/tasks/waitingOn";
 import { notifyAssigned } from "@/lib/data/notifications";
 import type { BoardTask, TaskComment } from "@/components/NewTaskModal";
 
@@ -43,7 +43,7 @@ function toTask(row: TaskRow): BoardTask {
     matterId: row.matter_id ?? null,
     createdBy: row.created_by ?? null,
     columnId: row.column_id ?? null,
-    waitingOn: (WAITING_ON as readonly string[]).includes(row.waiting_on ?? "") ? (row.waiting_on as WaitingOn) : null,
+    waitingOn: row.waiting_on?.trim() ? (row.waiting_on.trim().slice(0, 60) as WaitingOn) : null,
     position: typeof row.position === "number" ? row.position : null,
     checklist: cleanChecklist(row.checklist),
     updatedBy: row.updated_by ?? row.created_by ?? null,
@@ -66,7 +66,7 @@ function toColumns(task: BoardTask) {
     // Only sent when the task's checklist was changed (null removes it).
     ...(task.checklist !== undefined ? { checklist: cleanChecklist(task.checklist) } : {}),
     // Who the task is waiting on (only sent when the browser set it; null = nobody).
-    ...(task.waitingOn !== undefined ? { waiting_on: (WAITING_ON as readonly string[]).includes(task.waitingOn ?? "") ? task.waitingOn : null } : {}),
+    ...(task.waitingOn !== undefined ? { waiting_on: typeof task.waitingOn === "string" && task.waitingOn.trim() ? task.waitingOn.replace(/\s+/g, " ").trim().slice(0, 60) : null } : {}),
   };
 }
 

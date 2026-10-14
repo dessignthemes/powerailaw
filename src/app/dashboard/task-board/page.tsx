@@ -35,7 +35,8 @@ import NewTaskModal, {
 } from "@/components/NewTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { NextStepLine } from "@/components/matters/MatterTasks";
-import { WAITING_ON, WAITING_LABEL, type WaitingOn } from "@/lib/tasks/waitingOn";
+import { filterLabel, filterTest, waitingLabel, type CustomFilter } from "@/lib/tasks/customFilters";
+import AddFilterMenu from "@/components/tasks/AddFilterMenu";
 import ColorPicker from "@/components/ColorPicker";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -107,8 +108,8 @@ const initialColumns: Column[] = [
   { id: "done", title: "Done", color: "#22C55E", status: "done" },
 ];
 
-const waitingPill = (w: WaitingOn) => `Waiting on ${WAITING_LABEL[w].toLowerCase()}`;
-const filterPills = ["Me", "Overdue", "Due today", "Due this week", "Due this month", "Next week", ...WAITING_ON.map(waitingPill)];
+// The fixed quick filters; each board adds its own with "+ Add more" (Waiting on …, priority, …).
+const filterPills = ["Me", "Overdue", "Due today", "Due this week", "Next week", "Due this month"];
 
 // Pills that actually narrow the task list. A task is shown if it matches
 // any active one. "Me" (tasks assigned to the signed-in person) is added in TaskBoard.
@@ -118,10 +119,6 @@ const filterTests: Record<string, (t: BoardTask) => boolean> = {
   "Due this week": (t) => isDueIn(t, "week"),
   "Next week": (t) => isDueIn(t, "nextweek"),
   "Due this month": (t) => isDueIn(t, "month"),
-  // Tasks marked as waiting on someone; older tasks in the Waiting column count as waiting on the client.
-  ...Object.fromEntries(
-    WAITING_ON.map((w) => [waitingPill(w), (t: BoardTask) => t.waitingOn === w || (w === "client" && !t.waitingOn && t.status === "waiting")])
-  ),
 };
 
 const dueParamToPill: Record<string, string> = {
@@ -307,11 +304,39 @@ function TaskBoard({
   }
   const [cardMenuFor, setCardMenuFor] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>(initialFilters);
-  const { meEmail } = useWorkspaceData();
+  const { meEmail, boardFilters, saveBoardFilters, teamMembers: members } = useWorkspaceData();
+  // This board's own quick filters ("+ Add more"); keys "cf:<id>" in activeFilters.
+  const filterBoard = boardKey ?? "all";
+  const customFilters = boardFilters[filterBoard] ?? [];
+  const nameOf = (email: string) => members.find((m) => m.email.toLowerCase() === email.toLowerCase())?.fullName || email;
+  const customLabel = (key: string) => {
+    const f = customFilters.find((c) => `cf:${c.id}` === key);
+    return f ? filterLabel(f, nameOf) : key;
+  };
   const tests: Record<string, (t: BoardTask) => boolean> = {
     ...filterTests,
     Me: (t) => !!meEmail && (t.assignee ?? "").toLowerCase() === meEmail.toLowerCase(),
+    ...Object.fromEntries(customFilters.map((f) => [`cf:${f.id}`, filterTest(f)])),
   };
+  const [addFilterOpen, setAddFilterOpen] = useState(false);
+  const [filterError, setFilterError] = useState<string | null>(null);
+  async function addCustomFilter(f: Omit<CustomFilter, "id">) {
+    setFilterError(null);
+    try {
+      await saveBoardFilters(filterBoard, [...customFilters, { id: Math.random().toString(36).slice(2, 10), ...f }]);
+      setAddFilterOpen(false);
+    } catch (e) {
+      setFilterError((e as Error).message);
+    }
+  }
+  async function removeCustomFilter(id: string) {
+    setActiveFilters((fs) => fs.filter((x) => x !== `cf:${id}`));
+    try {
+      await saveBoardFilters(filterBoard, customFilters.filter((c) => c.id !== id));
+    } catch (e) {
+      setFilterError((e as Error).message);
+    }
+  }
   const activeTests = activeFilters.map((f) => tests[f]).filter(Boolean);
 
   // Search, the filter menu and display options (toolbar icons).
@@ -933,6 +958,46 @@ function TaskBoard({
             {f}
           </button>
         ))}
+        {customFilters.map((cf) => {
+          const key = `cf:${cf.id}`;
+          return (
+            <span key={cf.id} className="group relative">
+              <button
+                onClick={() => toggleFilter(key)}
+                className={`pl-3.5 pr-3.5 group-hover:pr-7 py-1.5 rounded-full text-[13.5px] font-medium transition-all ${
+                  activeFilters.includes(key) ? "bg-btn text-ink" : "bg-chip text-muted hover:text-ink"
+                }`}
+              >
+                {filterLabel(cf, nameOf)}
+              </button>
+              <button
+                onClick={() => void removeCustomFilter(cf.id)}
+                aria-label={`Remove filter ${filterLabel(cf, nameOf)}`}
+                title="Remove this filter from this board"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full hidden group-hover:flex items-center justify-center text-muted hover:text-[#B42318] hover:bg-white"
+              >
+                <X size={11} />
+              </button>
+            </span>
+          );
+        })}
+        <div className="relative">
+          <button
+            onClick={() => setAddFilterOpen((o) => !o)}
+            className="flex items-center gap-1 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium bg-white border border-dashed border-line text-muted hover:text-ink hover:border-[#AEB8C6] transition-colors"
+          >
+            <Plus size={13} /> Add more
+          </button>
+          {addFilterOpen && (
+            <AddFilterMenu
+              existing={customFilters}
+              members={members}
+              onAdd={(f) => void addCustomFilter(f)}
+              onClose={() => setAddFilterOpen(false)}
+            />
+          )}
+        </div>
+        {filterError && <span className="text-[12.5px] text-[#B42318]">{filterError}</span>}
         <div className="relative">
           <button
             onClick={() => setMatterMenuOpen((o) => !o)}
@@ -988,7 +1053,7 @@ function TaskBoard({
             {(() => {
               const parts = [
                 ...(filterMatter ? [filterMatter.matterNumber ?? filterMatter.title] : []),
-                ...activeFilters.filter((f) => tests[f]),
+                ...activeFilters.filter((f) => tests[f]).map((f) => (f.startsWith("cf:") ? customLabel(f) : f)),
                 ...(query.trim() ? [`“${query.trim()}”`] : []),
                 ...(advCount ? [`${advCount} ${advCount === 1 ? "filter" : "filters"}`] : []),
               ];
@@ -1413,7 +1478,7 @@ function TaskBoard({
                             })()}
                             {t.waitingOn && (
                               <span className="text-[11.5px] font-medium bg-[#FCEFD9] text-[#8A4B14] rounded-md px-1.5 py-0.5" title="Who this task is waiting on">
-                                Waiting on {WAITING_LABEL[t.waitingOn]}
+                                Waiting on {waitingLabel(t.waitingOn)}
                               </span>
                             )}
                             {(() => {

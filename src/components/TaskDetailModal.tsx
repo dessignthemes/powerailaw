@@ -4,7 +4,8 @@ import AssigneeOptions from "@/components/AssigneeOptions";
 import { useCallback, useState, useEffect, useRef } from "react";
 import ChecklistPanel, { ChecklistPicker } from "@/components/templates/ChecklistPanel";
 import { autoStatus, type TaskChecklist } from "@/lib/checklist";
-import { WAITING_ON, WAITING_LABEL, type WaitingOn } from "@/lib/tasks/waitingOn";
+import { WAITING_ON, type WaitingOn } from "@/lib/tasks/waitingOn";
+import { waitingLabel } from "@/lib/tasks/customFilters";
 import Link from "next/link";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import {
@@ -98,6 +99,19 @@ export default function TaskDetailModal({
   // Who the task is waiting on (Task Board filters "Waiting on lender" etc.).
   const [waitingOn, setWaitingOn] = useState<WaitingOn | null>(task.waitingOn ?? null);
   const [waitingOpen, setWaitingOpen] = useState(false);
+  const [otherParty, setOtherParty] = useState("");
+  // The usual parties, the ones the firm's boards filter by, and this task's own.
+  const { boardFilters } = useWorkspaceData();
+  const waitingParties = (() => {
+    const out: string[] = [];
+    const add = (v: string | null | undefined) => {
+      if (v && !out.some((o) => waitingLabel(o).toLowerCase() === waitingLabel(v).toLowerCase())) out.push(v);
+    };
+    WAITING_ON.forEach(add);
+    Object.values(boardFilters).flat().forEach((f) => f.kind === "waiting" && add(f.value));
+    add(waitingOn);
+    return out;
+  })();
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
@@ -403,11 +417,11 @@ export default function TaskDetailModal({
               trigger={
                 <span className={waitingOn ? "text-[#8A4B14]" : "text-muted"}>
                   <Hourglass size={13} strokeWidth={1.75} className="inline -mt-0.5 mr-1.5" />
-                  {waitingOn ? `Waiting on ${WAITING_LABEL[waitingOn]}` : "Waiting on…"}
+                  {waitingOn ? `Waiting on ${waitingLabel(waitingOn)}` : "Waiting on…"}
                 </span>
               }
             >
-              {[null, ...WAITING_ON].map((w) => (
+              {[null, ...waitingParties].map((w) => (
                 <button
                   key={w ?? "none"}
                   onClick={() => {
@@ -417,10 +431,33 @@ export default function TaskDetailModal({
                   }}
                   className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
                 >
-                  {w ? WAITING_LABEL[w] : "Not waiting on anyone"}
+                  {w ? waitingLabel(w) : "Not waiting on anyone"}
                   {waitingOn === w && <Check size={14} />}
                 </button>
               ))}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const v = otherParty.replace(/\s+/g, " ").trim().slice(0, 60);
+                  if (!v) return;
+                  setWaitingOn(v);
+                  commit({ waitingOn: v });
+                  setOtherParty("");
+                  setWaitingOpen(false);
+                }}
+                className="flex gap-1.5 px-1.5 pt-1.5 mt-1 border-t border-line"
+              >
+                <input
+                  value={otherParty}
+                  onChange={(e) => setOtherParty(e.target.value)}
+                  placeholder="Someone else…"
+                  aria-label="Waiting on someone else"
+                  className="flex-1 min-w-0 bg-white border border-line rounded-lg px-2.5 py-1.5 text-[13px] outline-none"
+                />
+                <button type="submit" className="bg-chip hover:bg-btn px-2.5 rounded-lg text-[12.5px] font-medium">
+                  Set
+                </button>
+              </form>
             </GenericDropdown>
 
             <div className="flex items-center gap-1.5 bg-card-alt px-3 py-1.5 rounded-full text-[13px] font-medium text-muted">

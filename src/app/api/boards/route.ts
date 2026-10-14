@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listBoards, createBoard, getGeneralName } from "@/lib/data/boards";
+import { listBoards, createBoard, getGeneralName, getBoardFilters } from "@/lib/data/boards";
 import { boardError as err } from "@/lib/data/boardsApi";
 
 export const dynamic = "force-dynamic";
@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const [boards, generalName] = await Promise.all([listBoards(), getGeneralName()]);
-    return NextResponse.json({ boards, generalName });
+    const [boards, generalName, boardFilters] = await Promise.all([listBoards(), getGeneralName(), getBoardFilters().catch(() => ({}))]);
+    return NextResponse.json({ boards, generalName, boardFilters });
   } catch (e) {
     return err("GET /api/boards", e);
   }
