@@ -278,7 +278,7 @@ export default function DashboardHome() {
                   <Link
                     key={key}
                     href={`/dashboard/task-board?board=${key}&due=${range}`}
-                    className="group/row flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium bg-[#E1E7F4] hover:bg-[#D5DDEE] transition-colors"
+                    className="group/row flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium bg-[#CCD7EA] hover:bg-[#BFCCE3] transition-colors"
                   >
                     <span className="font-semibold tabular-nums w-5 text-right">{n}</span>
                     <span className="truncate flex-1">{key === "general" ? generalName : boardName(key)}</span>
@@ -388,7 +388,7 @@ export default function DashboardHome() {
                 <button
                   key={e.id}
                   onClick={() => setOpenEvent(e)}
-                  className="flex-shrink-0 w-full text-left flex items-center gap-2 bg-[#E1E7F4] hover:bg-[#D5DDEE] rounded-xl px-3 py-2 text-[13.5px] transition-colors"
+                  className="flex-shrink-0 w-full text-left flex items-center gap-2 bg-[#CCD7EA] hover:bg-[#BFCCE3] rounded-xl px-3 py-2 text-[13.5px] transition-colors"
                 >
                   <span className="mono text-[12px] text-muted w-[54px] flex-shrink-0">{range === "today" ? fmtTime(e) : eventStart(e).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
                   <span className="font-medium truncate">{e.title}</span>
