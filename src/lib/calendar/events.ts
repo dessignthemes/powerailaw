@@ -12,6 +12,8 @@ export type SyncedEvent = {
   allDay: boolean;
   location: string | null;
   link: string | null;
+  private?: boolean; // marked private / confidential in Outlook or Google
+  ownerId?: string; // team view: whose calendar it's from
 };
 
 const MAX = 250;
@@ -33,6 +35,7 @@ type GEvent = {
   summary?: string;
   location?: string;
   htmlLink?: string;
+  visibility?: string;
   start?: { date?: string; dateTime?: string };
   end?: { date?: string; dateTime?: string };
 };
@@ -53,6 +56,7 @@ export async function googleEvents(token: string, from: string, to: string): Pro
         allDay,
         location: e.location ?? null,
         link: e.htmlLink ?? null,
+        private: e.visibility === "private" || e.visibility === "confidential",
       };
     });
 }
@@ -63,6 +67,7 @@ type MEvent = {
   isAllDay?: boolean;
   isCancelled?: boolean;
   webLink?: string;
+  sensitivity?: string;
   location?: { displayName?: string };
   start?: { dateTime?: string };
   end?: { dateTime?: string };
@@ -74,7 +79,7 @@ export async function outlookEvents(token: string, from: string, to: string): Pr
     endDateTime: to,
     $top: String(MAX),
     $orderby: "start/dateTime",
-    $select: "id,subject,isAllDay,isCancelled,webLink,location,start,end",
+    $select: "id,subject,isAllDay,isCancelled,webLink,location,start,end,sensitivity",
   });
   // Ask Graph for UTC so times convert correctly in the browser.
   const d = await getJson<{ value?: MEvent[] }>(`https://graph.microsoft.com/v1.0/me/calendarView?${params}`, token, {
@@ -95,6 +100,7 @@ export async function outlookEvents(token: string, from: string, to: string): Pr
         allDay,
         location: e.location?.displayName || null,
         link: e.webLink ?? null,
+        private: e.sensitivity === "private" || e.sensitivity === "confidential",
       };
     });
 }
@@ -135,6 +141,51 @@ export async function syncedEvents(userId: string, from: string, to: string) {
   );
   events.sort((a, b) => (a.start < b.start ? -1 : 1));
   return { events, sources };
+}
+
+// ── Team view: everyone's calendars, each person in their own colour ─────────
+// A colleague's private events show only as "Private event" (time kept, no
+// details). Colleagues' events are view-only; people change their own.
+
+export type TeamMemberCal = { id: string; name: string; email: string; connected: boolean; me: boolean };
+
+export async function teamEvents(orgId: string, meId: string, from: string, to: string) {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { data } = await createAdminClient().from("profiles").select("id, email, full_name").eq("org_id", orgId).limit(50);
+  const people = ((data ?? []) as { id: string; email: string; full_name?: string | null }[]).sort((a, b) =>
+    a.id === meId ? -1 : b.id === meId ? 1 : (a.full_name || a.email).localeCompare(b.full_name || b.email)
+  );
+  const members: TeamMemberCal[] = [];
+  const events: SyncedEvent[] = [];
+  let mySources: CalendarSource[] = [];
+  await Promise.all(
+    people.map(async (p) => {
+      const me = p.id === meId;
+      const r = await syncedEvents(p.id, from, to).catch(() => ({ events: [] as SyncedEvent[], sources: [] as CalendarSource[] }));
+      if (me) mySources = r.sources;
+      members.push({ id: p.id, name: (p.full_name || p.email).slice(0, 80), email: p.email, connected: r.sources.some((x) => x.status === "ok"), me });
+      for (const e of r.events) {
+        events.push(
+          me || !e.private
+            ? { ...e, ownerId: p.id }
+            : { ...e, ownerId: p.id, title: "Private event", location: null, link: null }
+        );
+      }
+    })
+  );
+  members.sort((a, b) => (a.me ? -1 : b.me ? 1 : a.name.localeCompare(b.name)));
+  events.sort((a, b) => (a.start < b.start ? -1 : 1));
+  return { events, sources: mySources, members };
+}
+
+// A colleague's event details (read-only): only within the same firm, never private ones.
+export async function colleagueEventDetail(orgId: string, ownerId: string, provider: MailProvider, rawId: string): Promise<EventDetail> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { data } = await createAdminClient().from("profiles").select("id").eq("id", ownerId).eq("org_id", orgId).maybeSingle();
+  if (!data) throw new MailError("provider_error", "That calendar isn't in your firm.");
+  const detail = await getEventDetail(ownerId, provider, rawId);
+  if (detail.private) throw new MailError("provider_error", "This is a private event.");
+  return detail;
 }
 
 export type NewEvent = {
@@ -271,11 +322,12 @@ export async function getEventDetail(userId: string, provider: MailProvider, raw
       organizer: e.organizer?.displayName || e.organizer?.email || null,
       attendees: (e.attendees ?? []).map((a) => ({ name: a.displayName ?? null, email: a.email, response: a.responseStatus ?? null })),
       joinUrl: e.hangoutLink ?? e.conferenceData?.entryPoints?.find((p) => p.entryPointType === "video")?.uri ?? null,
+      private: e.visibility === "private" || e.visibility === "confidential",
     };
   }
   const e = (await (
     await calFetch(
-      `https://graph.microsoft.com/v1.0/me/events/${id}?$select=id,subject,isAllDay,start,end,location,webLink,body,organizer,attendees,onlineMeeting`,
+      `https://graph.microsoft.com/v1.0/me/events/${id}?$select=id,subject,isAllDay,start,end,location,webLink,body,organizer,attendees,onlineMeeting,sensitivity`,
       token,
       { headers: { Prefer: 'outlook.timezone="UTC", outlook.body-content-type="text"' } }
     )
@@ -303,6 +355,7 @@ export async function getEventDetail(userId: string, provider: MailProvider, raw
       .filter((a) => a.emailAddress?.address)
       .map((a) => ({ name: a.emailAddress?.name ?? null, email: a.emailAddress!.address!, response: a.status?.response ?? null })),
     joinUrl: e.onlineMeeting?.joinUrl ?? null,
+    private: e.sensitivity === "private" || e.sensitivity === "confidential",
   };
 }
 

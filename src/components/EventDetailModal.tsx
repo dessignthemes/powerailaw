@@ -129,16 +129,19 @@ const responseLabel: Record<string, string> = {
   organizer: "Organizer",
 };
 
+// owner: a colleague's event (team calendar) — shown read-only.
 export default function EventDetailModal({
   event,
   onClose,
   onDeleted,
   onUpdated,
+  owner,
 }: {
   event: EventRef;
   onClose: () => void;
   onDeleted?: (id: string) => void;
   onUpdated?: (e: EventRef) => void;
+  owner?: { id: string; name: string } | null;
 }) {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -198,7 +201,7 @@ export default function EventDetailModal({
   useEffect(() => {
     let cancelled = false;
     fetch(
-      `/api/calendar/events/${encodeURIComponent(rawId(event.id))}?provider=${event.provider}`,
+      `/api/calendar/events/${encodeURIComponent(rawId(event.id))}?provider=${event.provider}${owner ? `&owner=${owner.id}` : ""}`,
     )
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
@@ -210,7 +213,7 @@ export default function EventDetailModal({
     return () => {
       cancelled = true;
     };
-  }, [event.id, event.provider]);
+  }, [event.id, event.provider, owner]);
 
   // Esc closes
   useEffect(() => {
@@ -513,6 +516,9 @@ export default function EventDetailModal({
             </>
           ) : (
             <>
+              {owner ? (
+                <div className="text-[13px] text-muted">On {owner.name}&apos;s calendar · view only</div>
+              ) : (
               <div className="flex items-center gap-1">
                 <button
                   onClick={remove}
@@ -540,6 +546,7 @@ export default function EventDetailModal({
                   <Pencil size={14} strokeWidth={1.75} /> Edit event
                 </button>
               </div>
+              )}
               <div className="flex items-center gap-2">
                 {link && (
                   <a

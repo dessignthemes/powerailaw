@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { syncedEvents, createSyncedEvent } from "@/lib/calendar/events";
+import { syncedEvents, createSyncedEvent, teamEvents } from "@/lib/calendar/events";
+import { getCurrentOrgId } from "@/lib/data/org";
 import { mailErrorResponse } from "@/lib/mail/api";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/calendar/events?from=ISO&to=ISO — the signed-in user's own calendars only.
+// GET /api/calendar/events?from=ISO&to=ISO[&team=1] — the signed-in user's calendars (team=1: the whole firm's).
 export async function GET(request: Request) {
   try {
     const user = await getSessionUser();
@@ -16,7 +17,11 @@ export async function GET(request: Request) {
     if (isNaN(from.getTime()) || isNaN(to.getTime()) || to <= from || to.getTime() - from.getTime() > 62 * 86400_000) {
       return NextResponse.json({ error: "Invalid date range." }, { status: 400 });
     }
-    return NextResponse.json(await syncedEvents(user.id, from.toISOString(), to.toISOString()));
+    // ?team=1: everyone in the firm, each event tagged with whose calendar it's from.
+    if (url.searchParams.get("team") === "1") {
+      return NextResponse.json(await teamEvents(await getCurrentOrgId(), user.id, from.toISOString(), to.toISOString()), { headers: { "Cache-Control": "no-store" } });
+    }
+    return NextResponse.json(await syncedEvents(user.id, from.toISOString(), to.toISOString()), { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     return mailErrorResponse("GET /api/calendar/events", e);
   }

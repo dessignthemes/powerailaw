@@ -37,10 +37,24 @@ function toISODate(d: Date) {
 
 type Provider = "google" | "microsoft";
 type Source = { provider: Provider; email: string | null; status: "ok" | "reconnect" | "missing_scope" | "error"; message?: string };
-type Synced = { id: string; provider: Provider; title: string; start: string; end: string; allDay: boolean; location: string | null; link: string | null };
+type Synced = { id: string; provider: Provider; title: string; start: string; end: string; allDay: boolean; location: string | null; link: string | null; private?: boolean; ownerId?: string };
+type Member = { id: string; name: string; email: string; connected: boolean; me: boolean };
+
+// Each person's events in their own colour (by their place in the team list; you first).
+const MEMBER_COLORS = [
+  { bg: "#E3F2F3", bd: "#BFDCDF", tx: "#155E63" }, // teal
+  { bg: "#E8F0FE", bd: "#C5D6F6", tx: "#1F3A93" }, // blue
+  { bg: "#FDECEE", bd: "#F5C6CC", tx: "#9B1C2C" }, // red
+  { bg: "#FFF1DE", bd: "#F6D4A6", tx: "#8A4B14" }, // orange
+  { bg: "#EAF6EC", bd: "#BFE3C6", tx: "#1F6B33" }, // green
+  { bg: "#F1EAFB", bd: "#D8C7F2", tx: "#5B2B9A" }, // purple
+  { bg: "#FCE9F5", bd: "#F2C3E2", tx: "#8E1F6A" }, // pink
+  { bg: "#EEF0F2", bd: "#D3D8DE", tx: "#3D4652" }, // grey
+];
+const HIDDEN_KEY = "lawpower.calendar.hiddenMembers";
 
 // One shape for synced and locally added events, in local time.
-type Shown = { id: string; title: string; allDay: boolean; start: Date; end: Date; link: string | null; location: string | null; source: Provider | "local" };
+type Shown = { id: string; title: string; allDay: boolean; start: Date; end: Date; link: string | null; location: string | null; source: Provider | "local"; ownerId?: string };
 
 const providerName: Record<Provider, string> = { google: "Google Calendar", microsoft: "Outlook" };
 const chipClass: Record<Shown["source"], string> = {
@@ -56,7 +70,8 @@ function parseAllDay(ymd: string) {
 
 function toShown(e: Synced): Shown {
   return {
-    id: e.id,
+    id: `${e.ownerId ?? ""}|${e.id}`, // a shared meeting can be on two people's calendars
+    ownerId: e.ownerId,
     title: e.title,
     allDay: e.allDay,
     start: e.allDay ? parseAllDay(e.start) : new Date(e.start),
@@ -165,6 +180,35 @@ export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   // Events being saved to Outlook / Google (shown until the save finishes).
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  // Team members whose calendars show here, and the ones switched off (remembered in this browser).
+  const [members, setMembers] = useState<Member[]>([]);
+  const [hidden, setHidden] = useState<Set<string>>(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY) ?? "[]") as string[]);
+    } catch {
+      return new Set();
+    }
+  });
+  const toggleMember = (id: string) =>
+    setHidden((h) => {
+      const next = new Set(h);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      try {
+        localStorage.setItem(HIDDEN_KEY, JSON.stringify([...next]));
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
+  const colorOf = (ownerId?: string) => {
+    const i = members.findIndex((m) => m.id === ownerId);
+    return MEMBER_COLORS[(i < 0 ? 0 : i) % MEMBER_COLORS.length];
+  };
+  const chipStyle = (e: Shown) => (e.source === "local" ? undefined : (() => {
+    const c = colorOf(e.ownerId);
+    return { backgroundColor: c.bg, borderColor: c.bd, color: c.tx };
+  })());
   const [saveNotice, setSaveNotice] = useState<{ kind: "ok" | "error" | "saving"; text: string; link?: string | null } | null>(null);
   const { addTask } = useWorkspaceData();
   const [modalDate, setModalDate] = useState<string | null>(null);
@@ -211,17 +255,18 @@ export default function CalendarPage() {
 
   useEffect(() => {
     let cancelled = false;
-    const qs = new URLSearchParams({ from: range.from.toISOString(), to: range.to.toISOString() });
+    const qs = new URLSearchParams({ from: range.from.toISOString(), to: range.to.toISOString(), team: "1" });
     fetch(`/api/calendar/events?${qs}`)
       .then(async (res) => {
         const d = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(d?.error ?? "Couldn't load your calendar.");
-        return d as { events: Synced[]; sources: Source[] };
+        return d as { events: Synced[]; sources: Source[]; members?: Member[] };
       })
       .then((d) => {
         if (cancelled) return;
         setSynced(d.events);
         setSources(d.sources);
+        if (d.members) setMembers(d.members);
         setSyncError(null);
       })
       .catch((e: Error) => !cancelled && setSyncError(e.message))
@@ -236,7 +281,24 @@ export default function CalendarPage() {
     setRefreshKey((k) => k + 1);
   }, []);
 
-  const shown = useMemo(() => [...synced.map(toShown), ...events.map(localToShown)], [synced, events]);
+  // Changes made in Outlook / Google show up on their own: checked every 30 seconds
+  // while the calendar is open, and as soon as you come back to the tab.
+  useEffect(() => {
+    const quiet = () => document.visibilityState === "visible" && setRefreshKey((k) => k + 1);
+    const t = setInterval(quiet, 30_000);
+    document.addEventListener("visibilitychange", quiet);
+    window.addEventListener("focus", quiet);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", quiet);
+      window.removeEventListener("focus", quiet);
+    };
+  }, []);
+
+  const shown = useMemo(
+    () => [...synced.filter((e) => !e.ownerId || !hidden.has(e.ownerId)).map(toShown), ...events.map(localToShown)],
+    [synced, events, hidden]
+  );
 
   // Start the hour grid at 7am instead of midnight.
   useEffect(() => {
@@ -302,7 +364,12 @@ export default function CalendarPage() {
   const [selected, setSelected] = useState<Synced | null>(null);
   function openEvent(e: Shown, ev: React.MouseEvent) {
     ev.stopPropagation();
-    const found = synced.find((x) => x.id === e.id);
+    const found = synced.find((x) => `${x.ownerId ?? ""}|${x.id}` === e.id);
+    const owner = found ? members.find((m) => m.id === found.ownerId) : null;
+    if (found?.private && owner && !owner.me) {
+      setSaveNotice({ kind: "ok", text: `${owner.name} marked this event private, so only the time shows.` });
+      return;
+    }
     if (found) setSelected(found); // events still being saved can't be opened yet
   }
 
@@ -487,6 +554,37 @@ export default function CalendarPage() {
         );
       })()}
 
+      {/* Whose calendars are shown: one colour per person; click to show / hide. */}
+      {members.filter((m) => m.connected).length > 0 && (
+        <div className="mb-4 -mt-1 flex flex-wrap items-center gap-1.5">
+          <span className="text-[12.5px] text-muted mr-1">Calendars:</span>
+          {members
+            .filter((m) => m.connected)
+            .map((m) => {
+              const c = colorOf(m.id);
+              const off = hidden.has(m.id);
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => toggleMember(m.id)}
+                  aria-pressed={!off}
+                  title={off ? `Show ${m.name}'s events` : `Hide ${m.name}'s events`}
+                  className={`flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full border text-[12.5px] font-medium transition-opacity ${off ? "opacity-45" : ""}`}
+                  style={{ backgroundColor: off ? "transparent" : c.bg, borderColor: c.bd, color: c.tx }}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: off ? "transparent" : c.tx, border: `1.5px solid ${c.tx}` }} />
+                  {m.me ? `${m.name} (you)` : m.name}
+                </button>
+              );
+            })}
+          {members.some((m) => !m.connected) && (
+            <span className="text-[12px] text-muted ml-1" title={members.filter((m) => !m.connected).map((m) => m.name).join(", ")}>
+              {members.filter((m) => !m.connected).length} not connected yet
+            </span>
+          )}
+        </div>
+      )}
+
       {saveNotice && (
         <div
           className={`mb-5 -mt-2 rounded-xl px-4 py-3 text-[13.5px] flex items-center justify-between gap-3 border ${
@@ -549,7 +647,8 @@ export default function CalendarPage() {
                         role={e.link ? "link" : undefined}
                         onClick={(ev) => openEvent(e, ev)}
                         title={`${e.title}${e.location ? ` · ${e.location}` : ""}`}
-                        className={`text-[11px] font-medium border rounded-md px-1.5 py-0.5 truncate ${chipClass[e.source]} ${e.link ? "cursor-pointer hover:brightness-95" : ""}`}
+                        className={`text-[11px] font-medium border rounded-md px-1.5 py-0.5 truncate ${e.source === "local" ? chipClass.local : ""} ${e.link ? "cursor-pointer hover:brightness-95" : ""}`}
+                        style={chipStyle(e)}
                       >
                         {e.allDay ? "" : `${timeLabel(e.start)} `}
                         {e.title}
@@ -603,7 +702,7 @@ export default function CalendarPage() {
                   {eventsOnDay(shown, d)
                     .filter((e) => e.allDay)
                     .map((e) => (
-                      <div key={e.id} onClick={(ev) => openEvent(e, ev)} title={e.title} className={`text-[11px] font-medium border rounded-md px-1.5 py-0.5 truncate ${chipClass[e.source]} ${e.link ? "cursor-pointer" : ""}`}>
+                      <div key={e.id} onClick={(ev) => openEvent(e, ev)} title={e.title} className={`text-[11px] font-medium border rounded-md px-1.5 py-0.5 truncate ${e.source === "local" ? chipClass.local : ""} ${e.link ? "cursor-pointer" : ""}`} style={chipStyle(e)}>
                         {e.title}
                       </div>
                     ))}
@@ -643,8 +742,8 @@ export default function CalendarPage() {
                     key={`${e.id}-${col}`}
                     onClick={(ev) => openEvent(e, ev)}
                     title={`${e.title}${e.location ? ` · ${e.location}` : ""}`}
-                    className={`absolute pointer-events-auto border rounded-md px-1.5 py-0.5 overflow-hidden text-[11px] leading-tight ${chipClass[e.source]} ${e.link ? "cursor-pointer hover:brightness-95" : ""}`}
-                    style={{ top, height, left: `calc(${(col / 7) * 100}% + ${(left / 100) * (100 / 7)}% + 2px)`, width: `calc(${(width / 100) * (100 / 7)}% - 4px)` }}
+                    className={`absolute pointer-events-auto border rounded-md px-1.5 py-0.5 overflow-hidden text-[11px] leading-tight ${e.source === "local" ? chipClass.local : ""} ${e.link ? "cursor-pointer hover:brightness-95" : ""}`}
+                    style={{ ...chipStyle(e), top, height, left: `calc(${(col / 7) * 100}% + ${(left / 100) * (100 / 7)}% + 2px)`, width: `calc(${(width / 100) * (100 / 7)}% - 4px)` }}
                   >
                     <div className="font-medium truncate">{e.title}</div>
                     {height > 32 && <div className="opacity-75 truncate">{timeLabel(e.start)}–{timeLabel(e.end)}</div>}
@@ -681,7 +780,7 @@ export default function CalendarPage() {
               {eventsOnDay(shown, cursor)
                 .filter((e) => e.allDay)
                 .map((e) => (
-                  <div key={e.id} onClick={(ev) => openEvent(e, ev)} className={`text-[11.5px] font-medium border rounded-md px-2 py-0.5 ${chipClass[e.source]} ${e.link ? "cursor-pointer" : ""}`}>
+                  <div key={e.id} onClick={(ev) => openEvent(e, ev)} className={`text-[11.5px] font-medium border rounded-md px-2 py-0.5 ${e.source === "local" ? chipClass.local : ""} ${e.link ? "cursor-pointer" : ""}`} style={chipStyle(e)}>
                     {e.title}
                   </div>
                 ))}
@@ -705,8 +804,8 @@ export default function CalendarPage() {
                 <div
                   key={e.id}
                   onClick={(ev) => openEvent(e, ev)}
-                  className={`absolute pointer-events-auto border rounded-md px-2 py-1 overflow-hidden text-[12px] leading-tight ${chipClass[e.source]} ${e.link ? "cursor-pointer hover:brightness-95" : ""}`}
-                  style={{ top, height, left: `calc(${left}% + 2px)`, width: `calc(${width}% - 4px)` }}
+                  className={`absolute pointer-events-auto border rounded-md px-2 py-1 overflow-hidden text-[12px] leading-tight ${e.source === "local" ? chipClass.local : ""} ${e.link ? "cursor-pointer hover:brightness-95" : ""}`}
+                  style={{ ...chipStyle(e), top, height, left: `calc(${left}% + 2px)`, width: `calc(${width}% - 4px)` }}
                 >
                   <div className="font-medium truncate">{e.title}</div>
                   {height > 32 && (
@@ -733,6 +832,10 @@ export default function CalendarPage() {
       {selected && (
         <EventDetailModal
           event={selected}
+          owner={(() => {
+            const m = members.find((x) => x.id === selected.ownerId);
+            return m && !m.me ? { id: m.id, name: m.name } : null;
+          })()}
           onClose={() => setSelected(null)}
           onDeleted={(id) => {
             setSynced((list) => list.filter((x) => x.id !== id));

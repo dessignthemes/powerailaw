@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { getEventDetail, deleteSyncedEvent, updateSyncedEvent } from "@/lib/calendar/events";
+import { getEventDetail, deleteSyncedEvent, updateSyncedEvent, colleagueEventDetail } from "@/lib/calendar/events";
+import { getCurrentOrgId } from "@/lib/data/org";
 import { mailErrorResponse } from "@/lib/mail/api";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,11 @@ export async function GET(request: Request, { params }: P) {
     const p = provider(request);
     if (!p) return NextResponse.json({ error: "Unknown calendar." }, { status: 400 });
     const { id } = await params;
+    // ?owner=<member id>: a colleague's event (read-only, same firm, not private).
+    const owner = new URL(request.url).searchParams.get("owner");
+    if (owner && owner !== user.id && /^[0-9a-f-]{36}$/i.test(owner)) {
+      return NextResponse.json({ event: await colleagueEventDetail(await getCurrentOrgId(), owner, p, id), readOnly: true });
+    }
     return NextResponse.json({ event: await getEventDetail(user.id, p, id) });
   } catch (e) {
     return mailErrorResponse("GET /api/calendar/events/[id]", e);
