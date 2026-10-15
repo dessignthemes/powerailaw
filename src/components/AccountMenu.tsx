@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown, Users } from "lucide-react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
+import LogoMark from "@/components/LogoMark";
 
 // The signed-in person's initial: first letter of their name, or of their
 // email address if the provider didn't share a name.
@@ -39,9 +40,7 @@ export default function AccountMenu({
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-[280px] bg-cream border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.35)] overflow-hidden">
             <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-line">
-              <div className="w-7 h-7 rounded-full bg-card-alt flex items-center justify-center text-[13px] font-semibold flex-shrink-0">
-                {orgName.charAt(0).toUpperCase()}
-              </div>
+              <LogoMark size={28} />
               <span className="text-[14.5px] font-semibold flex-1 truncate">{orgName}</span>
               <ChevronsUpDown size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
             </div>
