@@ -23,6 +23,9 @@ type TaskRow = {
   updated_by?: string | null;
   column_id?: string | null;
   waiting_on?: string | null;
+  offered_to?: string[] | null;
+  instructions?: string | null;
+  assigned_by?: string | null;
   position?: number | null;
   checklist?: unknown;
   created_at: string;
@@ -44,6 +47,9 @@ function toTask(row: TaskRow): BoardTask {
     createdBy: row.created_by ?? null,
     columnId: row.column_id ?? null,
     waitingOn: row.waiting_on?.trim() ? (row.waiting_on.trim().slice(0, 60) as WaitingOn) : null,
+    offeredTo: Array.isArray(row.offered_to) ? row.offered_to : [],
+    instructions: row.instructions ?? "",
+    assignedBy: row.assigned_by ?? null,
     position: typeof row.position === "number" ? row.position : null,
     checklist: cleanChecklist(row.checklist),
     updatedBy: row.updated_by ?? row.created_by ?? null,
@@ -65,10 +71,19 @@ function toColumns(task: BoardTask) {
     ...(typeof task.position === "number" && Number.isFinite(task.position) ? { position: task.position } : {}),
     // Only sent when the task's checklist was changed (null removes it).
     ...(task.checklist !== undefined ? { checklist: cleanChecklist(task.checklist) } : {}),
+    // Offered to several people / the assigner's instructions / who assigned it (only when sent).
+    ...(task.offeredTo !== undefined ? { offered_to: cleanEmails(task.offeredTo) } : {}),
+    ...(task.instructions !== undefined ? { instructions: String(task.instructions ?? "").slice(0, 5000) } : {}),
+    ...(task.assignedBy !== undefined ? { assigned_by: task.assignedBy ? String(task.assignedBy).slice(0, 200).toLowerCase() : null } : {}),
     // Who the task is waiting on (only sent when the browser set it; null = nobody).
     ...(task.waitingOn !== undefined ? { waiting_on: typeof task.waitingOn === "string" && task.waitingOn.trim() ? task.waitingOn.replace(/\s+/g, " ").trim().slice(0, 60) : null } : {}),
   };
 }
+
+const cleanEmails = (v: unknown): string[] =>
+  Array.isArray(v)
+    ? [...new Set(v.filter((x): x is string => typeof x === "string" && /^[^\s@]+@[^\s@]+$/.test(x.trim())).map((x) => x.trim().toLowerCase()))].slice(0, 20)
+    : [];
 
 // A matter id from the browser, kept only when that matter is in this workspace.
 async function matterInOrg(orgId: string, matterId: string | null | undefined): Promise<string | null> {
@@ -115,15 +130,29 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
     .single()
     .then(async (r) => {
       // Before 0010 / 0031 are run there's no column_id / waiting_on; save without them.
-      if (!r.error || !/column_id|waiting_on/.test(r.error.message ?? "")) return r;
-      const { waiting_on: _w, ...plain } = row as typeof row & { waiting_on?: unknown };
+      if (!r.error || !/column_id|waiting_on|offered_to|instructions|assigned_by/.test(r.error.message ?? "")) return r;
+      const { waiting_on: _w, offered_to: _o, instructions: _i, assigned_by: _a, ...plain } = row as typeof row & {
+        waiting_on?: unknown;
+        offered_to?: unknown;
+        instructions?: unknown;
+        assigned_by?: unknown;
+      };
       void _w;
+      void _o;
+      void _i;
+      void _a;
       return supabase.from("tasks").insert(plain).select("*").single();
     });
 
   if (error) throw error;
   const created = toTask(data as TaskRow);
   await notifyAssigned({ orgId, actorId: userId, kind: "task_assigned", refId: created.id, boardId: created.boardId, title: created.title, to: created.assignee });
+  // Offered to several people: each gets an alert to accept it.
+  if (!created.assignee) {
+    for (const email of created.offeredTo ?? []) {
+      await notifyAssigned({ orgId, actorId: userId, kind: "task_offered", refId: created.id, boardId: created.boardId, title: created.title, to: email });
+    }
+  }
   return created;
 }
 
@@ -144,7 +173,7 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   // Columns added by later migrations; if one isn't there yet, save without it.
   let fields: Record<string, unknown> = userId ? { ...base, updated_by: userId } : { ...base };
   let { data, error } = await run(fields);
-  for (const col of ["updated_by", "column_id", "position", "checklist", "waiting_on"]) {
+  for (const col of ["updated_by", "column_id", "position", "checklist", "waiting_on", "offered_to", "instructions", "assigned_by"]) {
     if (!error || !new RegExp(col).test(error.message ?? "") || !(col in fields)) continue;
     const { [col]: _drop, ...rest } = fields;
     void _drop;
@@ -173,4 +202,43 @@ export async function deleteTaskRows(ids: string[]): Promise<void> {
 
   const { error } = await supabase.from("tasks").delete().eq("org_id", orgId).in("id", ids);
   if (error) throw error;
+}
+
+// ── Accepting a task that was offered to several people ───────────────────────
+
+export class TaskAcceptError extends Error {
+  constructor(public status: 400 | 404 | 409, message: string) {
+    super(message);
+  }
+}
+
+// The first person to accept becomes the assignee; it leaves everyone else's list.
+export async function acceptTask(id: string, userId: string): Promise<BoardTask> {
+  const orgId = await getCurrentOrgId();
+  const db = createAdminClient();
+  const { data: me } = await db.from("profiles").select("email").eq("id", userId).maybeSingle();
+  const email = ((me?.email as string | undefined) ?? "").toLowerCase();
+  if (!email) throw new TaskAcceptError(400, "Your account has no email address.");
+  // One step, so two people accepting at the same moment can't both get it.
+  const { data, error } = await db
+    .from("tasks")
+    .update({ assignee: email, offered_to: [], updated_by: userId, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("org_id", orgId)
+    .is("assignee", null)
+    .contains("offered_to", [email])
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) {
+    const { data: t } = await db.from("tasks").select("assignee, offered_to").eq("id", id).eq("org_id", orgId).maybeSingle();
+    if (!t) throw new TaskAcceptError(404, "Task not found.");
+    if (t.assignee) throw new TaskAcceptError(409, t.assignee === email ? "You already have this task." : `${t.assignee} already accepted this task.`);
+    throw new TaskAcceptError(409, "This task isn't offered to you.");
+  }
+  const task = toTask(data as TaskRow);
+  if (task.assignedBy) {
+    await notifyAssigned({ orgId, actorId: userId, kind: "task_accepted", refId: task.id, boardId: task.boardId, title: task.title, to: task.assignedBy });
+  }
+  return task;
 }

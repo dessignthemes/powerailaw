@@ -35,6 +35,8 @@ type WorkspaceDataContextValue = {
   meEmail: string | null;
   // The signed-in person's role ("owner" | "admin" | "member"), null until the team has loaded.
   myRole: string | null;
+  // Accept a task offered to several people (the first to accept takes it).
+  acceptTask: (id: string) => Promise<void>;
 
   // Sub boards under the Task Board.
   boards: { id: string; name: string }[];
@@ -152,6 +154,17 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       throw e;
     }
   }, [boardFilters]);
+
+  const acceptTask = useCallback(async (id: string) => {
+    const r = await fetch(`/api/tasks/${id}/accept`, { method: "POST" });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      // Someone else was quicker: refresh so the task leaves this list.
+      fetch("/api/tasks").then((x) => x.json()).then((x) => Array.isArray(x.tasks) && setTasks(x.tasks)).catch(() => {});
+      throw new Error(d?.error ?? "The task couldn't be accepted.");
+    }
+    setTasks((ts) => ts.map((t) => (t.id === id ? (d.task as BoardTask) : t)));
+  }, []);
 
   const renameGeneral = useCallback(async (name: string) => {
     const d = await readJson(
@@ -383,6 +396,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         refreshAll,
         teamMembers,
         meEmail,
+        acceptTask,
         myRole: meEmail ? teamMembers.find((m) => m.email.toLowerCase() === meEmail.toLowerCase())?.role ?? (teamMembers.length ? "member" : null) : null,
         boards,
         generalName,

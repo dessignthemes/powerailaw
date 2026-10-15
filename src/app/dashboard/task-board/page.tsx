@@ -315,7 +315,10 @@ function TaskBoard({
   };
   const tests: Record<string, (t: BoardTask) => boolean> = {
     ...filterTests,
-    Me: (t) => !!meEmail && (t.assignee ?? "").toLowerCase() === meEmail.toLowerCase(),
+    Me: (t) =>
+      !!meEmail &&
+      ((t.assignee ?? "").toLowerCase() === meEmail.toLowerCase() ||
+        (!t.assignee && (t.offeredTo ?? []).some((e) => e.toLowerCase() === meEmail.toLowerCase()))),
     ...Object.fromEntries(customFilters.map((f) => [`cf:${f.id}`, filterTest(f)])),
   };
   const [addFilterOpen, setAddFilterOpen] = useState(false);
@@ -1460,6 +1463,11 @@ function TaskBoard({
                                 </>
                               );
                             })()}
+                            {!t.assignee && (t.offeredTo ?? []).length > 0 && (
+                              <span className="text-[11.5px] font-medium bg-[#FFF1DE] text-[#8A4B14] rounded-md px-1.5 py-0.5" title={`Offered to ${(t.offeredTo ?? []).join(", ")}`}>
+                                Offered to {(t.offeredTo ?? []).length}
+                              </span>
+                            )}
                             {t.waitingOn && (
                               <span className="text-[11.5px] font-medium bg-[#FCEFD9] text-[#8A4B14] rounded-md px-1.5 py-0.5" title="Who this task is waiting on">
                                 Waiting on {waitingLabel(t.waitingOn)}

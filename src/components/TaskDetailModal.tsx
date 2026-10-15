@@ -101,7 +101,17 @@ export default function TaskDetailModal({
   const [waitingOpen, setWaitingOpen] = useState(false);
   const [otherParty, setOtherParty] = useState("");
   // The usual parties, the ones the firm's boards filter by, and this task's own.
-  const { boardFilters } = useWorkspaceData();
+  const { boardFilters, meEmail, acceptTask, teamMembers } = useWorkspaceData();
+  // The assigner's instructions, and accepting a task offered to several people.
+  const [instructions, setInstructions] = useState(task.instructions ?? "");
+  const [offerNote, setOfferNote] = useState<string | null>(null);
+  const [accepting, setAccepting] = useState(false);
+  const offered = !assignee && (task.offeredTo ?? []).length > 0;
+  const offeredToMe = offered && !!meEmail && (task.offeredTo ?? []).some((e) => e.toLowerCase() === meEmail.toLowerCase());
+  const nameOf = (email: string | null | undefined) => {
+    const m = teamMembers.find((x) => x.email.toLowerCase() === (email ?? "").toLowerCase());
+    return m?.fullName || m?.email || email || "";
+  };
   const waitingParties = (() => {
     const out: string[] = [];
     const add = (v: string | null | undefined) => {
@@ -260,7 +270,7 @@ export default function TaskDetailModal({
 
   function commit(patch: Partial<BoardTask>) {
     if (!(patch.title ?? title).trim()) return;
-    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, ...patch });
+    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, instructions, ...patch });
   }
 
   return (
@@ -324,6 +334,52 @@ export default function TaskDetailModal({
             onBlur={() => commit({ title })}
             className="w-full bg-transparent outline-none text-[26px] font-semibold mb-4"
           />
+
+          {offered && (
+            <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl bg-[#FFF1DE] px-4 py-2.5 text-[13.5px] text-[#8A4B14]">
+              <span className="flex-1 min-w-[220px]">
+                Offered to {(task.offeredTo ?? []).map(nameOf).join(", ")}
+                {task.assignedBy ? ` by ${nameOf(task.assignedBy)}` : ""}. The first to accept takes it.
+              </span>
+              {offeredToMe && (
+                <button
+                  disabled={accepting}
+                  onClick={async () => {
+                    setAccepting(true);
+                    try {
+                      await acceptTask(task.id);
+                      setAssignee(meEmail);
+                      setOfferNote("You accepted this task. It's yours now and left the others' lists.");
+                    } catch (e) {
+                      setOfferNote((e as Error).message);
+                    } finally {
+                      setAccepting(false);
+                    }
+                  }}
+                  className="bg-white hover:bg-chip text-ink px-4 py-1.5 rounded-full text-[13px] font-medium disabled:opacity-50"
+                >
+                  {accepting ? "Accepting…" : "Accept task"}
+                </button>
+              )}
+            </div>
+          )}
+          {offerNote && <div className="mb-3 rounded-xl bg-[#EEF3FB] px-4 py-2 text-[13px]">{offerNote}</div>}
+
+          {(instructions || task.assignedBy) && (
+            <div className="mb-4 rounded-xl border border-[#D8E2F2] bg-[#F3F7FD] px-4 py-3">
+              <div className="text-[12px] font-semibold text-[#1F3A93] mb-1">
+                Instructions{task.assignedBy ? ` from ${nameOf(task.assignedBy)}` : ""}
+              </div>
+              <textarea
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value.slice(0, 5000))}
+                onBlur={() => commit({ instructions })}
+                rows={Math.min(6, Math.max(2, instructions.split("\n").length))}
+                placeholder="What exactly should be done?"
+                className="w-full bg-transparent outline-none resize-y text-[14px]"
+              />
+            </div>
+          )}
 
           <div className="flex items-center gap-1 flex-wrap mb-3 border-b border-line pb-3">
             {toolbarIcons.map((Icon, i) => (

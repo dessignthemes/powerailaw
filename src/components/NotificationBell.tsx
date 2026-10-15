@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, ListChecks, Folder } from "lucide-react";
 
-type Item = { id: string; kind: "task_assigned" | "matter_assigned"; refId: string; boardId: string | null; title: string; actorName: string; createdAt: string; read: boolean };
+type Item = { id: string; kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted"; refId: string; boardId: string | null; title: string; actorName: string; createdAt: string; read: boolean };
 
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -95,7 +95,11 @@ export default function NotificationBell() {
                     <Icon size={16} strokeWidth={1.75} className="text-muted mt-0.5 flex-shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[13px] text-muted">
-                        {n.actorName} assigned you a {n.kind === "matter_assigned" ? "matter" : "task"}
+                        {n.kind === "task_offered"
+                          ? `${n.actorName} offered you a task: accept it to take it`
+                          : n.kind === "task_accepted"
+                            ? `${n.actorName} accepted your task`
+                            : `${n.actorName} assigned you a ${n.kind === "matter_assigned" ? "matter" : "task"}`}
                       </span>
                       <span className="block text-[13.5px] font-medium truncate">{n.title}</span>
                     </span>

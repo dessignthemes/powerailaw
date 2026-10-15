@@ -131,13 +131,20 @@ export default function DashboardHome() {
   const fmtTime = (e: DashEvent) =>
     e.allDay ? "All day" : eventStart(e).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(" ", "").toLowerCase();
 
-  const { tasks: allTasks, tasksLoaded, updateTask, boards, generalName, teamMembers, meEmail } = useWorkspaceData();
+  const { tasks: allTasks, tasksLoaded, updateTask, boards, generalName, teamMembers, meEmail, acceptTask } = useWorkspaceData();
+  const [acceptNote, setAcceptNote] = useState<string | null>(null);
+  const offeredToMe = (t: BoardTask) => !t.assignee && !!meEmail && (t.offeredTo ?? []).some((e) => e.toLowerCase() === meEmail.toLowerCase());
   // Whose tasks: yours by default (assigned to you), everyone's, or one team member's.
   const [scope, setScope] = useState<TaskScope>("me");
   const tasks = useMemo(() => {
     if (scope === "all") return allTasks;
     const who = (scope === "me" ? meEmail ?? "" : scope).toLowerCase();
-    return who ? allTasks.filter((t) => (t.assignee ?? "").toLowerCase() === who) : [];
+    // Theirs, plus tasks offered to them that nobody has accepted yet.
+    return who
+      ? allTasks.filter(
+          (t) => (t.assignee ?? "").toLowerCase() === who || (!t.assignee && (t.offeredTo ?? []).some((e) => e.toLowerCase() === who))
+        )
+      : [];
   }, [allTasks, scope, meEmail]);
   const boardName = (id: string | null | undefined) => (id ? boards.find((b) => b.id === id)?.name ?? "Board" : generalName);
   const [selectedTask, setSelectedTask] = useState<BoardTask | null>(null);
@@ -193,8 +200,29 @@ export default function DashboardHome() {
           <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[160px] hidden sm:inline">
             {boardName(t.boardId)}
           </span>
+          {!t.assignee && (t.offeredTo ?? []).length > 0 && (
+            <span className="text-[11.5px] font-medium bg-[#FFF1DE] text-[#8A4B14] rounded-md px-1.5 py-0.5 flex-shrink-0">
+              {offeredToMe(t) ? "Offered to you" : `Offered to ${(t.offeredTo ?? []).length}`}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          {offeredToMe(t) && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                try {
+                  await acceptTask(t.id);
+                  setAcceptNote(`You accepted "${t.title}". It's yours now.`);
+                } catch (err) {
+                  setAcceptNote((err as Error).message);
+                }
+              }}
+              className="bg-btn hover:bg-btn-hover px-3 py-1 rounded-full text-[12.5px] font-medium"
+            >
+              Accept
+            </button>
+          )}
           {t.dueDate && (
             <span className={`mono text-[12px] ${overdue ? "text-red-600" : "text-muted"}`}>
               {overdue ? "Overdue · " : ""}
@@ -223,6 +251,14 @@ export default function DashboardHome() {
               </button>
             )}
           </div>
+          {acceptNote && (
+            <div className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#EEF3FB] px-3 py-1.5 text-[13px]">
+              {acceptNote}
+              <button onClick={() => setAcceptNote(null)} aria-label="Dismiss" className="text-muted hover:text-ink">
+                ×
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <TaskFilterDropdown value={scope} onChange={setScope} members={teamMembers} meEmail={meEmail} />

@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, X, ExternalLink } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { todayYmd, type TaskPriority } from "@/components/NewTaskModal";
-import { displayName } from "@/lib/initials";
 import SelectBox from "@/components/SelectBox";
+import AssigneeMultiPicker from "@/components/tasks/AssigneeMultiPicker";
 import type { MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
 
 const LAST_BOARD_KEY = "lawpower.triage.lastBoard";
@@ -44,9 +44,11 @@ export default function CreateTaskFromEmail({
   onClose: () => void;
   onCreate: (task: Parameters<ReturnType<typeof useWorkspaceData>["addTask"]>[0], boardId: string | null) => void;
 }) {
-  const { generalName } = useWorkspaceData();
+  const { generalName, meEmail } = useWorkspaceData();
+  // What the assigner expects, separate from the email itself.
+  const [instructions, setInstructions] = useState("");
   const [title, setTitle] = useState(email.subject?.trim() || `Email from ${email.from || email.fromEmail}`);
-  const [assignee, setAssignee] = useState<string>("");
+  const [assignees, setAssignees] = useState<string[]>([]);
   const [board, setBoard] = useState<string>(() => {
     try {
       const b = window.localStorage.getItem(LAST_BOARD_KEY);
@@ -98,7 +100,11 @@ export default function CreateTaskFromEmail({
         description: `${notes.trim()}${link ? `\n\nOpen email: ${link}` : ""}`,
         status: "todo",
         priority,
-        assignee: assignee || null,
+        // One person: theirs now. Several: offered to all, the first to accept takes it.
+        assignee: assignees.length === 1 ? assignees[0] : null,
+        offeredTo: assignees.length > 1 ? assignees : [],
+        instructions: instructions.trim().slice(0, 5000),
+        assignedBy: assignees.length ? meEmail : null,
         dueDate: due || null,
         comments: [],
         boardId,
@@ -127,14 +133,7 @@ export default function CreateTaskFromEmail({
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="block text-[12.5px] font-medium text-muted mb-1">Assign to</label>
-            <SelectBox label="Assign to" value={assignee} onChange={(v) => setAssignee(v)}>
-              <option value="">Unassigned</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.email}>
-                  {displayName(m.fullName, m.email)}
-                </option>
-              ))}
-            </SelectBox>
+            <AssigneeMultiPicker members={members} value={assignees} onChange={setAssignees} />
           </div>
           <div>
             <label className="block text-[12.5px] font-medium text-muted mb-1">Board</label>
@@ -161,7 +160,17 @@ export default function CreateTaskFromEmail({
           </div>
         </div>
 
-        <label className="block text-[12.5px] font-medium text-muted mb-1">Notes</label>
+        <label className="block text-[12.5px] font-medium text-muted mb-1">Instructions for the assignee</label>
+        <textarea
+          value={instructions}
+          onChange={(e) => setInstructions(e.target.value)}
+          rows={3}
+          maxLength={5000}
+          placeholder="What exactly should they do? e.g. Call the seller's attorney and confirm the new closing date, then update the key dates."
+          className={`${field} mb-3 resize-y`}
+        />
+
+        <label className="block text-[12.5px] font-medium text-muted mb-1">Notes (the email)</label>
         <textarea
           value={notes}
           onChange={(e) => {

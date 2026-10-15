@@ -2,7 +2,7 @@
 
 import type { WaitingOn } from "@/lib/tasks/waitingOn";
 
-import AssigneeOptions from "@/components/AssigneeOptions";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useState } from "react";
 import {
   X,
@@ -27,7 +27,11 @@ export type BoardTask = {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  assignee: string | null;
+  assignee: string | null; // the person doing it (the one who accepted, when it was offered)
+  // Offered to several people: the first to accept becomes the assignee and it leaves the others' lists.
+  offeredTo?: string[];
+  instructions?: string; // what the assigner expects ("Call the lender and confirm…")
+  assignedBy?: string | null; // email of the person who assigned / offered it
   dueDate: string | null;
   comments?: TaskComment[];
   boardId?: string | null; // null/undefined = main Task Board
@@ -127,7 +131,13 @@ export default function NewTaskModal({
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
   const [priority, setPriority] = useState<TaskPriority>("Medium");
-  const [assignee, setAssignee] = useState<string | null>(null);
+  // One person: assigned now. Several: offered to all, the first to accept takes it.
+  const [assignees, setAssignees] = useState<string[]>([]);
+  const { teamMembers, meEmail } = useWorkspaceData();
+  const memberName = (email: string) => {
+    const m = teamMembers.find((x) => x.email.toLowerCase() === email.toLowerCase());
+    return m?.fullName || email;
+  };
   const [dueDate, setDueDate] = useState<string | null>(() => todayYmd());
 
   const [statusOpen, setStatusOpen] = useState(false);
@@ -145,7 +155,9 @@ export default function NewTaskModal({
       description,
       status,
       priority,
-      assignee,
+      assignee: assignees.length === 1 ? assignees[0] : null,
+      offeredTo: assignees.length > 1 ? assignees : [],
+      assignedBy: assignees.length ? meEmail : null,
       dueDate,
     });
   }
@@ -254,17 +266,28 @@ export default function NewTaskModal({
             trigger={
               <>
                 <User size={13} strokeWidth={1.75} />
-                {assignee ?? "Assignee"}
+                {assignees.length === 0 ? "Assignee" : assignees.length === 1 ? memberName(assignees[0]) : `Offer to ${assignees.length} people`}
               </>
             }
           >
-            <AssigneeOptions
-              value={assignee}
-              onPick={(email) => {
-                setAssignee(email);
-                setAssigneeOpen(false);
-              }}
-            />
+            <div className="px-3 pt-1 pb-1.5 text-[11.5px] text-muted max-w-[240px]">Tick one person, or several to offer it: the first to accept takes it.</div>
+            <div className="flex flex-col gap-[3px]">
+              {teamMembers.map((m) => {
+                const on = assignees.includes(m.email);
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setAssignees((a) => (on ? a.filter((x) => x !== m.email) : [...a, m.email]))}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[14px] text-left ${on ? "bg-chip" : "hover:bg-chip"}`}
+                  >
+                    <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${on ? "bg-ink border-ink text-white" : "border-line bg-white"}`}>
+                      {on && <Check size={11} strokeWidth={3} />}
+                    </span>
+                    <span className="truncate">{m.fullName || m.email}</span>
+                  </button>
+                );
+              })}
+            </div>
           </GenericDropdown>
 
           <GenericDropdown
