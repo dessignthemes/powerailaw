@@ -44,6 +44,7 @@ import {
   CalendarDays,
   Check,
   Hourglass,
+  LayoutGrid,
   Flag,
   Play,
   Plus,
@@ -101,7 +102,11 @@ export default function TaskDetailModal({
   const [waitingOpen, setWaitingOpen] = useState(false);
   const [otherParty, setOtherParty] = useState("");
   // The usual parties, the ones the firm's boards filter by, and this task's own.
-  const { boardFilters, meEmail, acceptTask, teamMembers } = useWorkspaceData();
+  const { boardFilters, meEmail, acceptTask, teamMembers, boards, generalName } = useWorkspaceData();
+  // Which board the task is on (changeable from the bottom row).
+  const [boardId, setBoardId] = useState<string | null>(task.boardId ?? null);
+  const [boardOpen, setBoardOpen] = useState(false);
+  const [movedTo, setMovedTo] = useState<string | null>(null);
   // The assigner's instructions, and accepting a task offered to several people.
   const [instructions, setInstructions] = useState(task.instructions ?? "");
   const [offerNote, setOfferNote] = useState<string | null>(null);
@@ -270,7 +275,7 @@ export default function TaskDetailModal({
 
   function commit(patch: Partial<BoardTask>) {
     if (!(patch.title ?? title).trim()) return;
-    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, instructions, ...patch });
+    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, instructions, boardId, ...patch });
   }
 
   return (
@@ -364,6 +369,7 @@ export default function TaskDetailModal({
             </div>
           )}
           {offerNote && <div className="mb-3 rounded-xl bg-[#EEF3FB] px-4 py-2 text-[13px]">{offerNote}</div>}
+          {movedTo && <div className="mb-3 rounded-xl bg-[#EEF3FB] px-4 py-2 text-[13px]">Moved to the {movedTo} board.</div>}
 
           {(instructions || task.assignedBy) && (
             <div className="mb-4 rounded-xl border border-[#D8E2F2] bg-[#F3F7FD] px-4 py-3">
@@ -519,6 +525,38 @@ export default function TaskDetailModal({
             <div className="flex items-center gap-1.5 bg-card-alt px-3 py-1.5 rounded-full text-[13px] font-medium text-muted">
               <Folder size={13} strokeWidth={1.75} /> Matter
             </div>
+
+            {/* Move the task to another board (it lands in that board's first column). */}
+            <GenericDropdown
+              open={boardOpen}
+              setOpen={setBoardOpen}
+              trigger={
+                <>
+                  <LayoutGrid size={13} strokeWidth={1.75} />
+                  {boardId ? boards.find((b) => b.id === boardId)?.name ?? "Board" : generalName}
+                </>
+              }
+            >
+              <div className="px-3 pt-1 pb-1.5 text-[11.5px] text-muted">Move to board</div>
+              <div className="flex flex-col gap-[3px]">
+                {[{ id: null as string | null, name: generalName }, ...boards.map((b) => ({ id: b.id as string | null, name: b.name }))].map((b) => (
+                  <button
+                    key={b.id ?? "general"}
+                    onClick={() => {
+                      setBoardOpen(false);
+                      if (b.id === boardId) return;
+                      setBoardId(b.id);
+                      commit({ boardId: b.id, columnId: null });
+                      setMovedTo(b.name);
+                    }}
+                    className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[14px] font-medium text-left ${b.id === boardId ? "bg-chip" : "hover:bg-chip"}`}
+                  >
+                    <span className="truncate"># {b.name}</span>
+                    {b.id === boardId && <Check size={14} />}
+                  </button>
+                ))}
+              </div>
+            </GenericDropdown>
 
             <ChecklistPicker checklist={checklist} onChange={changeChecklist} />
 
