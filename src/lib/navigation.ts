@@ -21,7 +21,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type NavLink = { label: string; href: string; icon: LucideIcon };
+// ownerOnly: shown only to the workspace owner (e.g. AI Accountant: the firm's books).
+export type NavLink = { label: string; href: string; icon: LucideIcon; ownerOnly?: boolean };
 export type NavSection = { title: string | null; links: NavLink[] };
 
 // Community and Clients are off the menu for now (their pages still exist).
@@ -35,7 +36,7 @@ export const mainLinks: NavLink[] = [
 
 export const toolLinks: NavLink[] = [
   { label: "AI Agent", href: "/dashboard/agent", icon: Sparkles },
-  { label: "AI Accountant", href: "/dashboard/ai-accountant", icon: Calculator },
+  { label: "AI Accountant", href: "/dashboard/ai-accountant", icon: Calculator, ownerOnly: true },
   { label: "AI Matter", href: "/dashboard/ai-matter", icon: FolderSearch },
   { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },

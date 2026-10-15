@@ -69,10 +69,21 @@ function parse(body: unknown, partial = false) {
   return res.data;
 }
 
+// AI Accountant is the firm owner's: members have no access to the firm's books.
 async function ctx() {
   const user = await getSessionUser();
   if (!user) throw new AcctError(401, "Please sign in again.");
-  return { orgId: await getCurrentOrgId(), userId: user.id };
+  const orgId = await getCurrentOrgId();
+  const { data } = await createAdminClient().from("profiles").select("role, org_id").eq("id", user.id).maybeSingle();
+  if (!data || data.org_id !== orgId || data.role !== "owner") {
+    throw new AcctError(403, "Only the firm owner can use AI Accountant.", "owner_only");
+  }
+  return { orgId, userId: user.id };
+}
+
+// For routes that do work before touching the books (e.g. AI categorizing an import).
+export async function requireAccountingOwner() {
+  await ctx();
 }
 
 function receiptBelongs(path: string | null | undefined, orgId: string) {

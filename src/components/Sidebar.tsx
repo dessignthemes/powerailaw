@@ -1,6 +1,7 @@
 "use client";
 
 import LogoMark from "@/components/LogoMark";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
@@ -41,6 +42,7 @@ function NavItem({
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { myRole } = useWorkspaceData();
   const router = useRouter();
   const { openIntegrations } = useIntegrationsModal();
   const [adminOpen, setAdminOpen] = useState(false);
@@ -82,7 +84,7 @@ export default function Sidebar() {
           <div className="px-3 text-[10.5px] font-semibold uppercase tracking-wide text-muted mb-0.5">
             Tools
           </div>
-          {toolLinks.map((l) => (
+          {toolLinks.filter((l) => !l.ownerOnly || myRole === "owner").map((l) => (
             <NavItem key={l.label} {...l} active={isActiveLink(l.href, pathname)} />
           ))}
         </div>

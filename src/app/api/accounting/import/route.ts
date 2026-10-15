@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { importRows, AcctError } from "@/lib/data/accounting";
+import { importRows, requireAccountingOwner, AcctError } from "@/lib/data/accounting";
 import { categorize } from "@/lib/accounting/ai";
 import { acctFail } from "@/lib/accounting/api";
 
@@ -19,6 +19,7 @@ const body = z.object({
 // then all lines are saved for review (duplicates are skipped).
 export async function POST(request: Request) {
   try {
+    await requireAccountingOwner(); // before any AI work
     const parsed = body.safeParse(await request.json().catch(() => ({})));
     if (!parsed.success) throw new AcctError(400, "The file couldn't be read. Check that it has date, description and amount columns.");
     const { rows, account } = parsed.data;

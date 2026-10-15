@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
@@ -9,6 +10,7 @@ import { allNavLinks, isActiveLink, navSections } from "@/lib/navigation";
 // Same pages, order and sections as the sidebar (both read lib/navigation).
 export default function PageSwitcher() {
   const pathname = usePathname();
+  const { myRole } = useWorkspaceData();
   const [open, setOpen] = useState(false);
 
   const current = allNavLinks.find((p) => isActiveLink(p.href, pathname)) ?? allNavLinks[0];
@@ -39,7 +41,7 @@ export default function PageSwitcher() {
                 {section.title && (
                   <div className="px-4 pt-1.5 pb-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted">{section.title}</div>
                 )}
-                {section.links.map((p) => {
+                {section.links.filter((p) => !p.ownerOnly || myRole === "owner").map((p) => {
                   const Icon = p.icon;
                   const active = p.href === current.href;
                   return (

@@ -33,6 +33,8 @@ type WorkspaceDataContextValue = {
   // People in this workspace (for assignees) and the signed-in user.
   teamMembers: { id: string; email: string; fullName?: string | null; role: string }[];
   meEmail: string | null;
+  // The signed-in person's role ("owner" | "admin" | "member"), null until the team has loaded.
+  myRole: string | null;
 
   // Sub boards under the Task Board.
   boards: { id: string; name: string }[];
@@ -381,6 +383,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         refreshAll,
         teamMembers,
         meEmail,
+        myRole: meEmail ? teamMembers.find((m) => m.email.toLowerCase() === meEmail.toLowerCase())?.role ?? (teamMembers.length ? "member" : null) : null,
         boards,
         generalName,
         boardFilters,
