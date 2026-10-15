@@ -13,6 +13,7 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
   const rows = useMemo(() => parseLeapList(text), [text]);
 
   // New text: rows start ticked, except file complete / not proceeding and ones already in LawPower.
@@ -37,22 +38,35 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
   const closedCount = rows.filter((r) => r.closed && !existingNumbers.has(r.number)).length;
   const closedIncluded = rows.some((r) => r.closed && picked.has(r.number));
 
+  // Sent 200 rows at a time (each a short request), so big LEAP files go through.
   async function importNow() {
     const chosen: LeapRow[] = rows.filter((r) => picked.has(r.number));
     if (!chosen.length) return;
     setBusy(true);
     setError(null);
-    try {
-      const r = await fetch("/api/matters/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rows: chosen }) });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d?.error ?? "The import didn't finish. Please try again.");
-      setResult(d as Result);
-      onDone();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
+    const total: Result = { created: 0, skipped: [], failed: [], clientsCreated: 0 };
+    const CHUNK = 200;
+    for (let i = 0; i < chosen.length; i += CHUNK) {
+      const part = chosen.slice(i, i + CHUNK);
+      setProgress(`Importing ${Math.min(i + part.length, chosen.length).toLocaleString()} of ${chosen.length.toLocaleString()}…`);
+      try {
+        const r = await fetch("/api/matters/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rows: part }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d?.error ?? "This part didn't go through.");
+        const res = d as Result;
+        total.created += res.created;
+        total.clientsCreated += res.clientsCreated;
+        total.skipped.push(...res.skipped);
+        total.failed.push(...res.failed);
+      } catch (e) {
+        // Keep going with the rest; these rows can be imported again later (nothing is duplicated).
+        total.failed.push(...part.map((p) => ({ number: p.number, error: (e as Error).message })));
+      }
     }
+    setProgress(null);
+    setBusy(false);
+    setResult(total);
+    onDone();
   }
 
   return (
@@ -80,8 +94,9 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
               </div>
             </div>
             {result.failed.length > 0 && (
-              <div className="mt-3 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13px]">
-                Not imported: {result.failed.map((f) => `${f.number} (${f.error})`).join("; ")}
+              <div className="mt-3 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13px] max-h-[160px] overflow-y-auto">
+                <b>{result.failed.length} not imported.</b> Paste the same list again and click Import: matters already imported are skipped, so only these are retried.
+                <div className="mt-1 text-[12px]">{result.failed.slice(0, 50).map((f) => `${f.number} (${f.error})`).join("; ")}{result.failed.length > 50 ? " …" : ""}</div>
               </div>
             )}
             <div className="flex justify-end gap-2 mt-4">
@@ -185,7 +200,7 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
                 disabled={busy || picked.size === 0}
                 className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-5 py-2 rounded-full text-[13.5px] font-medium"
               >
-                {busy && <Loader2 size={13} className="animate-spin" />} Import {picked.size || ""} {picked.size === 1 ? "matter" : "matters"}
+                {busy && <Loader2 size={13} className="animate-spin" />} {progress ?? `Import ${picked.size ? picked.size.toLocaleString() : ""} ${picked.size === 1 ? "matter" : "matters"}`}
               </button>
             </div>
           </>

@@ -125,7 +125,7 @@ export function parseLeapList(text: string): LeapRow[] {
   }
   // Same number twice: keep the first.
   const seen = new Set<string>();
-  return rows.filter((r) => (seen.has(r.number) ? false : (seen.add(r.number), true))).slice(0, 1000);
+  return rows.filter((r) => (seen.has(r.number) ? false : (seen.add(r.number), true))).slice(0, 2000);
 }
 
 // Matter type in LawPower for a LEAP code.

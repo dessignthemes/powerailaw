@@ -4,7 +4,7 @@ import { AccessError } from "@/lib/data/documents";
 import { NoWorkspaceError } from "@/lib/data/org";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300; // large LEAP files
 
 // POST { rows: LeapRow[] } → creates the matters (LEAP import, Rapciewicz firm only).
 export async function POST(request: Request) {
