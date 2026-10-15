@@ -56,12 +56,14 @@ import {
 
 const DISPLAY_KEY = "lawpower.taskboard.display";
 
-// Four columns fill the board, each a quarter of its width. More columns
-// keep that same width and sit off to the right; the board scrolls sideways.
+// Columns are at most 280px wide: a large screen shows 7-8 of them, a smaller one
+// about four (a quarter of the board each, never under 224px). More columns sit
+// off to the right; the board scrolls sideways.
 const VISIBLE_COLUMNS = 4;
 const COLUMN_MIN = 224; // on small screens fewer than 4 fit
+const COLUMN_MAX = 280;
 const COLUMN_GAP = 16;
-const COLUMN_WIDTH = `calc((100% - ${(VISIBLE_COLUMNS - 1) * COLUMN_GAP}px) / ${VISIBLE_COLUMNS})`;
+const COLUMN_WIDTH = `min(${COLUMN_MAX}px, calc((100% - ${(VISIBLE_COLUMNS - 1) * COLUMN_GAP}px) / ${VISIBLE_COLUMNS}))`;
 
 // Collapsed columns are remembered per board in this browser.
 const collapsedKey = (board: string) => `lawpower.taskboard.collapsed.${board}`;
