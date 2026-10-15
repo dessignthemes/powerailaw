@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { X, Loader2, Upload, Check, AlertTriangle } from "lucide-react";
-import { parseLeapList, type LeapRow } from "@/lib/matters/leapImport";
+import { readLeapTable, defaultMapping, rowsFromTable, FIELD_TARGETS, type LeapRow, type FieldTarget, type LeapTable } from "@/lib/matters/leapImport";
 
-type Result = { created: number; skipped: string[]; failed: { number: string; error: string }[]; clientsCreated: number };
+type Result = { created: number; updated: number; skipped: string[]; failed: { number: string; error: string }[]; clientsCreated: number; clientsUpdated: number };
+const EMPTY_TABLE: LeapTable = { headers: null, records: [] };
 
 // Paste rows copied from LEAP's matter list (or choose a CSV), check the preview, import.
 export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { existingNumbers: Set<string>; onClose: () => void; onDone: () => void }) {
@@ -14,12 +15,20 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
-  const rows = useMemo(() => parseLeapList(text), [text]);
+  // The file as columns, and what each column means (guessed from its header; changeable).
+  const [table, setTable] = useState<LeapTable>(EMPTY_TABLE);
+  const [mapping, setMapping] = useState<FieldTarget[]>([]);
+  const rows = useMemo(() => rowsFromTable(table, mapping), [table, mapping]);
 
-  // New text: rows start ticked, except file complete / not proceeding and ones already in LawPower.
+  // New text: rows start ticked, except file complete / not proceeding (matters already in
+  // LawPower are ticked too: they get the information they're missing).
   function takeText(t: string) {
     setText(t);
-    setPicked(new Set(parseLeapList(t).filter((r) => !r.closed && !existingNumbers.has(r.number)).map((r) => r.number)));
+    const tb = readLeapTable(t);
+    const mp = defaultMapping(tb);
+    setTable(tb);
+    setMapping(mp);
+    setPicked(new Set(rowsFromTable(tb, mp).filter((r) => !r.closed || existingNumbers.has(r.number)).map((r) => r.number)));
   }
 
   useEffect(() => {
@@ -44,7 +53,7 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
     if (!chosen.length) return;
     setBusy(true);
     setError(null);
-    const total: Result = { created: 0, skipped: [], failed: [], clientsCreated: 0 };
+    const total: Result = { created: 0, updated: 0, skipped: [], failed: [], clientsCreated: 0, clientsUpdated: 0 };
     const CHUNK = 200;
     for (let i = 0; i < chosen.length; i += CHUNK) {
       const part = chosen.slice(i, i + CHUNK);
@@ -55,7 +64,9 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
         if (!r.ok) throw new Error(d?.error ?? "This part didn't go through.");
         const res = d as Result;
         total.created += res.created;
+        total.updated += res.updated ?? 0;
         total.clientsCreated += res.clientsCreated;
+        total.clientsUpdated += res.clientsUpdated ?? 0;
         total.skipped.push(...res.skipped);
         total.failed.push(...res.failed);
       } catch (e) {
@@ -87,9 +98,11 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
             <div className="rounded-2xl bg-[#E8F6EE] px-5 py-4 text-[14px] flex gap-2">
               <Check size={18} className="text-[#2F9E5A] flex-shrink-0" />
               <div>
-                <b>{result.created}</b> {result.created === 1 ? "matter" : "matters"} imported
-                {result.clientsCreated ? `, ${result.clientsCreated} new ${result.clientsCreated === 1 ? "client" : "clients"} created` : ""}.
-                {result.skipped.length > 0 && ` ${result.skipped.length} already in LawPower (skipped).`}
+                <b>{result.created}</b> new {result.created === 1 ? "matter" : "matters"} imported
+                {result.updated ? <>, <b>{result.updated}</b> existing {result.updated === 1 ? "matter" : "matters"} filled in</> : null}
+                {result.clientsCreated ? `, ${result.clientsCreated} new ${result.clientsCreated === 1 ? "client" : "clients"}` : ""}
+                {result.clientsUpdated ? `, ${result.clientsUpdated} client ${result.clientsUpdated === 1 ? "card" : "cards"} completed` : ""}.
+                {result.skipped.length > 0 && ` ${result.skipped.length} already had everything.`}
                 <div className="text-[13px] text-muted mt-1">Open a matter to add tasks from a template, or click Fill from documents once its contract is uploaded.</div>
               </div>
             </div>
@@ -139,6 +152,38 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
                 </label>
                 <span className="text-[12px] text-muted">Excel file? Copy its rows and paste them, or save it as CSV.</span>
               </div>
+              {table.headers && table.headers.length > 0 && (
+                <details open className="bg-card-alt rounded-xl px-3.5 py-2.5">
+                  <summary className="text-[13px] font-semibold cursor-pointer">
+                    Columns ({table.headers.length}) · check what each one is
+                  </summary>
+                  <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                    {table.headers.map((h, i) => {
+                      const sample = table.records.find((r) => (r[i] ?? "").trim())?.[i]?.trim() ?? "";
+                      return (
+                        <label key={i} className="flex items-center gap-2 text-[12.5px]">
+                          <span className="w-[38%] min-w-0 truncate font-medium" title={sample ? `e.g. ${sample}` : undefined}>
+                            {h || `Column ${i + 1}`}
+                            {sample && <span className="block text-[11px] text-muted font-normal truncate">e.g. {sample}</span>}
+                          </span>
+                          <select
+                            value={mapping[i] ?? "keep"}
+                            onChange={(e) => setMapping((m) => m.map((x, j) => (j === i ? (e.target.value as FieldTarget) : x)))}
+                            aria-label={`What "${h}" is`}
+                            className="flex-1 min-w-0 bg-white border border-line rounded-lg px-2 py-1 text-[12.5px] outline-none"
+                          >
+                            {FIELD_TARGETS.map(([k, l]) => (
+                              <option key={k} value={k}>
+                                {l}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </details>
+              )}
             </div>
 
             <div className="flex-1 min-h-0 overflow-auto px-6 mt-4">
@@ -150,14 +195,15 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
                         <input
                           type="checkbox"
                           aria-label="Select all"
-                          checked={rows.filter((r) => !existingNumbers.has(r.number)).every((r) => picked.has(r.number))}
-                          onChange={(e) => setPicked(new Set(e.target.checked ? rows.filter((r) => !existingNumbers.has(r.number)).map((r) => r.number) : []))}
+                          checked={rows.length > 0 && rows.every((r) => picked.has(r.number))}
+                          onChange={(e) => setPicked(new Set(e.target.checked ? rows.map((r) => r.number) : []))}
                         />
                       </th>
                       <th className="py-2 pr-3">No.</th>
                       <th className="py-2 pr-3">Client</th>
                       <th className="py-2 pr-3">Property</th>
                       <th className="py-2 pr-3">Other side</th>
+                      <th className="py-2 pr-3">Also</th>
                       <th className="py-2 pr-3">LEAP status</th>
                     </tr>
                   </thead>
@@ -165,21 +211,35 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
                     {rows.map((r) => {
                       const exists = existingNumbers.has(r.number);
                       return (
-                        <tr key={r.number} className={exists || !picked.has(r.number) ? "text-muted" : ""}>
+                        <tr key={r.number} className={!picked.has(r.number) ? "text-muted" : ""}>
                           <td className="py-1.5 pr-2 border-t border-line">
-                            <input type="checkbox" disabled={exists} checked={!exists && picked.has(r.number)} onChange={() => toggle(r.number)} aria-label={`Import ${r.number}`} />
+                            <input type="checkbox" checked={picked.has(r.number)} onChange={() => toggle(r.number)} aria-label={`Import ${r.number}`} />
                           </td>
                           <td className="py-1.5 pr-3 border-t border-line font-medium whitespace-nowrap">{r.number}</td>
                           <td className="py-1.5 pr-3 border-t border-line">{r.client}</td>
                           <td className="py-1.5 pr-3 border-t border-line">{r.address || r.matterType}</td>
                           <td className="py-1.5 pr-3 border-t border-line">{r.other}</td>
-                          <td className="py-1.5 pr-3 border-t border-line whitespace-nowrap">{exists ? "Already in LawPower" : r.leapStatus || "—"}</td>
+                          <td className="py-1.5 pr-3 border-t border-line text-[12px] text-muted">
+                            {[
+                              r.fields.clientEmail && "email",
+                              (r.fields.clientPhone || r.fields.clientCell) && "phone",
+                              (r.fields.clientStreet || r.fields.clientCity) && "address",
+                              r.fields.mailingAddress && "mailing",
+                              (r.fields.otherAttorneyName || r.fields.otherAttorneyFirm) && "attorney",
+                              Object.keys(r.extras).length > 0 && `+${Object.keys(r.extras).length} more`,
+                            ]
+                              .filter(Boolean)
+                              .join(", ") || "—"}
+                          </td>
+                          <td className="py-1.5 pr-3 border-t border-line whitespace-nowrap">
+                            {exists ? <span className="text-[#1F3A93] font-medium">Update (fills blanks)</span> : r.leapStatus || "—"}
+                          </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
-              ) : text.trim() ? (
+              ) : text.trim() && table.records.length ? (
                 <div className="flex items-start gap-2 text-[13px] text-[#8A4B14] bg-[#FDF1E7] rounded-xl px-4 py-3">
                   <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" /> No matter numbers found (like REP-2026-3612). Copy whole rows from LEAP&apos;s matter list, including the No. column.
                 </div>
@@ -188,7 +248,9 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
 
             <div className="px-6 py-4 border-t border-line flex flex-wrap items-center gap-3">
               <span className="text-[13px] text-muted flex-1 min-w-[260px]">
-                {rows.length ? `${rows.length} found · ${picked.size} selected` : "Nothing pasted yet."}
+                {rows.length
+                  ? `${rows.length} found · ${rows.filter((r) => picked.has(r.number) && !existingNumbers.has(r.number)).length} new · ${rows.filter((r) => picked.has(r.number) && existingNumbers.has(r.number)).length} to update`
+                  : "Nothing pasted yet."}
                 {closedCount > 0 && !closedIncluded && ` · ${closedCount} file complete / not proceeding left out (tick them to include)`}
               </span>
               {error && <span className="text-[13px] text-[#B42318] basis-full">{error}</span>}
