@@ -140,37 +140,88 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
   const setP = (fn: (p: Profile) => Profile) => setProfile((p) => fn(structuredClone(p)));
   const setPerson = (patch: Partial<Person>) => setP((p) => ({ ...p, people: p.people.map((x) => (x.id === person.id ? { ...x, ...patch } : x)) }));
 
-  async function save(close: boolean): Promise<string | null> {
+  // The latest values, for auto-save and for saving when leaving the page.
+  const live = useRef({ cardType, profile, cardId, dirty: false, saving: false });
+  const hasName = cardType === "company" ? !!profile.company.name.trim() : profile.people.some((p) => p.first.trim() || p.last.trim());
+  useEffect(() => {
+    live.current = { cardType, profile, cardId, dirty: JSON.stringify({ t: cardType, p: profile }) !== saved, saving };
+  });
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [autoSaving, setAutoSaving] = useState(false);
+
+  const bodyFor = (t: CardType, pr: Profile) => {
+    const p = structuredClone(pr);
+    const l = autoLetter(t, p);
+    if (p.letter.titleAuto) p.letter.title = l.title;
+    if (p.letter.dearAuto) p.letter.dear = l.dear;
+    return JSON.stringify({ cardType: t, profile: p });
+  };
+
+  async function save(auto = false): Promise<string | null> {
+    if (live.current.saving) return live.current.cardId;
     setSaving(true);
-    setError(null);
+    if (auto) setAutoSaving(true);
+    if (!auto) setError(null);
+    const sentType = cardType;
+    const sent = JSON.stringify(profile);
     try {
-      const p = structuredClone(profile);
-      if (p.letter.titleAuto) p.letter.title = letter.title;
-      if (p.letter.dearAuto) p.letter.dear = letter.dear;
       const { card } = await fetch(cardId ? `/api/client-cards/${cardId}` : "/api/client-cards", {
         method: cardId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cardType, profile: p }),
+        body: bodyFor(cardType, profile),
       }).then(readJson);
       const np = normalizeProfile(card.profile);
       setCardId(card.id);
-      setProfile(np);
+      // Typing that happened while saving is kept (saved again on the next auto-save).
+      if (JSON.stringify(live.current.profile) === sent && live.current.cardType === sentType) setProfile(np);
       setSaved(JSON.stringify({ t: card.cardType, p: np }));
+      setSavedAt(new Date());
+      if (auto) setError(null);
       refreshAll();
       onSaved(card.id);
-      if (close) onClose();
       return card.id as string;
     } catch (e) {
-      setError((e as Error).message);
+      setError(auto ? `Auto-save didn't work: ${(e as Error).message}` : (e as Error).message);
       return null;
     } finally {
       setSaving(false);
+      setAutoSaving(false);
     }
   }
 
+  // Auto-save 10 seconds after the last change (a new client once it has a name).
+  useEffect(() => {
+    if (!loaded || !hasName) return;
+    if (JSON.stringify({ t: cardType, p: profile }) === saved) return;
+    const t = setTimeout(() => void save(true), 10_000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardType, profile, saved, loaded, hasName]);
+
+  // Leaving the page with unsaved changes: save them on the way out (closing the tab asks first).
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (live.current.dirty) e.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      const l = live.current;
+      const named = l.cardType === "company" ? !!l.profile.company.name.trim() : l.profile.people.some((p) => p.first.trim() || p.last.trim());
+      if (l.dirty && named && !l.saving) {
+        void fetch(l.cardId ? `/api/client-cards/${l.cardId}` : "/api/client-cards", {
+          method: l.cardId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: bodyFor(l.cardType, l.profile),
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+  }, []);
+
   // Documents are filled from the saved card, so unsaved changes are saved first.
   async function makeDocument(kind: "intake" | "engagement", extra: Record<string, string> = {}): Promise<{ blob: Blob; filename: string } | null> {
-    const id = dirty || !cardId ? await save(false) : cardId;
+    const id = dirty || !cardId ? await save() : cardId;
     if (!id) return null;
     const res = await fetch(`/api/client-cards/${id}/document`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, ...extra }) });
     if (!res.ok) {
@@ -205,6 +256,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
 
   function cancel() {
     if (dirty && !confirm("Discard your changes to this card?")) return;
+    live.current.dirty = false; // discarded: don't save on the way out
     onClose();
   }
 
@@ -231,7 +283,18 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         <ClientAvatar name={name} company={cardType === "company"} src={profile.photo} size={56} />
         <div className="flex-1 min-w-[200px]">
           <div className="text-[24px] font-semibold leading-tight">{name}</div>
-          <div className="text-[13px] text-muted">{cardType === "company" ? "Company" : `People (${profile.people.length})`}{dirty ? " · unsaved changes" : ""}</div>
+          <div className="text-[13px] text-muted">
+            {cardType === "company" ? "Company" : `People (${profile.people.length})`}
+            {autoSaving
+              ? " · Saving…"
+              : dirty
+                ? hasName
+                  ? " · unsaved changes (auto-saves in a few seconds)"
+                  : " · auto-save starts once there's a name"
+                : savedAt
+                  ? ` · Saved ${savedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+                  : ""}
+          </div>
         </div>
         {templates && cardId && (
           <div className="flex gap-2">
@@ -361,9 +424,12 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         {!error && notice && <span className="text-[13px] text-green-700 mr-auto">{notice}</span>}
         <div className="ml-auto flex gap-2">
           <button onClick={cancel} disabled={saving} className="bg-chip hover:bg-btn px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Cancel</button>
-          <button onClick={() => save(false)} disabled={saving || (!dirty && !!cardId)} className="bg-chip hover:bg-btn px-5 py-2 rounded-full text-[13.5px] font-medium disabled:opacity-50">Save</button>
-          <button onClick={() => save(true)} disabled={saving} className="bg-btn hover:bg-btn-hover px-5 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-60">
-            {saving && <Loader2 size={14} className="animate-spin" />} Save &amp; Close
+          <button
+            onClick={() => void save()}
+            disabled={saving || (!dirty && !!cardId)}
+            className="bg-btn hover:bg-btn-hover px-6 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-60"
+          >
+            {saving && <Loader2 size={14} className="animate-spin" />} {!dirty && cardId ? "Saved" : "Save"}
           </button>
         </div>
       </div>

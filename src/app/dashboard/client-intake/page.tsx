@@ -19,7 +19,12 @@ export default function ClientIntakePage() {
 function ClientIntake() {
   const router = useRouter();
   const params = useSearchParams();
-  const open = params.get("card"); // "new" or a client id
+  // Client Intake opens a new client form; ?card=<id> opens a client; ?list=1 shows all clients.
+  const showList = params.get("list") === "1";
+  const open = params.get("card") ?? (showList ? null : "new");
+  // A new client that auto-save just created keeps the same form open (no reload).
+  const [created, setCreated] = useState<{ id: string; key: string } | null>(null);
+  const [newKey, setNewKey] = useState(1);
   const [cards, setCards] = useState<Card[] | null>(null);
   const [reload, setReload] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -54,16 +59,26 @@ function ClientIntake() {
     );
   }, [cards, q, type]);
 
-  const go = (card: string | null) => router.push(card ? `/dashboard/client-intake?card=${card}` : "/dashboard/client-intake");
+  const go = (card: string | null) => router.push(card ? `/dashboard/client-intake?card=${card}` : "/dashboard/client-intake?list=1");
 
   return (
     <div className="px-10 py-10">
       {open ? (
         <ClientCardEditor
-          key={open}
-          id={open === "new" ? null : open}
-          onClose={() => { setReload((n) => n + 1); go(null); }}
-          onSaved={(id) => { if (open === "new") router.replace(`/dashboard/client-intake?card=${id}`); }}
+          key={created && created.id === open ? created.key : open === "new" ? `new-${newKey}` : open}
+          id={open === "new" ? (created?.key === `new-${newKey}` ? created.id : null) : open}
+          onClose={() => {
+            setReload((n) => n + 1);
+            setCreated(null);
+            setNewKey((k) => k + 1);
+            go(null);
+          }}
+          onSaved={(id) => {
+            if (open === "new") {
+              setCreated({ id, key: `new-${newKey}` });
+              router.replace(`/dashboard/client-intake?card=${id}`);
+            }
+          }}
         />
       ) : (
         <>
