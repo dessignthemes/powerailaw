@@ -21,9 +21,12 @@ export async function GET(request: Request) {
     const q = url.searchParams.get("q")?.slice(0, 200) ?? undefined;
     const pageToken = url.searchParams.get("pageToken") ?? undefined;
     const folder = url.searchParams.get("folder")?.slice(0, 400) ?? undefined;
+    const unreadOnly = url.searchParams.get("unread") === "1";
     const { token, email } = await getAccessToken(userId, provider);
     const page =
-      provider === "google" ? await listGmail(token, { q, pageToken, folder }) : await listOutlook(token, { q, pageToken, folder });
+      provider === "google"
+        ? await listGmail(token, { q, pageToken, folder, unread: unreadOnly })
+        : await listOutlook(token, { q, pageToken, folder, unread: unreadOnly });
     // Emails opened in LawPower show as read, even though the mailbox itself
     // (which LawPower never changes) may still mark them unread.
     const unreadIds = page.messages.filter((m) => m.unread).map((m) => m.id);

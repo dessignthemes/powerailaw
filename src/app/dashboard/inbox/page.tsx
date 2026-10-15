@@ -272,6 +272,24 @@ export default function InboxPage() {
   const [activeQuery, setActiveQuery] = useState("");
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Unread only: the mailbox sends unread emails; ones already read in LawPower are hidden too
+  // (the open email stays until you move on). Remembered in this browser.
+  const [unreadOnly, setUnreadOnly] = useState(() => {
+    try {
+      return typeof window !== "undefined" && localStorage.getItem("lawpower.inbox.unreadOnly") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleUnread = () =>
+    setUnreadOnly((v) => {
+      try {
+        localStorage.setItem("lawpower.inbox.unreadOnly", v ? "0" : "1");
+      } catch {
+        /* private mode */
+      }
+      return !v;
+    });
   const [message, setMessage] = useState<MailMessage | null>(null);
   const [msgLoading, setMsgLoading] = useState(false);
   const [msgError, setMsgError] = useState<string | null>(null);
@@ -305,8 +323,9 @@ export default function InboxPage() {
   }, []);
 
   const fetchPage = useCallback(
-    (p: MailProvider, q: string, pageToken?: string, folder?: string | null) => {
+    (p: MailProvider, q: string, pageToken?: string, folder?: string | null, unread?: boolean) => {
       const params = new URLSearchParams({ provider: p });
+      if (unread) params.set("unread", "1");
       if (q) params.set("q", q);
       if (folder) params.set("folder", folder);
       if (pageToken) params.set("pageToken", pageToken);
@@ -315,11 +334,13 @@ export default function InboxPage() {
     []
   );
 
+  const shown = unreadOnly ? messages.filter((m) => m.unread || m.id === selectedId) : messages;
+
   // First page whenever provider or search changes
   useEffect(() => {
     if (!provider) return;
     let cancelled = false;
-    fetchPage(provider, activeQuery, undefined, folderId)
+    fetchPage(provider, activeQuery, undefined, folderId, unreadOnly)
       .then((d) => {
         if (cancelled) return;
         setMessages(withOpened(provider, d.messages));
@@ -331,7 +352,7 @@ export default function InboxPage() {
     return () => {
       cancelled = true;
     };
-  }, [provider, activeQuery, folderId, fetchPage]);
+  }, [provider, activeQuery, folderId, fetchPage, unreadOnly]);
 
   // Folders for the current mailbox
   useEffect(() => {
@@ -375,7 +396,7 @@ export default function InboxPage() {
   function reload() {
     if (!provider) return;
     setListLoading(true);
-    fetchPage(provider, activeQuery, undefined, folderId)
+    fetchPage(provider, activeQuery, undefined, folderId, unreadOnly)
       .then((d) => {
         setMessages(withOpened(provider, d.messages));
         setNextPage(d.nextPageToken);
@@ -388,7 +409,7 @@ export default function InboxPage() {
   function loadMore() {
     if (!provider || !nextPage) return;
     setListLoading(true);
-    fetchPage(provider, activeQuery, nextPage, folderId)
+    fetchPage(provider, activeQuery, nextPage, folderId, unreadOnly)
       .then((d) => {
         setMessages((m) => [...m, ...withOpened(provider, d.messages).filter((x) => !m.some((y) => y.id === x.id))]);
         setNextPage(d.nextPageToken);
@@ -683,6 +704,20 @@ export default function InboxPage() {
           )}
           {/* List */}
           <div className={`w-full md:w-[380px] md:flex-shrink-0 border-r border-line overflow-y-auto ${selectedId ? "hidden md:block" : ""}`}>
+            <div className="sticky top-0 z-10 bg-page/95 backdrop-blur border-b border-line px-4 py-2 flex items-center justify-between">
+              <span className="text-[12.5px] text-muted">{unreadOnly ? `${shown.length} unread` : "All emails"}</span>
+              <button
+                role="switch"
+                aria-checked={unreadOnly}
+                onClick={toggleUnread}
+                className="flex items-center gap-2 text-[13px] font-medium"
+              >
+                Unread only
+                <span className={`relative w-9 h-5 rounded-full transition-colors ${unreadOnly ? "bg-ink" : "bg-btn"}`}>
+                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-[left] ${unreadOnly ? "left-[18px]" : "left-0.5"}`} />
+                </span>
+              </button>
+            </div>
             {listError && !needsReconnect && (
               <div className="m-3 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[13px] text-red-700">{listError.message}</div>
             )}
@@ -690,13 +725,19 @@ export default function InboxPage() {
               <div className="flex items-center justify-center gap-2 py-16 text-[13.5px] text-muted">
                 <Loader2 size={15} className="animate-spin" /> Loading messages…
               </div>
-            ) : messages.length === 0 && !listError ? (
+            ) : shown.length === 0 && !listError ? (
               <div className="py-16 text-center text-[13.5px] text-muted">
-                {activeQuery ? "No messages match that search." : folderId ? "This folder is empty." : "Your inbox is empty."}
+                {unreadOnly
+                  ? "No unread emails here."
+                  : activeQuery
+                    ? "No messages match that search."
+                    : folderId
+                      ? "This folder is empty."
+                      : "Your inbox is empty."}
               </div>
             ) : (
               <>
-                {messages.map((m) => (
+                {shown.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => open(m)}

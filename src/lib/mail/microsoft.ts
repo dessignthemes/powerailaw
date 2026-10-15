@@ -61,7 +61,7 @@ const SELECT = "id,conversationId,subject,from,receivedDateTime,bodyPreview,isRe
 
 const FOLDER_ID = /^[A-Za-z0-9=+/_-]+$/;
 
-export async function listOutlook(token: string, opts: { q?: string; pageToken?: string; folder?: string }): Promise<MailPage> {
+export async function listOutlook(token: string, opts: { q?: string; pageToken?: string; folder?: string; unread?: boolean }): Promise<MailPage> {
   let url: string;
   const folder = opts.folder && FOLDER_ID.test(opts.folder) ? encodeURIComponent(opts.folder) : null;
   if (opts.pageToken) {
@@ -73,7 +73,8 @@ export async function listOutlook(token: string, opts: { q?: string; pageToken?:
     // Search within the chosen folder, or across the mailbox if none is chosen.
     url = `${folder ? `/me/mailFolders/${folder}` : "/me"}/messages?$top=25&$select=${SELECT}&$search="${encodeURIComponent(q)}"`;
   } else {
-    url = `/me/mailFolders/${folder ?? "inbox"}/messages?$top=25&$select=${SELECT}&$orderby=receivedDateTime desc`;
+    // Unread only: Outlook returns just unread emails (search results are filtered after).
+    url = `/me/mailFolders/${folder ?? "inbox"}/messages?$top=25&$select=${SELECT}${opts.unread ? "&$filter=isRead eq false" : ""}&$orderby=receivedDateTime desc`;
   }
   const data = await graph<{ value: GraphMsg[]; "@odata.nextLink"?: string }>(token, url);
   return { messages: data.value.map(toSummary), nextPageToken: data["@odata.nextLink"] ?? null };

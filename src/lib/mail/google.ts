@@ -90,10 +90,11 @@ function decodeEntities(s: string) {
     .replace(/&gt;/g, ">");
 }
 
-export async function listGmail(token: string, opts: { q?: string; pageToken?: string; folder?: string }): Promise<MailPage> {
+export async function listGmail(token: string, opts: { q?: string; pageToken?: string; folder?: string; unread?: boolean }): Promise<MailPage> {
   const params = new URLSearchParams({ maxResults: "25" });
   const folder = opts.folder && /^[A-Za-z0-9_-]+$/.test(opts.folder) ? opts.folder : null;
-  if (opts.q?.trim()) params.set("q", opts.q.trim());
+  const q = [opts.q?.trim(), opts.unread ? "is:unread" : ""].filter(Boolean).join(" ");
+  if (q) params.set("q", q);
   // A folder (label) narrows the list; with no folder, search covers all mail.
   if (folder) params.set("labelIds", folder);
   else if (!opts.q?.trim()) params.set("labelIds", "INBOX");
