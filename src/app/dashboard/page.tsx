@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import ScrollHint from "@/components/ScrollHint";
 import PriorityDot from "@/components/PriorityDot";
 import Link from "next/link";
-import TaskFilterDropdown from "@/components/TaskFilterDropdown";
+import TaskFilterDropdown, { scopeLabel, type TaskScope } from "@/components/TaskFilterDropdown";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { BoardTask, priorityMeta, statusMeta } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
@@ -20,8 +20,6 @@ import {
   Circle,
   CheckCircle2,
   ArrowUpRight,
-  UserPlus,
-  FolderPlus,
 } from "lucide-react";
 
 const rangeTabs = [
@@ -133,7 +131,14 @@ export default function DashboardHome() {
   const fmtTime = (e: DashEvent) =>
     e.allDay ? "All day" : eventStart(e).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(" ", "").toLowerCase();
 
-  const { tasks, tasksLoaded, updateTask, boards, generalName } = useWorkspaceData();
+  const { tasks: allTasks, tasksLoaded, updateTask, boards, generalName, teamMembers, meEmail } = useWorkspaceData();
+  // Whose tasks: yours by default (assigned to you), everyone's, or one team member's.
+  const [scope, setScope] = useState<TaskScope>("me");
+  const tasks = useMemo(() => {
+    if (scope === "all") return allTasks;
+    const who = (scope === "me" ? meEmail ?? "" : scope).toLowerCase();
+    return who ? allTasks.filter((t) => (t.assignee ?? "").toLowerCase() === who) : [];
+  }, [allTasks, scope, meEmail]);
   const boardName = (id: string | null | undefined) => (id ? boards.find((b) => b.id === id)?.name ?? "Board" : generalName);
   const [selectedTask, setSelectedTask] = useState<BoardTask | null>(null);
 
@@ -210,22 +215,17 @@ export default function DashboardHome() {
           <h1 className="text-[32px] font-semibold mb-1">
             <span className={greeting ? "" : "invisible"}>{greeting ?? "Good morning"}</span>
           </h1>
-          <div className="text-[14.5px] text-muted">{today}</div>
+          <div className="text-[14.5px] text-muted">
+            {today} · <span className="text-ink font-medium">Showing {scopeLabel(scope, teamMembers).replace(/^My tasks$/, "your tasks").replace(/^Everyone's tasks$/, "everyone's tasks")}</span>
+            {scope !== "me" && (
+              <button onClick={() => setScope("me")} className="ml-2 underline underline-offset-2 hover:text-ink">
+                back to mine
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/dashboard/client-intake"
-            className="flex items-center gap-2 bg-btn hover:bg-btn-hover transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
-          >
-            <UserPlus size={14} strokeWidth={1.75} /> Client Intake
-          </Link>
-          <Link
-            href="/dashboard/matters"
-            className="flex items-center gap-2 bg-btn hover:bg-btn-hover transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
-          >
-            <FolderPlus size={14} strokeWidth={1.75} /> Add Matter
-          </Link>
-          <TaskFilterDropdown />
+          <TaskFilterDropdown value={scope} onChange={setScope} members={teamMembers} meEmail={meEmail} />
         </div>
       </div>
 
