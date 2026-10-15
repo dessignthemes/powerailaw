@@ -1,6 +1,6 @@
 "use client";
 
-import AssigneeOptions from "@/components/AssigneeOptions";
+import AssigneeMultiPicker from "@/components/tasks/AssigneeMultiPicker";
 import { useCallback, useState, useEffect, useRef } from "react";
 import ChecklistPanel, { ChecklistPicker } from "@/components/templates/ChecklistPanel";
 import { autoStatus, type TaskChecklist } from "@/lib/checklist";
@@ -40,7 +40,6 @@ import {
   SquareCode,
   Link2,
   Folder,
-  User,
   CalendarDays,
   Check,
   Hourglass,
@@ -111,8 +110,17 @@ export default function TaskDetailModal({
   const [instructions, setInstructions] = useState(task.instructions ?? "");
   const [offerNote, setOfferNote] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
-  const offered = !assignee && (task.offeredTo ?? []).length > 0;
-  const offeredToMe = offered && !!meEmail && (task.offeredTo ?? []).some((e) => e.toLowerCase() === meEmail.toLowerCase());
+  const [offeredTo, setOfferedTo] = useState<string[]>(task.offeredTo ?? []);
+  const offered = !assignee && offeredTo.length > 0;
+  const offeredToMe = offered && !!meEmail && offeredTo.some((e) => e.toLowerCase() === meEmail.toLowerCase());
+  // One person: assigned. Several: offered (the first to accept takes it). None: unassigned.
+  function pickPeople(list: string[]) {
+    const one = list.length === 1 ? list[0] : null;
+    const many = list.length > 1 ? list : [];
+    setAssignee(one);
+    setOfferedTo(many);
+    commit({ assignee: one, offeredTo: many, ...(list.length ? { assignedBy: task.assignedBy || meEmail } : {}) });
+  }
   const nameOf = (email: string | null | undefined) => {
     const m = teamMembers.find((x) => x.email.toLowerCase() === (email ?? "").toLowerCase());
     return m?.fullName || m?.email || email || "";
@@ -128,7 +136,6 @@ export default function TaskDetailModal({
     return out;
   })();
   const [priorityOpen, setPriorityOpen] = useState(false);
-  const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const [tab, setTab] = useState("Comments");
   const [comment, setComment] = useState("");
@@ -275,7 +282,7 @@ export default function TaskDetailModal({
 
   function commit(patch: Partial<BoardTask>) {
     if (!(patch.title ?? title).trim()) return;
-    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, instructions, boardId, ...patch });
+    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, instructions, boardId, offeredTo, ...patch });
   }
 
   return (
@@ -337,13 +344,21 @@ export default function TaskDetailModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={() => commit({ title })}
-            className="w-full bg-transparent outline-none text-[26px] font-semibold mb-4"
+            className="w-full bg-transparent outline-none text-[26px] font-semibold mb-3"
           />
+
+          {/* Who it's for: near the top so the list has room to open. */}
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <span className="text-[13px] font-medium text-muted w-[92px]">Assigned to</span>
+            <div className="w-[340px] max-w-full">
+              <AssigneeMultiPicker members={teamMembers} value={assignee ? [assignee] : offeredTo} onChange={pickPeople} />
+            </div>
+          </div>
 
           {offered && (
             <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl bg-[#FFF1DE] px-4 py-2.5 text-[13.5px] text-[#8A4B14]">
               <span className="flex-1 min-w-[220px]">
-                Offered to {(task.offeredTo ?? []).map(nameOf).join(", ")}
+                Offered to {offeredTo.map(nameOf).join(", ")}
                 {task.assignedBy ? ` by ${nameOf(task.assignedBy)}` : ""}. The first to accept takes it.
               </span>
               {offeredToMe && (
@@ -354,6 +369,7 @@ export default function TaskDetailModal({
                     try {
                       await acceptTask(task.id);
                       setAssignee(meEmail);
+                      setOfferedTo([]);
                       setOfferNote("You accepted this task. It's yours now and left the others' lists.");
                     } catch (e) {
                       setOfferNote((e as Error).message);
@@ -584,26 +600,6 @@ export default function TaskDetailModal({
                   {p === priority && <Check size={14} strokeWidth={2} />}
                 </button>
               ))}
-            </GenericDropdown>
-
-            <GenericDropdown
-              open={assigneeOpen}
-              setOpen={setAssigneeOpen}
-              trigger={
-                <>
-                  <User size={13} strokeWidth={1.75} />
-                  {assignee ?? "Assignee"}
-                </>
-              }
-            >
-              <AssigneeOptions
-                value={assignee}
-                onPick={(email) => {
-                  setAssignee(email);
-                  commit({ assignee: email });
-                  setAssigneeOpen(false);
-                }}
-              />
             </GenericDropdown>
 
             <GenericDropdown

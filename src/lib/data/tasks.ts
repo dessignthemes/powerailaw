@@ -168,7 +168,7 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   const run = (fields: Record<string, unknown>) =>
     supabase.from("tasks").update(fields).eq("id", id).eq("org_id", orgId).select("*").single();
   // Who it was assigned to before (to alert only a newly assigned person).
-  const { data: before } = await supabase.from("tasks").select("assignee").eq("id", id).eq("org_id", orgId).maybeSingle();
+  const { data: before } = await supabase.from("tasks").select("*").eq("id", id).eq("org_id", orgId).maybeSingle();
 
   // Columns added by later migrations; if one isn't there yet, save without it.
   let fields: Record<string, unknown> = userId ? { ...base, updated_by: userId } : { ...base };
@@ -193,6 +193,14 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
     to: updated.assignee,
     before: (before as { assignee?: string | null } | null)?.assignee ?? null,
   });
+  // Newly offered people (an existing task offered to several) get an alert to accept it.
+  if (!updated.assignee) {
+    const had = new Set(((before as { offered_to?: string[] | null } | null)?.offered_to ?? []).map((e) => e.toLowerCase()));
+    for (const email of updated.offeredTo ?? []) {
+      if (had.has(email.toLowerCase())) continue;
+      await notifyAssigned({ orgId, actorId: userId, kind: "task_offered", refId: updated.id, boardId: updated.boardId, title: updated.title, to: email });
+    }
+  }
   return updated;
 }
 

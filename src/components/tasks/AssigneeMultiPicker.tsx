@@ -54,7 +54,7 @@ export default function AssigneeMultiPicker({
         <div className="text-[11.5px] text-muted mt-1">Offered to {value.map(nameOf).join(", ")}. The first to accept takes it.</div>
       )}
       {open && (
-        <div role="listbox" aria-multiselectable className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 flex flex-col gap-[3px] max-h-[300px] overflow-y-auto">
+        <div role="listbox" aria-multiselectable className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 flex flex-col gap-[3px] max-h-[min(420px,60vh)] overflow-y-auto">
           <div className="px-3 pt-1 pb-1.5 text-[11.5px] text-muted">Tick one person, or several to offer it: the first to accept takes it.</div>
           {members.map((m) => {
             const on = value.includes(m.email);
