@@ -259,16 +259,40 @@ function TaskBoard({
   const boardKey: string | null = createdBy || boardId === null ? null : boardId === "general" ? "general" : boardId;
 
   // A board always opens at its first column (not where the previous board was scrolled to).
-  const resetScroll = useRef(true);
+  // The jump is instant (no smooth slide that later loading could stop half-way), with
+  // snapping off for that moment, and repeated while the board finishes loading,
+  // unless the person has started scrolling it themselves.
+  const resetUntil = useRef(0);
+  const toStart = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el || Date.now() > resetUntil.current || el.scrollLeft === 0) return;
+    const snap = el.style.scrollSnapType;
+    el.style.scrollSnapType = "none";
+    el.scrollTo({ left: 0, behavior: "instant" as ScrollBehavior });
+    requestAnimationFrame(() => {
+      el.scrollTo({ left: 0, behavior: "instant" as ScrollBehavior });
+      el.style.scrollSnapType = snap;
+    });
+  }, []);
   useEffect(() => {
-    resetScroll.current = true;
-    scrollerRef.current?.scrollTo({ left: 0 });
-  }, [boardKey, createdBy]);
+    resetUntil.current = Date.now() + 2500;
+    const el = scrollerRef.current;
+    const stop = () => (resetUntil.current = 0); // the person scrolled: leave it
+    el?.addEventListener("wheel", stop, { passive: true });
+    el?.addEventListener("pointerdown", stop);
+    el?.addEventListener("keydown", stop);
+    toStart();
+    const timers = [100, 400, 1000, 2000].map((ms) => setTimeout(toStart, ms));
+    return () => {
+      timers.forEach(clearTimeout);
+      el?.removeEventListener("wheel", stop);
+      el?.removeEventListener("pointerdown", stop);
+      el?.removeEventListener("keydown", stop);
+    };
+  }, [boardKey, createdBy, toStart]);
   useEffect(() => {
-    if (!resetScroll.current || !scrollerRef.current) return;
-    scrollerRef.current.scrollTo({ left: 0 });
-    resetScroll.current = false;
-  }, [columns]);
+    toStart();
+  }, [columns, toStart]);
   const { tasks: workspaceTasks, tasksLoaded, tasksError, clearTasksError, addTask: addWorkspaceTask, updateTask, deleteTasks } =
     useWorkspaceData();
   // Only this board's tasks; new tasks land on this board.
