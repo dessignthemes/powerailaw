@@ -7,7 +7,8 @@ import { readLeapTable, defaultMapping, rowsFromTable, FIELD_TARGETS, type LeapR
 type Result = { created: number; updated: number; skipped: string[]; failed: { number: string; error: string }[]; clientsCreated: number; clientsUpdated: number };
 const EMPTY_TABLE: LeapTable = { headers: null, records: [] };
 
-// Paste rows copied from LEAP's matter list (or choose a CSV), check the preview, import.
+// Import matters from a CSV export (LEAP, Clio, PracticePanther, MyCase, a spreadsheet…)
+// or pasted rows: check the columns and the preview, import.
 export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { existingNumbers: Set<string>; onClose: () => void; onDone: () => void }) {
   const [text, setText] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -28,7 +29,7 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
     const mp = defaultMapping(tb);
     setTable(tb);
     setMapping(mp);
-    setPicked(new Set(rowsFromTable(tb, mp).filter((r) => !r.closed || existingNumbers.has(r.number)).map((r) => r.number)));
+    setPicked(new Set(rowsFromTable(tb, mp).filter((r) => !r.closed || (!!r.number && existingNumbers.has(r.number.toUpperCase()))).map((r) => r.key)));
   }
 
   useEffect(() => {
@@ -44,12 +45,12 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
       else next.add(n);
       return next;
     });
-  const closedCount = rows.filter((r) => r.closed && !existingNumbers.has(r.number)).length;
-  const closedIncluded = rows.some((r) => r.closed && picked.has(r.number));
+  const closedCount = rows.filter((r) => r.closed && !(!!r.number && existingNumbers.has(r.number.toUpperCase()))).length;
+  const closedIncluded = rows.some((r) => r.closed && picked.has(r.key));
 
-  // Sent 200 rows at a time (each a short request), so big LEAP files go through.
+  // Sent 200 rows at a time (each a short request), so big files go through.
   async function importNow() {
-    const chosen: LeapRow[] = rows.filter((r) => picked.has(r.number));
+    const chosen: LeapRow[] = rows.filter((r) => picked.has(r.key));
     if (!chosen.length) return;
     setBusy(true);
     setError(null);
@@ -71,7 +72,7 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
         total.failed.push(...res.failed);
       } catch (e) {
         // Keep going with the rest; these rows can be imported again later (nothing is duplicated).
-        total.failed.push(...part.map((p) => ({ number: p.number, error: (e as Error).message })));
+        total.failed.push(...part.map((p) => ({ number: p.number || p.client, error: (e as Error).message })));
       }
     }
     setProgress(null);
@@ -82,11 +83,14 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={() => !busy && onClose()}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Import matters from LEAP" className="bg-cream rounded-3xl w-full max-w-[1100px] max-h-[92vh] flex flex-col overflow-hidden">
+      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Import CSV file" className="bg-cream rounded-3xl w-full max-w-[1100px] max-h-[92vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <div>
-            <div className="text-[18px] font-semibold">Import matters from LEAP</div>
-            <div className="text-[13px] text-muted">Matters keep their LEAP number. Clients are matched by name or created; the property and the other side go into Details.</div>
+            <div className="text-[18px] font-semibold">Import CSV file</div>
+            <div className="text-[13px] text-muted">
+              Bring your matters from LEAP, Clio, PracticePanther, MyCase or a spreadsheet. Matters keep their old number; clients are matched by name or
+              created with their contact details; the property and the other side go into Details.
+            </div>
           </div>
           <button onClick={onClose} disabled={busy} aria-label="Close" className="text-muted hover:text-ink">
             <X size={18} />
@@ -125,7 +129,8 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
           <>
             <div className="px-6 flex flex-col gap-2">
               <div className="text-[13px] text-muted">
-                In LEAP, search (e.g. <b>rep-2026</b>), select the rows, copy them (<b>Ctrl+C</b> / <b>Cmd+C</b>) and paste here, or choose a CSV file.
+                Export your matter list as a <b>CSV file</b> from your old software and choose it below, or copy the rows from its matter list (<b>Ctrl+C</b> /{" "}
+                <b>Cmd+C</b>) and paste them here.
               </div>
               <textarea
                 value={text}
@@ -195,27 +200,27 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
                         <input
                           type="checkbox"
                           aria-label="Select all"
-                          checked={rows.length > 0 && rows.every((r) => picked.has(r.number))}
-                          onChange={(e) => setPicked(new Set(e.target.checked ? rows.map((r) => r.number) : []))}
+                          checked={rows.length > 0 && rows.every((r) => picked.has(r.key))}
+                          onChange={(e) => setPicked(new Set(e.target.checked ? rows.map((r) => r.key) : []))}
                         />
                       </th>
                       <th className="py-2 pr-3">No.</th>
                       <th className="py-2 pr-3">Client</th>
-                      <th className="py-2 pr-3">Property</th>
+                      <th className="py-2 pr-3">Property / description</th>
                       <th className="py-2 pr-3">Other side</th>
                       <th className="py-2 pr-3">Also</th>
-                      <th className="py-2 pr-3">LEAP status</th>
+                      <th className="py-2 pr-3">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((r) => {
-                      const exists = existingNumbers.has(r.number);
+                      const exists = (!!r.number && existingNumbers.has(r.number.toUpperCase()));
                       return (
-                        <tr key={r.number} className={!picked.has(r.number) ? "text-muted" : ""}>
+                        <tr key={r.key} className={!picked.has(r.key) ? "text-muted" : ""}>
                           <td className="py-1.5 pr-2 border-t border-line">
-                            <input type="checkbox" checked={picked.has(r.number)} onChange={() => toggle(r.number)} aria-label={`Import ${r.number}`} />
+                            <input type="checkbox" checked={picked.has(r.key)} onChange={() => toggle(r.key)} aria-label={`Import ${r.number || r.client}`} />
                           </td>
-                          <td className="py-1.5 pr-3 border-t border-line font-medium whitespace-nowrap">{r.number}</td>
+                          <td className="py-1.5 pr-3 border-t border-line font-medium whitespace-nowrap">{r.number || <span className="text-muted font-normal">new</span>}</td>
                           <td className="py-1.5 pr-3 border-t border-line">{r.client}</td>
                           <td className="py-1.5 pr-3 border-t border-line">{r.address || r.matterType}</td>
                           <td className="py-1.5 pr-3 border-t border-line">{r.other}</td>
@@ -241,7 +246,7 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
                 </table>
               ) : text.trim() && table.records.length ? (
                 <div className="flex items-start gap-2 text-[13px] text-[#8A4B14] bg-[#FDF1E7] rounded-xl px-4 py-3">
-                  <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" /> No matter numbers found (like REP-2026-3612). Copy whole rows from LEAP&apos;s matter list, including the No. column.
+                  <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" /> No matters found. Make sure the first row has the column names (Client, Matter, Number…), or copy whole rows from your matter list.
                 </div>
               ) : null}
             </div>
@@ -249,7 +254,7 @@ export default function ImportLeapModal({ existingNumbers, onClose, onDone }: { 
             <div className="px-6 py-4 border-t border-line flex flex-wrap items-center gap-3">
               <span className="text-[13px] text-muted flex-1 min-w-[260px]">
                 {rows.length
-                  ? `${rows.length} found · ${rows.filter((r) => picked.has(r.number) && !existingNumbers.has(r.number)).length} new · ${rows.filter((r) => picked.has(r.number) && existingNumbers.has(r.number)).length} to update`
+                  ? `${rows.length} found · ${rows.filter((r) => picked.has(r.key) && !(!!r.number && existingNumbers.has(r.number.toUpperCase()))).length} new · ${rows.filter((r) => picked.has(r.key) && (!!r.number && existingNumbers.has(r.number.toUpperCase()))).length} to update`
                   : "Nothing pasted yet."}
                 {closedCount > 0 && !closedIncluded && ` · ${closedCount} file complete / not proceeding left out (tick them to include)`}
               </span>

@@ -1,11 +1,13 @@
-// Reads matters copied out of LEAP's matter list (or a LEAP export / CSV):
+// Reads matters from a CSV export (LEAP, Clio, PracticePanther, MyCase, a spreadsheet…)
+// or rows copied out of a matter list. LEAP's list looks like:
 //   NO. | CLIENT | MATTER TYPE | OTHER | RESP. | STATUS
 //   REP-2026-3608 | Clark | Purchase - Residential - 88 Riva Blvd., Brick, NJ | Rosky | PR | FILE COMPLETE
 // Works with tab-separated rows (copy from LEAP / Excel), CSV, or one cell per line.
 
 export type LeapRow = {
-  number: string; // REP-2026-3608
-  code: string; // REP
+  key: string; // unique per row in this file (the number, or the row's position when there is none)
+  number: string; // REP-2026-3608, 2024-0153… ("" when the file has no matter numbers)
+  code: string; // REP (only for numbers like REP-2026-3608)
   client: string; // Clark (or "Mr. Jason Szczypinski")
   matterType: string; // Purchase - Residential - 88 Riva Blvd., Brick, NJ
   kind: string; // Purchase
@@ -14,12 +16,12 @@ export type LeapRow = {
   resp: string; // PR
   leapStatus: string; // FILE COMPLETE
   closed: boolean; // file complete / not proceeding / closed
-  // From extra LEAP columns, when the file has them:
+  // From the file's other columns, when it has them:
   fields: Partial<Record<FieldTarget, string>>;
-  extras: Record<string, string>; // columns that fit no field, kept as "Other LEAP information"
+  extras: Record<string, string>; // columns that fit no field, kept as "Other imported information"
 };
 
-// What a column of the LEAP file can mean.
+// What a column of the file can mean.
 export const FIELD_TARGETS = [
   ["number", "Matter number"],
   ["client", "Client name"],
@@ -37,6 +39,7 @@ export const FIELD_TARGETS = [
   ["clientCountry", "Client country"],
   ["mailingAddress", "Mailing address"],
   ["matterType", "Matter type / description"],
+  ["practiceArea", "Practice area"],
   ["property", "Property address"],
   ["other", "Other side (name)"],
   ["otherEmail", "Other side email"],
@@ -46,7 +49,7 @@ export const FIELD_TARGETS = [
   ["otherAttorneyEmail", "Other side's attorney email"],
   ["otherAttorneyPhone", "Other side's attorney phone"],
   ["resp", "Responsible (initials)"],
-  ["leapStatus", "LEAP status"],
+  ["leapStatus", "Status (old system)"],
   ["notes", "Notes"],
   ["keep", "Keep as other information"],
   ["ignore", "Don't import"],
@@ -59,6 +62,8 @@ const clean = (v: string | undefined) => (v ?? "").replace(/\s+/g, " ").trim().s
 
 // Header text → meaning (the more specific names first).
 const SYNONYMS: [FieldTarget, RegExp][] = [
+  ["resp", /^(resp|responsible|person responsible|(attorney|lawyer|staff) responsible|responsible (attorney|lawyer|staff|person)|originating (attorney|lawyer)|staff|assigned( to)?|handling (attorney|lawyer))\.?$/],
+  ["practiceArea", /^(practice area|area of law|practice|matter category|category|department)$/],
   ["otherAttorneyEmail", /^(other ?side|opposing|other party)?.*(attorney|counsel|solicitor|lawyer).*e-?mail/],
   ["otherAttorneyPhone", /^(other ?side|opposing|other party)?.*(attorney|counsel|solicitor|lawyer).*(phone|tel|mobile|cell)/],
   ["otherAttorneyFirm", /(attorney|counsel|solicitor|lawyer).*firm|^(other ?side|opposing).*firm|^law firm$/],
@@ -81,7 +86,6 @@ const SYNONYMS: [FieldTarget, RegExp][] = [
   ["clientZip", /^(client )?(zip|zip ?code|post ?code|postal ?code)$/],
   ["clientCountry", /^(client )?country$/],
   ["matterType", /^(matter )?(type|description|desc)$|^matter type|^matter description|^matter$/],
-  ["resp", /^(resp|responsible|person responsible|attorney responsible|staff|assigned( to)?)\.?$/],
   ["leapStatus", /^(matter )?(status|stage)$/],
   ["notes", /^(notes?|comments?|memo|remarks)$/],
   ["client", /^(client|clients|client names?|client name\(s\)|name|full name|card)$/],
@@ -209,25 +213,29 @@ export function rowsFromTable(table: LeapTable, mapping: FieldTarget[]): LeapRow
       }
       fields[t] = fields[t] ? `${fields[t]}, ${v}` : v;
     });
-    const m = NUMBER.exec(fields.number ?? "") ?? NUMBER.exec(rec.join(" "));
-    if (!m) continue;
-    const number = `${m[1].toUpperCase()}-${m[2]}-${m[3]}`;
-    if (seen.has(number)) continue;
-    seen.add(number);
+    // LEAP-style numbers (REP-2026-3608) anywhere in the row, or whatever the number column holds.
+    const m = NUMBER.exec(fields.number ?? "") ?? (mapping.includes("number") ? null : NUMBER.exec(rec.join(" ")));
+    const number = m ? `${m[1].toUpperCase()}-${m[2]}-${m[3]}` : clean(fields.number).slice(0, 40);
+    const hasContent = number || fields.client || fields.clientLast || fields.matterType;
+    if (!hasContent) continue;
+    const key = number ? number.toUpperCase() : `#${rows.length + 1}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     const matterType = fields.matterType ?? "";
     const split = splitMatterType(matterType);
     const client =
       fields.client ?? [fields.clientTitle, fields.clientFirst, fields.clientLast].filter(Boolean).join(" ").trim();
     const leapStatus = fields.leapStatus ?? "";
     rows.push({
+      key,
       number,
-      code: m[1].toUpperCase(),
+      code: m ? m[1].toUpperCase() : "",
       client,
       matterType,
       kind: split.kind,
       address: fields.property ?? split.address,
       other: fields.other ?? "",
-      resp: (fields.resp ?? "").slice(0, 10),
+      resp: (fields.resp ?? "").slice(0, 120),
       leapStatus,
       closed: CLOSED.test(leapStatus),
       fields,
@@ -242,7 +250,22 @@ export function parseLeapList(text: string): LeapRow[] {
   return rowsFromTable(table, defaultMapping(table));
 }
 
-// Matter type in LawPower for a LEAP code.
+// Matter type from the description when there's no code ("Purchase - Residential", "Divorce"…).
+export function categoryFromText(t: string): string {
+  const s = t.toLowerCase();
+  if (/purchase|sale|refinanc|closing|real estate|residential|commercial|lease|deed/.test(s)) return "Real Estate";
+  if (/estate planning|will|trust|power of attorney|living will/.test(s)) return "Estate Planning";
+  if (/probate|administration|estate of|executor|intestate|testate/.test(s)) return "Probate";
+  if (/divorce|custody|family|support|matrimonial/.test(s)) return "Family Law";
+  if (/immigration|visa|green card|citizenship|asylum/.test(s)) return "Immigration";
+  if (/injury|accident|slip|malpractice/.test(s)) return "Personal Injury";
+  if (/criminal|dui|dwi|municipal court/.test(s)) return "Criminal Defense";
+  if (/litigation|lawsuit|complaint|collection|eviction|landlord/.test(s)) return "Litigation";
+  if (/business|corporate|llc|formation|contract/.test(s)) return "Business / Corporate";
+  return "None";
+}
+
+// Matter type in LawPower for a matter-number code (REP, RES, ADM…).
 export function categoryForCode(code: string): string {
   if (["REP", "RES", "REF", "RE", "COM"].includes(code)) return "Real Estate";
   if (["EST", "PRO", "ADM", "EP"].includes(code)) return code === "EP" ? "Estate Planning" : "Probate";

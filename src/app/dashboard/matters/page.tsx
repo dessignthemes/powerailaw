@@ -1,7 +1,6 @@
 "use client";
 
 import ImportLeapModal from "@/components/matters/ImportLeapModal";
-import { templatesAllowed } from "@/lib/firmFeatures";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -91,12 +90,10 @@ export default function MattersPage() {
     deleteMatters,
     bulkSetMatterStatus,
     clients,
-    meEmail,
     refreshAll,
   } = useWorkspaceData();
-  // Import from LEAP (The Law Office of Piotr Rapciewicz only).
+  // Import CSV file (matters from LEAP, Clio, PracticePanther, a spreadsheet…).
   const [importOpen, setImportOpen] = useState(false);
-  const canImport = templatesAllowed(meEmail);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMatter, setEditingMatter] = useState<Matter | null>(null);
@@ -156,14 +153,12 @@ export default function MattersPage() {
           Matters <span className="text-muted font-normal text-[18px]">/ {matters.length}</span>
         </h1>
         <div className="flex items-center gap-2">
-          {canImport && (
-            <button
-              onClick={() => setImportOpen(true)}
-              className="flex items-center gap-1.5 bg-chip text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors"
-            >
-              <Upload size={14} strokeWidth={1.75} /> Import from LEAP
-            </button>
-          )}
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-1.5 bg-chip text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors"
+          >
+            <Upload size={14} strokeWidth={1.75} /> Import CSV file
+          </button>
           <button
             onClick={() => setModalOpen(true)}
             className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
@@ -174,7 +169,7 @@ export default function MattersPage() {
       </div>
       {importOpen && (
         <ImportLeapModal
-          existingNumbers={new Set(matters.map((m) => numberOf(m)).filter((n): n is string => !!n))}
+          existingNumbers={new Set(matters.flatMap((m) => [m.matterNumber, numberOf(m)]).filter((n): n is string => !!n).map((n) => n.toUpperCase()))}
           onClose={() => setImportOpen(false)}
           onDone={() => refreshAll()}
         />

@@ -2,12 +2,11 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { requireUserOrg } from "@/lib/data/documents";
-import { templatesAllowed } from "@/lib/clients/templates";
-import { categoryForCode, type LeapRow, type FieldTarget } from "@/lib/matters/leapImport";
+import { categoryForCode, categoryFromText, type LeapRow, type FieldTarget } from "@/lib/matters/leapImport";
 import { emptyProfile, newPerson, normalizeProfile, coreFields, TITLES, type CardType, type Profile, type Person, type ContactLine, type ContactKind } from "@/lib/clients/card";
 
-// Bulk import of matters from LEAP (The Law Office of Piotr Rapciewicz only).
-// Each row becomes a matter with its LEAP number, its client (reused by name or
+// Bulk import of matters from a CSV file (LEAP, Clio, PracticePanther, a spreadsheet…).
+// Each row becomes a matter with its old number (if any), its client (reused by name or
 // created), the property address and the other side in Details. Matters whose
 // number already exists are skipped, so importing twice is safe.
 
@@ -27,7 +26,7 @@ const initialsOf = (name: string) =>
 
 const CHUNK = 200; // rows saved per database call
 
-// ── Client cards from LEAP names ("Mr. Jason Szczypinski", "Ms. A & Mr. B") ──
+// ── Client cards from imported names ("Mr. Jason Szczypinski", "Ms. A & Mr. B") ──
 const COMPANY = /\b(LLC|L\.L\.C\.|Inc\.?|Corp\.?|Corporation|Company|Co\.|Trust|Estate of|LP|LLP|Group|Holdings|Partners|Properties|Realty|Bank)\b/i;
 const SUFFIX = /^(jr\.?|sr\.?|ii|iii|iv|esq\.?)$/i;
 
@@ -73,7 +72,7 @@ function setIfEmpty(lines: ContactLine[], kind: ContactKind, value: string | und
   return [...lines, { kind, value }];
 }
 
-// Adds the LEAP contact details and address where the card has nothing yet.
+// Adds the imported contact details and address where the card has nothing yet.
 function fillContacts(type: CardType, profile: Profile, f: Fields) {
   if (type === "company") {
     profile.company.contacts = setIfEmpty(setIfEmpty(setIfEmpty(profile.company.contacts, "Email", f.clientEmail), "Phone", f.clientPhone), "Cell", f.clientCell);
@@ -114,7 +113,7 @@ export function detailValues(code: string, client: string, address: string, othe
   return Object.fromEntries(Object.entries(v).filter(([, x]) => x && x.trim()).map(([k, x]) => [k, x!.trim().slice(0, 500)]));
 }
 
-// Fills empty Details (and ones that came from LEAP before); never what someone typed.
+// Fills empty Details (and ones that came from an import before); never what someone typed.
 function mergeDetails(current: unknown, values: Record<string, string>) {
   const d = (current && typeof current === "object" ? { ...(current as Record<string, { value?: string; manual?: boolean; source?: string }>) } : {}) as Record<
     string,
@@ -123,15 +122,15 @@ function mergeDetails(current: unknown, values: Record<string, string>) {
   let changed = false;
   for (const [k, v] of Object.entries(values)) {
     const cur = d[k];
-    if (cur?.manual || (cur?.value && cur.source !== "LEAP")) continue;
+    if (cur?.manual || (cur?.value && cur.source !== "LEAP" && cur.source !== "Import")) continue;
     if (cur?.value === v) continue;
-    d[k] = { value: v, source: "LEAP" };
+    d[k] = { value: v, source: "Import" };
     changed = true;
   }
   return { details: d, changed };
 }
 
-// LEAP columns that fit no field, kept on the matter so nothing is lost.
+// Columns that fit no field, kept on the matter so nothing is lost.
 const extrasText = (extras: Record<string, string> | undefined, f: Fields, code: string) => {
   const lines = Object.entries(extras ?? {}).map(([k, v]) => `${k}: ${v}`);
   // General matters have no Details field for the other side's own email / phone.
@@ -139,28 +138,37 @@ const extrasText = (extras: Record<string, string> | undefined, f: Fields, code:
     if (f.otherEmail) lines.push(`Other side email: ${f.otherEmail}`);
     if (f.otherPhone) lines.push(`Other side phone: ${f.otherPhone}`);
   }
-  return lines.length ? `Other LEAP information:\n${lines.join("\n")}` : "";
+  return lines.length ? `Other imported information:\n${lines.join("\n")}` : "";
 };
 
 export async function importLeapMatters(input: unknown) {
-  const { user } = await requireUserOrg();
-  if (!templatesAllowed(user.email)) throw new ImportError(403, "Importing from LEAP isn't set up for your firm.");
+  await requireUserOrg();
   const orgId = await getCurrentOrgId();
   const db = createAdminClient();
   const rows = (Array.isArray(input) ? input : []).slice(0, 1000) as Partial<LeapRow>[];
   if (!rows.length) throw new ImportError(400, "Nothing to import.");
 
   const [{ data: existing }, { data: clients }, { data: team }] = await Promise.all([
-    db.from("matters").select("id, matter_number, details, description, client_id, counterparty").eq("org_id", orgId).not("matter_number", "is", null).limit(20000),
+    db.from("matters").select("id, title, matter_number, details, description, client_id, counterparty").eq("org_id", orgId).limit(20000),
     db.from("clients").select("id, name, email, phone, address, card_type, profile").eq("org_id", orgId).limit(20000),
     db.from("profiles").select("id, email, full_name").eq("org_id", orgId),
   ]);
-  type ExMatter = { id: string; matter_number: string; details: unknown; description: string | null; client_id: string | null; counterparty: string | null };
+  type ExMatter = { id: string; title: string; matter_number: string | null; details: unknown; description: string | null; client_id: string | null; counterparty: string | null };
   type ExClient = { id: string; name: string; email: string | null; phone: string | null; address: string | null; card_type: string | null; profile: unknown };
-  const byNumber = new Map(((existing ?? []) as ExMatter[]).map((m) => [m.matter_number.toUpperCase(), m]));
+  const exList = (existing ?? []) as ExMatter[];
+  const byNumber = new Map(exList.filter((m) => m.matter_number).map((m) => [m.matter_number!.toUpperCase(), m]));
+  // Rows without a number are matched by their title (client – description), so re-importing doesn't duplicate.
+  const byTitle = new Map(exList.map((m) => [m.title.trim().toLowerCase(), m]));
   const clientByName = new Map(((clients ?? []) as ExClient[]).map((c) => [c.name.trim().toLowerCase(), c]));
   const byInitials = new Map<string, string>();
-  for (const p of (team ?? []) as { id: string; email: string; full_name?: string | null }[]) if (p.full_name) byInitials.set(initialsOf(p.full_name), p.id);
+  // Responsible person: by initials (PR), full name or email.
+  for (const p of (team ?? []) as { id: string; email: string; full_name?: string | null }[]) {
+    if (p.full_name) {
+      byInitials.set(initialsOf(p.full_name), p.id);
+      byInitials.set(p.full_name.trim().toUpperCase(), p.id);
+    }
+    byInitials.set(p.email.trim().toUpperCase(), p.id);
+  }
 
   const result = { created: 0, updated: 0, skipped: [] as string[], failed: [] as { number: string; error: string }[], clientsCreated: 0, clientsUpdated: 0 };
 
@@ -168,22 +176,28 @@ export async function importLeapMatters(input: unknown) {
   const todo: Clean[] = [];
   const seen = new Set<string>();
   for (const r of rows) {
-    const m = /^([A-Z][A-Z0-9]{1,5})-(\d{4})-(\d{3,6})$/.exec(txt(r.number, 30).toUpperCase());
-    if (!m || seen.has(m[0])) continue;
-    seen.add(m[0]);
+    // LEAP-style numbers give a code (REP…); any other number is kept as written; none is fine too.
+    const raw = txt(r.number, 40);
+    const m = /^([A-Z][A-Z0-9]{1,5})-(\d{4})-(\d{3,6})$/.exec(raw.toUpperCase());
+    const number = m ? m[0] : /^[A-Za-z0-9][A-Za-z0-9 ._\/#-]{0,39}$/.test(raw) ? raw : "";
+    const client0 = txt(r.client, 200);
+    const seenKey = number ? number.toUpperCase() : `${client0.toLowerCase()}|${txt(r.matterType, 300).toLowerCase()}`;
+    if (!client0 && !number && !txt(r.matterType, 300)) continue;
+    if (seen.has(seenKey)) continue;
+    seen.add(seenKey);
     const fields: Fields = {};
     for (const [k, v] of Object.entries((r.fields ?? {}) as Record<string, unknown>)) if (typeof v === "string" && v.trim()) fields[k as FieldTarget] = txt(v, 500);
     const extras: Record<string, string> = {};
     for (const [k, v] of Object.entries((r.extras ?? {}) as Record<string, unknown>).slice(0, 40)) if (typeof v === "string" && v.trim()) extras[txt(k, 80)] = txt(v, 500);
     todo.push({
-      number: m[0],
-      code: m[1],
+      number,
+      code: m ? m[1] : "",
       client: txt(r.client, 200) || "Unknown client",
       address: txt(r.address, 300),
       other: txt(r.other, 300),
       leapStatus: txt(r.leapStatus, 80),
       matterType: txt(r.matterType, 300),
-      resp: txt(r.resp, 10).toUpperCase(),
+      resp: txt(r.resp, 120).toUpperCase(),
       fields,
       extras,
     });
@@ -207,7 +221,7 @@ export async function importLeapMatters(input: unknown) {
       return {
         org_id: orgId,
         name,
-        description: "Imported from LEAP",
+        description: "Imported",
         status: "Active",
         type: c.type === "company" ? "Legal entity" : "Individual",
         email: core.email || null,
@@ -255,24 +269,32 @@ export async function importLeapMatters(input: unknown) {
   }
 
   // 2. Matters: new ones in batches; existing ones get the missing information.
-  const fresh = todo.filter((t) => !byNumber.has(t.number));
-  const known = todo.filter((t) => byNumber.has(t.number));
+  const titleFor = (t: Clean) =>
+    (t.address ? `${t.client} – ${t.address}` : t.matterType && !/\d/.test(t.matterType) ? `${t.client} – ${t.matterType}` : t.client).slice(0, 300);
+  const existingFor = (t: Clean) => (t.number ? byNumber.get(t.number.toUpperCase()) : byTitle.get(titleFor(t).toLowerCase()));
+  const fresh = todo.filter((t) => !existingFor(t));
+  const known = todo.filter((t) => existingFor(t));
   const toInsert = fresh.map((t) => {
     const closed = /file complete|not proceeding|closed|archived|cancel+ed/i.test(t.leapStatus);
     const { details } = mergeDetails({}, detailValues(t.code, t.client, t.address, t.other, t.fields));
     return {
-      number: t.number,
+      number: t.number || titleFor(t),
       row: {
         org_id: orgId,
-        title: (t.address ? `${t.client} – ${t.address}` : t.matterType && !/\d/.test(t.matterType) ? `${t.client} – ${t.matterType}` : t.client).slice(0, 300),
-        description: [t.matterType, `Imported from LEAP${t.leapStatus ? ` · LEAP status: ${t.leapStatus}` : ""}`, extrasText(t.extras, t.fields, t.code)].filter(Boolean).join("\n"),
+        title: titleFor(t),
+        description: [t.matterType, `Imported${t.leapStatus ? ` · Status in the old system: ${t.leapStatus}` : ""}`, extrasText(t.extras, t.fields, t.code)].filter(Boolean).join("\n"),
         status: closed ? "Closed" : "Active",
         client_id: clientByName.get(t.client.toLowerCase())?.id ?? null,
-        category: categoryForCode(t.code),
+        category:
+          t.code && categoryForCode(t.code) !== "None"
+            ? categoryForCode(t.code)
+            : categoryFromText(t.fields.practiceArea ?? "") !== "None"
+              ? categoryFromText(t.fields.practiceArea ?? "")
+              : categoryFromText(t.matterType),
         counterparty: t.other || null,
         billing_type: "Flat fee",
-        matter_code: t.code,
-        matter_number: t.number, // LEAP's number, kept as is (your own counter is unchanged)
+        matter_code: t.code || null,
+        matter_number: t.number || null, // the old system's number, kept as is (your own counter is unchanged)
         assigned_to: byInitials.get(t.resp) ?? null,
         details,
       },
@@ -300,7 +322,7 @@ export async function importLeapMatters(input: unknown) {
     }
   }
   for (const t of known) {
-    const ex = byNumber.get(t.number)!;
+    const ex = existingFor(t)!;
     const { details, changed } = mergeDetails(ex.details, detailValues(t.code, t.client, t.address, t.other, t.fields));
     const patch: Record<string, unknown> = {};
     if (changed) patch.details = details;
@@ -308,13 +330,13 @@ export async function importLeapMatters(input: unknown) {
     if (!ex.client_id && clientId) patch.client_id = clientId;
     if (!ex.counterparty && t.other) patch.counterparty = t.other;
     const extra = extrasText(t.extras, t.fields, t.code);
-    if (extra && !(ex.description ?? "").includes("Other LEAP information")) patch.description = [ex.description, extra].filter(Boolean).join("\n");
+    if (extra && !/Other (LEAP|imported) information/.test(ex.description ?? "")) patch.description = [ex.description, extra].filter(Boolean).join("\n");
     if (!Object.keys(patch).length) {
-      result.skipped.push(t.number);
+      result.skipped.push(t.number || titleFor(t));
       continue;
     }
     const { error } = await db.from("matters").update(patch).eq("id", ex.id).eq("org_id", orgId);
-    if (error) result.failed.push({ number: t.number, error: (error.message ?? "couldn't be updated").slice(0, 160) });
+    if (error) result.failed.push({ number: t.number || titleFor(t), error: (error.message ?? "couldn't be updated").slice(0, 160) });
     else result.updated++;
   }
   return result;
