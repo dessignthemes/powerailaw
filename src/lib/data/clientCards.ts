@@ -2,7 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { getCurrentOrgId, NoWorkspaceError } from "@/lib/data/org";
-import { coreFields, normalizeProfile, type CardType, type Profile } from "@/lib/clients/card";
+import { coreFields, normalizeProfile, isCompanyName, peopleFromName, type CardType, type Profile } from "@/lib/clients/card";
 
 export const CARDS_MIGRATION = "0018_client_cards.sql";
 
@@ -55,16 +55,18 @@ export async function getCard(id: string) {
     throw error;
   }
   if (!data) throw new CardError(404, "That client wasn't found.");
-  const cardType = (data.card_type ?? "person") as CardType;
+  let cardType = (data.card_type ?? "person") as CardType;
   let profile = normalizeProfile(data.profile);
-  // Clients created elsewhere (Clients page, AI Agent) start with their basics.
+  // Clients created elsewhere (Clients page, AI Agent, an import) start with their basics:
+  // "Mr. William S. Mahalik" → Mr. / William / S. / Mahalik; "Estate of …", "… LLC" → company.
   if (!data.profile || Object.keys(data.profile).length === 0) {
+    if (cardType === "person" && isCompanyName(String(data.name))) cardType = "company";
     if (cardType === "company") {
       profile.company.name = data.name;
       profile.company.contacts = [{ kind: "Email", value: data.email ?? "" }, { kind: "Phone", value: data.phone ?? "" }, { kind: "Fax", value: "" }, { kind: "Web", value: "" }];
     } else {
-      const parts = String(data.name).trim().split(/\s+/);
-      profile.people[0] = { ...profile.people[0], first: parts.length > 1 ? parts.slice(0, -1).join(" ") : parts[0] ?? "", last: parts.length > 1 ? parts[parts.length - 1] : "" };
+      const people = peopleFromName(String(data.name));
+      if (people.length) profile.people = people;
       profile.people[0].contacts = [{ kind: "Email", value: data.email ?? "" }, { kind: "Phone", value: "" }, { kind: "Cell", value: data.phone ?? "" }, { kind: "Fax", value: "" }, { kind: "Web", value: "" }];
     }
     if (data.address) profile.address.street.street = data.address;

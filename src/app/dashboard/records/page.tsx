@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
-import NewClientModal, { getInitials, getAvatarColor, formatUpdatedAt, type Client } from "@/components/NewClientModal";
+import { getInitials, getAvatarColor, formatUpdatedAt } from "@/components/NewClientModal";
 import NewMatterModal from "@/components/NewMatterModal";
 import ContactModal from "@/components/records/ContactModal";
 import type { Contact, ContactInput, ContactKind } from "@/lib/records/contactTypes";
@@ -51,7 +51,7 @@ const blackBtn = "bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medi
 
 export default function RecordsPage() {
   const router = useRouter();
-  const { clients, clientsLoaded, matters, mattersLoaded, addClient, updateClient, addMatter } = useWorkspaceData();
+  const { clients, clientsLoaded, matters, mattersLoaded, addMatter } = useWorkspaceData();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactsLoaded, setContactsLoaded] = useState(false);
@@ -63,7 +63,6 @@ export default function RecordsPage() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const [adding, setAdding] = useState<Kind | null>(null);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
 
   useEffect(() => {
@@ -156,12 +155,13 @@ export default function RecordsPage() {
 
   function open(r: Row) {
     if (r.kind === "matter") router.push(`/dashboard/matters/${r.id}`);
-    else if (r.kind === "client") setEditingClient(clients.find((c) => c.id === r.id) ?? null);
+    else if (r.kind === "client") router.push(`/dashboard/client-intake?card=${r.id}`); // the full client card
     else setEditingContact(contacts.find((c) => c.id === r.id) ?? null);
   }
 
   function startAdd(kind: Kind) {
     setMenuOpen(false);
+    if (kind === "client") return router.push("/dashboard/client-intake"); // the new client form
     setAdding(kind);
   }
 
@@ -334,15 +334,6 @@ export default function RecordsPage() {
         )}
       </div>
 
-      {adding === "client" && (
-        <NewClientModal
-          onClose={() => setAdding(null)}
-          onSubmit={(c) => {
-            addClient(c);
-            setAdding(null);
-          }}
-        />
-      )}
       {adding === "matter" && (
         <NewMatterModal
           clients={clients}
@@ -365,16 +356,6 @@ export default function RecordsPage() {
             onSave={(input) => saveContact(input)}
           />
         ))}
-      {editingClient && (
-        <NewClientModal
-          client={editingClient}
-          onClose={() => setEditingClient(null)}
-          onSubmit={(c) => {
-            updateClient(c);
-            setEditingClient(null);
-          }}
-        />
-      )}
       {editingContact && (
         <ContactModal
           contact={editingContact}

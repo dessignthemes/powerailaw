@@ -297,3 +297,34 @@ export function mergePortalIntake(type: CardType, pr: Profile, raw: unknown): Pr
   }
   return next;
 }
+
+// ── Names typed as one line ("Mr. William S. Mahalik", "Ms. A Zakrzewski & Mr. B Zakrzewski") ──
+const COMPANY_NAME = /\b(LLC|L\.L\.C\.|Inc\.?|Corp\.?|Corporation|Company|Co\.|Trust|Estate of|LP|LLP|Group|Holdings|Partners|Properties|Realty|Bank)\b/i;
+const NAME_SUFFIX = /^(jr\.?|sr\.?|ii|iii|iv|esq\.?)$/i;
+
+export const isCompanyName = (name: string) => COMPANY_NAME.test(name);
+
+// One person: title / first / middle / last / suffix.
+export function parsePersonName(raw: string): Pick<Person, "title" | "first" | "middle" | "last" | "suffix"> {
+  let words = raw.replace(/,/g, " ").split(/\s+/).filter(Boolean);
+  let title = "";
+  const t = TITLES.find((x) => x && words[0] && words[0].replace(/\.$/, "").toLowerCase() === x.replace(/\.$/, "").toLowerCase());
+  if (t) {
+    title = t;
+    words = words.slice(1);
+  }
+  let suffix = "";
+  while (words.length > 1 && NAME_SUFFIX.test(words[words.length - 1])) suffix = [words.pop(), suffix].filter(Boolean).join(" ");
+  if (words.length <= 1) return { title, first: "", middle: "", last: words[0] ?? "", suffix };
+  return { title, first: words[0], middle: words.slice(1, -1).join(" "), last: words[words.length - 1], suffix };
+}
+
+// Everyone in a one-line name ("A & B", "A and B").
+export function peopleFromName(name: string): Person[] {
+  return name
+    .split(/\s+(?:&|and)\s+/i)
+    .map((n) => n.trim())
+    .filter(Boolean)
+    .slice(0, 6)
+    .map((n) => ({ ...newPerson(), ...parsePersonName(n) }));
+}

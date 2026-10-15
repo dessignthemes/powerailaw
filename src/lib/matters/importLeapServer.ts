@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { requireUserOrg } from "@/lib/data/documents";
 import { categoryForCode, categoryFromText, type LeapRow, type FieldTarget } from "@/lib/matters/leapImport";
-import { emptyProfile, newPerson, normalizeProfile, coreFields, TITLES, type CardType, type Profile, type Person, type ContactLine, type ContactKind } from "@/lib/clients/card";
+import { emptyProfile, newPerson, normalizeProfile, coreFields, isCompanyName, parsePersonName, type CardType, type Profile, type Person, type ContactLine, type ContactKind } from "@/lib/clients/card";
 
 // Bulk import of matters from a CSV file (LEAP, Clio, PracticePanther, a spreadsheet…).
 // Each row becomes a matter with its old number (if any), its client (reused by name or
@@ -27,22 +27,8 @@ const initialsOf = (name: string) =>
 const CHUNK = 200; // rows saved per database call
 
 // ── Client cards from imported names ("Mr. Jason Szczypinski", "Ms. A & Mr. B") ──
-const COMPANY = /\b(LLC|L\.L\.C\.|Inc\.?|Corp\.?|Corporation|Company|Co\.|Trust|Estate of|LP|LLP|Group|Holdings|Partners|Properties|Realty|Bank)\b/i;
-const SUFFIX = /^(jr\.?|sr\.?|ii|iii|iv|esq\.?)$/i;
-
-function parsePerson(raw: string): Partial<Person> {
-  let words = raw.replace(/,/g, " ").split(/\s+/).filter(Boolean);
-  let title = "";
-  const t = TITLES.find((x) => x && words[0] && words[0].replace(/\.$/, "").toLowerCase() === x.replace(/\.$/, "").toLowerCase());
-  if (t) {
-    title = t;
-    words = words.slice(1);
-  }
-  let suffix = "";
-  while (words.length > 1 && SUFFIX.test(words[words.length - 1])) suffix = [words.pop(), suffix].filter(Boolean).join(" ");
-  if (words.length === 1) return { title, last: words[0], suffix };
-  return { title, first: words[0] ?? "", middle: words.slice(1, -1).join(" "), last: words[words.length - 1] ?? "", suffix };
-}
+const COMPANY = { test: isCompanyName };
+const parsePerson = parsePersonName;
 
 type Fields = Partial<Record<FieldTarget, string>>;
 

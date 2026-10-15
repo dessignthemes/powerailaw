@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentPortalUser, logEvent, firmName, PortalError } from "@/lib/portal/server";
-import { normalizeProfile, coreFields, portalIntakeOf, mergePortalIntake, type CardType } from "@/lib/clients/card";
+import { normalizeProfile, coreFields, portalIntakeOf, mergePortalIntake, peopleFromName, type CardType } from "@/lib/clients/card";
 
 // "Complete intake sheet" in the client portal: the client sees their own details
 // from the client card and can fill in or correct them; saving updates the card.
@@ -18,9 +18,8 @@ async function loadClient() {
   const profile = normalizeProfile(c.profile ?? {});
   // A client the firm added before client cards existed: start from their name/email/phone.
   if (!c.profile && type === "person") {
-    const parts = (c.name ?? "").trim().split(/\s+/);
-    profile.people[0].first = parts.length > 1 ? parts.slice(0, -1).join(" ") : parts[0] ?? "";
-    profile.people[0].last = parts.length > 1 ? parts[parts.length - 1] : "";
+    const people = peopleFromName(c.name ?? "");
+    if (people.length) profile.people = people;
     profile.people[0].contacts = profile.people[0].contacts.map((l) =>
       l.kind === "Email" && c.email ? { ...l, value: c.email } : l.kind === "Phone" && c.phone ? { ...l, value: c.phone } : l
     );
