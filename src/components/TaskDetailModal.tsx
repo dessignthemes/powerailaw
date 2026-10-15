@@ -350,9 +350,7 @@ export default function TaskDetailModal({
           {/* Who it's for: near the top so the list has room to open. */}
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <span className="text-[13px] font-medium text-muted w-[92px]">Assigned to</span>
-            <div className="w-[340px] max-w-full">
-              <AssigneeMultiPicker members={teamMembers} value={assignee ? [assignee] : offeredTo} onChange={pickPeople} />
-            </div>
+            <AssigneeMultiPicker variant="pill" members={teamMembers} value={assignee ? [assignee] : offeredTo} onChange={pickPeople} />
           </div>
 
           {offered && (
