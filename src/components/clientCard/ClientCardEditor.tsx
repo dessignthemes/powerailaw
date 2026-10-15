@@ -5,7 +5,7 @@ import PortalView from "@/components/clientCard/PortalView";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, Mail, MessageSquare, Phone, Plus, X, User, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList,
+  ArrowLeft, Mail, MessageSquare, Phone, Plus, X, User, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList, MoreHorizontal, Trash2,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import SelectBox from "@/components/SelectBox";
@@ -254,6 +254,35 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
     }
   }
 
+  // Delete the client: their matters stay (no longer linked); their client portal access goes.
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  async function removeClient() {
+    if (!cardId) return;
+    const n = matters.filter((m) => m.clientId === cardId).length;
+    const msg =
+      `Delete ${name}? This removes the client card and their client portal access.` +
+      (n ? `\n\nTheir ${n} ${n === 1 ? "matter stays" : "matters stay"} in LawPower, no longer linked to a client.` : "") +
+      "\n\nThis can't be undone.";
+    if (!confirm(msg)) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/clients", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: [cardId] }) });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d?.error ?? "The client couldn't be deleted.");
+      }
+      live.current.dirty = false; // nothing to save on the way out
+      refreshAll();
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   function cancel() {
     if (dirty && !confirm("Discard your changes to this card?")) return;
     live.current.dirty = false; // discarded: don't save on the way out
@@ -321,6 +350,34 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
                 <a.icon size={18} strokeWidth={1.75} /> {a.label}
               </span>
             )
+          )}
+          {cardId && (
+            <div className="relative self-center">
+              <button
+                onClick={() => setMoreOpen((o) => !o)}
+                aria-label="More actions"
+                className="w-9 h-9 rounded-full bg-chip hover:bg-btn flex items-center justify-center transition-colors"
+              >
+                <MoreHorizontal size={16} strokeWidth={1.75} />
+              </button>
+              {moreOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
+                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[200px]">
+                    <button
+                      onClick={() => {
+                        setMoreOpen(false);
+                        void removeClient();
+                      }}
+                      disabled={deleting}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-red-500 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <Trash2 size={14} strokeWidth={1.75} /> Delete client
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
