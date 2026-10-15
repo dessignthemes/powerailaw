@@ -1392,7 +1392,7 @@ function TaskBoard({
                           )}
                           <div className="flex items-start justify-between gap-2 mb-2.5">
                             <div className="min-w-0">
-                              <div className="text-[13px] font-normal leading-snug">{t.title}</div>
+                              <div className="text-[13px] font-normal leading-snug line-clamp-2 break-words" title={t.title}>{t.title}</div>
                               {t.status !== "done" && (
                                 <div className="mt-1">
                                   <NextStepLine task={t} />
