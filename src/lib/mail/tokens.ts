@@ -11,7 +11,15 @@ export class MailError extends Error {
   }
 }
 
-const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
+const GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.modify"];
+const GMAIL_MODIFY = "https://www.googleapis.com/auth/gmail.modify";
+
+// Can LawPower change read / unread in this mailbox? (Reconnected with the newer permission.)
+export function canSyncRead(conn: Pick<ConnectionRow, "provider" | "scopes">) {
+  return conn.provider === "google"
+    ? conn.scopes.includes(GMAIL_MODIFY)
+    : conn.scopes.some((s) => /(^|\/)Mail\.ReadWrite$/i.test(s));
+}
 const GOOGLE_CALENDAR_SCOPES = [
   "https://www.googleapis.com/auth/calendar",
   "https://www.googleapis.com/auth/calendar.readonly",
@@ -23,7 +31,7 @@ export type AccessNeed = "mail" | "calendar";
 
 export function hasGoogleScope(scopes: string[], need: AccessNeed) {
   if (scopes.length === 0) return true; // unknown (older connection): let the API decide
-  return need === "mail" ? scopes.includes(GMAIL_SCOPE) : scopes.some((s) => GOOGLE_CALENDAR_SCOPES.includes(s));
+  return need === "mail" ? scopes.some((s) => GMAIL_SCOPES.includes(s)) : scopes.some((s) => GOOGLE_CALENDAR_SCOPES.includes(s));
 }
 
 export function canRefresh(provider: MailProvider) {
@@ -50,9 +58,9 @@ async function refresh(conn: ConnectionRow): Promise<string> {
           client_secret: process.env.MICROSOFT_CLIENT_SECRET!,
           refresh_token: conn.refresh_token,
           grant_type: "refresh_token",
-          // Ask for everything the app uses, or the renewed token loses access
-          // (e.g. calendar) that the original sign-in granted.
-          scope: "offline_access User.Read Mail.Read Calendars.ReadWrite Files.Read",
+          // Ask for what this connection was granted, or the renewal fails / loses access.
+          // Mail.ReadWrite only once the person reconnected and approved it.
+          scope: `offline_access User.Read ${canSyncRead(conn) ? "Mail.ReadWrite" : "Mail.Read"} Calendars.ReadWrite Files.Read`,
         });
 
   const url =
@@ -81,7 +89,7 @@ export async function getAccessToken(
   userId: string,
   provider: MailProvider,
   need: AccessNeed = "mail"
-): Promise<{ token: string; email: string | null }> {
+): Promise<{ token: string; email: string | null; canSync: boolean }> {
   const conn = (await getUserConnections(userId)).find((c) => c.provider === provider);
   if (!conn) throw new MailError("not_connected", "No account connected yet.");
 
@@ -96,7 +104,7 @@ export async function getAccessToken(
 
   const fresh = conn.expires_at && new Date(conn.expires_at).getTime() > Date.now() + 60_000;
   const token = fresh ? conn.access_token : await refresh(conn);
-  return { token, email: conn.account_email };
+  return { token, email: conn.account_email, canSync: canSyncRead(conn) };
 }
 
 export async function connectionStatus(userId: string) {
@@ -106,6 +114,12 @@ export async function connectionStatus(userId: string) {
     let status: "ok" | "reconnect" | "missing_scope" = "ok";
     if (c.provider === "google" && !hasGoogleScope(c.scopes, "mail")) status = "missing_scope";
     else if (!fresh && !(c.refresh_token && canRefresh(c.provider))) status = "reconnect";
-    return { provider: c.provider, email: c.account_email, status, autoRefresh: !!c.refresh_token && canRefresh(c.provider) };
+    return {
+      provider: c.provider,
+      email: c.account_email,
+      status,
+      autoRefresh: !!c.refresh_token && canRefresh(c.provider),
+      syncsRead: canSyncRead(c), // read / unread kept in step with Outlook / Gmail
+    };
   });
 }

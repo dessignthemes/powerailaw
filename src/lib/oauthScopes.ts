@@ -16,7 +16,8 @@ export const GOOGLE_MAILBOX_ITEMS: MailboxItem[] = [
     key: "mail",
     label: "Gmail",
     desc: "New client emails and documents get routed to your team the moment they arrive.",
-    scope: "https://www.googleapis.com/auth/gmail.readonly",
+    // Read mail and change read / unread (no sending, no deleting).
+    scope: "https://www.googleapis.com/auth/gmail.modify",
   },
   {
     key: "calendar",
@@ -37,7 +38,8 @@ export const MICROSOFT_MAILBOX_ITEMS: MailboxItem[] = [
     key: "mail",
     label: "Outlook Mail",
     desc: "New client emails and documents get routed to your team the moment they arrive.",
-    scope: "Mail.Read",
+    // Read mail and change read / unread (LawPower doesn't send or delete mail).
+    scope: "Mail.ReadWrite",
   },
   {
     key: "calendar",

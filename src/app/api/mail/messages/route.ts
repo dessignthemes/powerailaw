@@ -22,14 +22,15 @@ export async function GET(request: Request) {
     const pageToken = url.searchParams.get("pageToken") ?? undefined;
     const folder = url.searchParams.get("folder")?.slice(0, 400) ?? undefined;
     const unreadOnly = url.searchParams.get("unread") === "1";
-    const { token, email } = await getAccessToken(userId, provider);
+    const { token, email, canSync } = await getAccessToken(userId, provider);
     const page =
       provider === "google"
         ? await listGmail(token, { q, pageToken, folder, unread: unreadOnly })
         : await listOutlook(token, { q, pageToken, folder, unread: unreadOnly });
     // Emails opened in LawPower show as read, even though the mailbox itself
     // (which LawPower never changes) may still mark them unread.
-    const unreadIds = page.messages.filter((m) => m.unread).map((m) => m.id);
+    // A mailbox that syncs read / unread is the single source of truth (Outlook / Gmail).
+    const unreadIds = canSync ? [] : page.messages.filter((m) => m.unread).map((m) => m.id);
     const opened = await readMessageIds(userId, provider, unreadIds);
     let messages = opened.size ? page.messages.map((m) => (opened.has(m.id) ? { ...m, unread: false } : m)) : page.messages;
     // Flagged / marked unread in LawPower.
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
     if (marks.size) {
       messages = messages.map((m) => {
         const mk = marks.get(m.id);
-        return mk ? { ...m, flagged: mk.flagged, unread: mk.unread ? true : m.unread } : m;
+        return mk ? { ...m, flagged: mk.flagged, unread: mk.unread && !canSync ? true : m.unread } : m;
       });
     }
     // The matter each email is on (emails carrying a matter number are filed to it).

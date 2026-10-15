@@ -77,3 +77,9 @@ export async function mailMarks(userId: string, provider: MailProvider, ids: str
   }
   return new Map((data ?? []).map((r) => [r.message_id as string, { flagged: !!r.flagged, unread: !!r.unread }]));
 }
+
+// When read / unread lives in the mailbox itself, LawPower's own "opened" note is dropped.
+export async function forgetRead(userId: string, provider: MailProvider, messageId: string) {
+  const { error } = await createAdminClient().from("mail_reads").delete().eq("user_id", userId).eq("provider", provider).eq("message_id", messageId.slice(0, 500));
+  if (error && !missingTable(error)) console.error("forgetRead failed:", error);
+}

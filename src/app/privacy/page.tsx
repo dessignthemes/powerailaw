@@ -27,8 +27,9 @@ export default function PrivacyPage() {
       <P>Only if you choose to connect them, and only for your own account:</P>
       <UL>
         <li>
-          <strong>Email (Gmail or Outlook):</strong> read-only access to show your mailbox inside LawPower, to turn emails you choose into tasks,
-          and, when you ask, to let the AI Agent search and read messages to answer your question. We do not send, move or delete email.
+          <strong>Email (Gmail or Outlook):</strong> access to show your mailbox inside LawPower, to keep read / unread in step with your mailbox
+          (an email you open in LawPower is marked read there, and one you mark unread is marked unread there), to turn emails you choose into
+          tasks, and, when you ask, to let the AI Agent search and read messages to answer your question. We do not send, move or delete email.
         </li>
         <li>
           <strong>Calendar (Google Calendar or Outlook):</strong> access to show your events, and to create, edit or delete events when you do so in

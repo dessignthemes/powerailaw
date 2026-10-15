@@ -64,7 +64,9 @@ function rememberOpened(p: MailProvider, id: string) {
 function forgetOpened(p: MailProvider, id: string) {
   writePref(openedKey(p), JSON.stringify([...openedIds(p)].filter((x) => x !== id)));
 }
-function withOpened(p: MailProvider, list: MailSummary[]) {
+// syncs: the mailbox keeps read / unread itself (Outlook / Gmail is the source of truth).
+function withOpened(p: MailProvider, list: MailSummary[], syncs = false) {
+  if (syncs) return list;
   const opened = openedIds(p);
   return opened.size ? list.map((m) => (m.unread && opened.has(m.id) ? { ...m, unread: false } : m)) : list;
 }
@@ -88,7 +90,7 @@ function cacheFolders(p: MailProvider, folders: MailFolder[]) {
   }
 }
 
-type Conn = { provider: MailProvider; email: string | null; status: "ok" | "reconnect" | "missing_scope"; autoRefresh: boolean };
+type Conn = { provider: MailProvider; email: string | null; status: "ok" | "reconnect" | "missing_scope"; autoRefresh: boolean; syncsRead?: boolean };
 type Problem = { message: string; code?: string };
 
 const providerLabel: Record<MailProvider, string> = { google: "Gmail", microsoft: "Outlook" };
@@ -272,6 +274,9 @@ export default function InboxPage() {
   const [activeQuery, setActiveQuery] = useState("");
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Does this mailbox keep read / unread in step with LawPower? (Reconnected with the newer permission.)
+  const syncRef = useRef(false);
+  const [syncNoteHidden, setSyncNoteHidden] = useState(false);
   // Unread only: the mailbox sends unread emails; ones already read in LawPower are hidden too
   // (the open email stays until you move on). Remembered in this browser.
   const [unreadOnly, setUnreadOnly] = useState(() => {
@@ -336,6 +341,11 @@ export default function InboxPage() {
 
   const shown = unreadOnly ? messages.filter((m) => m.unread || m.id === selectedId) : messages;
 
+  // Known before the first list loads: a syncing mailbox needs no browser memory of opened emails.
+  useEffect(() => {
+    syncRef.current = !!conns?.find((c) => c.provider === provider)?.syncsRead;
+  }, [conns, provider]);
+
   // First page whenever provider or search changes
   useEffect(() => {
     if (!provider) return;
@@ -343,7 +353,7 @@ export default function InboxPage() {
     fetchPage(provider, activeQuery, undefined, folderId, unreadOnly)
       .then((d) => {
         if (cancelled) return;
-        setMessages(withOpened(provider, d.messages));
+        setMessages(withOpened(provider, d.messages, syncRef.current));
         setNextPage(d.nextPageToken);
         setListError(null);
       })
@@ -398,7 +408,7 @@ export default function InboxPage() {
     setListLoading(true);
     fetchPage(provider, activeQuery, undefined, folderId, unreadOnly)
       .then((d) => {
-        setMessages(withOpened(provider, d.messages));
+        setMessages(withOpened(provider, d.messages, syncRef.current));
         setNextPage(d.nextPageToken);
         setListError(null);
       })
@@ -411,7 +421,7 @@ export default function InboxPage() {
     setListLoading(true);
     fetchPage(provider, activeQuery, nextPage, folderId, unreadOnly)
       .then((d) => {
-        setMessages((m) => [...m, ...withOpened(provider, d.messages).filter((x) => !m.some((y) => y.id === x.id))]);
+        setMessages((m) => [...m, ...withOpened(provider, d.messages, syncRef.current).filter((x) => !m.some((y) => y.id === x.id))]);
         setNextPage(d.nextPageToken);
       })
       .catch((e: Error & { code?: string }) => setListError({ message: e.message, code: e.code }))
@@ -665,6 +675,20 @@ export default function InboxPage() {
             <RefreshCw size={15} strokeWidth={1.75} className={listLoading ? "animate-spin" : ""} />
           </button>
         </div>
+
+        {!needsReconnect && provider && conn?.status === "ok" && conn.syncsRead === false && !syncNoteHidden && (
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#EEF3FB] border-b border-line text-[13px] flex-wrap">
+            <span>Read / unread only changes in LawPower for now. Reconnect {providerLabel[provider]} once so it stays in step with {providerLabel[provider]} both ways.</span>
+            <span className="flex items-center gap-2">
+              <Link href={connectHref(provider)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-btn-hover">
+                Reconnect {providerLabel[provider]}
+              </Link>
+              <button onClick={() => setSyncNoteHidden(true)} className="text-muted hover:text-ink text-[12.5px]">
+                Later
+              </button>
+            </span>
+          </div>
+        )}
 
         {needsReconnect && provider && (
           <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#F5E3B3]/60 border-b border-line text-[13px] flex-wrap">

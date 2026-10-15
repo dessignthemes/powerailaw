@@ -182,3 +182,14 @@ export async function listGmailThreadIds(token: string, threadId: string): Promi
   const t = await gmail<{ messages?: { id: string }[] }>(token, `/threads/${threadId}?format=minimal`);
   return (t.messages ?? []).map((m) => m.id);
 }
+
+// Read / unread in Gmail (needs gmail.modify).
+export async function setGmailRead(token: string, id: string, read: boolean): Promise<void> {
+  if (!/^[A-Za-z0-9_-]+$/.test(id)) throw new MailError("provider_error", "Invalid message id.");
+  const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}/modify`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(read ? { removeLabelIds: ["UNREAD"] } : { addLabelIds: ["UNREAD"] }),
+  });
+  if (!res.ok) throw new MailError("provider_error", `Gmail didn't update read / unread (${res.status}).`);
+}

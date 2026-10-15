@@ -156,3 +156,14 @@ export async function listOutlookThreadIds(token: string, conversationId: string
   const d = await graph<{ value: { id: string }[] }>(token, `/me/messages?$filter=${filter}&$select=id&$top=50`);
   return d.value.map((m) => m.id);
 }
+
+// Read / unread in Outlook (needs Mail.ReadWrite).
+export async function setOutlookRead(token: string, id: string, read: boolean): Promise<void> {
+  if (!/^[A-Za-z0-9_=+/-]+$/.test(id)) throw new MailError("provider_error", "Invalid message id.");
+  const res = await fetch(`${GRAPH}/me/messages/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ isRead: read }),
+  });
+  if (!res.ok) throw new MailError("provider_error", `Outlook didn't update read / unread (${res.status}).`);
+}
