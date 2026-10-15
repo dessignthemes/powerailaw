@@ -1191,8 +1191,12 @@ function TaskBoard({
                 style={{
                   flex: `0 0 ${COLUMN_WIDTH}`,
                   minWidth: COLUMN_MIN,
-                  // Empty columns are half height, with "Add a task" centered.
-                  ...(colTasks.length === 0 ? { height: "50%", minHeight: 220, alignSelf: "flex-start" } : {}),
+                  // Empty columns are half height, with "Add a task" centered. Columns with tasks
+                  // are only as tall as their cards (growing as cards are added, up to the
+                  // board's height, then scrolling inside).
+                  ...(colTasks.length === 0
+                    ? { height: "50%", minHeight: 220, alignSelf: "flex-start" }
+                    : { alignSelf: "flex-start", maxHeight: "100%", minHeight: 220 }),
                 }}
                 {...dropProps(col)}
                 className={`snap-start border rounded-2xl flex flex-col min-h-0 transition-colors ${
