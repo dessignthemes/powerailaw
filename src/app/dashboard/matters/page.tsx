@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   X,
   Upload,
+  Search,
 } from "lucide-react";
 import NewMatterModal, {
   numberOf,
@@ -94,6 +95,7 @@ export default function MattersPage() {
   } = useWorkspaceData();
   // Import CSV file (matters from LEAP, Clio, PracticePanther, a spreadsheet…).
   const [importOpen, setImportOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMatter, setEditingMatter] = useState<Matter | null>(null);
@@ -142,8 +144,20 @@ export default function MattersPage() {
     return clientId ? clients.find((c) => c.id === clientId) ?? null : null;
   }
 
+  // Search: matter number, title, client, other side, type. Every word must match.
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const shownMatters = words.length
+    ? matters.filter((m) => {
+        const hay = [m.title, m.matterNumber, numberOf(m), clientFor(m.clientId)?.name, m.counterparty, m.category, m.description]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return words.every((w) => hay.includes(w));
+      })
+    : matters;
+
   const groups = matterStatusOrder
-    .map((status) => ({ status, items: matters.filter((m) => m.status === status) }))
+    .map((status) => ({ status, items: shownMatters.filter((m) => m.status === status) }))
     .filter((g) => g.items.length > 0);
 
   return (
@@ -167,6 +181,27 @@ export default function MattersPage() {
           </button>
         </div>
       </div>
+      {mattersLoaded && matters.length > 0 && (
+        <div className="relative max-w-[520px] -mt-3 mb-6">
+          <Search size={15} strokeWidth={1.75} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Escape" && setQuery("")}
+            placeholder="Search matters: number, client, title, other side…"
+            aria-label="Search matters"
+            className="w-full bg-white border border-line rounded-full pl-10 pr-24 py-2.5 text-[14px] outline-none focus:border-ink"
+          />
+          {query && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[12.5px] text-muted">
+              {shownMatters.length} found
+              <button onClick={() => setQuery("")} aria-label="Clear search" className="hover:text-ink">
+                <X size={14} />
+              </button>
+            </span>
+          )}
+        </div>
+      )}
       {importOpen && (
         <ImportLeapModal
           existingNumbers={new Set(matters.flatMap((m) => [m.matterNumber, numberOf(m)]).filter((n): n is string => !!n).map((n) => n.toUpperCase()))}
@@ -189,6 +224,13 @@ export default function MattersPage() {
             className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
           >
             + Add matter
+          </button>
+        </div>
+      ) : groups.length === 0 ? (
+        <div className="border border-line rounded-2xl min-h-[200px] flex flex-col items-center justify-center text-center text-[14px] text-muted">
+          No matters match &ldquo;{query}&rdquo;.
+          <button onClick={() => setQuery("")} className="mt-3 underline underline-offset-2 hover:text-ink">
+            Clear search
           </button>
         </div>
       ) : (
