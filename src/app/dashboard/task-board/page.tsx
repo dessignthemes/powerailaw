@@ -1341,7 +1341,12 @@ function TaskBoard({
                   </div>
                 </div>
 
-                <div className="px-3 pt-1.5 -mt-1.5 pb-3 flex-1 min-h-0 overflow-y-auto flex flex-col">
+                {/* More than 5 cards: about 5 show, the rest scroll (visible scroll bar);
+                    "Add a task" stays pinned at the bottom. */}
+                <div
+                  className={`px-3 pt-1.5 -mt-1.5 flex-1 min-h-0 overflow-y-auto flex flex-col ${colTasks.length > 5 ? "scroll-on-hover pr-1.5" : "pb-3"}`}
+                  style={colTasks.length > 5 ? { maxHeight: 560 } : undefined}
+                >
                   {colTasks.length === 0 && inlineAddFor !== col.id ? (
                     <button
                       onClick={() => {
@@ -1546,7 +1551,7 @@ function TaskBoard({
                             setInlineAddFor(col.id);
                             setInlineValue("");
                           }}
-                          className="flex items-center justify-center gap-1.5 py-3 text-muted hover:text-ink transition-colors"
+                          className="sticky bottom-0 z-[1] flex items-center justify-center gap-1.5 py-3 bg-card-alt text-muted hover:text-ink transition-colors"
                         >
                           <Plus size={15} strokeWidth={1.75} />
                           <span className="text-[13px]">Add a task</span>
