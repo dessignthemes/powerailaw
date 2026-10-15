@@ -67,10 +67,10 @@ export default function TaskFilterDropdown({
         <ChevronDown size={13} strokeWidth={1.75} />
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[260px] max-h-[420px] overflow-y-auto">
+        <div className="absolute right-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[260px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]">
           {item("me", "My tasks")}
           {item("all", "View all tasks")}
-          {others.length > 0 && <div className="px-3 pt-2.5 pb-1 text-[11.5px] font-semibold text-muted border-t border-line mt-1.5">Team members</div>}
+          {others.length > 0 && <div className="px-3 pt-2.5 pb-1 text-[11.5px] font-semibold text-muted border-t border-line mt-1">Team members</div>}
           {others.map((m) => item(m.email, m.fullName || m.email))}
         </div>
       )}
