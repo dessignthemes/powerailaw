@@ -257,6 +257,18 @@ function TaskBoard({
   // Saved columns belong to a board ("general" or its id). "All tasks" and
   // "created by" views show the standard columns only.
   const boardKey: string | null = createdBy || boardId === null ? null : boardId === "general" ? "general" : boardId;
+
+  // A board always opens at its first column (not where the previous board was scrolled to).
+  const resetScroll = useRef(true);
+  useEffect(() => {
+    resetScroll.current = true;
+    scrollerRef.current?.scrollTo({ left: 0 });
+  }, [boardKey, createdBy]);
+  useEffect(() => {
+    if (!resetScroll.current || !scrollerRef.current) return;
+    scrollerRef.current.scrollTo({ left: 0 });
+    resetScroll.current = false;
+  }, [columns]);
   const { tasks: workspaceTasks, tasksLoaded, tasksError, clearTasksError, addTask: addWorkspaceTask, updateTask, deleteTasks } =
     useWorkspaceData();
   // Only this board's tasks; new tasks land on this board.
