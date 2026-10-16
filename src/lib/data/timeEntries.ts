@@ -67,10 +67,18 @@ async function me() {
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 
-export async function listTimeEntries(q: { from?: string | null; to?: string | null; everyone?: boolean; taskId?: string | null }) {
+// Your own time; the firm owner can also see everyone's (everyone) or one person's (member).
+export async function listTimeEntries(q: { from?: string | null; to?: string | null; everyone?: boolean; member?: string | null; taskId?: string | null }) {
   const { userId, orgId } = await me();
-  let query = createAdminClient().from("time_entries").select("*").eq("org_id", orgId);
-  if (!q.everyone) query = query.eq("user_id", userId);
+  const db = createAdminClient();
+  const member = q.member && /^[0-9a-f-]{36}$/i.test(q.member) ? q.member : null;
+  if (q.everyone || (member && member !== userId)) {
+    const { data: p } = await db.from("profiles").select("role").eq("id", userId).eq("org_id", orgId).maybeSingle();
+    if (p?.role !== "owner") throw new TimeError(403, "Only the firm owner can see other people's time.");
+  }
+  let query = db.from("time_entries").select("*").eq("org_id", orgId);
+  if (member) query = query.eq("user_id", member);
+  else if (!q.everyone) query = query.eq("user_id", userId);
   if (q.from && YMD.test(q.from)) query = query.gte("entry_date", q.from);
   if (q.to && YMD.test(q.to)) query = query.lte("entry_date", q.to);
   if (q.taskId) query = query.eq("task_id", q.taskId);

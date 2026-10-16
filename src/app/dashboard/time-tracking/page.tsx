@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar, List, SlidersHorizontal, Plus, X, Clock, Check, ChevronDown, Trash2, Loader2, AlertTriangle, Timer, Pencil } from "lucide-react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Calendar, List, SlidersHorizontal, Plus, X, Clock, Check, ChevronDown, Trash2, Loader2, AlertTriangle, Timer, Pencil, Users } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { displayName } from "@/lib/initials";
 import { formatMinutes, localYmd } from "@/lib/taskTimer";
@@ -63,13 +63,18 @@ function parseDuration(s: string): number | null {
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
 export default function TimeTrackingPage() {
-  const { matters, tasks, teamMembers, meEmail } = useWorkspaceData();
+  const { matters, tasks, teamMembers, meEmail, myRole } = useWorkspaceData();
+  // Whose time: your own; the firm owner can also pick everyone or one team member.
+  const isOwner = myRole === "owner";
+  const [who, setWho] = useState<"me" | "all" | string>("me");
+  const [whoOpen, setWhoOpen] = useState(false);
+  const everyone = isOwner && who === "all";
+  const memberId = isOwner && who !== "me" && who !== "all" ? who : null;
   const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
   const [view, setView] = useState<"timesheet" | "entries">("timesheet");
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [billable, setBillable] = useState<"all" | "billable" | "nonbillable">("all");
-  const [everyone, setEveryone] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Entry | null>(null);
   const [entries, setEntries] = useState<Entry[] | null>(null);
@@ -86,7 +91,7 @@ export default function TimeTrackingPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/time-entries?${new URLSearchParams({ from, to, ...(everyone ? { everyone: "1" } : {}) })}`)
+    fetch(`/api/time-entries?${new URLSearchParams({ from, to, ...(everyone ? { everyone: "1" } : {}), ...(memberId ? { member: memberId } : {}) })}`)
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d?.error ?? "Couldn't load time entries.");
@@ -105,7 +110,7 @@ export default function TimeTrackingPage() {
     return () => {
       cancelled = true;
     };
-  }, [from, to, everyone, reloadKey]);
+  }, [from, to, everyone, memberId, reloadKey]);
 
   const matterName = (id: string | null) => (id ? matters.find((m) => m.id === id)?.title ?? "Matter" : "No matter");
   const taskName = (id: string | null) => (id ? tasks.find((t) => t.id === id)?.title ?? null : null);
@@ -160,7 +165,7 @@ export default function TimeTrackingPage() {
             {matterName(e.matterId)}
             {tn && e.description !== tn ? ` · ${tn}` : ""}
             {e.startedAt && e.endedAt ? ` · ${hm(new Date(e.startedAt))} – ${hm(new Date(e.endedAt))}` : ""}
-            {everyone ? ` · ${personName(e.userId)}` : ""}
+            {everyone || memberId ? ` · ${personName(e.userId)}` : ""}
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -262,7 +267,7 @@ export default function TimeTrackingPage() {
             <button
               onClick={() => setFilterOpen((o) => !o)}
               aria-label="Filters"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" || everyone ? "bg-btn text-ink" : "bg-chip hover:bg-btn"}`}
+              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" ? "bg-btn text-ink" : "bg-chip hover:bg-btn"}`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
             </button>
@@ -284,28 +289,63 @@ export default function TimeTrackingPage() {
                       ))}
                     </div>
                   </div>
-                  <div className="border-t border-line pt-4 flex items-center justify-between">
-                    <span className="text-[13.5px] font-medium">Show everyone in the workspace</span>
-                    <button
-                      onClick={() => {
-                        setEntries(null);
-                        setEveryone((s) => !s);
-                      }}
-                      aria-pressed={everyone}
-                      className={`w-10 h-6 rounded-full relative flex-shrink-0 ${everyone ? "bg-dark" : "bg-line"}`}
-                    >
-                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${everyone ? "left-[18px]" : "left-0.5"}`} />
-                    </button>
-                  </div>
                 </div>
               </>
             )}
           </div>
 
+          {isOwner && (
+            <div className="relative">
+              <button
+                onClick={() => setWhoOpen((o) => !o)}
+                aria-expanded={whoOpen}
+                className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+              >
+                <Users size={14} strokeWidth={1.75} />
+                {who === "me" ? "My time" : who === "all" ? "Everyone" : personName(who)}
+                <ChevronDown size={13} strokeWidth={1.75} />
+              </button>
+              {whoOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setWhoOpen(false)} />
+                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[240px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]">
+                    {[
+                      { key: "me", label: "My time" },
+                      { key: "all", label: "Everyone" },
+                    ]
+                      .concat(
+                        teamMembers
+                          .filter((m) => m.email.toLowerCase() !== (meEmail ?? "").toLowerCase())
+                          .map((m) => ({ key: m.id, label: displayName(m.fullName, m.email) }))
+                      )
+                      .map((o, i) => (
+                        <Fragment key={o.key}>
+                          {i === 2 && <div className="px-3 pt-2 pb-1 text-[11.5px] font-semibold text-muted border-t border-line mt-1">Team members</div>}
+                          <button
+                            onClick={() => {
+                              setWhoOpen(false);
+                              if (o.key === who) return;
+                              setEntries(null);
+                              setWho(o.key);
+                            }}
+                            className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[14px] font-medium text-left ${who === o.key ? "bg-chip" : "hover:bg-chip"}`}
+                          >
+                            <span className="truncate">{o.label}</span>
+                            {who === o.key && <Check size={14} />}
+                          </button>
+                        </Fragment>
+                      ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           <button
             onClick={() => {
               setEntries(null);
               setWeekStart(getWeekStart(new Date()));
+              setReloadKey((k) => k + 1); // reload even when already on this week
             }}
             className={`px-3.5 py-2 rounded-full text-[13.5px] font-medium ${isThisWeek ? "bg-chip" : "bg-chip hover:bg-btn"}`}
           >

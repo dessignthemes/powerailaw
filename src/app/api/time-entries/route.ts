@@ -4,12 +4,13 @@ import { timeError } from "@/lib/data/timeApi";
 
 export const dynamic = "force-dynamic";
 
-// GET ?from=YYYY-MM-DD&to=YYYY-MM-DD&everyone=1&task=<id>
+// GET ?from=YYYY-MM-DD&to=YYYY-MM-DD&everyone=1&member=<user id>&task=<id>
+// (everyone / another member: the firm owner only)
 export async function GET(request: Request) {
   try {
     const u = new URL(request.url).searchParams;
     return NextResponse.json({
-      entries: await listTimeEntries({ from: u.get("from"), to: u.get("to"), everyone: u.get("everyone") === "1", taskId: u.get("task") }),
+      entries: await listTimeEntries({ from: u.get("from"), to: u.get("to"), everyone: u.get("everyone") === "1", member: u.get("member"), taskId: u.get("task") }),
     });
   } catch (e) {
     return timeError("GET /api/time-entries", e);
