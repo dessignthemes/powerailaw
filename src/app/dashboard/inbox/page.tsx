@@ -1,5 +1,7 @@
 "use client";
 
+import PortalMessagesPanel from "@/components/mail/PortalMessagesPanel";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -550,7 +552,9 @@ export default function InboxPage() {
 
   // ── Connected ───────────────────────────────────────────────────────────
   return (
-    <div ref={rootRef} className="px-6 lg:px-10 pt-4" style={{ height: height ?? "calc(100vh - 100px)" }}>
+    <div ref={rootRef} className="px-6 lg:px-10 pt-4 flex flex-col" style={{ height: height ?? "calc(100vh - 100px)" }}>
+      {/* Messages clients sent through the client portal (the mailbox takes the rest of the height). */}
+      <PortalMessagesPanel />
       {composing && (() => {
         const summary = message ? messages.find((x) => x.id === message.id) : null;
         const fwd = composing === "forward" && message;
@@ -591,7 +595,7 @@ export default function InboxPage() {
           </button>
         </div>
       )}
-      <div className="flex flex-col h-full border border-line rounded-2xl overflow-hidden bg-cream">
+      <div className="flex flex-col flex-1 min-h-0 border border-line rounded-2xl overflow-hidden bg-cream">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-line flex-wrap">
           {panelHidden && (

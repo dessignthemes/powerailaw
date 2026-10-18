@@ -85,6 +85,21 @@ export default function PortalHome() {
                 Complete intake sheet
               </Link>
             </div>
+            {home.matters.length > 0 && (
+              <section className="mb-6">
+                <h2 className="text-[15px] font-semibold mb-2.5" style={{ letterSpacing: 0 }}>Your files</h2>
+                <div className="flex flex-col gap-2">
+                  {home.matters.map((m) => (
+                    <Link key={m.id} href={`/portal/matters/${m.id}`} className="flex items-center gap-3 bg-card-alt hover:bg-chip rounded-xl px-4 py-3 transition-colors">
+                      <Folder size={16} className="text-muted flex-shrink-0" />
+                      <span className="flex-1 min-w-0 text-[14px] font-medium truncate">{m.title}</span>
+                      {m.status && <span className="text-[12px] text-muted bg-white rounded-md px-1.5 py-0.5">{m.status}</span>}
+                      <span className="text-[13px] font-medium">View status →</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
             <PortalMessages firm={home.firm} matters={home.matters} />
 
             {home.documents.length === 0 ? (

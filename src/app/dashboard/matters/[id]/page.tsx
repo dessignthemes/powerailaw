@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter , useSearchParams } from "next/navigation";
 import {
   Pencil,
   MoreHorizontal,
@@ -64,7 +64,9 @@ export default function MatterDetailPage() {
 
   const matter = matters.find((m) => m.id === params.id) ?? null;
 
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  // ?tab=emails etc. opens that tab (e.g. from a client portal message alert).
+  const tabParam = useSearchParams().get("tab");
+  const [activeTab, setActiveTab] = useState<TabKey>(() => (tabs.some((t) => t.key === tabParam) ? (tabParam as TabKey) : "overview"));
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);

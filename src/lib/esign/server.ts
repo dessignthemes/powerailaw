@@ -146,13 +146,33 @@ export async function renewLink(id: string) {
 
 async function byToken(token: string): Promise<Row> {
   if (!/^[A-Za-z0-9_-]{30,80}$/.test(token)) throw new SignError(404, "This signing link isn't valid.");
-  const { data, error } = await createAdminClient().from("signature_requests").select("*").eq("token_hash", sha256(token)).maybeSingle();
+  const h = sha256(token);
+  const first = await createAdminClient().from("signature_requests").select("*").eq("token_hash", h).maybeSingle();
+  const error = first.error;
+  let data = first.data;
+  // The client portal's own link for the same request (the emailed link keeps working).
+  if (!error && !data) {
+    const alt = await createAdminClient().from("signature_requests").select("*").eq("alt_token_hash", h).maybeSingle();
+    if (!alt.error) data = alt.data;
+  }
   if (error) {
     if (missing(error)) throw new SignError(404, "This signing link isn't valid.");
     throw error;
   }
   if (!data) throw new SignError(404, "This signing link isn't valid or has been replaced by a newer one.");
   return data as Row;
+}
+
+// A signing link for the client portal: a second token for the same request, so the
+// signer can sign from the portal while the emailed link keeps working.
+export async function portalSigningToken(requestId: string): Promise<string> {
+  const token = randomBytes(32).toString("base64url");
+  const { error } = await createAdminClient()
+    .from("signature_requests")
+    .update({ alt_token_hash: sha256(token), updated_at: new Date().toISOString() })
+    .eq("id", requestId);
+  if (error) throw missing(error) || /alt_token_hash/.test(error.message ?? "") ? new SignError(503, "Signing from the portal needs a database update (0042).") : error;
+  return token;
 }
 
 export async function publicView(token: string) {

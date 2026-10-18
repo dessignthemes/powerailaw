@@ -29,7 +29,8 @@ type Matter = { id: string; title: string };
 const when = (iso: string) => new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 // Secure messages from the law firm, one conversation per matter, with a reply box.
-export default function PortalMessages({ firm, matters }: { firm: string; matters: Matter[] }) {
+// onlyMatters: show just these matters' conversations (a matter's own page).
+export default function PortalMessages({ firm, matters, onlyMatters = false }: { firm: string; matters: Matter[]; onlyMatters?: boolean }) {
   const [messages, setMessages] = useState<Msg[] | null>(null);
   const [newCount, setNewCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +65,7 @@ export default function PortalMessages({ firm, matters }: { firm: string; matter
   if (!messages.length && !matters.length) return null;
 
   // One conversation per matter (so files can be sent anytime), plus any general messages.
-  const groups = [...matters, { id: "", title: "General" }]
+  const groups = [...matters, ...(onlyMatters ? [] : [{ id: "", title: "General" }])]
     .map((m) => ({ m, list: messages.filter((x) => (m.id ? x.matterId === m.id : !matters.some((y) => y.id === x.matterId))) }))
     .filter((g) => g.m.id || g.list.length);
 

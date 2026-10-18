@@ -1,4 +1,5 @@
 import "server-only";
+import { notifyPortalMessage } from "@/lib/data/notifications";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUserOrg, newStoragePath, createUploadUrl, createDocumentFromUpload, DOCUMENTS_BUCKET } from "@/lib/data/documents";
@@ -246,5 +247,39 @@ export async function portalReply(input: { matterId?: unknown; body?: unknown; u
     .single();
   if (error) throw missing(error) ? setup() : error;
   await logEvent(u, "replied");
+  // The firm hears about it: bell alert (dashboard), Inbox panel and the matter's badge.
+  await notifyPortalMessage({ orgId: u.org_id, matterId, clientId: u.client_id, fromName: clientName, preview: body || `Sent ${docIds.length} file${docIds.length === 1 ? "" : "s"}` });
   return { message: (await withAttachments(u.org_id, [data as Row]))[0], failed };
+}
+
+// Firm side, for the Inbox: recent messages clients sent through the portal (newest first).
+export async function recentPortalMessages() {
+  const { orgId } = await requireUserOrg();
+  const since = new Date(Date.now() - 30 * 86400_000).toISOString();
+  const { data, error } = await db()
+    .from("portal_messages")
+    .select("id, client_id, matter_id, body, document_ids, sender_name, read_at, created_at")
+    .eq("org_id", orgId)
+    .eq("direction", "client")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(25);
+  if (error) return { messages: [], unread: 0 };
+  const rows = (data ?? []) as { id: string; client_id: string; matter_id: string | null; body: string; document_ids: string[]; sender_name: string; read_at: string | null; created_at: string }[];
+  const matterIds = [...new Set(rows.map((r) => r.matter_id).filter((x): x is string => !!x))];
+  const { data: ms } = matterIds.length ? await db().from("matters").select("id, title, matter_number").in("id", matterIds) : { data: [] };
+  const matters = new Map(((ms ?? []) as { id: string; title: string; matter_number: string | null }[]).map((m) => [m.id, m]));
+  return {
+    unread: rows.filter((r) => !r.read_at).length,
+    messages: rows.map((r) => ({
+      id: r.id,
+      from: r.sender_name || "Client",
+      clientId: r.client_id,
+      matterId: r.matter_id,
+      matter: r.matter_id ? (matters.get(r.matter_id)?.matter_number || matters.get(r.matter_id)?.title || "Matter") : null,
+      preview: (r.body || (r.document_ids?.length ? `Sent ${r.document_ids.length} file${r.document_ids.length === 1 ? "" : "s"}` : "")).slice(0, 160),
+      unread: !r.read_at,
+      at: r.created_at,
+    })),
+  };
 }
