@@ -51,7 +51,6 @@ const MEMBER_COLORS = [
   { bg: "#FCE9F5", bd: "#F2C3E2", tx: "#8E1F6A" }, // pink
   { bg: "#EEF0F2", bd: "#D3D8DE", tx: "#3D4652" }, // grey
 ];
-const HIDDEN_KEY = "lawpower.calendar.hiddenMembers";
 
 // One shape for synced and locally added events, in local time.
 type Shown = { id: string; title: string; allDay: boolean; start: Date; end: Date; link: string | null; location: string | null; source: Provider | "local"; ownerId?: string };
@@ -180,25 +179,21 @@ export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   // Events being saved to Outlook / Google (shown until the save finishes).
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  // Team members whose calendars show here, and the ones switched off (remembered in this browser).
+  // Team members whose calendars can show here. Each visit starts with just your own
+  // calendar; click a colleague's name to show (or hide) theirs.
   const [members, setMembers] = useState<Member[]>([]);
-  const [hidden, setHidden] = useState<Set<string>>(() => {
-    try {
-      return new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY) ?? "[]") as string[]);
-    } catch {
-      return new Set();
-    }
-  });
+  const [picked, setPicked] = useState<Set<string> | null>(null);
+  const shownSet = useMemo(() => {
+    if (picked) return picked;
+    const mine = members.filter((m) => m.me).map((m) => m.id);
+    return new Set(mine.length ? mine : members.map((m) => m.id)); // can't tell who you are: show all
+  }, [picked, members]);
+  const hidden = useMemo(() => new Set(members.filter((m) => !shownSet.has(m.id)).map((m) => m.id)), [members, shownSet]);
   const toggleMember = (id: string) =>
-    setHidden((h) => {
-      const next = new Set(h);
+    setPicked(() => {
+      const next = new Set(shownSet);
       if (next.has(id)) next.delete(id);
       else next.add(id);
-      try {
-        localStorage.setItem(HIDDEN_KEY, JSON.stringify([...next]));
-      } catch {
-        /* private mode */
-      }
       return next;
     });
   const colorOf = (ownerId?: string) => {
@@ -569,8 +564,9 @@ export default function CalendarPage() {
                   onClick={() => toggleMember(m.id)}
                   aria-pressed={!off}
                   title={off ? `Show ${m.name}'s events` : `Hide ${m.name}'s events`}
-                  className={`flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full border text-[12.5px] font-medium transition-opacity ${off ? "opacity-45" : ""}`}
-                  style={{ backgroundColor: off ? "transparent" : c.bg, borderColor: c.bd, color: c.tx }}
+                  className="flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full border text-[12.5px] font-medium transition-colors hover:brightness-95"
+                  // Off: white chip, name in the person's colour (readable), hollow dot.
+                  style={{ backgroundColor: off ? "#FFFFFF" : c.bg, borderColor: c.bd, color: c.tx }}
                 >
                   <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: off ? "transparent" : c.tx, border: `1.5px solid ${c.tx}` }} />
                   {m.me ? `${m.name} (you)` : m.name}
