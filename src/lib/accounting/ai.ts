@@ -1,5 +1,8 @@
 import "server-only";
 import { getProvider } from "@/lib/ai/provider";
+import { recordAiUsage } from "@/lib/ai/usage";
+import { getSessionUser } from "@/lib/auth";
+import { getCurrentOrgId } from "@/lib/data/org";
 import { CATEGORIES, type Kind } from "@/lib/accounting/core";
 
 // The AI only suggests; every suggestion lands in Review for a person.
@@ -14,6 +17,7 @@ async function askJson(system: string, user: string, maxTokens = 3000): Promise<
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 45_000);
   let text = "";
+  let usage = { inputTokens: 0, outputTokens: 0 };
   try {
     for await (const ev of provider.stream({
       system,
@@ -23,12 +27,22 @@ async function askJson(system: string, user: string, maxTokens = 3000): Promise<
       signal: controller.signal,
     })) {
       if (ev.type === "text") text += ev.delta;
+      if (ev.type === "done") usage = ev.usage;
     }
   } catch (e) {
     console.error("AI Accountant request failed:", e);
     return null;
   } finally {
     clearTimeout(timer);
+    // Counted towards the firm's AI usage (AI Accountant).
+    try {
+      const user = await getSessionUser();
+      if (user && (usage.inputTokens || usage.outputTokens)) {
+        await recordAiUsage({ orgId: await getCurrentOrgId(), userId: user.id, feature: "accounting", model: provider.model, ...usage });
+      }
+    } catch (e) {
+      console.error("Recording AI Accountant usage failed:", e);
+    }
   }
   const json = text.replace(/```json|```/g, "").trim();
   const start = json.search(/[[{]/);

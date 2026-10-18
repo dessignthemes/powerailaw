@@ -1,4 +1,5 @@
 import "server-only";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUserOrg, AccessError, DOCUMENTS_BUCKET } from "@/lib/data/documents";
 import { extractText, detectKind, MIME_BY_KIND, MAX_FILE_BYTES, type ExtractedChunk } from "@/lib/ai/extract";
@@ -687,14 +688,7 @@ export async function usageToday(ctx: AiCtx) {
 }
 
 export async function recordUsage(ctx: AiCtx, conversationId: string, model: string, inputTokens: number, outputTokens: number) {
-  await db().from("ai_usage").insert({
-    org_id: ctx.orgId,
-    user_id: ctx.userId,
-    conversation_id: conversationId,
-    model,
-    input_tokens: inputTokens,
-    output_tokens: outputTokens,
-  });
+  await recordAiUsage({ orgId: ctx.orgId, userId: ctx.userId, feature: "chat", model, inputTokens, outputTokens, conversationId });
 }
 
 // ── Audit (no content, just who/what/when) ────────────────────────────────

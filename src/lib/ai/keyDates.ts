@@ -1,4 +1,5 @@
 import "server-only";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, aiConfig } from "@/lib/ai/provider";
 import type { ContentBlock } from "@/lib/ai/provider/types";
@@ -222,7 +223,7 @@ async function readWithAi(
   } finally {
     clearTimeout(timer);
   }
-  await db().from("ai_usage").insert({ org_id: ctx.orgId, user_id: ctx.userId, conversation_id: null, model: provider.model, input_tokens: usage.inputTokens, output_tokens: usage.outputTokens });
+  await recordAiUsage({ orgId: ctx.orgId, userId: ctx.userId, feature: "documents", model: provider.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
 
   let raw: Record<string, unknown>;
   try {

@@ -1,4 +1,5 @@
 import "server-only";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider } from "@/lib/ai/provider";
 import { getMatterContext, ensureVersionIndexed, searchChunks, type AiCtx, type SearchScope, type Excerpt } from "@/lib/ai/store";
@@ -194,7 +195,7 @@ Keep lists short (max 6 items each). Facts from excerpts must cite their source.
   } finally {
     clearTimeout(timer);
   }
-  await s.from("ai_usage").insert({ org_id: ctx.orgId, user_id: ctx.userId, conversation_id: null, model: provider.model, input_tokens: usage.inputTokens, output_tokens: usage.outputTokens });
+  await recordAiUsage({ orgId: ctx.orgId, userId: ctx.userId, feature: "matter_review", model: provider.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
 
   try {
     const json = text.replace(/```json|```/g, "").trim();

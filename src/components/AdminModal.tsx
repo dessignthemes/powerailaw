@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AiUsagePanel from "@/components/admin/AiUsagePanel";
 import TeamMembers from "@/components/TeamMembers";
 import { createPortal } from "react-dom";
 import {
@@ -11,8 +12,6 @@ import {
   Gauge,
   ClipboardList,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 const navItems = [
@@ -103,7 +102,6 @@ export default function AdminModal({
     setTimeout(() => setReviewedNotice(false), 2200);
   }
 
-  const monthLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return createPortal(
     <div
@@ -385,76 +383,7 @@ export default function AdminModal({
               </>
             )}
 
-            {page === "usage" && (
-              <>
-                <h2 className="text-[26px] font-semibold mt-1 mb-1.5">AI usage</h2>
-                <p className="text-[14px] text-muted mb-6">
-                  What the firm&apos;s AI allowance went on, month by month
-                </p>
-
-                <div className="border border-line rounded-2xl p-5 mb-8">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-[15px] font-semibold">Allowance</div>
-                    <span className="text-[14px] font-semibold">0%</span>
-                  </div>
-                  <div className="w-full h-2 bg-card-alt rounded-full overflow-hidden mb-3">
-                    <div className="h-full bg-dark rounded-full" style={{ width: "0%" }} />
-                  </div>
-                  <p className="text-[13.5px] text-muted">Well within this month&apos;s allowance — 0% used.</p>
-                </div>
-
-                <div className="flex items-center justify-between mb-4">
-                  <div className="text-[16px] font-semibold">{monthLabel}</div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      disabled
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-muted-light cursor-not-allowed"
-                    >
-                      <ChevronLeft size={16} strokeWidth={1.75} />
-                    </button>
-                    <button
-                      disabled
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-muted-light cursor-not-allowed"
-                    >
-                      <ChevronRight size={16} strokeWidth={1.75} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="border border-line rounded-2xl p-5 flex flex-col gap-5 mb-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="text-[14.5px] font-semibold">Email &amp; document import</div>
-                      <span className="text-[13.5px] text-muted">
-                        <span className="font-semibold text-ink">17 tokens</span> 85%
-                      </span>
-                    </div>
-                    <p className="text-[13px] text-muted mb-2">Email scanning and document reading, including OCR</p>
-                    <div className="w-full h-1.5 bg-card-alt rounded-full overflow-hidden">
-                      <div className="h-full bg-dark rounded-full" style={{ width: "85%" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="text-[14.5px] font-semibold">Chat</div>
-                      <span className="text-[13.5px] text-muted">
-                        <span className="font-semibold text-ink">3 tokens</span> 15%
-                      </span>
-                    </div>
-                    <p className="text-[13px] text-muted mb-2">Questions asked of the workspace</p>
-                    <div className="w-full h-1.5 bg-card-alt rounded-full overflow-hidden">
-                      <div className="h-full bg-dark rounded-full" style={{ width: "15%" }} />
-                    </div>
-                  </div>
-                  <div className="text-[13.5px] text-muted pt-1">20 tokens this month</div>
-                </div>
-
-                <p className="text-[13px] text-muted">
-                  Tokens are the metered unit of AI reading and writing — a page of text is
-                  roughly 500.
-                </p>
-              </>
-            )}
+            {page === "usage" && <AiUsagePanel />}
 
             {page === "log" && (
               <>
