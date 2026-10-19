@@ -21,7 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// ownerOnly: shown only to the workspace owner (e.g. AI Accountant: the firm's books).
+// ownerOnly: shown only to the workspace owner (none right now; AI Accountant is open to everyone since Oct 19, 2026).
 export type NavLink = { label: string; href: string; icon: LucideIcon; ownerOnly?: boolean };
 export type NavSection = { title: string | null; links: NavLink[] };
 
@@ -36,7 +36,7 @@ export const mainLinks: NavLink[] = [
 
 export const toolLinks: NavLink[] = [
   { label: "AI Agent", href: "/dashboard/agent", icon: Sparkles },
-  { label: "AI Accountant", href: "/dashboard/ai-accountant", icon: Calculator, ownerOnly: true },
+  { label: "AI Accountant", href: "/dashboard/ai-accountant", icon: Calculator },
   { label: "AI Matter", href: "/dashboard/ai-matter", icon: FolderSearch },
   { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },

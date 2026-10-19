@@ -61,23 +61,8 @@ async function readJson(res: Response) {
 const blackBtn = "bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex items-center gap-1.5";
 const beigeBtn = "bg-card-alt hover:bg-line/70 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors flex items-center gap-1.5";
 
-// AI Accountant is for the firm owner only (the server enforces it too).
+// AI Accountant: everyone in the firm can use it (owner-only until Oct 19, 2026).
 export default function AiAccountantPage() {
-  const { myRole } = useWorkspaceData();
-  if (myRole === null) {
-    return <div className="px-10 py-16 text-[14px] text-muted">Loading…</div>;
-  }
-  if (myRole !== "owner") {
-    return (
-      <div className="px-10 py-16 max-w-[560px]">
-        <h1 className="text-[24px] font-semibold mb-2">AI Accountant</h1>
-        <p className="text-[14px] text-muted">
-          Only the firm owner can use AI Accountant, since the owner is responsible for the firm&apos;s accounting. Ask the owner if you need
-          a report.
-        </p>
-      </div>
-    );
-  }
   return <AiAccountant />;
 }
 
