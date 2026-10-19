@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUserOrg, newStoragePath, createUploadUrl, createDocumentFromUpload, DOCUMENTS_BUCKET } from "@/lib/data/documents";
 import { fileTypeFromName, MAX_DOCUMENT_BYTES, type FileType } from "@/lib/documents/fileTypes";
 import { currentPortalUser, logEvent, firmName, PortalError } from "@/lib/portal/server";
+import { accessibleMatter, accessibleMatterIds, partyRole, type PortalPerson } from "@/lib/portal/parties";
 
 // Secure messages through the client portal (0029_portal_messages.sql). The
 // message and its documents never travel by email; the client reads them after
@@ -20,15 +21,30 @@ export type PortalAttachment = { id: string; title: string; versionId: string | 
 export type PortalMessage = {
   id: string;
   matterId: string | null;
-  direction: "firm" | "client";
+  direction: "firm" | "client" | "party";
   body: string;
   senderName: string;
   readAt: string | null;
   createdAt: string;
   attachments: PortalAttachment[];
+  // Which conversation: 'client' (client <-> firm), 'shared' (everyone on the file) or 'party' (one realtor <-> firm).
+  thread: "client" | "shared" | "party";
+  partyId: string | null;
 };
 
-type Row = { id: string; matter_id: string | null; direction: "firm" | "client"; body: string; sender_name: string; read_at: string | null; created_at: string; document_ids: string[] | null };
+type Row = {
+  id: string;
+  matter_id: string | null;
+  direction: "firm" | "client" | "party";
+  body: string;
+  sender_name: string;
+  read_at: string | null;
+  created_at: string;
+  document_ids: string[] | null;
+  thread?: "client" | "shared" | "party" | null;
+  party_user_id?: string | null;
+  client_id?: string | null;
+};
 
 // Titles and newest versions of the attached documents (only ones still shared).
 async function withAttachments(orgId: string, rows: Row[]): Promise<PortalMessage[]> {
@@ -53,6 +69,8 @@ async function withAttachments(orgId: string, rows: Row[]): Promise<PortalMessag
     senderName: r.sender_name,
     readAt: r.read_at,
     createdAt: r.created_at,
+    thread: r.thread ?? "client",
+    partyId: r.party_user_id ?? null,
     attachments: (r.document_ids ?? []).map((id) => docs.get(id)).filter((d): d is PortalAttachment & { shared: boolean } => !!d).map(({ shared: _s, ...a }) => (void _s, a)),
   }));
 }
@@ -73,7 +91,7 @@ export async function listMatterPortalMessages(matterId: string) {
   const { data, error } = await db().from("portal_messages").select("*").eq("org_id", orgId).eq("matter_id", matter.id).order("created_at").limit(500);
   if (error) throw missing(error) ? setup() : error;
   const rows = (data ?? []) as Row[];
-  const unread = rows.filter((r) => r.direction === "client" && !r.read_at).map((r) => r.id);
+  const unread = rows.filter((r) => r.direction !== "firm" && !r.read_at).map((r) => r.id);
   if (unread.length) await db().from("portal_messages").update({ read_at: new Date().toISOString() }).in("id", unread);
   const { data: access } = matter.client_id
     ? await db().from("client_portal_users").select("email, status, last_login_at").eq("client_id", matter.client_id).maybeSingle()
@@ -94,54 +112,102 @@ export async function unreadPortalReplies(matterId: string) {
     .select("id", { count: "exact", head: true })
     .eq("org_id", orgId)
     .eq("matter_id", matterId)
-    .eq("direction", "client")
+    .neq("direction", "firm")
     .is("read_at", null);
   if (error) return 0;
   return count ?? 0;
 }
 
-export async function sendPortalMessage(matterId: string, input: { body?: unknown; documentIds?: unknown }) {
+// thread: 'client' (default), 'shared' (client and invited parties) or 'party' (with partyId).
+export async function sendPortalMessage(matterId: string, input: { body?: unknown; documentIds?: unknown; thread?: unknown; partyId?: unknown }) {
   const { orgId, user, matter } = await ownMatter(matterId);
-  if (!matter.client_id) throw new PortalError(400, "Link this matter to a client first.");
+  const thread = input.thread === "shared" || input.thread === "party" ? input.thread : "client";
   const body = typeof input.body === "string" ? input.body.trim().slice(0, 20000) : "";
   const docIds = (Array.isArray(input.documentIds) ? input.documentIds : []).filter(uuid).slice(0, 25) as string[];
   if (!body && !docIds.length) throw new PortalError(400, "Write a message or attach a document.");
 
-  const { data: access, error: ae } = await db().from("client_portal_users").select("id, status").eq("client_id", matter.client_id).maybeSingle();
-  if (ae) throw ae;
-  if (!access || access.status === "disabled") throw new PortalError(409, "This client doesn't have portal access yet. Invite them first.", "not_invited");
+  let access: { status: string } = { status: "active" };
+  let partyId: string | null = null;
+  if (thread === "party") {
+    if (!uuid(input.partyId)) throw new PortalError(400, "Choose who this is for.");
+    const { data: pa } = await db().from("portal_matter_access").select("portal_user_id").eq("matter_id", matter.id).eq("portal_user_id", input.partyId).maybeSingle();
+    if (!pa) throw new PortalError(404, "That person doesn't have access to this file.");
+    partyId = input.partyId as string;
+  } else if (thread === "client") {
+    if (!matter.client_id) throw new PortalError(400, "Link this matter to a client first.");
+    const { data: ca, error: ae } = await db().from("client_portal_users").select("id, status").eq("client_id", matter.client_id).maybeSingle();
+    if (ae) throw ae;
+    if (!ca || ca.status === "disabled") throw new PortalError(409, "This client doesn't have portal access yet. Invite them first.", "not_invited");
+    access = { status: ca.status as string };
+  }
 
   // Attached documents must belong to this matter; they become visible in the portal.
   if (docIds.length) {
     const { data: docs } = await db().from("documents").select("id").eq("org_id", orgId).eq("matter_id", matter.id).in("id", docIds);
     if ((docs ?? []).length !== docIds.length) throw new PortalError(400, "Only documents on this matter can be attached.");
-    const { error } = await db().from("documents").update({ portal_shared: true, portal_shared_at: new Date().toISOString() }).eq("org_id", orgId).in("id", docIds);
-    if (error) throw error;
+    // In the client's or the shared thread the client sees them; in a party's private thread only that party (through the message).
+    if (thread !== "party") {
+      const { error } = await db().from("documents").update({ portal_shared: true, portal_shared_at: new Date().toISOString() }).eq("org_id", orgId).in("id", docIds);
+      if (error) throw error;
+    }
   }
   const { data: me } = await db().from("profiles").select("full_name, email").eq("id", user.id).maybeSingle();
   const senderName = ((me?.full_name as string | undefined) || (me?.email as string | undefined) || user.email || "Your attorney").slice(0, 120);
   const { data, error } = await db()
     .from("portal_messages")
-    .insert({ org_id: orgId, client_id: matter.client_id, matter_id: matter.id, direction: "firm", body, document_ids: docIds, sender_user_id: user.id, sender_name: senderName })
+    .insert({
+      org_id: orgId,
+      client_id: matter.client_id,
+      matter_id: matter.id,
+      direction: "firm",
+      body,
+      document_ids: docIds,
+      sender_user_id: user.id,
+      sender_name: senderName,
+      ...(thread !== "client" ? { thread, party_user_id: partyId } : {}),
+    })
     .select("*")
     .single();
   if (error) throw missing(error) ? setup() : error;
-  return { message: (await withAttachments(orgId, [data as Row]))[0], firm: await firmName(orgId), accessStatus: access.status as string };
+  return { message: (await withAttachments(orgId, [data as Row]))[0], firm: await firmName(orgId), accessStatus: access.status };
 }
 
 // ── Client side (signed in to the portal) ─────────────────────────────────
 
 export async function portalMessages() {
   const u = await currentPortalUser();
-  const { data, error } = await db().from("portal_messages").select("*").eq("org_id", u.org_id).eq("client_id", u.client_id).order("created_at").limit(1000);
+  // A client: their private thread and the shared threads of their files.
+  // A realtor / party: their own thread and the shared threads of the files they were invited to.
+  const matterIds = await accessibleMatterIds(u);
+  const mine =
+    u.kind === "party"
+      ? db().from("portal_messages").select("*").eq("org_id", u.org_id).eq("thread", "party").eq("party_user_id", u.id)
+      : db().from("portal_messages").select("*").eq("org_id", u.org_id).eq("client_id", u.client_id ?? "").or("thread.is.null,thread.eq.client");
+  const [own, shared] = await Promise.all([
+    mine.order("created_at").limit(1000),
+    matterIds.length
+      ? db().from("portal_messages").select("*").eq("org_id", u.org_id).eq("thread", "shared").in("matter_id", matterIds).order("created_at").limit(1000)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  let error = own.error;
+  let ownRows = own.data;
+  if (error && u.kind !== "party" && /thread/.test(error.message ?? "")) {
+    // Before 0043 (no thread column): every message is the client's own.
+    const r = await db().from("portal_messages").select("*").eq("org_id", u.org_id).eq("client_id", u.client_id ?? "").order("created_at").limit(1000);
+    error = r.error;
+    ownRows = r.data;
+  }
   if (error) throw missing(error) ? setup() : error;
-  const rows = (data ?? []) as Row[];
-  const unread = rows.filter((r) => r.direction === "firm" && !r.read_at);
+  const rows = ([...(ownRows ?? []), ...((shared.error ? [] : shared.data) ?? [])] as Row[]).sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+  const unread = rows.filter((r) => r.direction === "firm" && !r.read_at && (r.thread ?? "client") !== "shared");
   if (unread.length) {
     await db().from("portal_messages").update({ read_at: new Date().toISOString() }).in("id", unread.map((r) => r.id));
     await logEvent(u, "message_read");
   }
-  return { messages: await withAttachments(u.org_id, rows), newCount: unread.length };
+  // Which messages the signed-in person sent (in the shared thread, others' show their name).
+  const mineOf = (r: Row) => (u.kind === "party" ? r.direction === "party" && r.party_user_id === u.id : r.direction === "client");
+  const out = await withAttachments(u.org_id, rows);
+  return { messages: out.map((m, i) => ({ ...m, mine: mineOf(rows[i]) })), newCount: unread.length };
 }
 
 // ── Client uploads ────────────────────────────────────────────────────────
@@ -162,12 +228,7 @@ function validTicket(portalUserId: string, path: string, ticket: unknown) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-async function clientMatter(u: { org_id: string; client_id: string }, matterId: unknown) {
-  if (!uuid(matterId)) throw new PortalError(400, "Choose which matter this is for.");
-  const { data } = await db().from("matters").select("id").eq("id", matterId as string).eq("org_id", u.org_id).eq("client_id", u.client_id).maybeSingle();
-  if (!data) throw new PortalError(404, "Matter not found.");
-  return data.id as string;
-}
+const clientMatter = (u: PortalPerson, matterId: unknown) => accessibleMatter(u, matterId);
 
 // Step 1: a one-time link the browser uploads the file to (straight to storage).
 export async function portalUploadUrl(input: { matterId?: unknown; name?: unknown; size?: unknown }) {
@@ -189,7 +250,8 @@ export async function portalUploadUrl(input: { matterId?: unknown; name?: unknow
 
 // Step 2: the reply, with the uploaded files. Each file is checked, saved to the
 // matter's Documents (marked as from the client) and attached to the message.
-export async function portalReply(input: { matterId?: unknown; body?: unknown; uploads?: unknown }) {
+// thread: 'private' (default: the client's or the party's own thread with the firm) or 'shared'.
+export async function portalReply(input: { matterId?: unknown; body?: unknown; uploads?: unknown; thread?: unknown }) {
   const u = await currentPortalUser();
   const body = typeof input.body === "string" ? input.body.trim().slice(0, 20000) : "";
   const uploads = (Array.isArray(input.uploads) ? input.uploads : [])
@@ -200,8 +262,17 @@ export async function portalReply(input: { matterId?: unknown; body?: unknown; u
   let matterId: string | null = null;
   if (uuid(input.matterId)) matterId = await clientMatter(u, input.matterId);
   if (uploads.length && !matterId) throw new PortalError(400, "Choose which matter these files are for.");
-  const { data: client } = await db().from("clients").select("name").eq("id", u.client_id).maybeSingle();
-  const clientName = ((client?.name as string | undefined) ?? u.email).slice(0, 120);
+  const shared = input.thread === "shared";
+  if (shared && !matterId) throw new PortalError(400, "Choose which file this is for.");
+  let clientName: string;
+  if (u.kind === "party") {
+    if (!matterId) throw new PortalError(400, "Choose which file this is for.");
+    const role = await partyRole(u, matterId);
+    clientName = `${u.display_name || u.email}${role ? ` (${role})` : ""}`.slice(0, 120);
+  } else {
+    const { data: client } = await db().from("clients").select("name").eq("id", u.client_id ?? "").maybeSingle();
+    clientName = ((client?.name as string | undefined) ?? u.email).slice(0, 120);
+  }
 
   const docIds: string[] = [];
   const failed: string[] = [];
@@ -226,10 +297,11 @@ export async function portalReply(input: { matterId?: unknown; body?: unknown; u
         path: f.path,
         note: `Uploaded by ${clientName} through the client portal`,
       });
-      // The client can see what they sent; the firm sees it came from the client.
-      const shared = { portal_shared: true, portal_shared_at: new Date().toISOString() };
-      const { error: fe } = await db().from("documents").update({ ...shared, from_client: true }).eq("id", doc.id);
-      if (fe) await db().from("documents").update(shared).eq("id", doc.id); // before 0030: no from_client column
+      // The client can see what they (or, in the shared thread, a realtor) sent; a realtor's private
+      // upload stays between them and the firm. The firm sees it came through the portal.
+      const visible = u.kind !== "party" || shared ? { portal_shared: true, portal_shared_at: new Date().toISOString() } : {};
+      const { error: fe } = await db().from("documents").update({ ...visible, from_client: true }).eq("id", doc.id);
+      if (fe && Object.keys(visible).length) await db().from("documents").update(visible).eq("id", doc.id); // before 0030: no from_client column
       docIds.push(doc.id);
       await logEvent(u, "uploaded", doc.title);
     } catch (e) {
@@ -242,13 +314,23 @@ export async function portalReply(input: { matterId?: unknown; body?: unknown; u
 
   const { data, error } = await db()
     .from("portal_messages")
-    .insert({ org_id: u.org_id, client_id: u.client_id, matter_id: matterId, direction: "client", body, document_ids: docIds, sender_name: clientName })
+    .insert({
+      org_id: u.org_id,
+      client_id: u.kind === "party" ? null : u.client_id,
+      matter_id: matterId,
+      direction: u.kind === "party" ? "party" : "client",
+      body,
+      document_ids: docIds,
+      sender_name: clientName,
+      // A party's message keeps who sent it, in the shared thread too.
+      ...(shared ? { thread: "shared", party_user_id: u.kind === "party" ? u.id : null } : u.kind === "party" ? { thread: "party", party_user_id: u.id } : {}),
+    })
     .select("*")
     .single();
   if (error) throw missing(error) ? setup() : error;
   await logEvent(u, "replied");
   // The firm hears about it: bell alert (dashboard), Inbox panel and the matter's badge.
-  await notifyPortalMessage({ orgId: u.org_id, matterId, clientId: u.client_id, fromName: clientName, preview: body || `Sent ${docIds.length} file${docIds.length === 1 ? "" : "s"}` });
+  await notifyPortalMessage({ orgId: u.org_id, matterId, clientId: u.client_id ?? u.id, fromName: clientName, preview: body || `Sent ${docIds.length} file${docIds.length === 1 ? "" : "s"}` });
   return { message: (await withAttachments(u.org_id, [data as Row]))[0], failed };
 }
 
@@ -260,7 +342,7 @@ export async function recentPortalMessages() {
     .from("portal_messages")
     .select("id, client_id, matter_id, body, document_ids, sender_name, read_at, created_at")
     .eq("org_id", orgId)
-    .eq("direction", "client")
+    .neq("direction", "firm")
     .gte("created_at", since)
     .order("created_at", { ascending: false })
     .limit(25);

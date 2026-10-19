@@ -10,6 +10,7 @@ const db = () => createAdminClient();
 
 async function loadClient() {
   const u = await currentPortalUser();
+  if (u.kind === "party" || !u.client_id) throw new PortalError(403, "The intake sheet is for clients.");
   const { data, error } = await db().from("clients").select("*").eq("id", u.client_id).eq("org_id", u.org_id).maybeSingle();
   if (error) throw error;
   if (!data) throw new PortalError(404, "We couldn't find your details. Please contact your law firm.");

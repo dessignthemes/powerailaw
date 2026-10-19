@@ -51,7 +51,9 @@ function checkNewPassword(pw: string) {
 }
 
 type UserRow = {
-  id: string; org_id: string; client_id: string; email: string; status: "invited" | "active" | "disabled"; password_hash: string | null;
+  // A client's login (client_id set) or a realtor's / other party's (kind 'party', client_id null).
+  kind?: "client" | "party" | null; display_name?: string | null;
+  id: string; org_id: string; client_id: string | null; email: string; status: "invited" | "active" | "disabled"; password_hash: string | null;
   invite_expires_at: string | null; invited_at: string | null; failed_attempts: number; locked_until: string | null; last_login_at: string | null;
 };
 
@@ -278,6 +280,23 @@ type VersionLite = { id: string; version_number: number; size_bytes: number; fil
 
 export async function portalHome() {
   const u = await currentPortalUser();
+  if (u.kind === "party") {
+    // A realtor / other party: the files they were invited to (documents come through messages).
+    const { accessibleMatterIds } = await import("@/lib/portal/parties");
+    const ids = await accessibleMatterIds(u);
+    const [firm, { data: ms }] = await Promise.all([
+      firmName(u.org_id),
+      ids.length ? db().from("matters").select("id, title, status, category, updated_at").in("id", ids).order("updated_at", { ascending: false }) : Promise.resolve({ data: [] }),
+    ]);
+    return {
+      firm,
+      clientName: u.display_name || u.email,
+      email: u.email,
+      isParty: true,
+      matters: ((ms ?? []) as { id: string; title: string; status: string; category: string | null }[]).map((m) => ({ id: m.id, title: m.title, status: m.status, category: m.category ?? null })),
+      documents: [] as { id: string; matterId: string; title: string; sharedAt: string | null; versionId: string; fileType: string; size: number; updatedAt: string }[],
+    };
+  }
   const [{ data: client }, firm, { data: matters }] = await Promise.all([
     db().from("clients").select("name").eq("id", u.client_id).maybeSingle(),
     firmName(u.org_id),
@@ -305,6 +324,7 @@ export async function portalHome() {
     firm,
     clientName: (client?.name as string | undefined) ?? "",
     email: u.email,
+    isParty: false,
     matters: (matters ?? []).map((m) => ({ id: m.id as string, title: m.title as string, status: m.status as string, category: (m.category as string | null) ?? null })),
     documents: docList,
   };
@@ -320,8 +340,14 @@ export async function portalFileUrl(versionId: string, download: boolean) {
     .eq("id", versionId)
     .eq("org_id", u.org_id)
     .maybeSingle();
-  const doc = (v as unknown as { documents: { title: string; org_id: string; portal_shared: boolean; matters: { client_id: string | null } } } | null)?.documents;
-  if (!v || !doc || !doc.portal_shared || doc.matters?.client_id !== u.client_id) throw new PortalError(404, "File not found.");
+  const doc = (v as unknown as { documents: { id: string; title: string; org_id: string; portal_shared: boolean; matters: { client_id: string | null } } } | null)?.documents;
+  if (!v || !doc) throw new PortalError(404, "File not found.");
+  if (u.kind === "party") {
+    // A realtor / party: only files attached to a message they can see.
+    const { portalMessages } = await import("@/lib/portal/messages");
+    const { messages } = await portalMessages();
+    if (!messages.some((m) => m.attachments.some((a) => a.id === doc.id))) throw new PortalError(404, "File not found.");
+  } else if (!doc.portal_shared || doc.matters?.client_id !== u.client_id) throw new PortalError(404, "File not found.");
   const path = v.storage_path as string;
   const ext = path.split(".").pop() ?? "pdf";
   const name = (doc.title.replace(/[\\/:*?"<>|]+/g, "-") || "document").replace(new RegExp(`\\.${ext}$`, "i"), "") + "." + ext;

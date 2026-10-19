@@ -23,7 +23,17 @@ async function uploadFile(matterId: string, file: File): Promise<{ path: string;
 }
 
 type Attachment = { id: string; title: string; versionId: string | null; fileType: string };
-type Msg = { id: string; matterId: string | null; direction: "firm" | "client"; body: string; senderName: string; createdAt: string; attachments: Attachment[] };
+type Msg = {
+  id: string;
+  matterId: string | null;
+  direction: "firm" | "client" | "party";
+  body: string;
+  senderName: string;
+  createdAt: string;
+  attachments: Attachment[];
+  thread?: "client" | "shared" | "party";
+  mine?: boolean;
+};
 type Matter = { id: string; title: string };
 
 const when = (iso: string) => new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
@@ -94,6 +104,8 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Private: just the firm. Shared: everyone on this file (the client, invited realtors, the firm).
+  const [visibility, setVisibility] = useState<"private" | "shared">("private");
 
   function addFiles(list: FileList | null) {
     if (!list) return;
@@ -124,11 +136,11 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
       const r = await fetch("/api/portal/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matterId: matter.id || null, body: reply, uploads }),
+        body: JSON.stringify({ matterId: matter.id || null, body: reply, uploads, thread: visibility }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d?.error ?? "Your message couldn't be sent. Please try again.");
-      setList((l) => [...l, d.message]);
+      setList((l) => [...l, { ...d.message, mine: true }]);
       setReply("");
       setFiles([]);
       if (d.failed?.length) setError(`${d.failed.join(", ")} couldn't be read, so ${d.failed.length === 1 ? "it wasn't" : "they weren't"} sent. Please check the file and try again.`);
@@ -147,11 +159,13 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
         {list.length === 0 && <div className="text-[13px] text-muted">No messages yet. You can send a message or files to {firm} here.</div>}
         {list.map((x) => {
           const fromFirm = x.direction === "firm";
+          const mine = x.mine ?? !fromFirm;
           return (
-            <div key={x.id} className={`flex ${fromFirm ? "justify-start" : "justify-end"}`}>
-              <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${fromFirm ? "bg-white" : "bg-[#E1E7F4]"}`}>
-                <div className="text-[11.5px] text-muted mb-0.5">
-                  {fromFirm ? `${x.senderName}, ${firm}` : "You"} · {when(x.createdAt)}
+            <div key={x.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${mine ? "bg-[#E1E7F4]" : "bg-white"}`}>
+                <div className="text-[11.5px] text-muted mb-0.5 flex items-center gap-1.5 flex-wrap">
+                  {x.thread === "shared" && <span className="bg-[#FFF1DE] text-[#8A4B14] font-semibold rounded px-1.5 py-px">Shared</span>}
+                  {mine ? "You" : fromFirm ? `${x.senderName}, ${firm}` : x.senderName} · {when(x.createdAt)}
                 </div>
                 {x.body && <div className="text-[14px] whitespace-pre-wrap">{x.body}</div>}
                 {x.attachments.length > 0 && (
@@ -218,8 +232,23 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
               <input type="file" multiple accept={ACCEPT} className="sr-only" onChange={(e) => (addFiles(e.target.files), (e.target.value = ""))} />
             </label>
           )}
+          {matter.id && (
+            <span className="flex items-center bg-white rounded-full p-0.5 text-[12.5px] font-medium" role="radiogroup" aria-label="Who sees this message">
+              {(["private", "shared"] as const).map((v) => (
+                <button
+                  key={v}
+                  role="radio"
+                  aria-checked={visibility === v}
+                  onClick={() => setVisibility(v)}
+                  className={`px-2.5 py-1 rounded-full ${visibility === v ? "bg-btn" : "text-muted hover:text-ink"}`}
+                >
+                  {v === "private" ? `Private (just ${firm.split(",")[0]})` : "Shared (everyone on this file)"}
+                </button>
+              ))}
+            </span>
+          )}
           <span className="text-[12px] text-muted flex items-center gap-1">
-            <ShieldCheck size={12} /> Only you and {firm} can read this. PDF, Word, Excel, JPG or PNG, up to 25 MB.
+            <ShieldCheck size={12} /> {visibility === "shared" ? "Everyone on this file can read this." : `Only you and ${firm} can read this.`} PDF, Word, Excel, JPG or PNG, up to 25 MB.
           </span>
           <button
             onClick={() => void send()}

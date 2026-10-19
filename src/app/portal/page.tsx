@@ -11,6 +11,7 @@ type Home = {
   firm: string;
   clientName: string;
   email: string;
+  isParty?: boolean; // a realtor / other party (no intake sheet, documents come through messages)
   matters: { id: string; title: string; status: string; category: string | null }[];
   documents: { id: string; matterId: string; title: string; sharedAt: string | null; versionId: string; fileType: string; size: number; updatedAt: string }[];
 };
@@ -75,6 +76,7 @@ export default function PortalHome() {
             <p className="text-[14px] text-muted mt-1 mb-8">Your secure messages and the documents {home.firm} has shared with you.</p>
             {missing && <div className="mb-5 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13.5px]">That document isn’t available anymore. Your law firm may have stopped sharing it.</div>}
 
+            {!home.isParty && (
             <div className="mb-8 bg-card-alt rounded-2xl px-5 py-4 flex flex-wrap items-center gap-3">
               <ClipboardList size={20} className="text-muted flex-shrink-0" />
               <div className="flex-1 min-w-[220px]">
@@ -85,6 +87,7 @@ export default function PortalHome() {
                 Complete intake sheet
               </Link>
             </div>
+            )}
             {home.matters.length > 0 && (
               <section className="mb-6">
                 <h2 className="text-[15px] font-semibold mb-2.5" style={{ letterSpacing: 0 }}>Your files</h2>

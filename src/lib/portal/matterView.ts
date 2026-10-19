@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentPortalUser, firmName, PortalError } from "@/lib/portal/server";
 import { portalSigningToken } from "@/lib/esign/server";
+import { accessibleMatter } from "@/lib/portal/parties";
 
 // The client portal's page for one matter (REP / RES and other real estate files):
 // closing status, deal details, the parties and documents waiting for a signature.
@@ -60,10 +61,14 @@ export function closingStages(m: { status: string; created_at: string; key_dates
   return { stages, current: current.label, description: STAGE_TEXT[current.key] ?? "", closingDate: dates.closing?.date ?? null };
 }
 
+// A matter the signed-in client owns, or a realtor / party was invited to.
 async function clientMatterRow(matterId: unknown) {
   const u = await currentPortalUser();
   if (!uuid(matterId)) throw new PortalError(404, "Matter not found.");
-  const { data, error } = await db().from("matters").select("*").eq("id", matterId).eq("org_id", u.org_id).eq("client_id", u.client_id).maybeSingle();
+  await accessibleMatter(u, matterId).catch(() => {
+    throw new PortalError(404, "Matter not found.");
+  });
+  const { data, error } = await db().from("matters").select("*").eq("id", matterId).eq("org_id", u.org_id).maybeSingle();
   if (error) throw error;
   if (!data) throw new PortalError(404, "Matter not found.");
   return { u, m: data as Record<string, unknown> };

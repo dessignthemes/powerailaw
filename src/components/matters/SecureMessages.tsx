@@ -7,7 +7,19 @@ import { numberOf, type Matter } from "@/components/NewMatterModal";
 import type { Client } from "@/components/NewClientModal";
 
 type Attachment = { id: string; title: string; versionId: string | null; fileType: string };
-type Msg = { id: string; direction: "firm" | "client"; body: string; senderName: string; readAt: string | null; createdAt: string; attachments: Attachment[] };
+type Msg = {
+  id: string;
+  direction: "firm" | "client" | "party";
+  body: string;
+  senderName: string;
+  readAt: string | null;
+  createdAt: string;
+  attachments: Attachment[];
+  thread?: "client" | "shared" | "party";
+  partyId?: string | null;
+};
+type Party = { accessId: string; partyId: string; name: string; email: string; role: string; status: string; lastLoginAt: string | null };
+const ROLES = ["Buyer's realtor", "Seller's realtor", "Lender", "Title company", "Other"];
 type Access = { email: string; status: string; lastLoginAt: string | null } | null;
 type Thread = { messages: Msg[]; access: Access; hasClient: boolean; unreadFromClient: number };
 type DocLite = { id: string; title: string };
@@ -60,6 +72,19 @@ export default function SecureMessages({ matter, client, preselect = [], compact
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
   const base = `/api/matters/${matter.id}/portal-messages`;
+  // Threads: the client's private one, the shared one (client + invited realtors), one per realtor.
+  const [tab, setTab] = useState<string>("client");
+  const [parties, setParties] = useState<Party[]>([]);
+  const [partyForm, setPartyForm] = useState<{ name: string; email: string; role: string } | null>(null);
+  const [partyBusy, setPartyBusy] = useState(false);
+  const [partyInvite, setPartyInvite] = useState<{ name: string; email: string; link: string; newLogin: boolean } | null>(null);
+  const loadParties = useCallback(
+    () =>
+      getJson<{ parties: Party[] }>(`/api/matters/${matter.id}/portal-parties`)
+        .then((d) => setParties(d.parties ?? []))
+        .catch(() => setParties([])),
+    [matter.id]
+  );
 
   const load = useCallback(
     () =>
@@ -70,10 +95,46 @@ export default function SecureMessages({ matter, client, preselect = [], compact
   );
   useEffect(() => {
     void load();
+    void loadParties();
     getJson<{ documents: DocLite[] }>(`/api/documents?matterId=${matter.id}`)
       .then((d) => setDocs(d.documents ?? []))
       .catch(() => setDocs([]));
-  }, [load, matter.id]);
+  }, [load, loadParties, matter.id]);
+
+  async function inviteParty() {
+    if (!partyForm) return;
+    setPartyBusy(true);
+    setError(null);
+    try {
+      const d = await getJson<{ token: string | null; link: string; name: string; email: string }>(`/api/matters/${matter.id}/portal-parties`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(partyForm),
+      });
+      setPartyInvite({ name: d.name, email: d.email, link: d.link, newLogin: !!d.token });
+      setPartyForm(null);
+      await loadParties();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setPartyBusy(false);
+    }
+  }
+  async function removeParty(p: Party) {
+    if (!confirm(`Remove ${p.name}'s access to this file? They'll no longer see it in the portal.`)) return;
+    try {
+      await getJson(`/api/matters/${matter.id}/portal-parties?access=${p.accessId}`, { method: "DELETE" });
+      if (tab === p.partyId) setTab("client");
+      await loadParties();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  const inThread = (m: Msg) =>
+    tab === "client" ? (m.thread ?? "client") === "client" : tab === "shared" ? m.thread === "shared" : m.thread === "party" && m.partyId === tab;
+  const unreadIn = (key: string) =>
+    (thread?.messages ?? []).filter((m) => m.direction !== "firm" && !m.readAt && (key === "client" ? (m.thread ?? "client") === "client" : key === "shared" ? m.thread === "shared" : m.partyId === key)).length;
+  const tabParty = parties.find((p) => p.partyId === tab) ?? null;
 
   const access = thread?.access ?? null;
   const canSend = access && access.status !== "disabled";
@@ -104,7 +165,7 @@ export default function SecureMessages({ matter, client, preselect = [], compact
       const d = await getJson<{ firm: string; accessStatus: string }>(base, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body, documentIds: picked }),
+        body: JSON.stringify({ body, documentIds: picked, thread: tab === "client" || tab === "shared" ? tab : "party", partyId: tabParty?.partyId }),
       });
       setSent({ firm: d.firm, docs: picked.length });
       setBody("");
@@ -149,11 +210,103 @@ export default function SecureMessages({ matter, client, preselect = [], compact
       <div className="p-4 flex flex-col gap-3">
         {error && <div className="rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-3.5 py-2.5 text-[13px]">{error}</div>}
 
+        {/* Realtors and other parties on the portal for this file */}
+        <div className="flex flex-wrap items-center gap-1.5 text-[12.5px]">
+          <span className="text-muted mr-1">On the portal:</span>
+          {client && <span className="bg-chip rounded-full px-2.5 py-1">{client.name} · client</span>}
+          {parties.map((p) => (
+            <span key={p.accessId} className="flex items-center gap-1 bg-chip rounded-full pl-2.5 pr-1 py-1" title={`${p.email}${p.status === "invited" ? " (invited, hasn't signed in yet)" : ""}`}>
+              {p.name} · {p.role}
+              <button onClick={() => void removeParty(p)} aria-label={`Remove ${p.name}`} className="w-5 h-5 rounded-full hover:bg-white flex items-center justify-center">
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+          <button onClick={() => setPartyForm({ name: "", email: "", role: ROLES[0] })} className="flex items-center gap-1 rounded-full px-2.5 py-1 text-ink font-medium hover:bg-chip border border-dashed border-line">
+            <UserPlus size={12} /> Invite realtor or party
+          </button>
+        </div>
+        {partyForm && (
+          <div className="rounded-xl bg-[#EEF3FB] px-4 py-3 flex flex-wrap items-center gap-2">
+            <input value={partyForm.name} onChange={(e) => setPartyForm({ ...partyForm, name: e.target.value })} placeholder="Name" className="bg-white border border-line rounded-full px-3.5 py-1.5 text-[13px] outline-none w-[170px]" />
+            <input value={partyForm.email} onChange={(e) => setPartyForm({ ...partyForm, email: e.target.value })} placeholder="email@example.com" className="bg-white border border-line rounded-full px-3.5 py-1.5 text-[13px] outline-none w-[210px]" />
+            <select value={partyForm.role} onChange={(e) => setPartyForm({ ...partyForm, role: e.target.value })} className="bg-white border border-line rounded-full px-3 py-1.5 text-[13px] outline-none">
+              {ROLES.map((r) => (
+                <option key={r}>{r}</option>
+              ))}
+            </select>
+            <button onClick={() => void inviteParty()} disabled={partyBusy || !partyForm.name.trim() || !partyForm.email.trim()} className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-3.5 py-1.5 rounded-full text-[13px] font-medium">
+              {partyBusy && <Loader2 size={12} className="animate-spin" />} Invite
+            </button>
+            <button onClick={() => setPartyForm(null)} className="text-[12.5px] text-muted hover:text-ink">
+              Cancel
+            </button>
+            <div className="basis-full text-[12px] text-muted">They&apos;ll see this file&apos;s status, parties and the shared thread, plus their own private thread with you. They don&apos;t see the client&apos;s private messages.</div>
+          </div>
+        )}
+        {partyInvite && (
+          <div className="rounded-xl bg-[#E8F6EE] px-4 py-3 flex flex-col gap-2">
+            <div className="text-[13.5px] font-medium">{partyInvite.name} now has access. Send them the link:</div>
+            <div className="text-[12.5px] text-muted break-all">{partyInvite.link}</div>
+            <div className="flex flex-wrap gap-2">
+              {(() => {
+                const l = composeLinks(
+                  partyInvite.email,
+                  subjectWithTag(`${matter.title}: client portal access`, numberOf(matter)),
+                  [
+                    `Hello ${partyInvite.name.split(" ")[0]},`,
+                    "",
+                    `You now have access to this file in our secure client portal, where you can follow the closing status, message us and share documents:`,
+                    "",
+                    partyInvite.link,
+                    "",
+                    partyInvite.newLogin ? "The first time, this link lets you set your own password (it works for 14 days)." : "Sign in with your email address and portal password.",
+                  ].join("\n")
+                );
+                return (
+                  <>
+                    <a href={l.microsoft} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-3.5 py-1.5 rounded-full text-[13px] font-medium">
+                      <Mail size={13} /> Email in Outlook
+                    </a>
+                    <a href={l.google} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium">
+                      Gmail
+                    </a>
+                  </>
+                );
+              })()}
+              <button onClick={() => setPartyInvite(null)} className="ml-auto text-muted hover:text-ink" aria-label="Dismiss">
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Thread tabs */}
+        {(parties.length > 0 || (thread?.messages ?? []).some((m) => m.thread && m.thread !== "client")) && (
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-line pb-2">
+            {[{ key: "client", label: client ? `${client.name.split(" ")[0]} (client)` : "Client" }, { key: "shared", label: "Shared (everyone)" }, ...parties.map((p) => ({ key: p.partyId, label: `${p.name.split(" ")[0]} (${p.role})` }))].map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-medium ${tab === t.key ? "bg-btn" : "hover:bg-chip text-muted"}`}
+              >
+                {t.label}
+                {unreadIn(t.key) > 0 && <span className="bg-[#E5484D] text-white text-[10.5px] rounded-full px-1.5">{unreadIn(t.key)}</span>}
+              </button>
+            ))}
+          </div>
+        )}
+        {tab === "shared" && (
+          <div className="rounded-lg bg-[#FFF8EE] text-[#8A4B14] px-3 py-2 text-[12px]">
+            The client and every invited realtor or party on this file see messages here. Keep privileged advice in the client&apos;s private thread.
+          </div>
+        )}
+
         {!thread ? (
           <div className="text-[13px] text-muted flex items-center gap-2">
             <Loader2 size={13} className="animate-spin" /> Loading…
           </div>
-        ) : !thread.hasClient ? (
+        ) : tab !== "client" ? null : !thread.hasClient ? (
           <div className="text-[13px] text-muted">Link this matter to a client to message them securely.</div>
         ) : !canSend ? (
           <div className="rounded-xl bg-[#EEF3FB] px-4 py-3 flex flex-col gap-2">
@@ -175,9 +328,9 @@ export default function SecureMessages({ matter, client, preselect = [], compact
           </div>
         ) : null}
 
-        {thread && thread.messages.length > 0 && (
+        {thread && thread.messages.filter(inThread).length > 0 && (
           <div className={`flex flex-col gap-2.5 ${compact ? "max-h-[320px]" : "max-h-[460px]"} overflow-y-auto pr-1`}>
-            {thread.messages.map((m) => {
+            {thread.messages.filter(inThread).map((m) => {
               const mine = m.direction === "firm";
               return (
                 <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
@@ -252,13 +405,19 @@ export default function SecureMessages({ matter, client, preselect = [], compact
           </div>
         )}
 
-        {canSend && (
+        {(tab === "client" ? canSend : tab === "shared" || !!tabParty) && (
           <div className="flex flex-col gap-2">
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={compact ? 3 : 4}
-              placeholder={`Write a secure message to ${client?.name?.split(" ")[0] ?? "your client"}…`}
+              placeholder={
+                tab === "shared"
+                  ? "Write to everyone on this file…"
+                  : tabParty
+                    ? `Write a private message to ${tabParty.name.split(" ")[0]}…`
+                    : `Write a secure message to ${client?.name?.split(" ")[0] ?? "your client"}…`
+              }
               className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none resize-y"
             />
             {picked.length > 0 && (
@@ -298,7 +457,9 @@ export default function SecureMessages({ matter, client, preselect = [], compact
               <button onClick={() => setPickerOpen((o) => !o)} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium">
                 <Paperclip size={13} /> Attach documents
               </button>
-              <span className="text-[12px] text-muted">Attached documents become visible to the client in their portal.</span>
+              <span className="text-[12px] text-muted">
+                {tabParty ? `Attached documents are visible to ${tabParty.name.split(" ")[0]} only.` : tab === "shared" ? "Attached documents are visible to everyone on this file." : "Attached documents become visible to the client in their portal."}
+              </span>
               <button
                 onClick={() => void send()}
                 disabled={sending || (!body.trim() && !picked.length)}
