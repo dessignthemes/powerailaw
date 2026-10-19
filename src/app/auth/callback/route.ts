@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { ensureProfile } from "@/lib/data/profile";
 import { saveOAuthConnection } from "@/lib/data/oauth";
+import { scopesFromMicrosoftToken, expiryFromMicrosoftToken } from "@/lib/mail/microsoftScopes";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -68,6 +69,10 @@ export async function GET(request: NextRequest) {
           } catch {
             // Non-fatal: keep the defaults.
           }
+        } else {
+          // Outlook: the granted permissions are inside the token itself.
+          scopes = scopesFromMicrosoftToken(session.provider_token);
+          expiresAt = expiryFromMicrosoftToken(session.provider_token) ?? expiresAt;
         }
 
         await saveOAuthConnection({

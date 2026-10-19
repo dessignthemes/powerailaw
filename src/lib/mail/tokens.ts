@@ -1,6 +1,7 @@
 import "server-only";
 import { getUserConnections, updateConnectionTokens, type ConnectionRow } from "@/lib/data/oauth";
 import type { MailProvider } from "@/lib/mail/types";
+import { scopesFromMicrosoftToken } from "@/lib/mail/microsoftScopes";
 
 export class MailError extends Error {
   constructor(
@@ -80,6 +81,10 @@ async function refresh(conn: ConnectionRow): Promise<string> {
     access_token: data.access_token,
     expires_at: expiresAt,
     ...(data.refresh_token ? { refresh_token: data.refresh_token } : {}),
+    // Outlook: record what the renewed token allows (fixes connections saved without it).
+    ...(conn.provider === "microsoft" && scopesFromMicrosoftToken(data.access_token).length
+      ? { scopes: scopesFromMicrosoftToken(data.access_token) }
+      : {}),
   });
   return data.access_token as string;
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrgIdForUser } from "@/lib/data/org";
+import { scopesFromMicrosoftToken } from "@/lib/mail/microsoftScopes";
 
 export type MailProvider = "google" | "microsoft";
 
@@ -58,12 +59,16 @@ export async function getUserConnections(userId: string): Promise<ConnectionRow[
     // Mail and calendar only; Dropbox connections are read in lib/dropbox.
     .in("provider", ["google", "microsoft"]);
   if (error) throw error;
-  return (data ?? []) as ConnectionRow[];
+  // Outlook connections saved before Oct 19, 2026 have no permissions on record:
+  // read them from the stored token so a reconnect already done counts.
+  return ((data ?? []) as ConnectionRow[]).map((c) =>
+    c.provider === "microsoft" && !(c.scopes ?? []).length ? { ...c, scopes: scopesFromMicrosoftToken(c.access_token) } : { ...c, scopes: c.scopes ?? [] }
+  );
 }
 
 export async function updateConnectionTokens(
   id: string,
-  fields: { access_token: string; expires_at: string; refresh_token?: string }
+  fields: { access_token: string; expires_at: string; refresh_token?: string; scopes?: string[] }
 ) {
   const supabase = createAdminClient();
   const { error } = await supabase
