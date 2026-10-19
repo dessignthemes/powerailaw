@@ -9,9 +9,6 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
   Sun,
-  Search,
-  SlidersHorizontal,
-  RotateCw,
   Plus,
   Check,
   ChevronDown,
@@ -20,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import NewEventModal, { CalendarEvent } from "@/components/NewEventModal";
+import CalendarSearch, { type SearchHit } from "@/components/calendar/CalendarSearch";
 
 const weekDayShort = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const hours = Array.from({ length: 24 }, (_, i) => i); // full day; the grid scrolls to the morning
@@ -209,7 +207,6 @@ export default function CalendarPage() {
   const [modalDate, setModalDate] = useState<string | null>(null);
   const [synced, setSynced] = useState<Synced[]>([]);
   const [sources, setSources] = useState<Source[] | null>(null);
-  const [syncing, setSyncing] = useState(true);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const weekScroll = useRef<HTMLDivElement>(null);
@@ -264,15 +261,14 @@ export default function CalendarPage() {
         if (d.members) setMembers(d.members);
         setSyncError(null);
       })
-      .catch((e: Error) => !cancelled && setSyncError(e.message))
-      .finally(() => !cancelled && setSyncing(false));
+      .catch((e: Error) => !cancelled && setSyncError(e.message));
     return () => {
       cancelled = true;
     };
   }, [range, refreshKey]);
 
+  // "Try again" after a sync error.
   const refresh = useCallback(() => {
-    setSyncing(true);
     setRefreshKey((k) => k + 1);
   }, []);
 
@@ -393,8 +389,12 @@ export default function CalendarPage() {
     }
   }
 
-  function goToday() {
-    setCursor(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+  // A search result: go to its date, show that person's calendar, open the event.
+  function openSearchHit(e: SearchHit) {
+    const d = e.allDay ? parseAllDay(e.start) : new Date(e.start);
+    setCursor(view === "Month" ? new Date(d.getFullYear(), d.getMonth(), 1) : new Date(d.getFullYear(), d.getMonth(), d.getDate()));
+    if (e.ownerId && hidden.has(e.ownerId)) toggleMember(e.ownerId);
+    setSelected(e);
   }
 
   const nowMinutes = today.getHours() * 60 + today.getMinutes();
@@ -465,31 +465,12 @@ export default function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="w-9 h-9 rounded-full bg-chip hover:bg-btn transition-colors flex items-center justify-center">
-            <Search size={15} strokeWidth={1.75} />
-          </button>
-          <button className="w-9 h-9 rounded-full bg-chip hover:bg-btn transition-colors flex items-center justify-center">
-            <SlidersHorizontal size={15} strokeWidth={1.75} />
-          </button>
-          <button
-            onClick={refresh}
-            title="Refresh calendar"
-            aria-label="Refresh calendar"
-            className="w-9 h-9 rounded-full bg-chip hover:bg-btn transition-colors flex items-center justify-center"
-          >
-            <RotateCw size={15} strokeWidth={1.75} className={syncing ? "animate-spin" : ""} />
-          </button>
-          <button
-            onClick={goToday}
-            className="bg-chip px-3.5 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors"
-          >
-            Today
-          </button>
+          <CalendarSearch members={members} colorOf={colorOf} onPick={openSearchHit} />
           <button
             onClick={() => setModalDate(toISODate(cursor))}
             className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
           >
-            <Plus size={14} strokeWidth={2} /> Add
+            <Plus size={14} strokeWidth={2} /> Add Event
           </button>
         </div>
       </div>

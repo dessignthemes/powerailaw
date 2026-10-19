@@ -43,7 +43,11 @@ type GEvent = {
 export async function googleEvents(token: string, from: string, to: string): Promise<SyncedEvent[]> {
   const params = new URLSearchParams({ timeMin: from, timeMax: to, singleEvents: "true", orderBy: "startTime", maxResults: String(MAX) });
   const d = await getJson<{ items?: GEvent[] }>(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`, token);
-  return (d.items ?? [])
+  return mapGoogle(d.items ?? []);
+}
+
+function mapGoogle(items: GEvent[]): SyncedEvent[] {
+  return items
     .filter((e) => e.status !== "cancelled" && (e.start?.date || e.start?.dateTime))
     .map((e) => {
       const allDay = !!e.start?.date;
@@ -73,19 +77,8 @@ type MEvent = {
   end?: { dateTime?: string };
 };
 
-export async function outlookEvents(token: string, from: string, to: string): Promise<SyncedEvent[]> {
-  const params = new URLSearchParams({
-    startDateTime: from,
-    endDateTime: to,
-    $top: String(MAX),
-    $orderby: "start/dateTime",
-    $select: "id,subject,isAllDay,isCancelled,webLink,location,start,end,sensitivity",
-  });
-  // Ask Graph for UTC so times convert correctly in the browser.
-  const d = await getJson<{ value?: MEvent[] }>(`https://graph.microsoft.com/v1.0/me/calendarView?${params}`, token, {
-    Prefer: 'outlook.timezone="UTC"',
-  });
-  return (d.value ?? [])
+function mapOutlook(list: MEvent[]): SyncedEvent[] {
+  return list
     .filter((e) => !e.isCancelled && e.start?.dateTime)
     .map((e) => {
       const allDay = !!e.isAllDay;
@@ -103,6 +96,23 @@ export async function outlookEvents(token: string, from: string, to: string): Pr
         private: e.sensitivity === "private" || e.sensitivity === "confidential",
       };
     });
+}
+
+const OUTLOOK_SELECT = "id,subject,isAllDay,isCancelled,webLink,location,start,end,sensitivity";
+
+export async function outlookEvents(token: string, from: string, to: string): Promise<SyncedEvent[]> {
+  const params = new URLSearchParams({
+    startDateTime: from,
+    endDateTime: to,
+    $top: String(MAX),
+    $orderby: "start/dateTime",
+    $select: OUTLOOK_SELECT,
+  });
+  // Ask Graph for UTC so times convert correctly in the browser.
+  const d = await getJson<{ value?: MEvent[] }>(`https://graph.microsoft.com/v1.0/me/calendarView?${params}`, token, {
+    Prefer: 'outlook.timezone="UTC"',
+  });
+  return mapOutlook(d.value ?? []);
 }
 
 export type CalendarSource = {
@@ -412,4 +422,88 @@ export async function updateSyncedEvent(userId: string, provider: MailProvider, 
     });
   }
   return getEventDetail(userId, provider, rawId);
+}
+
+// ── Search: find events by words in the title or location ────────────────────
+// Looks 6 months back and 12 months ahead, in your calendar or a colleague's
+// (same firm only). A colleague's private events are never searched, so their
+// titles can't be found by guessing words.
+
+const SEARCH_BACK_DAYS = 183;
+const SEARCH_AHEAD_DAYS = 366;
+const SEARCH_LIMIT = 100;
+
+function searchWords(q: string) {
+  return q.toLowerCase().split(/\s+/).filter(Boolean).slice(0, 8);
+}
+
+function matchesWords(e: SyncedEvent, words: string[]) {
+  const text = `${e.title} ${e.location ?? ""}`.toLowerCase();
+  return words.every((w) => text.includes(w));
+}
+
+// Google's own search matches whole words only ("clos" wouldn't find
+// "Closing"), so read the window (up to 2,500 events) and match here, like Outlook.
+async function googleAll(token: string, from: string, to: string): Promise<SyncedEvent[]> {
+  const out: SyncedEvent[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < 5; page++) {
+    const params = new URLSearchParams({ timeMin: from, timeMax: to, singleEvents: "true", maxResults: "500" });
+    if (pageToken) params.set("pageToken", pageToken);
+    const d = await getJson<{ items?: GEvent[]; nextPageToken?: string }>(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`, token);
+    out.push(...mapGoogle(d.items ?? []));
+    pageToken = d.nextPageToken;
+    if (!pageToken) break;
+  }
+  return out;
+}
+
+// Outlook has no reliable word search for calendar events either: read the
+// window page by page (up to 2,000 events) and match here.
+async function outlookAll(token: string, from: string, to: string): Promise<SyncedEvent[]> {
+  const params = new URLSearchParams({ startDateTime: from, endDateTime: to, $top: "500", $select: OUTLOOK_SELECT });
+  let url: string | undefined = `https://graph.microsoft.com/v1.0/me/calendarView?${params}`;
+  const out: SyncedEvent[] = [];
+  for (let page = 0; url && page < 4; page++) {
+    const d: { value?: MEvent[]; "@odata.nextLink"?: string } = await getJson(url, token, { Prefer: 'outlook.timezone="UTC"' });
+    out.push(...mapOutlook(d.value ?? []));
+    url = d["@odata.nextLink"];
+  }
+  return out;
+}
+
+export async function searchTeamEvents(orgId: string, meId: string, query: string, ownerId: string | null) {
+  const words = searchWords(query);
+  if (!words.length) return { events: [] as SyncedEvent[], skipped: [] as string[], more: false };
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  let req = createAdminClient().from("profiles").select("id, email, full_name").eq("org_id", orgId).limit(50);
+  if (ownerId) req = req.eq("id", ownerId); // only someone in the same firm
+  const { data } = await req;
+  const people = (data ?? []) as { id: string; email: string; full_name?: string | null }[];
+  const now = Date.now();
+  const from = new Date(now - SEARCH_BACK_DAYS * 86400_000).toISOString();
+  const to = new Date(now + SEARCH_AHEAD_DAYS * 86400_000).toISOString();
+  const events: SyncedEvent[] = [];
+  const skipped: string[] = [];
+  await Promise.all(
+    people.map(async (p) => {
+      const me = p.id === meId;
+      const conns = await getUserConnections(p.id).catch(() => []);
+      for (const c of conns) {
+        if (c.provider === "google" && !hasGoogleScope(c.scopes, "calendar")) continue;
+        try {
+          const { token } = await getAccessToken(p.id, c.provider, "calendar");
+          const list = c.provider === "google" ? await googleAll(token, from, to) : await outlookAll(token, from, to);
+          for (const e of list) {
+            if (!me && e.private) continue;
+            if (matchesWords(e, words)) events.push({ ...e, ownerId: p.id });
+          }
+        } catch {
+          skipped.push((p.full_name || p.email).slice(0, 80));
+        }
+      }
+    })
+  );
+  events.sort((a, b) => (a.start < b.start ? -1 : 1));
+  return { events: events.slice(0, SEARCH_LIMIT), skipped: [...new Set(skipped)], more: events.length > SEARCH_LIMIT };
 }
