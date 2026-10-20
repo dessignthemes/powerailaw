@@ -56,14 +56,13 @@ import {
 
 const DISPLAY_KEY = "lawpower.taskboard.display";
 
-// Columns are 206-218px wide (just enough for a card title like "Walsh: REP-2026-3695"
-// on one line, next to its menu): a sixth of the board each, but never under 206px on
-// small laptops or over 218px on big monitors. A 13" laptop shows about 4-5 columns,
-// a large monitor 9-10.
+// Columns are 227-240px wide (10% wider than the Oct 20 trim): a sixth of the
+// board each, but never under 227px on small laptops or over 240px on big monitors.
+// Card titles are 12px semibold. A 13" laptop shows about 4 columns, a large monitor 8-9.
 // More columns sit off to the right; the board scrolls sideways.
 const VISIBLE_COLUMNS = 6;
-const COLUMN_MIN = 206;
-const COLUMN_MAX = 218;
+const COLUMN_MIN = 227;
+const COLUMN_MAX = 240;
 const COLUMN_GAP = 14;
 const COLUMN_WIDTH = `clamp(${COLUMN_MIN}px, calc((100% - ${(VISIBLE_COLUMNS - 1) * COLUMN_GAP}px) / ${VISIBLE_COLUMNS}), ${COLUMN_MAX}px)`;
 
@@ -1441,7 +1440,7 @@ function TaskBoard({
                           )}
                           <div className="flex items-start justify-between gap-1.5 mb-2.5">
                             <div className="min-w-0">
-                              <div className="text-[13px] font-normal leading-snug line-clamp-2 break-words" title={t.title}>{t.title}</div>
+                              <div className="text-[12px] font-semibold leading-snug line-clamp-2 break-words" title={t.title}>{t.title}</div>
                               {t.status !== "done" && (
                                 <div className="mt-1">
                                   <NextStepLine task={t} />
