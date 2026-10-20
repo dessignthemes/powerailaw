@@ -1151,7 +1151,23 @@ function TaskBoard({
                       <Icon size={15} strokeWidth={2} className={statusMeta[t.status].color} />
                       <span className="text-[14.5px] font-medium">{t.title}</span>
                     </div>
-                    <PriorityDot priority={t.priority} />
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const m = t.matterId ? matters.find((x) => x.id === t.matterId) : null;
+                        if (!m) return null;
+                        return (
+                          <Link
+                            href={`/dashboard/matters/${m.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            title={`Open matter: ${m.title}`}
+                            className="text-[11.5px] font-semibold tracking-wide bg-[#E1E7F4] hover:bg-[#D5DDEE] hover:underline underline-offset-2 rounded-md px-1.5 py-0.5 truncate max-w-[160px]"
+                          >
+                            {m.matterNumber ?? m.title}
+                          </Link>
+                        );
+                      })()}
+                      <PriorityDot priority={t.priority} />
+                    </div>
                     {boardId === null && (
                       <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[140px]">
                         {t.boardId ? boards.find((b) => b.id === t.boardId)?.name ?? "Board" : generalName}
@@ -1527,9 +1543,10 @@ function TaskBoard({
                                 <Link
                                   href={`/dashboard/matters/${m.id}`}
                                   onClick={(e) => e.stopPropagation()}
+                                  onMouseDown={(e) => e.stopPropagation()}
                                   draggable={false}
-                                  title={`Matter: ${m.title}`}
-                                  className="text-[11.5px] font-semibold tracking-wide bg-[#E1E7F4] hover:bg-[#D5DDEE] rounded-md px-1.5 py-0.5 truncate max-w-[140px]"
+                                  title={`Open matter: ${m.title}`}
+                                  className="text-[11.5px] font-semibold tracking-wide bg-[#E1E7F4] hover:bg-[#D5DDEE] hover:underline underline-offset-2 cursor-pointer rounded-md px-1.5 py-0.5 truncate max-w-[140px]"
                                 >
                                   {m.matterNumber ?? m.title}
                                 </Link>
