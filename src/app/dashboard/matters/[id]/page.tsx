@@ -444,7 +444,7 @@ export default function MatterDetailPage() {
                       placeholder="0"
                       className="w-full bg-transparent outline-none text-[13.5px]"
                     />
-                    <span className="text-muted text-[13px] flex-shrink-0">/h</span>
+                    {matter.billingType !== "Flat fee" && <span className="text-muted text-[13px] flex-shrink-0">/h</span>}
                   </div>
                   <div className="text-[12.5px] text-muted mt-1.5">
                     Leave empty or 0 to use the firm default.

@@ -533,7 +533,7 @@ export default function NewMatterModal({
             icon={<Link2 size={13} strokeWidth={1.75} />}
             label="Hourly rate"
             value={hourlyRate}
-            placeholder="$/hr"
+            placeholder={billingType === "Flat fee" ? "$" : "$/hr"}
             onChange={setHourlyRate}
             numeric
           />
