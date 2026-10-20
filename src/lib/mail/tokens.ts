@@ -61,7 +61,9 @@ async function refresh(conn: ConnectionRow): Promise<string> {
           grant_type: "refresh_token",
           // Ask for what this connection was granted, or the renewal fails / loses access.
           // Mail.ReadWrite only once the person reconnected and approved it.
-          scope: `offline_access User.Read ${canSyncRead(conn) ? "Mail.ReadWrite" : "Mail.Read"} Calendars.ReadWrite Files.Read`,
+          scope: `offline_access User.Read ${canSyncRead(conn) ? "Mail.ReadWrite" : "Mail.Read"} Calendars.ReadWrite Files.Read${
+            conn.scopes.some((x) => /(^|\/)Contacts\.Read$/i.test(x)) ? " Contacts.Read" : ""
+          }`,
         });
 
   const url =

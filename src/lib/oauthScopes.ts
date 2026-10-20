@@ -5,7 +5,7 @@ export const GOOGLE_BASE_SCOPES = ["openid", "email", "profile"];
 export const MICROSOFT_BASE_SCOPES = ["openid", "email", "profile", "offline_access", "User.Read"];
 
 export type MailboxItem = {
-  key: "mail" | "calendar" | "files";
+  key: "mail" | "calendar" | "files" | "contacts";
   label: string;
   desc: string;
   scope: string;
@@ -52,6 +52,12 @@ export const MICROSOFT_MAILBOX_ITEMS: MailboxItem[] = [
     label: "OneDrive Files",
     desc: "Assigned documents show up as files your whole team can see.",
     scope: "Files.Read",
+  },
+  {
+    key: "contacts",
+    label: "Outlook Contacts",
+    desc: "Bring your Outlook contacts into LawPower Contacts, and new ones as you add them (read only).",
+    scope: "Contacts.Read",
   },
 ];
 

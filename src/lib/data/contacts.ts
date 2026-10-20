@@ -153,7 +153,7 @@ export async function updateContact(id: string, input: unknown): Promise<Contact
     if (isMissingTable(error)) throw new ContactsSetupError();
     throw error;
   }
-  if (!data) throw new ContactInputError("That record wasn't found. It may have been deleted.");
+  if (!data) throw new ContactInputError("That contact wasn't found. It may have been deleted.");
   return toContact(data as Row);
 }
 

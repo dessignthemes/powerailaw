@@ -74,7 +74,7 @@ const toolbarIcons = [
   Link2,
 ];
 
-const detailTabs = ["Comments", "Attachments", "Time tracking", "Records"];
+const detailTabs = ["Comments", "Attachments", "Time tracking", "Contacts"];
 
 export default function TaskDetailModal({
   task,

@@ -515,11 +515,11 @@ export default function MatterDetailPage() {
             <div className="rounded-2xl overflow-hidden border border-line">
               <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
                 <Bookmark size={14} strokeWidth={1.75} className="text-muted" />
-                <span className="text-[14px] font-semibold">Records</span>
+                <span className="text-[14px] font-semibold">Contacts</span>
               </div>
               <div className="p-6 flex flex-col items-center justify-center text-center gap-2">
                 <Bookmark size={20} strokeWidth={1.5} className="text-muted" />
-                <div className="text-[13px] text-muted">No records yet.</div>
+                <div className="text-[13px] text-muted">No contacts yet.</div>
               </div>
             </div>
 

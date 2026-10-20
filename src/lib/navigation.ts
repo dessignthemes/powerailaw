@@ -30,7 +30,7 @@ export const mainLinks: NavLink[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Matters", href: "/dashboard/matters", icon: Folder },
-  { label: "Records", href: "/dashboard/records", icon: Bookmark },
+  { label: "Contacts", href: "/dashboard/records", icon: Bookmark },
   { label: "Documents", href: "/dashboard/documents", icon: Copy },
 ];
 

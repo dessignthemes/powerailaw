@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark } from "lucide-react";
+import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { getInitials, getAvatarColor, formatUpdatedAt } from "@/components/NewClientModal";
 import NewMatterModal from "@/components/NewMatterModal";
 import ContactModal from "@/components/records/ContactModal";
+import ImportContactsModal, { type ImportSource } from "@/components/records/ImportContactsModal";
 import type { Contact, ContactInput, ContactKind } from "@/lib/records/contactTypes";
 
 type Kind = "client" | "matter" | "person" | "company";
@@ -63,6 +64,8 @@ export default function RecordsPage() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const [adding, setAdding] = useState<Kind | null>(null);
+  const [importing, setImporting] = useState<ImportSource | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
 
   useEffect(() => {
@@ -79,6 +82,14 @@ export default function RecordsPage() {
     return () => {
       cancelled = true;
     };
+  }, [reloadKey]);
+
+  // Kept in step with Outlook: pick up contacts added there since the last check.
+  useEffect(() => {
+    fetch("/api/contacts/outlook", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ auto: true }) })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && (d.added > 0 || d.updated > 0) && setReloadKey((k) => k + 1))
+      .catch(() => {});
   }, []);
 
   const loaded = clientsLoaded && mattersLoaded && contactsLoaded;
@@ -187,7 +198,7 @@ export default function RecordsPage() {
     <div className="px-10 py-10">
       <div className="flex items-center justify-between mb-1">
         <h1 className="text-[28px] font-semibold">
-          Records <span className="text-muted font-normal text-[18px]">/ {loaded ? counts.all : "–"}</span>
+          Contacts <span className="text-muted font-normal text-[18px]">/ {loaded ? counts.all : "–"}</span>
         </h1>
         <div className="relative">
           <button
@@ -196,7 +207,7 @@ export default function RecordsPage() {
             aria-expanded={menuOpen}
             className="bg-btn text-ink pl-4 pr-3 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex items-center gap-1.5"
           >
-            + Add record
+            + Add contact
             <ChevronDown size={14} strokeWidth={2} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} />
           </button>
           {menuOpen && (
@@ -204,7 +215,7 @@ export default function RecordsPage() {
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
               <div
                 role="menu"
-                className="absolute right-0 top-[calc(100%+6px)] z-50 w-[220px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5"
+                className="absolute right-0 top-[calc(100%+6px)] z-50 w-[240px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5"
               >
                 {(["client", "matter", "person", "company"] as Kind[]).map((k) => (
                   <button
@@ -217,6 +228,29 @@ export default function RecordsPage() {
                     {KIND_LABEL[k]}
                   </button>
                 ))}
+                <div className="border-t border-line my-1.5" />
+                <div className="px-3 pt-1 pb-1 text-[11.5px] font-semibold uppercase tracking-wide text-muted">Import contacts</div>
+                {(
+                  [
+                    ["outlook", "From Microsoft Outlook"],
+                    ["iphone", "From iPhone / iCloud"],
+                    ["ringcentral", "From RingCentral"],
+                    ["csv", "From a CSV file"],
+                  ] as [ImportSource, string][]
+                ).map(([k, label]) => (
+                  <button
+                    key={k}
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setImporting(k);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left hover:bg-chip transition-colors"
+                  >
+                    <Download size={14} className="text-muted" />
+                    {label}
+                  </button>
+                ))}
               </div>
             </>
           )}
@@ -224,12 +258,12 @@ export default function RecordsPage() {
       </div>
       <p className="text-[14.5px] text-muted mb-6">
         {loaded
-          ? `${plural(counts.all, "record", "records")} — ${plural(counts.client, "client", "clients")}, ${plural(counts.matter, "matter", "matters")}, ${plural(
+          ? `${plural(counts.all, "contact", "contacts")} — ${plural(counts.client, "client", "clients")}, ${plural(counts.matter, "matter", "matters")}, ${plural(
               counts.person,
               "person",
               "people"
             )}, ${plural(counts.company, "company", "companies")}`
-          : "Loading records…"}
+          : "Loading contacts…"}
       </p>
 
       <div className="flex items-center justify-between gap-4 mb-5 flex-wrap">
@@ -252,8 +286,8 @@ export default function RecordsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
-            placeholder="Find a record..."
-            aria-label="Find a record"
+            placeholder="Find a contact..."
+            aria-label="Find a contact"
             className="w-full border border-line bg-white rounded-full pl-10 pr-9 py-2 text-[13.5px] outline-none focus:border-ink placeholder:text-muted"
           />
           {query && (
@@ -281,24 +315,24 @@ export default function RecordsPage() {
 
       <div className="bg-card-alt rounded-2xl p-2">
         {!loaded ? (
-          <div className="bg-cream rounded-xl py-14 text-center text-[14px] text-muted">Loading records…</div>
+          <div className="bg-cream rounded-xl py-14 text-center text-[14px] text-muted">Loading contacts…</div>
         ) : shown.length === 0 ? (
           <div className="bg-cream rounded-xl py-14 text-center px-6">
             <Bookmark size={22} strokeWidth={1.5} className="text-muted mx-auto mb-3" />
             {q ? (
               <>
-                <div className="text-[14.5px] font-medium">No records match “{query.trim()}”</div>
+                <div className="text-[14.5px] font-medium">No contacts match “{query.trim()}”</div>
                 <button onClick={() => setQuery("")} className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium mt-4 transition-colors">
                   Clear search
                 </button>
               </>
             ) : (
               <>
-                <div className="text-[14.5px] font-medium">{tab === "all" ? "No records yet" : `No ${EMPTY_LABEL[tab]} yet`}</div>
+                <div className="text-[14.5px] font-medium">{tab === "all" ? "No contacts yet" : `No ${EMPTY_LABEL[tab]} yet`}</div>
                 <div className="text-[13px] text-muted mt-1 mb-5">{EMPTY_HINT[tab]}</div>
                 {tab === "all" ? (
                   <button onClick={() => setMenuOpen(true)} className={blackBtn}>
-                    + Add record
+                    + Add contact
                   </button>
                 ) : (
                   <button onClick={() => startAdd(tab)} className={blackBtn}>
@@ -356,6 +390,7 @@ export default function RecordsPage() {
             onSave={(input) => saveContact(input)}
           />
         ))}
+      {importing && <ImportContactsModal source={importing} onClose={() => setImporting(null)} onImported={() => setReloadKey((k) => k + 1)} />}
       {editingContact && (
         <ContactModal
           contact={editingContact}

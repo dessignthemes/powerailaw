@@ -3,9 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Loaded from node_modules at runtime on the server (text extraction for
   // the AI Agent) rather than bundled.
-  // Triage was renamed to Task Folder; old links still work.
+  // Triage was renamed to Task Folder; old links still work. Records is shown as
+  // Contacts (the page stays at /dashboard/records), so /dashboard/contacts works too.
   async redirects() {
-    return [{ source: "/dashboard/triage", destination: "/dashboard/task-folder", permanent: false }];
+    return [
+      { source: "/dashboard/triage", destination: "/dashboard/task-folder", permanent: false },
+      { source: "/dashboard/contacts", destination: "/dashboard/records", permanent: false },
+    ];
   },
   serverExternalPackages: ["pdfjs-dist", "mammoth"],
   // pdf.js loads its worker by path, which file tracing can't see.
