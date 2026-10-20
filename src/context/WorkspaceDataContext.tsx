@@ -320,26 +320,36 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(matter),
     })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.matter) {
+      .then(async (res) => ({ ok: res.ok, data: await res.json().catch(() => ({})) }))
+      .then(({ ok, data }) => {
+        if (ok && data.matter) {
           setMatters((ms) => ms.map((m) => (m.id === matter.id ? data.matter : m)));
+        } else if (!ok) {
+          setMatters((ms) => ms.filter((m) => m.id !== matter.id));
+          alert(`The matter wasn't created: ${data?.error ?? "please try again."}`);
         }
       })
       .catch((err) => console.error("Failed to save matter:", err));
   }, []);
 
   const updateMatter = useCallback((matter: Matter) => {
-    setMatters((ms) => ms.map((m) => (m.id === matter.id ? matter : m))); // optimistic
+    let previous: Matter | undefined;
+    setMatters((ms) => {
+      previous = ms.find((m) => m.id === matter.id);
+      return ms.map((m) => (m.id === matter.id ? matter : m)); // optimistic
+    });
     fetch(`/api/matters/${matter.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(matter),
     })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.matter) {
+      .then(async (res) => ({ ok: res.ok, data: await res.json().catch(() => ({})) }))
+      .then(({ ok, data }) => {
+        if (ok && data.matter) {
           setMatters((ms) => ms.map((m) => (m.id === matter.id ? data.matter : m)));
+        } else if (!ok) {
+          if (previous) setMatters((ms) => ms.map((m) => (m.id === matter.id ? previous! : m)));
+          alert(`The matter wasn't saved: ${data?.error ?? "please try again."}`);
         }
       })
       .catch((err) => console.error("Failed to update matter:", err));

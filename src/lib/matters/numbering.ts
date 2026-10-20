@@ -43,3 +43,9 @@ export function parseCodes(v: unknown): string[] {
   }
   return out.slice(0, 20);
 }
+
+// A full matter number like REP-2026-3709 (for typing your own number).
+export const NUMBER_PATTERN = /^[A-Z][A-Z0-9]{1,5}-\d{4}-\d{1,9}$/;
+export function cleanNumber(v: unknown): string {
+  return String(v ?? "").toUpperCase().replace(/\s+/g, "").slice(0, 24);
+}

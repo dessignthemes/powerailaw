@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { GenericDropdown } from "@/components/NewTaskModal";
 import { Client, getInitials, getAvatarColor } from "@/components/NewClientModal";
-import { SUGGESTED_CODES, cleanCode, isValidCode, formatMatterNumber } from "@/lib/matters/numbering";
+import { SUGGESTED_CODES, cleanCode, isValidCode, formatMatterNumber, NUMBER_PATTERN, cleanNumber } from "@/lib/matters/numbering";
 
 // Matter types shown first when creating a matter.
 const MAIN_TYPES: MatterCategory[] = ["Real Estate", "Litigation", "Estate Planning"];
@@ -199,7 +199,32 @@ export default function NewMatterModal({
       live = false;
     };
   }, [needsNumber]);
-  const canSave = !!title.trim() && (isEdit ? !matterCode || codeOk : !!category && codeOk);
+  // Your own number instead of the next one (null = use the next number).
+  const [ownNumber, setOwnNumber] = useState<string | null>(null);
+  const own = ownNumber === null ? null : cleanNumber(ownNumber);
+  const ownOk = own !== null && NUMBER_PATTERN.test(own);
+  const [taken, setTaken] = useState<{ number: string; taken: boolean } | null>(null);
+  useEffect(() => {
+    if (!own || !ownOk) return;
+    let live = true;
+    const t = setTimeout(() => {
+      const qs = new URLSearchParams({ check: own });
+      if (matter?.id) qs.set("except", matter.id);
+      fetch(`/api/matters/next-number?${qs}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => live && d && setTaken({ number: own, taken: !!d.taken }))
+        .catch(() => {});
+    }, 300);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [own, ownOk, matter?.id]);
+  const ownChecked = own !== null && taken?.number === own;
+  const ownFree = ownOk && ownChecked && !taken?.taken;
+  const numberOk = ownNumber === null ? (isEdit ? !matterCode || codeOk : codeOk) : ownFree;
+  const suggested = codeOk && nextNo ? formatMatterNumber(cleanCode(matterCode), nextNo.year, nextNo.next) : "";
+  const canSave = !!title.trim() && (isEdit ? numberOk : !!category && numberOk);
 
   const [statusOpen, setStatusOpen] = useState(false);
   const [clientOpen, setClientOpen] = useState(false);
@@ -227,8 +252,8 @@ export default function NewMatterModal({
       hourlyRate: hourlyRate ? Number(hourlyRate) : null,
       assignedTo: matter?.assignedTo ?? null,
       privateNotes: matter?.privateNotes ?? "",
-      matterCode: numbered ? matter?.matterCode ?? null : codeOk ? cleanCode(matterCode) : null,
-      matterNumber: matter?.matterNumber ?? null,
+      matterCode: numbered ? matter?.matterCode ?? null : own && ownOk ? own.split("-")[0] : codeOk ? cleanCode(matterCode) : null,
+      matterNumber: numbered ? matter?.matterNumber ?? null : own && ownOk ? own : null,
       matterSeq: matter?.matterSeq ?? null,
       createdAt: matter?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -305,7 +330,33 @@ export default function NewMatterModal({
                 />
               </div>
               <div className="text-[12.5px] text-muted mt-2">
-                {matterCode && !codeOk ? (
+                {ownNumber !== null ? (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Matter number:</span>
+                      <input
+                        autoFocus
+                        value={ownNumber}
+                        onChange={(e) => setOwnNumber(cleanNumber(e.target.value))}
+                        placeholder="e.g. REP-2026-3709"
+                        aria-label="Your own matter number"
+                        className="w-[170px] bg-white border border-line rounded-full px-3 py-1 text-[13px] font-semibold tracking-wide text-ink outline-none"
+                      />
+                      <button type="button" onClick={() => setOwnNumber(null)} className="underline underline-offset-2 hover:text-ink">
+                        Use the next number{suggested ? ` (${suggested})` : ""}
+                      </button>
+                    </div>
+                    {own && !ownOk ? (
+                      <span className="text-[#B4232C]">Type it like REP-2026-3709.</span>
+                    ) : ownChecked && taken?.taken ? (
+                      <span className="text-[#B4232C]">{own} is already used by another matter.</span>
+                    ) : ownFree ? (
+                      <span className="text-[#1F7A4D]">{own} is free.</span>
+                    ) : ownOk ? (
+                      <span>Checking…</span>
+                    ) : null}
+                  </div>
+                ) : matterCode && !codeOk ? (
                   <span className="text-[#B4232C]">Use 2–6 letters or numbers, starting with a letter.</span>
                 ) : codeOk ? (
                   <>
@@ -313,7 +364,10 @@ export default function NewMatterModal({
                     <span className="font-semibold text-ink">
                       {nextNo ? formatMatterNumber(cleanCode(matterCode), nextNo.year, nextNo.next) : `${cleanCode(matterCode)}-${new Date().getFullYear()}-…`}
                     </span>{" "}
-                    (given when you click {isEdit ? "Save" : "Create"})
+                    (given when you click {isEdit ? "Save" : "Create"}) ·{" "}
+                    <button type="button" onClick={() => setOwnNumber(suggested || `${cleanCode(matterCode)}-${nextNo?.year ?? new Date().getFullYear()}-`)} className="underline underline-offset-2 hover:text-ink">
+                      Change
+                    </button>
                   </>
                 ) : isEdit ? (
                   "Add an abbreviation to give this matter a number."

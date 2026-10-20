@@ -2,7 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import type { Matter } from "@/components/NewMatterModal";
-import { cleanCode, isValidCode } from "@/lib/matters/numbering";
+import { NUMBER_PATTERN, cleanCode, cleanNumber, formatMatterNumber, isValidCode } from "@/lib/matters/numbering";
 import { getSessionUserId } from "@/lib/auth";
 import { notifyAssigned } from "@/lib/data/notifications";
 
@@ -118,8 +118,9 @@ export async function createMatterRow(matter: Matter): Promise<Matter> {
       private_notes: matter.privateNotes,
       assigned_to: assigneeId(emails, matter.assignedTo),
   };
-  let { data, error } = await supabase.from("matters").insert({ ...fields, matter_code: code }).select("*").single();
-  if (missingNumberCols(error)) ({ data, error } = await supabase.from("matters").insert(fields).select("*").single());
+  const insert = (extra: Record<string, unknown>) => supabase.from("matters").insert({ ...fields, ...extra }).select("*").single();
+  let { data, error } = code || matter.matterNumber ? await saveNumbered(orgId, code ?? "", matter.matterNumber, undefined, insert) : await insert({});
+  if (missingNumberCols(error)) ({ data, error } = await insert({}));
 
   if (error) throw error;
   const saved = toMatter(data as MatterRow, emails);
@@ -127,23 +128,84 @@ export async function createMatterRow(matter: Matter): Promise<Matter> {
   return saved;
 }
 
-// Next running number and the current year (for the preview in New matter).
-export async function nextMatterNumber(): Promise<{ next: number; year: number }> {
+// The highest running number used so far: LawPower's own counter AND the last
+// part of numbers kept from an import (e.g. REP-2026-3708 → 3708), so a new
+// matter continues straight after the last one.
+async function highestNumber(orgId: string): Promise<number> {
   const supabase = createAdminClient();
-  const orgId = await getCurrentOrgId();
-  const [{ data: last }, { data: org }] = await Promise.all([
-    supabase.from("matters").select("matter_seq").eq("org_id", orgId).not("matter_seq", "is", null).order("matter_seq", { ascending: false }).limit(1),
-    supabase.from("organizations").select("*").eq("id", orgId).maybeSingle(),
-  ]);
+  const { data } = await supabase.from("matters").select("matter_seq, matter_number").eq("org_id", orgId).limit(50000);
+  let max = 0;
+  for (const r of (data ?? []) as { matter_seq: number | null; matter_number: string | null }[]) {
+    if (r.matter_seq && r.matter_seq > max) max = r.matter_seq;
+    const tail = r.matter_number?.match(/-(\d{1,9})$/)?.[1];
+    if (tail && Number(tail) > max) max = Number(tail);
+  }
+  return max;
+}
+
+async function firmYearAndStart(orgId: string) {
+  const { data: org } = await createAdminClient().from("organizations").select("*").eq("id", orgId).maybeSingle();
   const o = (org ?? {}) as { timezone?: string; matter_number_start?: number };
-  const lastSeq = Number((last as { matter_seq: number }[] | null)?.[0]?.matter_seq ?? 0);
   let year = new Date().getFullYear();
   try {
     year = Number(new Intl.DateTimeFormat("en-US", { year: "numeric", timeZone: o.timezone || "America/New_York" }).format(new Date()));
   } catch {
     /* unknown timezone: keep server year */
   }
-  return { next: Math.max(lastSeq + 1, Number(o.matter_number_start ?? 1) || 1), year };
+  return { year, start: Number(o.matter_number_start ?? 1) || 1 };
+}
+
+// Next running number and the current year (for the preview in New matter).
+export async function nextMatterNumber(): Promise<{ next: number; year: number }> {
+  const orgId = await getCurrentOrgId();
+  const [last, { year, start }] = await Promise.all([highestNumber(orgId), firmYearAndStart(orgId)]);
+  return { next: Math.max(last + 1, start), year };
+}
+
+// Whether a matter number is already used in this firm (except one matter).
+export async function matterNumberTaken(raw: string, exceptId?: string | null) {
+  const orgId = await getCurrentOrgId();
+  let q = createAdminClient().from("matters").select("id").eq("org_id", orgId).eq("matter_number", cleanNumber(raw)).limit(1);
+  if (exceptId && /^[0-9a-f-]{36}$/i.test(exceptId)) q = q.neq("id", exceptId);
+  const { data } = await q;
+  return !!data?.length;
+}
+
+// A number someone typed instead of the next one: right format and not in use.
+async function checkOwnNumber(orgId: string, raw: unknown, exceptId?: string) {
+  const number = cleanNumber(raw);
+  if (!NUMBER_PATTERN.test(number)) throw new MatterInputError("Type the matter number like REP-2026-3709.");
+  let q = createAdminClient().from("matters").select("id").eq("org_id", orgId).eq("matter_number", number).limit(1);
+  if (exceptId) q = q.neq("id", exceptId);
+  const { data } = await q;
+  if (data?.length) throw new MatterInputError(`${number} is already used by another matter. Choose a different number.`);
+  return { number, code: number.split("-")[0] };
+}
+
+// Saves with a matter number: the one typed, or the next after the highest.
+// If two people create a matter at the same moment, the second one simply gets
+// the following number.
+async function saveNumbered<T>(
+  orgId: string,
+  code: string,
+  own: unknown,
+  exceptId: string | undefined,
+  save: (n: { matter_number: string; matter_code: string }) => PromiseLike<{ data: T | null; error: { code?: string; message?: string } | null }>
+) {
+  if (own) {
+    const n = await checkOwnNumber(orgId, own, exceptId);
+    const res = await save({ matter_number: n.number, matter_code: n.code });
+    if (res.error?.code === "23505") throw new MatterInputError(`${n.number} is already used by another matter. Choose a different number.`);
+    return res;
+  }
+  const { year, start } = await firmYearAndStart(orgId);
+  let res: { data: T | null; error: { code?: string; message?: string } | null } = { data: null, error: null };
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const next = Math.max((await highestNumber(orgId)) + 1, start) + attempt;
+    res = await save({ matter_number: formatMatterNumber(code, year, next), matter_code: code });
+    if (res.error?.code !== "23505") return res;
+  }
+  return res;
 }
 
 export async function updateMatterRow(id: string, matter: Matter): Promise<Matter> {
@@ -153,7 +215,8 @@ export async function updateMatterRow(id: string, matter: Matter): Promise<Matte
   const code = codeOf(matter);
   const emails = await teamEmails(orgId);
   const actorId = await getSessionUserId();
-  const { data: before } = await supabase.from("matters").select("assigned_to").eq("id", id).eq("org_id", orgId).maybeSingle();
+  const { data: before } = await supabase.from("matters").select("*").eq("id", id).eq("org_id", orgId).maybeSingle();
+  const hadNumber = !!(before as { matter_number?: string | null } | null)?.matter_number;
   const fields = {
       client_id: matter.clientId,
       title: matter.title,
@@ -172,8 +235,11 @@ export async function updateMatterRow(id: string, matter: Matter): Promise<Matte
   };
   const run = (f: Record<string, unknown>) => supabase.from("matters").update(f).eq("id", id).eq("org_id", orgId).select("*").single();
   // A numbered matter keeps its number (the database enforces this too).
-  let { data, error } = await run(code ? { ...fields, matter_code: code } : fields);
-  if (code && missingNumberCols(error)) ({ data, error } = await run(fields));
+  let { data, error } =
+    !hadNumber && (code || matter.matterNumber)
+      ? await saveNumbered(orgId, code ?? "", matter.matterNumber, id, (n) => run({ ...fields, ...n }))
+      : await run(code && !hadNumber ? { ...fields, matter_code: code } : fields);
+  if ((code || matter.matterNumber) && missingNumberCols(error)) ({ data, error } = await run(fields));
 
   if (error) throw error;
   const saved = toMatter(data as MatterRow, emails);
