@@ -19,6 +19,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import InvoicesPanel from "@/components/invoices/InvoicesPanel";
+import TrustBalances from "@/components/invoices/TrustBalances";
 import SelectBox from "@/components/SelectBox";
 import TxnModal from "@/components/accounting/TxnModal";
 import ImportModal from "@/components/accounting/ImportModal";
@@ -50,7 +52,9 @@ function periodRange(k: PeriodKey) {
   }
 }
 
-type Tab = "overview" | "review" | "transactions" | "reports";
+type Tab = "overview" | "review" | "transactions" | "invoices" | "reports";
+type Book = "operating" | "trust";
+type TrustTab = "balances" | "ledger";
 
 async function readJson(res: Response) {
   const d = await res.json().catch(() => ({}));
@@ -78,6 +82,9 @@ function AiAccountant() {
   const [setup, setSetup] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
+  // Two books: Operating (the firm's money, invoices) and Trust (clients' money, IOLTA).
+  const [book, setBook] = useState<Book>("operating");
+  const [trustTab, setTrustTab] = useState<TrustTab>("balances");
   const [addOpen, setAddOpen] = useState(false);
   const [modal, setModal] = useState<null | { kind: "txn"; txn?: Txn; file?: File | null } | { kind: "import" }>(null);
   const [exporting, setExporting] = useState<string | null>(null);
@@ -116,9 +123,12 @@ function AiAccountant() {
   const clientName = useCallback((id: string | null) => clients.find((c) => c.id === id)?.name ?? "Unknown client", [clients]);
   const matterName = useCallback((id: string | null) => matters.find((m) => m.id === id)?.title ?? "Unknown matter", [matters]);
 
+  const opTxns = useMemo(() => txns.filter((t) => t.account !== "trust"), [txns]);
+  const trustTxns = useMemo(() => txns.filter((t) => t.account === "trust"), [txns]);
   const s = useMemo(() => summarize(txns), [txns]);
   const r = useMemo(() => readiness(txns), [txns]);
-  const review = txns.filter((t) => t.status === "needs_review");
+  const review = opTxns.filter((t) => t.status === "needs_review");
+  const trustReview = trustTxns.filter((t) => t.status === "needs_review").length;
   const timeValue = time.reduce((a, t) => a + t.valueCents, 0) / 100;
 
   const upsert = (t: Txn) => setTxns((list) => (list.some((x) => x.id === t.id) ? list.map((x) => (x.id === t.id ? t : x)) : [t, ...list]));
@@ -228,17 +238,49 @@ function AiAccountant() {
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-line mt-6 mb-6">
+      <div className="mt-6 inline-flex bg-chip rounded-full p-1" role="tablist" aria-label="Book">
         {([
-          ["overview", "Overview"],
-          ["review", `Review${review.length ? ` (${review.length})` : ""}`],
-          ["transactions", "Transactions"],
-          ["reports", "Reports"],
-        ] as [Tab, string][]).map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)} className={`px-4 py-2.5 text-[14px] font-medium -mb-px border-b-2 transition-colors ${tab === k ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}>
+          ["operating", "Operating", "The firm's money · invoices"],
+          ["trust", "Trust", "Clients' money (IOLTA)"],
+        ] as [Book, string, string][]).map(([k, label, hint]) => (
+          <button
+            key={k}
+            role="tab"
+            aria-selected={book === k}
+            title={hint}
+            onClick={() => setBook(k)}
+            className={`px-5 py-2 rounded-full text-[14px] font-semibold transition-colors ${book === k ? "bg-white shadow-sm text-ink" : "text-muted hover:text-ink"}`}
+          >
             {label}
           </button>
         ))}
+      </div>
+
+      <div className="flex gap-1 border-b border-line mt-4 mb-6">
+        {(book === "operating"
+          ? ([
+              ["overview", "Overview"],
+              ["review", `Review${review.length ? ` (${review.length})` : ""}`],
+              ["transactions", "Transactions"],
+              ["invoices", "Invoices"],
+              ["reports", "Reports"],
+            ] as [string, string][])
+          : ([
+              ["balances", "Client balances"],
+              ["ledger", `Trust ledger${trustReview ? ` (${trustReview} to review)` : ""}`],
+            ] as [string, string][])
+        ).map(([k, label]) => {
+          const on = book === "operating" ? tab === k : trustTab === k;
+          return (
+            <button
+              key={k}
+              onClick={() => (book === "operating" ? setTab(k as Tab) : setTrustTab(k as TrustTab))}
+              className={`px-4 py-2.5 text-[14px] font-medium -mb-px border-b-2 transition-colors ${on ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {setup && (
@@ -259,7 +301,22 @@ function AiAccountant() {
         </div>
       )}
 
-      {loading ? (
+      {book === "trust" ? (
+        loading ? (
+          <div className="bg-card-alt rounded-2xl py-16 text-center text-[14px] text-muted">Loading the books…</div>
+        ) : trustTab === "balances" ? (
+          <TrustBalances matters={matters} clientName={clientName} reloadKey={reload} />
+        ) : (
+          <>
+            <p className="text-[13px] text-muted mb-3">
+              Every deposit into and payment out of the trust (IOLTA) account, {range.label.toLowerCase()}. Link each one to its matter so client balances stay right.
+            </p>
+            <TxnTable txns={trustTxns} clientName={clientName} matterName={matterName} onOpen={(t) => setModal({ kind: "txn", txn: t })} onCategory={(t, c) => patch(t, { category: c, status: "ready" })} />
+          </>
+        )
+      ) : tab === "invoices" ? (
+        <InvoicesPanel matters={matters} clientName={clientName} onChanged={() => setReload((x) => x + 1)} />
+      ) : loading ? (
         <div className="bg-card-alt rounded-2xl py-16 text-center text-[14px] text-muted">Loading the books…</div>
       ) : tab === "overview" ? (
         <Overview
@@ -279,7 +336,7 @@ function AiAccountant() {
           }}
         />
       ) : tab === "transactions" ? (
-        <TxnTable txns={txns} clientName={clientName} matterName={matterName} onOpen={(t) => setModal({ kind: "txn", txn: t })} onCategory={(t, c) => patch(t, { category: c, status: "ready" })} />
+        <TxnTable txns={opTxns} clientName={clientName} matterName={matterName} onOpen={(t) => setModal({ kind: "txn", txn: t })} onCategory={(t, c) => patch(t, { category: c, status: "ready" })} />
       ) : (
         <Reports s={s} time={time} clientName={clientName} matterName={matterName} />
       )}

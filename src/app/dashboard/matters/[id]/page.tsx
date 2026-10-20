@@ -1,5 +1,7 @@
 "use client";
 
+import InvoicesPanel from "@/components/invoices/InvoicesPanel";
+import { money as invMoney } from "@/components/invoices/shared";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter , useSearchParams } from "next/navigation";
@@ -473,6 +475,15 @@ export default function MatterDetailPage() {
                 </div>
 
                 <div className="text-[13px] text-muted pt-1">0 time entries</div>
+
+                {/* Invoices for this matter (they also show in AI Accountant → Operating → Invoices). */}
+                <div className="border-t border-line pt-5">
+                  <div className="text-[14px] font-semibold mb-3 flex items-center gap-2">
+                    Invoices
+                    <MatterTrustBalance matterId={matter.id} />
+                  </div>
+                  <InvoicesPanel matters={matters} clientName={(id) => clients.find((c) => c.id === id)?.name ?? ""} matterId={matter.id} compact />
+                </div>
               </div>
             </div>
           </div>
@@ -549,5 +560,29 @@ export default function MatterDetailPage() {
         />
       )}
     </div>
+  );
+}
+
+// "In trust: $X" next to Invoices, when this matter has money in trust.
+function MatterTrustBalance({ matterId }: { matterId: string }) {
+  const [bal, setBal] = useState<number | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/accounting/trust")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { balances?: { matterId: string | null; balance: number }[] } | null) => {
+        if (!live || !d?.balances) return;
+        setBal(d.balances.find((b) => b.matterId === matterId)?.balance ?? 0);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [matterId]);
+  if (!bal) return null;
+  return (
+    <span className="ml-auto text-[12.5px] font-medium bg-card-alt rounded-md px-2 py-0.5" title="Client money held in trust for this matter (AI Accountant → Trust)">
+      In trust: {invMoney(bal)}
+    </span>
   );
 }

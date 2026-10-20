@@ -58,7 +58,7 @@ const input = z.object({
   status: z.enum(["needs_review", "ready", "excluded"]).default("ready"),
   receiptPath: z.string().max(300).nullable().default(null),
   receiptName: z.string().max(200).nullable().default(null),
-  source: z.enum(["manual", "receipt", "bank_import"]).default("manual"),
+  source: z.enum(["manual", "receipt", "bank_import", "invoice"]).default("manual"),
   aiConfidence: z.number().min(0).max(1).nullable().default(null),
   aiReason: z.string().max(500).default(""),
 });
@@ -152,9 +152,24 @@ export async function createTxn(body: unknown): Promise<Txn> {
   return toTxn(data as Row);
 }
 
+// Payments recorded on an invoice keep the invoice's numbers right: their amount,
+// account and direction can't be changed here, and they can't be deleted here.
+async function invoicePaymentOf(orgId: string, id: string) {
+  const { data } = await createAdminClient().from("acct_transactions").select("source, amount, account, kind").eq("id", id).eq("org_id", orgId).maybeSingle();
+  return data && (data as { source: string }).source === "invoice" ? (data as { amount: number; account: string; kind: string }) : null;
+}
+const PAYMENT_LOCKED = "This was recorded as a payment on an invoice, so its amount, account and type can't be changed here (the invoice would be wrong). Notes, category and matter can be changed.";
+
 export async function updateTxn(id: string, body: unknown): Promise<Txn> {
   const { orgId } = await ctx();
   const v = parse(body, true);
+  const pay = await invoicePaymentOf(orgId, id);
+  if (
+    pay &&
+    ((v.amount !== undefined && Math.abs(v.amount - Number(pay.amount)) > 0.001) || (v.account !== undefined && v.account !== pay.account) || (v.kind !== undefined && v.kind !== pay.kind))
+  ) {
+    throw new AcctError(400, PAYMENT_LOCKED);
+  }
   receiptBelongs(v.receiptPath, orgId);
   await checkLinks(orgId, v);
   const { data, error } = await createAdminClient()
@@ -175,18 +190,21 @@ export async function updateTxn(id: string, body: unknown): Promise<Txn> {
 export async function bulkUpdate(ids: string[], body: unknown): Promise<number> {
   const { orgId } = await ctx();
   const v = parse(body, true);
-  const { data, error } = await createAdminClient()
+  let q = createAdminClient()
     .from("acct_transactions")
     .update({ ...toRow(v), updated_at: new Date().toISOString() })
     .eq("org_id", orgId)
-    .in("id", ids.slice(0, 1000))
-    .select("id");
+    .in("id", ids.slice(0, 1000));
+  // Invoice payments keep their amount, account and type (see updateTxn).
+  if (v.amount !== undefined || v.account !== undefined || v.kind !== undefined) q = q.neq("source", "invoice");
+  const { data, error } = await q.select("id");
   if (error) throw error;
   return data?.length ?? 0;
 }
 
 export async function deleteTxn(id: string) {
   const { orgId } = await ctx();
+  if (await invoicePaymentOf(orgId, id)) throw new AcctError(400, "This was recorded as a payment on an invoice, so it can't be deleted here.");
   const s = createAdminClient();
   const { data } = await s.from("acct_transactions").delete().eq("id", id).eq("org_id", orgId).select("receipt_path").maybeSingle();
   if (data?.receipt_path) await s.storage.from(RECEIPTS_BUCKET).remove([data.receipt_path]);

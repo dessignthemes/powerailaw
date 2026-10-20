@@ -20,7 +20,7 @@ export type Txn = {
   reimbursable: boolean;
   notes: string;
   status: Status;
-  source: "manual" | "receipt" | "bank_import";
+  source: "manual" | "receipt" | "bank_import" | "invoice"; // invoice = written by LawPower when an invoice payment is recorded
   receiptPath: string | null;
   receiptName: string | null;
   aiConfidence: number | null;
