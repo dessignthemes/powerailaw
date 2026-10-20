@@ -193,3 +193,21 @@ export async function setGmailRead(token: string, id: string, read: boolean): Pr
   });
   if (!res.ok) throw new MailError("provider_error", `Gmail didn't update read / unread (${res.status}).`);
 }
+
+// One attachment's bytes, by its position in the message's attachment list.
+export async function getGmailAttachment(token: string, id: string, index: number) {
+  if (!/^[A-Za-z0-9_-]+$/.test(id)) throw new MailError("provider_error", "Invalid message id.");
+  const m = await gmail<GmailMsg>(token, `/messages/${id}?format=full`);
+  const parts: { name: string; mimeType: string; attachmentId: string }[] = [];
+  const walk = (p: Part | undefined) => {
+    if (!p) return;
+    if (p.filename && p.body?.attachmentId) parts.push({ name: p.filename, mimeType: p.mimeType ?? "", attachmentId: p.body.attachmentId });
+    (p.parts ?? []).forEach(walk);
+  };
+  walk(m.payload);
+  const part = parts[index];
+  if (!part) throw new MailError("provider_error", "That attachment wasn't found.");
+  const d = await gmail<{ data?: string }>(token, `/messages/${id}/attachments/${encodeURIComponent(part.attachmentId)}`);
+  const bytes = new Uint8Array(Buffer.from((d.data ?? "").replace(/-/g, "+").replace(/_/g, "/"), "base64"));
+  return { name: part.name, mimeType: part.mimeType || "application/octet-stream", bytes };
+}

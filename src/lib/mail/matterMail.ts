@@ -2,8 +2,10 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAccessToken, MailError } from "@/lib/mail/tokens";
 import { getUserConnections } from "@/lib/data/oauth";
-import { listGmail, getGmail, listGmailThreadIds } from "@/lib/mail/google";
-import { listOutlook, getOutlook, listOutlookThreadIds } from "@/lib/mail/microsoft";
+import { listGmail, getGmail, listGmailThreadIds, getGmailAttachment } from "@/lib/mail/google";
+import { listOutlook, getOutlook, listOutlookThreadIds, getOutlookAttachment } from "@/lib/mail/microsoft";
+import { createDocumentFromUpload, newStoragePath, DOCUMENTS_BUCKET } from "@/lib/data/documents";
+import { fileTypeFromName, FILE_TYPES, MAX_DOCUMENT_BYTES } from "@/lib/documents/fileTypes";
 import { matterTag } from "@/lib/mail/matterTag";
 import { matterNumberOf } from "@/lib/ai/keyDates";
 import type { MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
@@ -252,7 +254,67 @@ export async function tagEmail(orgId: string, userId: string, provider: MailProv
   const { token, email } = await getAccessToken(userId, provider);
   const msg = await fetchFull(provider, token, messageId, email);
   await saveEmail({ orgId, userId, matterId, provider, mailbox: email, msg, source: "tagged", move: true });
-  return matter;
+  const attachments = await copyAttachments({ orgId, userId, userEmail: email, matterId, provider, token, messageId, msg });
+  return { ...matter, attachments };
+}
+
+// Filing an email on a matter also puts its attachments in the matter's
+// Documents (once: filing the same email again doesn't add copies).
+async function copyAttachments(o: {
+  orgId: string;
+  userId: string;
+  userEmail: string | null;
+  matterId: string;
+  provider: MailProvider;
+  token: string;
+  messageId: string;
+  msg: MailMessage;
+}) {
+  const added: string[] = [];
+  const skipped: { name: string; why: string }[] = [];
+  if (!o.msg.attachments.length) return { added, skipped };
+  const note = `Attachment from email: ${o.msg.subject || "(no subject)"} (${o.msg.from || "unknown sender"})`.slice(0, 300);
+
+  // Already on this matter from this email?
+  const { data: existing } = await db()
+    .from("documents")
+    .select("title, document_versions(note)")
+    .eq("org_id", o.orgId)
+    .eq("matter_id", o.matterId)
+    .in("title", o.msg.attachments.map((a) => a.name.slice(0, 200)));
+  const already = new Set(
+    ((existing ?? []) as { title: string; document_versions?: { note: string | null }[] }[])
+      .filter((d) => (d.document_versions ?? []).some((v) => v.note === note))
+      .map((d) => d.title)
+  );
+
+  for (let i = 0; i < o.msg.attachments.length; i++) {
+    const a = o.msg.attachments[i];
+    const name = a.name.slice(0, 200);
+    if (already.has(name)) continue;
+    const type = fileTypeFromName(name);
+    if (!type) {
+      skipped.push({ name, why: "this kind of file can't be stored in Documents" });
+      continue;
+    }
+    if (a.size > MAX_DOCUMENT_BYTES) {
+      skipped.push({ name, why: "it's over 25 MB" });
+      continue;
+    }
+    try {
+      const file = o.provider === "google" ? await getGmailAttachment(o.token, o.messageId, i) : await getOutlookAttachment(o.token, o.messageId, i);
+      if (file.bytes.length > MAX_DOCUMENT_BYTES) throw new Error("too big");
+      const path = newStoragePath(o.orgId, o.matterId, type);
+      const up = await db().storage.from(DOCUMENTS_BUCKET).upload(path, file.bytes, { contentType: FILE_TYPES[type].mime, upsert: false });
+      if (up.error) throw up.error;
+      await createDocumentFromUpload({ orgId: o.orgId, matterId: o.matterId, userId: o.userId, userEmail: o.userEmail, title: name, path, note });
+      added.push(name);
+    } catch (e) {
+      console.error("Copying an email attachment to Documents failed:", e);
+      skipped.push({ name, why: "the file couldn't be read (it may be damaged or password-protected)" });
+    }
+  }
+  return { added, skipped };
 }
 
 // ── Matter ────────────────────────────────────────────────────────────────

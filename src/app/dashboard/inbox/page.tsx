@@ -27,6 +27,7 @@ import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/Compose
 import CreateTaskFromEmail, { htmlToText } from "@/components/mail/CreateTaskFromEmail";
 import type { MailFolder, MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
 import FolderPanel from "@/components/mail/FolderPanel";
+import AttachmentPreview from "@/components/mail/AttachmentPreview";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 
 // Folder panel preferences live in this browser (they're just layout choices).
@@ -149,6 +150,7 @@ function FileToMatter({
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const list = matters
     .filter((m) => m.status !== "Closed" || m.id === current?.id)
     .filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase()))
@@ -169,6 +171,13 @@ function FileToMatter({
       const m = matterId ? matters.find((x) => x.id === matterId) : null;
       onChange(m ? { id: m.id, number: m.matterNumber ?? null, title: m.title } : null);
       setOpen(false);
+      const att = d?.matter?.attachments as { added: string[]; skipped: { name: string; why: string }[] } | undefined;
+      if (m && att) {
+        const parts: string[] = [];
+        if (att.added.length) parts.push(`${att.added.length} attachment${att.added.length === 1 ? "" : "s"} added to the matter's Documents`);
+        if (att.skipped.length) parts.push(`not added: ${att.skipped.map((x) => `${x.name} (${x.why})`).join("; ")}`);
+        setNotice(parts.length ? `Filed. ${parts.join(". ")}.` : "Filed. The attachments were already in the matter's Documents.");
+      } else setNotice(null);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -199,6 +208,14 @@ function FileToMatter({
         </button>
       )}
       {error && <div className="absolute left-0 top-full mt-1 text-[12px] text-[#B42318] whitespace-nowrap">{error}</div>}
+      {notice && !error && (
+        <div className="absolute left-0 top-full mt-1 z-30 w-[360px] bg-white border border-line rounded-xl shadow-sm px-3 py-2 text-[12.5px] flex gap-2">
+          <span className="flex-1">{notice}</span>
+          <button onClick={() => setNotice(null)} aria-label="Dismiss" className="text-muted hover:text-ink flex-shrink-0">
+            <X size={12} />
+          </button>
+        </div>
+      )}
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
@@ -239,6 +256,7 @@ export default function InboxPage() {
   // New email / forward (opens in the person's Gmail or Outlook) and "Turn into task".
   const [composing, setComposing] = useState<"new" | "forward" | null>(null);
   const [taskFrom, setTaskFrom] = useState<MailSummary | null>(null);
+  const [previewAtt, setPreviewAtt] = useState<{ provider: MailProvider; messageId: string; index: number; attachment: MailMessage["attachments"][number] } | null>(null);
   const [actionNote, setActionNote] = useState<string | null>(null);
   const [conns, setConns] = useState<Conn[] | null>(null);
   const [statusError, setStatusError] = useState<Problem | null>(null);
@@ -572,6 +590,15 @@ export default function InboxPage() {
           />
         );
       })()}
+      {previewAtt && (
+        <AttachmentPreview
+          provider={previewAtt.provider}
+          messageId={previewAtt.messageId}
+          index={previewAtt.index}
+          attachment={previewAtt.attachment}
+          onClose={() => setPreviewAtt(null)}
+        />
+      )}
       {taskFrom && provider && (
         <CreateTaskFromEmail
           email={taskFrom}
@@ -918,6 +945,7 @@ export default function InboxPage() {
                     })()}
                     {provider && (
                       <FileToMatter
+                        key={message.id}
                         provider={provider}
                         messageId={message.id}
                         current={messages.find((x) => x.id === message.id)?.matter ?? null}
@@ -928,11 +956,16 @@ export default function InboxPage() {
                   {message.attachments.length > 0 && (
                     <div className="flex gap-2 flex-wrap mt-3">
                       {message.attachments.map((a, i) => (
-                        <span key={i} className="flex items-center gap-1.5 text-[12.5px] bg-white border border-line rounded-lg px-2.5 py-1">
+                        <button
+                          key={i}
+                          onClick={() => provider && setPreviewAtt({ provider, messageId: message.id, index: i, attachment: a })}
+                          title={`Preview ${a.name}`}
+                          className="flex items-center gap-1.5 text-[12.5px] bg-white border border-line rounded-lg px-2.5 py-1 hover:bg-chip hover:border-btn transition-colors"
+                        >
                           <Paperclip size={12} className="text-muted" />
                           <span className="max-w-[220px] truncate">{a.name}</span>
                           <span className="text-muted">{sizeLabel(a.size)}</span>
-                        </span>
+                        </button>
                       ))}
                     </div>
                   )}

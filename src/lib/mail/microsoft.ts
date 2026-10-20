@@ -167,3 +167,25 @@ export async function setOutlookRead(token: string, id: string, read: boolean): 
   });
   if (!res.ok) throw new MailError("provider_error", `Outlook didn't update read / unread (${res.status}).`);
 }
+
+// One attachment's bytes, by its position in the message's attachment list
+// (the same order the message view shows them in).
+export async function getOutlookAttachment(token: string, id: string, index: number) {
+  if (!/^[A-Za-z0-9_=+/-]+$/.test(id)) throw new MailError("provider_error", "Invalid message id.");
+  const enc = encodeURIComponent(id);
+  const a = await graph<{ value: { id: string; name: string; size: number; contentType: string; isInline?: boolean; "@odata.type"?: string }[] }>(
+    token,
+    `/me/messages/${enc}/attachments?$select=id,name,size,contentType,isInline`
+  );
+  const att = a.value.filter((x) => !x.isInline)[index];
+  if (!att) throw new MailError("provider_error", "That attachment wasn't found.");
+  if (att["@odata.type"] && !/fileAttachment/i.test(att["@odata.type"])) {
+    throw new MailError("provider_error", "This attachment is a linked item, not a file.");
+  }
+  const res = await fetchWithRetry(`${GRAPH}/me/messages/${enc}/attachments/${encodeURIComponent(att.id)}/$value`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new MailError("provider_error", "Outlook didn't send the attachment. Please try again.");
+  return { name: att.name, mimeType: att.contentType || "application/octet-stream", bytes: new Uint8Array(await res.arrayBuffer()) };
+}

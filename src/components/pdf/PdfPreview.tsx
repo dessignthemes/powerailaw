@@ -10,12 +10,15 @@ import { fetchVersionBytes, versionDownloadUrl } from "@/lib/pdf/upload";
 export default function PdfPreview({
   documentId,
   versionId,
+  source,
   title,
   subtitle,
   onClose,
 }: {
-  documentId: string;
-  versionId: string;
+  documentId?: string;
+  versionId?: string;
+  // A PDF that isn't in Documents yet (e.g. an email attachment): where to read it and download it.
+  source?: { url: string; downloadUrl: string };
   title: string;
   subtitle?: string;
   onClose: () => void;
@@ -28,13 +31,22 @@ export default function PdfPreview({
 
   useEffect(() => {
     let live = true;
-    fetchVersionBytes(versionId)
+    const load = source
+      ? fetch(source.url).then(async (r) => {
+          if (!r.ok) {
+            const d = await r.json().catch(() => ({}));
+            throw new Error(d?.error ?? "");
+          }
+          return new Uint8Array(await r.arrayBuffer());
+        })
+      : fetchVersionBytes(versionId ?? "");
+    load
       .then((b) => live && setBytes(b))
-      .catch(() => live && setError("The PDF couldn't be loaded. Try Download instead."));
+      .catch((e: Error) => live && setError(e?.message || "The PDF couldn't be loaded. Try Download instead."));
     return () => {
       live = false;
     };
-  }, [versionId]);
+  }, [versionId, source?.url]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Page width follows the window (and the zoom).
   useEffect(() => {
@@ -62,7 +74,7 @@ export default function PdfPreview({
 
   async function download() {
     try {
-      window.location.assign(await versionDownloadUrl(versionId, true));
+      window.location.assign(source ? source.downloadUrl : await versionDownloadUrl(versionId ?? "", true));
     } catch {
       setError("The download couldn't start. Please try again.");
     }
@@ -91,12 +103,14 @@ export default function PdfPreview({
               <ZoomIn size={15} strokeWidth={1.75} />
             </button>
           </div>
+          {documentId && versionId && (
           <Link
             href={`/dashboard/power-pdf/${documentId}?version=${versionId}`}
             className="bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5"
           >
             <PenLine size={13} strokeWidth={2} /> Open in Power PDF
           </Link>
+          )}
           <button onClick={() => void download()} className="bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5">
             <Download size={13} strokeWidth={2} /> Download
           </button>
