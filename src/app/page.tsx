@@ -126,12 +126,12 @@ export default function Home() {
             <a href="/portal/login" className="border border-ink text-ink px-3.5 sm:px-4 py-[7px] rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-ink hover:text-white transition-colors">
               Client login
             </a>
-            <a href="/login" className="hidden sm:inline bg-[#ECECEC] text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-[#DEDEDE] transition-colors">
+            <Link href="/" className="hidden sm:inline bg-[#ECECEC] text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-[#DEDEDE] transition-colors">
               Sign in
-            </a>
-            <a href="/connect" className="bg-dark text-white px-3.5 sm:px-4 py-2 rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-dark2 transition-colors">
+            </Link>
+            <Link href="/" className="bg-dark text-white px-3.5 sm:px-4 py-2 rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-dark2 transition-colors">
               Get started
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -157,9 +157,9 @@ export default function Home() {
               move faster and give every client better service &ndash; built by lawyers, for lawyers.
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
-              <a href="/connect" className="bg-white text-ink px-6 py-3.5 rounded-lg text-[15.5px] font-medium hover:bg-[#ECEDEF] transition-colors">
+              <Link href="/" className="bg-white text-ink px-6 py-3.5 rounded-lg text-[15.5px] font-medium hover:bg-[#ECEDEF] transition-colors">
                 Start Free Trial
-              </a>
+              </Link>
               <a href="#features" className="border border-white/80 text-white px-6 py-3.5 rounded-lg text-[15.5px] font-medium hover:bg-white/10 transition-colors">
                 Explore Features
               </a>
@@ -409,12 +409,12 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <a
-                href="/connect"
+              <Link
+                href="/"
                 className="bg-dark text-white py-3.5 rounded-full text-[15px] font-semibold text-center hover:bg-dark2 transition-colors mt-auto"
               >
                 Start 7-day free trial
-              </a>
+              </Link>
             </div>
 
             {/* Monthly */}
@@ -441,12 +441,12 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <a
-                href="/connect"
+              <Link
+                href="/"
                 className="bg-white text-ink py-3.5 rounded-full text-[15px] font-semibold text-center hover:bg-cream transition-colors mt-auto"
               >
                 Start free trial
-              </a>
+              </Link>
             </div>
 
             {/* Yearly */}
@@ -476,12 +476,12 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <a
-                href="/connect"
+              <Link
+                href="/"
                 className="bg-dark text-white py-3.5 rounded-full text-[15px] font-semibold text-center hover:bg-dark2 transition-colors mt-auto"
               >
                 Start free trial
-              </a>
+              </Link>
             </div>
           </div>
         </div>

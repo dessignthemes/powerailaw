@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Play, X } from "lucide-react";
@@ -65,9 +66,9 @@ export default function SeeInAction({ variant = "card" }: { variant?: "card" | "
                   <div className="text-white/70 text-[15px] mt-2 max-w-[440px]">
                     A short walkthrough of LawPower AI is on its way. In the meantime, start a free trial and see it for yourself.
                   </div>
-                  <a href="/connect" className="mt-6 bg-white text-ink px-5 py-3 rounded-lg text-[15px] font-medium hover:bg-[#ECEDEF] transition-colors">
+                  <Link href="/" onClick={() => setOpen(false)} className="mt-6 bg-white text-ink px-5 py-3 rounded-lg text-[15px] font-medium hover:bg-[#ECEDEF] transition-colors">
                     Start Free Trial
-                  </a>
+                  </Link>
                 </div>
               </>
             )}
