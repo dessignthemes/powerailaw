@@ -18,6 +18,7 @@ import {
   Bookmark,
   Folder,
   ShieldCheck,
+  PieChart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,6 +29,7 @@ export type NavSection = { title: string | null; links: NavLink[] };
 // Community and Clients are off the menu for now (their pages still exist).
 export const mainLinks: NavLink[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
+  { label: "Reports", href: "/dashboard/reports", icon: PieChart },
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Matters", href: "/dashboard/matters", icon: Folder },
   { label: "Contacts", href: "/dashboard/records", icon: Bookmark },
