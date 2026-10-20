@@ -62,7 +62,9 @@ export async function logEvent(u: { id: string; org_id: string }, type: string, 
 }
 export async function firmName(orgId: string) {
   const { data } = await db().from("organizations").select("name").eq("id", orgId).maybeSingle();
-  return (data?.name as string | undefined) ?? "Your law firm";
+  // New workspaces start with the owner's email as a placeholder name: not a firm name.
+  const n = ((data?.name as string | undefined) ?? "").trim();
+  return !n || n.includes("@") || /^my (workspace|firm)$/i.test(n) ? "Your law firm" : n;
 }
 
 // ── Firm side ─────────────────────────────────────────────────────────────
@@ -90,6 +92,7 @@ export async function portalStatus(clientId: string) {
     : { data: [] };
   return {
     clientEmail: client.email,
+    matterCount: ids.length, // 0 = the portal shows only the intake sheet
     access: user
       ? {
           email: user.email,

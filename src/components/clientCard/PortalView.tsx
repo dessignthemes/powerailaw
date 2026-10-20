@@ -5,6 +5,7 @@ import { Copy, Check, Mail, Loader2, KeyRound, ShieldCheck, UserX, UserCheck, Ex
 
 type Status = {
   clientEmail: string | null;
+  matterCount?: number;
   access: { email: string; status: "invited" | "active" | "disabled"; invitedAt: string | null; inviteExpiresAt: string | null; lastLoginAt: string | null; hasPassword: boolean } | null;
   sharedDocumentIds: string[];
   events: { type: string; documentTitle: string | null; at: string }[];
@@ -127,6 +128,13 @@ export default function PortalView({ clientId, defaultEmail, defaultName }: { cl
       </p>
 
       {error && <div className="mb-4 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13.5px]">{error}</div>}
+
+      {status?.matterCount === 0 && (
+        <div className="mb-5 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13.5px] max-w-[620px]">
+          <b>This client has no matter yet</b>, so their portal only shows the intake sheet. Open a matter for them (Matters → New matter, with this
+          client) and their portal will show the file&apos;s status, key dates, details, the people involved, secure messages and shared documents.
+        </div>
+      )}
 
       {status === null && !error ? (
         <div className="text-[13.5px] text-muted flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Loading…</div>

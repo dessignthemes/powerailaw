@@ -20,6 +20,9 @@ const fmtSize = (n: number) => (n < 1024 ** 2 ? `${Math.max(1, Math.round(n / 10
 const fmtDate = (s: string) => new Date(s).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 const previewable = (t: string) => ["pdf", "png", "jpg", "jpeg", "gif", "webp", "txt"].includes(t.toLowerCase());
 
+// The stock "Your law firm" (firm name not set yet) reads better in lower case mid-sentence.
+const inSentence = (firm: string) => (firm === "Your law firm" ? "your law firm" : firm);
+
 export default function PortalHome() {
   const router = useRouter();
   const [home, setHome] = useState<Home | null>(null);
@@ -73,7 +76,7 @@ export default function PortalHome() {
         ) : (
           <>
             <h1 className="text-[28px] font-semibold">Hello{home.clientName ? `, ${home.clientName.split(" ")[0]}` : ""}</h1>
-            <p className="text-[14px] text-muted mt-1 mb-8">Your secure messages and the documents {home.firm} has shared with you.</p>
+            <p className="text-[14px] text-muted mt-1 mb-8">Your secure messages and the documents {inSentence(home.firm)} has shared with you.</p>
             {missing && <div className="mb-5 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13.5px]">That document isn’t available anymore. Your law firm may have stopped sharing it.</div>}
 
             {!home.isParty && (
@@ -81,12 +84,27 @@ export default function PortalHome() {
               <ClipboardList size={20} className="text-muted flex-shrink-0" />
               <div className="flex-1 min-w-[220px]">
                 <div className="text-[15px] font-semibold">Your intake sheet</div>
-                <div className="text-[13px] text-muted">Check your details and fill in anything that&apos;s missing, so {home.firm} has everything up to date.</div>
+                <div className="text-[13px] text-muted">Check your details and fill in anything that&apos;s missing, so {inSentence(home.firm)} has everything up to date.</div>
               </div>
               <Link href="/portal/intake" className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium">
                 Complete intake sheet
               </Link>
             </div>
+            )}
+            {home.matters.length === 0 && (
+              <section className="mb-8">
+                <h2 className="text-[15px] font-semibold mb-2.5" style={{ letterSpacing: 0 }}>Your files</h2>
+                <div className="bg-card-alt rounded-2xl px-6 py-8 flex gap-4 items-start">
+                  <Folder size={20} className="text-muted flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-[15px] font-medium">Your file isn&apos;t set up here yet</div>
+                    <div className="text-[13.5px] text-muted mt-1 max-w-[600px]">
+                      Once {inSentence(home.firm)} opens your file, you&apos;ll see its status step by step, the key dates and details, the people involved, and a secure
+                      place to message your attorney and send documents.
+                    </div>
+                  </div>
+                </div>
+              </section>
             )}
             {home.matters.length > 0 && (
               <section className="mb-6">
@@ -109,7 +127,7 @@ export default function PortalHome() {
               <div className="bg-card-alt rounded-2xl px-6 py-14 text-center">
                 <FileText size={22} className="mx-auto text-muted mb-3" />
                 <div className="text-[15px] font-medium">No documents yet</div>
-                <div className="text-[13.5px] text-muted mt-1">When {home.firm} shares a document with you, it will appear here.</div>
+                <div className="text-[13.5px] text-muted mt-1">When {inSentence(home.firm)} shares a document with you, it will appear here.</div>
               </div>
             ) : (
               <div className="flex flex-col gap-6">
