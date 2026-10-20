@@ -56,14 +56,16 @@ import {
 
 const DISPLAY_KEY = "lawpower.taskboard.display";
 
-// Columns are at most 280px wide: a large screen shows 7-8 of them, a smaller one
-// about four (a quarter of the board each, never under 224px). More columns sit
-// off to the right; the board scrolls sideways.
-const VISIBLE_COLUMNS = 4;
-const COLUMN_MIN = 224; // on small screens fewer than 4 fit
-const COLUMN_MAX = 280;
-const COLUMN_GAP = 16;
-const COLUMN_WIDTH = `min(${COLUMN_MAX}px, calc((100% - ${(VISIBLE_COLUMNS - 1) * COLUMN_GAP}px) / ${VISIBLE_COLUMNS}))`;
+// Columns are 206-218px wide (just enough for a card title like "Walsh: REP-2026-3695"
+// on one line, next to its menu): a sixth of the board each, but never under 206px on
+// small laptops or over 218px on big monitors. A 13" laptop shows about 4-5 columns,
+// a large monitor 9-10.
+// More columns sit off to the right; the board scrolls sideways.
+const VISIBLE_COLUMNS = 6;
+const COLUMN_MIN = 206;
+const COLUMN_MAX = 218;
+const COLUMN_GAP = 14;
+const COLUMN_WIDTH = `clamp(${COLUMN_MIN}px, calc((100% - ${(VISIBLE_COLUMNS - 1) * COLUMN_GAP}px) / ${VISIBLE_COLUMNS}), ${COLUMN_MAX}px)`;
 
 // Collapsed columns are remembered per board in this browser.
 const collapsedKey = (board: string) => `lawpower.taskboard.collapsed.${board}`;
@@ -236,8 +238,10 @@ function TaskBoard({
   function scrollByColumn(dir: 1 | -1) {
     const el = scrollerRef.current;
     if (!el) return;
-    const step = (el.clientWidth - (VISIBLE_COLUMNS - 1) * COLUMN_GAP) / VISIBLE_COLUMNS + COLUMN_GAP;
-    el.scrollBy({ left: dir * Math.max(step, COLUMN_MIN + COLUMN_GAP), behavior: "smooth" });
+    // One column at a time, whatever width the columns have on this screen.
+    const full = Array.from(el.children).find((c) => (c as HTMLElement).offsetWidth >= COLUMN_MIN - 1) as HTMLElement | undefined;
+    const step = (full?.offsetWidth || COLUMN_MIN) + COLUMN_GAP;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
   }
 
   function jumpTo(id: string) {
@@ -1360,7 +1364,7 @@ function TaskBoard({
                 {/* More than 5 cards: about 5 show, the rest scroll (visible scroll bar);
                     "Add a task" stays pinned at the bottom. */}
                 <div
-                  className={`px-3 pt-1.5 -mt-1.5 flex-1 min-h-0 overflow-y-auto flex flex-col ${colTasks.length > 5 ? "scroll-on-hover pr-1.5" : "pb-3"}`}
+                  className={`px-2.5 pt-1.5 -mt-1.5 flex-1 min-h-0 overflow-y-auto flex flex-col ${colTasks.length > 5 ? "scroll-on-hover pr-1" : "pb-3"}`}
                   style={colTasks.length > 5 ? { maxHeight: 560 } : undefined}
                 >
                   {colTasks.length === 0 && inlineAddFor !== col.id ? (
@@ -1427,7 +1431,7 @@ function TaskBoard({
                             const target = upper ? t.id : (colTasks[i + 1]?.id ?? null);
                             if (dropBefore !== target) setDropBefore(target);
                           }}
-                          className={`${dragId === t.id ? "opacity-40" : ""} relative bg-page rounded-xl px-3.5 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.08),0_1px_2px_rgba(27,25,26,0.04)] hover:shadow-[0_4px_12px_rgba(27,25,26,0.10),0_2px_4px_rgba(27,25,26,0.05)] transition-shadow`}
+                          className={`${dragId === t.id ? "opacity-40" : ""} relative bg-page rounded-xl px-3 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.08),0_1px_2px_rgba(27,25,26,0.04)] hover:shadow-[0_4px_12px_rgba(27,25,26,0.10),0_2px_4px_rgba(27,25,26,0.05)] transition-shadow`}
                         >
                           {dragId && dragId !== t.id && dropCol === col.id && dropBefore === t.id && (
                             <span className="absolute left-1 right-1 -top-[5.5px] h-[3px] rounded-full bg-[#3B82F6] pointer-events-none" aria-hidden />
@@ -1435,7 +1439,7 @@ function TaskBoard({
                           {dragId && dragId !== t.id && dropCol === col.id && dropBefore === null && t.id === colTasks[colTasks.length - 1]?.id && (
                             <span className="absolute left-1 right-1 -bottom-[5.5px] h-[3px] rounded-full bg-[#3B82F6] pointer-events-none" aria-hidden />
                           )}
-                          <div className="flex items-start justify-between gap-2 mb-2.5">
+                          <div className="flex items-start justify-between gap-1.5 mb-2.5">
                             <div className="min-w-0">
                               <div className="text-[13px] font-normal leading-snug line-clamp-2 break-words" title={t.title}>{t.title}</div>
                               {t.status !== "done" && (
