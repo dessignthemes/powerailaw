@@ -90,7 +90,6 @@ const pricingMonthly = [
 
 const pricingYearly = [
   "Everything in Monthly",
-  "2 months free",
   "Priority onboarding support",
   "Annual usage report for your firm",
 ];
@@ -423,10 +422,7 @@ export default function Home() {
                 <div className="text-[13px] font-semibold text-muted-light uppercase tracking-wide mb-4">
                   Monthly
                 </div>
-                <div className="flex items-baseline gap-2.5">
-                  <div className="font-display text-5xl font-semibold text-white">$199</div>
-                  <div className="text-muted-light text-[15px]">/ month</div>
-                </div>
+                <div className="font-display text-4xl font-semibold text-white">Get Pricing</div>
                 <div className="text-muted-light text-[14.5px] leading-relaxed mt-2.5">
                   Billed monthly. Cancel anytime.
                 </div>
@@ -452,18 +448,15 @@ export default function Home() {
             {/* Yearly */}
             <div className="bg-cream text-ink rounded-3xl p-10 flex flex-col gap-6 relative">
               <div className="absolute -top-3 right-8 bg-dark text-white text-[11.5px] font-semibold px-3 py-1.5 rounded-full">
-                2 months free
+                Best value
               </div>
               <div>
                 <div className="text-[13px] font-semibold text-muted uppercase tracking-wide mb-4">
                   Yearly
                 </div>
-                <div className="flex items-baseline gap-2.5">
-                  <div className="font-display text-5xl font-semibold text-ink">$1,990</div>
-                  <div className="text-muted text-[15px]">/ year</div>
-                </div>
+                <div className="font-display text-4xl font-semibold text-ink">Get Pricing</div>
                 <div className="text-muted text-[14.5px] leading-relaxed mt-2.5">
-                  Equivalent to $165.83/month — 2 months free versus paying monthly.
+                  Billed yearly, at a lower price than paying monthly.
                 </div>
               </div>
               <div className="flex flex-col gap-3">
