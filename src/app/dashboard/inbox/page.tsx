@@ -29,6 +29,8 @@ import CreateTaskFromEmail, { htmlToText } from "@/components/mail/CreateTaskFro
 import type { MailFolder, MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
 import FolderPanel from "@/components/mail/FolderPanel";
 import AttachmentPreview from "@/components/mail/AttachmentPreview";
+import { emailDocument } from "@/lib/mail/emailDocument";
+import { AutoHeightFrame, ThreadView } from "@/components/mail/ThreadView";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 
 // Folder panel preferences live in this browser (they're just layout choices).
@@ -118,20 +120,6 @@ function when(iso: string) {
 function sizeLabel(n: number) {
   if (n < 1024 * 1024) return `${Math.max(1, Math.round(n / 1024))} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-// Email HTML runs in a sandboxed iframe: no scripts, no access to the app,
-// links open in a new tab, and remote images stay blocked until the person
-// asks for them (they're often used to track when an email is opened).
-function emailDocument(msg: MailMessage, showImages: boolean) {
-  const img = showImages ? "img-src data: cid: https: http:;" : "img-src data: cid:;";
-  const csp = `default-src 'none'; ${img} style-src 'unsafe-inline' https:; font-src https: data:;`;
-  const body = msg.html ?? `<pre style="white-space:pre-wrap;font:14px/1.55 -apple-system,Segoe UI,Arial,sans-serif;margin:0">${escapeHtml(msg.text ?? "")}</pre>`;
-  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}"><base target="_blank"><style>body{margin:0;padding:20px 24px;font:14px/1.55 -apple-system,"Segoe UI",Arial,sans-serif;color:#1a1917;word-wrap:break-word}img{max-width:100%;height:auto}table{max-width:100%}</style></head><body>${body}</body></html>`;
 }
 
 // Files the open email on a matter (or takes it off). Saved emails show on the matter's Emails tab.
@@ -307,6 +295,14 @@ export default function InboxPage() {
       return false;
     }
   });
+  // Conversations (like Outlook): one line per conversation in the list, and the
+  // whole thread under the open email. On by default; remembered on this computer.
+  const [threaded, setThreaded] = useState<boolean>(() => readPref("lawpower.inbox.conversations") !== "0");
+  const toggleThreaded = () =>
+    setThreaded((v) => {
+      writePref("lawpower.inbox.conversations", v ? "0" : "1");
+      return !v;
+    });
   const toggleUnread = () =>
     setUnreadOnly((v) => {
       try {
@@ -360,7 +356,23 @@ export default function InboxPage() {
     []
   );
 
-  const shown = unreadOnly ? messages.filter((m) => m.unread || m.id === selectedId) : messages;
+  const filtered = unreadOnly ? messages.filter((m) => m.unread || m.id === selectedId) : messages;
+  // One line per conversation: its newest email, how many are listed, and unread
+  // if any of them is.
+  const groups = useMemo(() => {
+    if (!threaded) return null;
+    const by = new Map<string, MailSummary[]>();
+    for (const m of filtered) {
+      const k = m.threadId ? `t:${m.threadId}` : `m:${m.id}`;
+      const g = by.get(k);
+      if (g) g.push(m);
+      else by.set(k, [m]);
+    }
+    return by;
+  }, [filtered, threaded]);
+  const shown = groups ? [...groups.values()].map((g) => ({ ...g[0], unread: g.some((x) => x.unread), hasAttachments: g.some((x) => x.hasAttachments) })) : filtered;
+  const countOf = (m: MailSummary) => (groups && m.threadId ? groups.get(`t:${m.threadId}`)?.length ?? 1 : 1);
+  const inGroup = (m: MailSummary, id: string | null) => !!id && (m.id === id || (!!groups && !!m.threadId && !!groups.get(`t:${m.threadId}`)?.some((x) => x.id === id)));
 
   // Known before the first list loads: a syncing mailbox needs no browser memory of opened emails.
   useEffect(() => {
@@ -761,7 +773,18 @@ export default function InboxPage() {
           {/* List */}
           <div className={`w-full md:w-[380px] md:flex-shrink-0 border-r border-line overflow-y-auto ${selectedId ? "hidden md:block" : ""}`}>
             <div className="sticky top-0 z-10 bg-page/95 backdrop-blur border-b border-line px-4 py-2 flex items-center justify-between">
-              <span className="text-[12.5px] text-muted">{unreadOnly ? `${shown.length} unread` : "All emails"}</span>
+              <button
+                role="switch"
+                aria-checked={threaded}
+                onClick={toggleThreaded}
+                title="Group emails by conversation and show the whole thread, like Outlook"
+                className="flex items-center gap-2 text-[13px] font-medium"
+              >
+                <span className={`relative w-9 h-5 rounded-full transition-colors ${threaded ? "bg-ink" : "bg-btn"}`}>
+                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-[left] ${threaded ? "left-[18px]" : "left-0.5"}`} />
+                </span>
+                Conversations
+              </button>
               <button
                 role="switch"
                 aria-checked={unreadOnly}
@@ -798,12 +821,15 @@ export default function InboxPage() {
                     key={m.id}
                     onClick={() => open(m)}
                     className={`w-full text-left px-4 py-3 border-b border-line transition-colors ${
-                      selectedId === m.id ? "bg-chip" : "hover:bg-chip/50"
+                      inGroup(m, selectedId) ? "bg-chip" : "hover:bg-chip/50"
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-0.5">
                       {m.unread && <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0" aria-label="Unread" />}
-                      <span className={`text-[13.5px] truncate flex-1 ${m.unread ? "font-semibold" : "font-medium"}`}>{m.from}</span>
+                      <span className={`text-[13.5px] truncate flex-1 ${m.unread ? "font-semibold" : "font-medium"}`}>
+                        {m.from}
+                        {countOf(m) > 1 && <span className="ml-1.5 text-muted font-normal">({countOf(m)})</span>}
+                      </span>
                       {m.flagged && <Flag size={12} className="text-[#E5484D] fill-current flex-shrink-0" aria-label="Flagged as important" />}
                       {m.hasAttachments && <Paperclip size={12} className="text-muted flex-shrink-0" />}
                       <span className="text-[12px] text-muted flex-shrink-0">{when(m.date)}</span>
@@ -971,12 +997,19 @@ export default function InboxPage() {
                     </div>
                   )}
                 </div>
-                <iframe
-                  title="Email content"
-                  sandbox="allow-popups allow-popups-to-escape-sandbox"
-                  srcDoc={srcDoc}
-                  className="flex-1 w-full bg-white"
-                />
+                {threaded && message.threadId && provider ? (
+                  <div className="flex-1 min-h-0 overflow-y-auto">
+                    <AutoHeightFrame srcDoc={srcDoc} title="Email content" minHeight={240} />
+                    <ThreadView key={message.threadId} provider={provider} threadId={message.threadId} currentId={message.id} onOpen={(x) => open(x)} />
+                  </div>
+                ) : (
+                  <iframe
+                    title="Email content"
+                    sandbox="allow-popups allow-popups-to-escape-sandbox"
+                    srcDoc={srcDoc}
+                    className="flex-1 w-full bg-white"
+                  />
+                )}
               </>
             ) : null}
           </div>

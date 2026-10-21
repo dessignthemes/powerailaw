@@ -183,6 +183,13 @@ export async function listGmailThreadIds(token: string, threadId: string): Promi
   return (t.messages ?? []).map((m) => m.id);
 }
 
+// Every email in a Gmail thread (sent ones included), newest first.
+export async function listGmailConversation(token: string, threadId: string): Promise<MailSummary[]> {
+  if (!/^[A-Za-z0-9_-]+$/.test(threadId)) return [];
+  const t = await gmail<{ messages?: GmailMsg[] }>(token, `/threads/${threadId}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`);
+  return (t.messages ?? []).map(toSummary).sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
 // Read / unread in Gmail (needs gmail.modify).
 export async function setGmailRead(token: string, id: string, read: boolean): Promise<void> {
   if (!/^[A-Za-z0-9_-]+$/.test(id)) throw new MailError("provider_error", "Invalid message id.");

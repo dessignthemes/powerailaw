@@ -157,6 +157,14 @@ export async function listOutlookThreadIds(token: string, conversationId: string
   return d.value.map((m) => m.id);
 }
 
+// Every email in a conversation (all folders, Sent Items included), newest first.
+export async function listOutlookConversation(token: string, conversationId: string): Promise<MailSummary[]> {
+  if (!/^[A-Za-z0-9_=+/-]+$/.test(conversationId)) return [];
+  const filter = encodeURIComponent(`conversationId eq '${conversationId.replace(/'/g, "''")}'`);
+  const d = await graph<{ value: GraphMsg[] }>(token, `/me/messages?$filter=${filter}&$select=${SELECT}&$top=100`);
+  return d.value.map(toSummary).sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
 // Read / unread in Outlook (needs Mail.ReadWrite).
 export async function setOutlookRead(token: string, id: string, read: boolean): Promise<void> {
   if (!/^[A-Za-z0-9_=+/-]+$/.test(id)) throw new MailError("provider_error", "Invalid message id.");
