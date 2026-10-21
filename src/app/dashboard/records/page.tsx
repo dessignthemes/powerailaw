@@ -77,6 +77,13 @@ export default function RecordsPage() {
         if (cancelled) return;
         setContacts(d.contacts ?? []);
         setSetupRequired(!!d.setupRequired);
+        // ?contact=<id> (e.g. a name clicked on a matter's Contacts card) opens that contact, once.
+        const id = new URLSearchParams(window.location.search).get("contact");
+        const c = id ? ((d.contacts ?? []) as Contact[]).find((x) => x.id === id) : null;
+        if (c) {
+          setEditingContact(c);
+          window.history.replaceState(null, "", window.location.pathname);
+        }
       })
       .catch((e: Error) => !cancelled && setError(e.message))
       .finally(() => !cancelled && setContactsLoaded(true));

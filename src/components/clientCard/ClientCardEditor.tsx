@@ -2,12 +2,13 @@
 
 import ClickAway from "@/components/ClickAway";
 import PortalButton from "@/components/clientCard/PortalButton";
+import MatterLinks, { LinkToMatterModal } from "@/components/matters/MatterLinks";
 import ClientAvatar from "@/components/clientCard/ClientAvatar";
 import PortalView from "@/components/clientCard/PortalView";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, Mail, MessageSquare, Phone, Plus, X, User, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList, MoreHorizontal, Trash2,
+  ArrowLeft, Link2, Mail, MessageSquare, Phone, Plus, X, User, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList, MoreHorizontal, Trash2,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import SelectBox from "@/components/SelectBox";
@@ -95,7 +96,7 @@ async function shrinkPhoto(file: File) {
 }
 
 export default function ClientCardEditor({ id, onClose, onSaved }: { id: string | null; onClose: () => void; onSaved: (id: string) => void }) {
-  const { matters, refreshAll } = useWorkspaceData();
+  const { matters, refreshAll, updateMatter } = useWorkspaceData();
   const [cardId, setCardId] = useState<string | null>(id);
   const [cardType, setCardType] = useState<CardType>("person");
   const [profile, setProfile] = useState<Profile>(emptyProfile);
@@ -453,7 +454,18 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
           {section === "notes" && <NotesView profile={profile} setP={setP} />}
           {section === "documents" && <DocumentsView clientId={cardId} matters={matters.filter((m) => m.clientId === cardId)} />}
           {section === "mailings" && <MailingsView clientId={cardId} dirty={dirty} />}
-          {section === "matters" && <MattersView clientId={cardId} matters={matters.filter((m) => m.clientId === cardId)} />}
+          {section === "matters" && (
+            <MattersView
+              clientId={cardId}
+              clientName={name}
+              matters={matters.filter((m) => m.clientId === cardId)}
+              allMatters={matters}
+              onMakeClient={(matterId) => {
+                const m = matters.find((x) => x.id === matterId);
+                if (m && cardId) updateMatter({ ...m, clientId: cardId });
+              }}
+            />
+          )}
           {section === "portal" && <PortalView clientId={cardId} defaultEmail={firstEmail} defaultName={profile.people[0]?.first || name} />}
         </section>
       </div>
@@ -1026,19 +1038,50 @@ function MailingsView({ clientId, dirty }: { clientId: string | null; dirty: boo
   );
 }
 
-function MattersView({ clientId, matters }: { clientId: string | null; matters: MatterLite[] }) {
+function MattersView({
+  clientId,
+  clientName,
+  matters,
+  allMatters,
+  onMakeClient,
+}: {
+  clientId: string | null;
+  clientName: string;
+  matters: MatterLite[];
+  allMatters: { id: string; title: string; matterNumber?: string | null; status: string; clientId?: string | null }[];
+  onMakeClient: (matterId: string) => void;
+}) {
   const [archived, setArchived] = useState(false);
+  const [linking, setLinking] = useState(false);
+  const [linkKey, setLinkKey] = useState(0);
   if (!clientId) return <SaveFirst what="matters" />;
   const shown = matters.filter((m) => archived || m.status !== "Closed");
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <div className="text-[13px] font-semibold uppercase tracking-wide text-muted">Matters</div>
-        <label className="flex items-center gap-1.5 text-[13px]"><input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} className="accent-black" /> Include closed matters</label>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-[13px]"><input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} className="accent-black" /> Include closed matters</label>
+          <button onClick={() => setLinking(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-chip hover:bg-btn text-[12.5px] font-medium">
+            <Link2 size={13} /> Link to a matter
+          </button>
+        </div>
       </div>
+      {linking && (
+        <LinkToMatterModal
+          who={{ kind: "client", id: clientId, name: clientName }}
+          matters={allMatters}
+          onMakeClient={onMakeClient}
+          onClose={() => setLinking(false)}
+          onLinked={() => {
+            setLinking(false);
+            setLinkKey((k) => k + 1);
+          }}
+        />
+      )}
       {shown.length === 0 ? (
         <div className="py-12 text-center text-[14px] text-muted">
-          No {archived ? "" : "open "}matters for this client. <Link href="/dashboard/matters" className="underline underline-offset-2">Open Matters</Link> to create one.
+          No {archived ? "" : "open "}matters for this client. Use <b>Link to a matter</b> above, or <Link href="/dashboard/matters" className="underline underline-offset-2">open Matters</Link> to create one.
         </div>
       ) : (
         <div className="border border-line rounded-xl overflow-hidden">
@@ -1055,6 +1098,9 @@ function MattersView({ clientId, matters }: { clientId: string | null; matters: 
           ))}
         </div>
       )}
+      <div className="mt-8">
+        <MatterLinks key={linkKey} who={{ kind: "client", id: clientId, name: clientName }} matters={allMatters} onMakeClient={onMakeClient} title="Also on these matters as a contact (co-client, seller, beneficiary…)" hideButton />
+      </div>
     </div>
   );
 }

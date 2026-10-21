@@ -1,5 +1,6 @@
 "use client";
 
+import MatterLinks from "@/components/matters/MatterLinks";
 import { useEffect, useState } from "react";
 import { X, Loader2, Trash2, User, Building2 } from "lucide-react";
 import SelectBox from "@/components/SelectBox";
@@ -24,7 +25,7 @@ export default function ContactModal({
   contact?: Contact;
   initialKind: ContactKind;
   clients: { id: string; name: string }[];
-  matters: { id: string; title: string }[];
+  matters: { id: string; title: string; matterNumber?: string | null; status: string; clientId?: string | null }[];
   onClose: () => void;
   onSave: (input: ContactInput) => Promise<void>;
   onDelete?: () => Promise<void>;
@@ -166,6 +167,7 @@ export default function ContactModal({
             <Label>Address</Label>
             <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city" className={field} />
           </div>
+          {!isEdit && (
           <div>
             <Label>Matter</Label>
             <SelectBox label="Matter" value={matterId} onChange={setMatterId}>
@@ -177,6 +179,7 @@ export default function ContactModal({
               ))}
             </SelectBox>
           </div>
+          )}
           <div>
             <Label>Client</Label>
             <SelectBox label="Client" value={clientId} onChange={setClientId}>
@@ -199,6 +202,13 @@ export default function ContactModal({
             />
           </div>
         </div>
+
+        {/* A saved contact can be on many matters, each with its own role. */}
+        {isEdit && contact && (
+          <div className="mt-5 pt-4 border-t border-line">
+            <MatterLinks who={{ kind: "contact", id: contact.id, name: contact.name }} matters={matters} title="Matters" />
+          </div>
+        )}
 
         {error && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{error}</div>}
 

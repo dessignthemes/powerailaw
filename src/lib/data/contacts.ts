@@ -135,7 +135,16 @@ export async function createContact(input: ContactInput | unknown): Promise<Cont
     if (isMissingTable(error)) throw new ContactsSetupError();
     throw error;
   }
-  return toContact(data as Row);
+  const created = toContact(data as Row);
+  // A matter picked when creating the contact: also put them on that matter's
+  // Contacts card (skipped quietly before migration 0047).
+  if (created.matterId) {
+    await createAdminClient()
+      .from("matter_contacts")
+      .insert({ org_id: orgId, matter_id: created.matterId, contact_id: created.id, role: created.role ?? "", created_by: user?.id ?? null })
+      .then(() => undefined, () => undefined);
+  }
+  return created;
 }
 
 export async function updateContact(id: string, input: unknown): Promise<Contact> {

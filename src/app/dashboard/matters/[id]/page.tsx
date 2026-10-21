@@ -1,5 +1,6 @@
 "use client";
 
+import MatterContactsCard from "@/components/matters/MatterContactsCard";
 import ClickAway from "@/components/ClickAway";
 import PortalButton from "@/components/clientCard/PortalButton";
 import InvoicesPanel from "@/components/invoices/InvoicesPanel";
@@ -26,7 +27,6 @@ import {
   StickyNote,
   Link2,
   ClipboardList,
-  Bookmark,
   CalendarDays,
 } from "lucide-react";
 import NewMatterModal, {
@@ -531,16 +531,7 @@ export default function MatterDetailPage() {
               )}
             </div>
 
-            <div className="rounded-2xl overflow-hidden border border-line">
-              <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
-                <Bookmark size={14} strokeWidth={1.75} className="text-muted" />
-                <span className="text-[14px] font-semibold">Contacts</span>
-              </div>
-              <div className="p-6 flex flex-col items-center justify-center text-center gap-2">
-                <Bookmark size={20} strokeWidth={1.5} className="text-muted" />
-                <div className="text-[13px] text-muted">No contacts yet.</div>
-              </div>
-            </div>
+            <MatterContactsCard matterId={matter.id} clientId={matter.clientId} clients={clients} />
 
             <div className="rounded-2xl overflow-hidden border border-line">
               <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
