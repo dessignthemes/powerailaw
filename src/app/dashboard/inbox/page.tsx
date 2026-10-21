@@ -24,6 +24,7 @@ import {
   Forward,
   PenSquare,
   ChevronDown,
+  ChevronRight,
   FolderInput,
 } from "lucide-react";
 import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/ComposeEmail";
@@ -249,6 +250,35 @@ export default function InboxPage() {
   const [composing, setComposing] = useState<"new" | "forward" | null>(null);
   const [taskFrom, setTaskFrom] = useState<MailSummary | null>(null);
   const [attMenu, setAttMenu] = useState<number | null>(null);
+  // Conversations opened with the ▸ arrow in the list, and their emails (newest first).
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [threadRows, setThreadRows] = useState<Record<string, "loading" | { list: MailSummary[]; mailbox: string }>>({});
+  function toggleThread(threadId: string) {
+    const closing = expanded.has(threadId);
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(threadId)) next.delete(threadId);
+      else next.add(threadId);
+      return next;
+    });
+    if (closing) {
+      // Fetched fresh next time it's opened (new replies may have arrived).
+      setThreadRows((t) => {
+        const { [threadId]: _gone, ...rest } = t;
+        void _gone;
+        return rest;
+      });
+      return;
+    }
+    if (!provider || threadRows[threadId]) return;
+    setThreadRows((t) => ({ ...t, [threadId]: "loading" }));
+    fetch(`/api/mail/threads/${encodeURIComponent(threadId)}?provider=${provider}`)
+      .then((r) => (r.ok ? r.json() : { messages: [], mailbox: "" }))
+      .then((d: { messages?: MailSummary[]; mailbox?: string }) =>
+        setThreadRows((t) => ({ ...t, [threadId]: { list: d.messages ?? [], mailbox: (d.mailbox ?? "").toLowerCase() } }))
+      )
+      .catch(() => setThreadRows((t) => ({ ...t, [threadId]: { list: [], mailbox: "" } })));
+  }
   const [saveAtt, setSaveAtt] = useState<{ mode: SaveMode; index?: number } | null>(null);
   const [previewAtt, setPreviewAtt] = useState<{ provider: MailProvider; messageId: string; index: number; attachment: MailMessage["attachments"][number] } | null>(null);
   const [actionNote, setActionNote] = useState<string | null>(null);
@@ -823,35 +853,92 @@ export default function InboxPage() {
               </div>
             ) : (
               <>
-                {shown.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => open(m)}
-                    className={`w-full text-left px-4 py-3 border-b border-line transition-colors ${
-                      inGroup(m, selectedId) ? "bg-chip" : "hover:bg-chip/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-0.5">
-                      {m.unread && <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0" aria-label="Unread" />}
-                      <span className={`text-[13.5px] truncate flex-1 ${m.unread ? "font-semibold" : "font-medium"}`}>
-                        {m.from}
-                        {countOf(m) > 1 && <span className="ml-1.5 text-muted font-normal">({countOf(m)})</span>}
-                      </span>
-                      {m.flagged && <Flag size={12} className="text-[#E5484D] fill-current flex-shrink-0" aria-label="Flagged as important" />}
-                      {m.hasAttachments && <Paperclip size={12} className="text-muted flex-shrink-0" />}
-                      <span className="text-[12px] text-muted flex-shrink-0">{when(m.date)}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      {m.matter && (
-                        <span className="flex-shrink-0 text-[11px] font-semibold tracking-wide bg-[#E1E7F4] rounded-md px-1.5 py-px" title={m.matter.title}>
-                          {m.matter.number ?? m.matter.title}
-                        </span>
+                {shown.map((m) => {
+                  const convo = threaded && !!m.threadId && countOf(m) > 1;
+                  const isOpen = convo && expanded.has(m.threadId!);
+                  const kids = m.threadId ? threadRows[m.threadId] : undefined;
+                  return (
+                    <div key={m.id} className="border-b border-line">
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => {
+                          open(m);
+                          if (convo && !isOpen) toggleThread(m.threadId!);
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && open(m)}
+                        className={`relative w-full text-left pr-4 py-3 cursor-pointer transition-colors ${convo ? "pl-8" : "pl-4"} ${
+                          inGroup(m, selectedId) ? "bg-chip" : "hover:bg-chip/50"
+                        } ${isOpen ? "border-l-[3px] border-[#2B6CB0]" : ""}`}
+                      >
+                        {convo && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleThread(m.threadId!);
+                            }}
+                            aria-label={isOpen ? "Hide the emails in this conversation" : "Show the emails in this conversation"}
+                            aria-expanded={isOpen}
+                            title={isOpen ? "Hide the conversation" : "Show every email in this conversation"}
+                            className="absolute left-1.5 top-3 w-6 h-6 rounded-md hover:bg-btn flex items-center justify-center text-muted"
+                          >
+                            <ChevronRight size={14} strokeWidth={2.25} className={`transition-transform ${isOpen ? "rotate-90 text-[#2B6CB0]" : ""}`} />
+                          </button>
+                        )}
+                        <div className="flex items-center gap-2 mb-0.5">
+                          {m.unread && <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0" aria-label="Unread" />}
+                          <span className={`text-[13.5px] truncate flex-1 ${m.unread ? "font-semibold" : "font-medium"}`}>
+                            {m.from}
+                            {countOf(m) > 1 && <span className="ml-1.5 text-muted font-normal">({countOf(m)})</span>}
+                          </span>
+                          {m.flagged && <Flag size={12} className="text-[#E5484D] fill-current flex-shrink-0" aria-label="Flagged as important" />}
+                          {m.hasAttachments && <Paperclip size={12} className="text-muted flex-shrink-0" />}
+                          <span className="text-[12px] text-muted flex-shrink-0">{when(m.date)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {m.matter && (
+                            <span className="flex-shrink-0 text-[11px] font-semibold tracking-wide bg-[#E1E7F4] rounded-md px-1.5 py-px" title={m.matter.title}>
+                              {m.matter.number ?? m.matter.title}
+                            </span>
+                          )}
+                          <span className={`text-[13px] truncate ${isOpen ? "text-[#2B6CB0] font-medium" : m.unread ? "font-semibold" : ""}`}>{m.subject}</span>
+                        </div>
+                        {!isOpen && <div className="text-[12.5px] text-muted truncate">{m.snippet}</div>}
+                      </div>
+
+                      {/* Every email in the conversation, like Outlook: newest first, Sent Items included. */}
+                      {isOpen && (
+                        <div className="bg-[#EEF3FB] border-l-[3px] border-[#2B6CB0]">
+                          {!kids || kids === "loading" ? (
+                            <div className="pl-9 pr-4 py-2.5 text-[12.5px] text-muted flex items-center gap-2">
+                              <Loader2 size={12} className="animate-spin" /> Loading the conversation…
+                            </div>
+                          ) : (
+                            kids.list.map((k) => {
+                              const you = !!kids.mailbox && k.fromEmail.toLowerCase() === kids.mailbox;
+                              return (
+                                <button
+                                  key={k.id}
+                                  onClick={() => open(k)}
+                                  className={`w-full text-left pl-9 pr-4 py-2 border-t border-[#D8E2F1] transition-colors ${selectedId === k.id ? "bg-[#D5E1F3]" : "hover:bg-[#E2EAF7]"}`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {k.unread && <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] flex-shrink-0" aria-label="Unread" />}
+                                    <span className={`text-[13px] truncate flex-1 ${k.unread ? "font-semibold text-[#1E4E8C]" : "font-medium"}`}>{you ? `You (${k.from})` : k.from}</span>
+                                    {k.hasAttachments && <Paperclip size={11} className="text-muted flex-shrink-0" />}
+                                    {you && <Forward size={11} className="text-[#7C5CC4] -scale-x-100 flex-shrink-0" aria-label="Sent by you" />}
+                                    <span className="text-[11.5px] text-muted flex-shrink-0">{when(k.date)}</span>
+                                  </div>
+                                  <div className="text-[12px] text-muted truncate">{k.snippet}</div>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
                       )}
-                      <span className={`text-[13px] truncate ${m.unread ? "font-semibold" : ""}`}>{m.subject}</span>
                     </div>
-                    <div className="text-[12.5px] text-muted truncate">{m.snippet}</div>
-                  </button>
-                ))}
+                  );
+                })}
                 {nextPage && (
                   <div className="p-3">
                     <button
