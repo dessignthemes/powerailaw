@@ -1,5 +1,6 @@
 "use client";
 
+import PortalButton from "@/components/clientCard/PortalButton";
 import ClientAvatar from "@/components/clientCard/ClientAvatar";
 import PortalView from "@/components/clientCard/PortalView";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,7 +14,7 @@ import { uploadAnyDocument, versionDownloadUrl, UploadError } from "@/lib/pdf/up
 import type { Doc } from "@/components/pdf/DocumentList";
 import {
   APT_TYPES, CONTACT_KINDS, CONTACT_PREFERENCES, ENTITY_TYPES, PRACTICE_AREAS, RELATIONSHIP, TITLES, ageFrom, autoLetter, emptyProfile, personName, newPerson, normalizeProfile,
-  personFullTitle, type CardType, type ContactLine, type Person, type Profile,
+  personFullTitle, newContactPerson, rolesFor, type CardType, type ContactLine, type ContactPerson, type Person, type Profile,
 } from "@/lib/clients/card";
 
 type Section = "person" | "intake" | "details" | "address" | "notes" | "documents" | "mailings" | "matters" | "portal";
@@ -325,6 +326,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
                   : ""}
           </div>
         </div>
+        <PortalButton clientId={cardId} size="button" onOpen={() => setSection("portal")} />
         {templates && cardId && (
           <div className="flex gap-2">
             <button onClick={intakeSheet} disabled={!!docBusy || saving} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
@@ -389,7 +391,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
             <div className="text-[13px] font-semibold mb-1.5">Card type</div>
             <SelectBox label="Card type" value={cardType} onChange={(v) => { setCardType(v as CardType); setSection("person"); }}>
               <option value="person">People</option>
-              <option value="company">Company</option>
+              <option value="company">Business, estate, trust or government</option>
             </SelectBox>
           </div>
           {cardType === "person" ? (
@@ -622,6 +624,81 @@ function CompanyView({ profile, setP, photo, setPhoto }: { profile: Profile; set
         <ContactLines lines={c.contacts} onChange={(contacts) => set({ contacts })} />
         <PhotoBox photo={photo} setPhoto={setPhoto} />
       </div>
+      <ContactPeople entityType={c.entityType} people={c.contactPeople ?? []} onChange={(contactPeople) => set({ contactPeople })} />
+    </div>
+  );
+}
+
+// The people the firm deals with at the business, estate, trust or agency.
+function ContactPeople({ entityType, people, onChange }: { entityType: string; people: ContactPerson[]; onChange: (p: ContactPerson[]) => void }) {
+  const roles = rolesFor(entityType);
+  const heading =
+    entityType === "Estate"
+      ? "People for the estate (executor, administrator…)"
+      : entityType === "Trust"
+        ? "People for the trust (trustees…)"
+        : entityType === "Government"
+          ? "People at the agency"
+          : "People we deal with";
+  const setOne = (id: string, patch: Partial<ContactPerson>) => onChange(people.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  const listId = `roles-${entityType || "company"}`;
+  return (
+    <div>
+      <Heading>{heading}</Heading>
+      <datalist id={listId}>
+        {roles.map((r) => (
+          <option key={r} value={r} />
+        ))}
+      </datalist>
+      {people.length === 0 && (
+        <p className="text-[13.5px] text-muted mb-3">
+          Add the {entityType === "Estate" ? "executor or administrator" : entityType === "Trust" ? "trustee" : entityType === "Government" ? "official or employee" : "president, owner or employee"} you work with,
+          and how to reach them.
+        </p>
+      )}
+      <div className="grid gap-3">
+        {people.map((p, i) => (
+          <div key={p.id} className="border border-line rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[13px] font-semibold">{p.name.trim() ? `${p.name}${p.role ? ` · ${p.role}` : ""}` : `Person ${i + 1}`}</span>
+              <button
+                onClick={() => {
+                  if (!p.name.trim() || confirm(`Remove ${p.name} from this card?`)) onChange(people.filter((x) => x.id !== p.id));
+                }}
+                className="text-muted hover:text-red-700 w-7 h-7 rounded-full hover:bg-chip flex items-center justify-center"
+                aria-label={`Remove ${p.name || `person ${i + 1}`}`}
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="grid md:grid-cols-2 gap-x-6 gap-y-3">
+              <Field label="Name">
+                <input value={p.name} onChange={(e) => setOne(p.id, { name: e.target.value })} placeholder="e.g. John Smith" className={input} />
+              </Field>
+              <Field label="Role">
+                <input value={p.role} onChange={(e) => setOne(p.id, { role: e.target.value })} list={listId} placeholder={`e.g. ${roles[0]}`} className={input} />
+              </Field>
+              <Field label="Email">
+                <input type="email" value={p.email} onChange={(e) => setOne(p.id, { email: e.target.value })} className={input} />
+              </Field>
+              <Field label="Phone">
+                <input value={p.phone} onChange={(e) => setOne(p.id, { phone: e.target.value })} className={input} />
+              </Field>
+              <Field label="Cell">
+                <input value={p.cell} onChange={(e) => setOne(p.id, { cell: e.target.value })} className={input} />
+              </Field>
+              <Field label="Notes">
+                <input value={p.notes} onChange={(e) => setOne(p.id, { notes: e.target.value })} placeholder="e.g. signs on behalf of the company" className={input} />
+              </Field>
+            </div>
+          </div>
+        ))}
+      </div>
+      {people.length < 20 && (
+        <button onClick={() => onChange([...people, newContactPerson()])} className="mt-3 flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium">
+          <Plus size={14} /> Add a person
+        </button>
+      )}
     </div>
   );
 }

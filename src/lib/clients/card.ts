@@ -44,9 +44,13 @@ export type Address = {
   instructions: string;
 };
 
+// The people the firm deals with at a business, estate, trust or government client:
+// the president, the executor, a trustee, an employee… each with their own details.
+export type ContactPerson = { id: string; name: string; role: string; email: string; phone: string; cell: string; notes: string };
+
 export type Profile = {
   people: Person[];
-  company: { name: string; legalName: string; entityType: string; ein: string; website: string; contacts: ContactLine[] };
+  company: { name: string; legalName: string; entityType: string; ein: string; website: string; contacts: ContactLine[]; contactPeople: ContactPerson[] };
   letter: { title: string; dear: string; titleAuto: boolean; dearAuto: boolean; style: "formal" | "friendly" };
   address: { street: Address; poBox: { box: string; city: string; state: string; zip: string; country: string }; future: Address & { from: string } };
   notes: string;
@@ -89,9 +93,30 @@ export const newPerson = (): Person => ({
   occupation: "", employer: "", education: "", ssnLast4: "", driversLicense: "", preferredLanguage: "", extra: [],
 });
 
+export const newContactPerson = (): ContactPerson => ({ id: Math.random().toString(36).slice(2, 10), name: "", role: "", email: "", phone: "", cell: "", notes: "" });
+
+// Roles offered for the people at each kind of client (any role can also be typed in).
+export function rolesFor(entityType: string): string[] {
+  if (entityType === "Estate") return ["Executor", "Co-executor", "Administrator", "Beneficiary", "Heir", "Estate attorney", "Accountant", "Other"];
+  if (entityType === "Trust") return ["Trustee", "Co-trustee", "Successor trustee", "Grantor / settlor", "Beneficiary", "Trust officer", "Accountant", "Other"];
+  if (entityType === "Government") return ["Official", "Department head", "Contracting officer", "Counsel", "Clerk", "Employee", "Other"];
+  if (entityType === "Non-profit") return ["Executive director", "Board president", "Treasurer", "Secretary", "Employee", "Other"];
+  return ["President", "CEO", "Owner", "Managing member", "Member", "Partner", "Officer", "Manager", "Employee", "Accountant", "Other"];
+}
+
+// Kept tidy: at most 20 people, each field trimmed to a sensible length.
+function cleanContactPeople(raw: unknown): ContactPerson[] {
+  if (!Array.isArray(raw)) return [];
+  const t = (v: unknown, n: number) => (typeof v === "string" ? v.slice(0, n) : "");
+  return raw.slice(0, 20).map((x) => {
+    const r = (x ?? {}) as Record<string, unknown>;
+    return { id: t(r.id, 20) || newContactPerson().id, name: t(r.name, 160), role: t(r.role, 80), email: t(r.email, 200), phone: t(r.phone, 40), cell: t(r.cell, 40), notes: t(r.notes, 1000) };
+  });
+}
+
 export const emptyProfile = (): Profile => ({
   people: [newPerson()],
-  company: { name: "", legalName: "", entityType: "", ein: "", website: "", contacts: [{ kind: "Email", value: "" }, { kind: "Phone", value: "" }, { kind: "Fax", value: "" }, { kind: "Web", value: "" }] },
+  company: { name: "", legalName: "", entityType: "", ein: "", website: "", contacts: [{ kind: "Email", value: "" }, { kind: "Phone", value: "" }, { kind: "Fax", value: "" }, { kind: "Web", value: "" }], contactPeople: [] },
   letter: { title: "", dear: "", titleAuto: true, dearAuto: true, style: "formal" },
   address: { street: emptyAddress(), poBox: { box: "", city: "", state: "", zip: "", country: "United States" }, future: { ...emptyAddress(), from: "" } },
   notes: "",
@@ -109,7 +134,7 @@ export function normalizeProfile(raw: unknown): Profile {
     ...base,
     ...p,
     people: Array.isArray(p.people) && p.people.length ? p.people.map((x) => ({ ...newPerson(), ...x, contacts: x.contacts?.length ? x.contacts : newPerson().contacts, extra: x.extra ?? [] })) : base.people,
-    company: { ...base.company, ...(p.company ?? {}) },
+    company: { ...base.company, ...(p.company ?? {}), contactPeople: cleanContactPeople((p.company as { contactPeople?: unknown } | undefined)?.contactPeople) },
     letter: { ...base.letter, ...(p.letter ?? {}) },
     address: {
       street: { ...base.address.street, ...(p.address?.street ?? {}) },

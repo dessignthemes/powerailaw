@@ -1,5 +1,6 @@
 "use client";
 
+import PortalButton from "@/components/clientCard/PortalButton";
 import InvoicesPanel from "@/components/invoices/InvoicesPanel";
 import { money as invMoney } from "@/components/invoices/shared";
 import { useState, useEffect } from "react";
@@ -261,6 +262,7 @@ export default function MatterDetailPage() {
               ))
             )}
           </GenericDropdown>
+          {client && <PortalButton clientId={client.id} defaultEmail={client.email ?? undefined} defaultName={client.name} />}
         </div>
 
         <div className="flex items-center gap-3">

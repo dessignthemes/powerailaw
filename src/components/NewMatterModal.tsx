@@ -1,5 +1,6 @@
 "use client";
 
+import PortalButton from "@/components/clientCard/PortalButton";
 import { useEffect, useState } from "react";
 import {
   X,
@@ -482,6 +483,9 @@ export default function NewMatterModal({
               ))
             )}
           </GenericDropdown>
+
+          {/* Client portal for the chosen client: invite them or manage their access. */}
+          {clientId && <PortalButton clientId={clientId} defaultEmail={selectedClient?.email ?? undefined} defaultName={selectedClient?.name} />}
 
           <GenericDropdown
             open={dateOpen}
