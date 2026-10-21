@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useState } from "react";
 import { Calendar as CalendarIcon, X, Folder, Search } from "lucide-react";
@@ -234,7 +235,7 @@ export default function NewEventModal({
               </button>
               {matterOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setMatterOpen(false)} />
+                  <ClickAway onClose={() => setMatterOpen(false)} />
                   <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-2.5 w-full min-w-[260px]">
                     <div className="relative mb-2">
                       <Search

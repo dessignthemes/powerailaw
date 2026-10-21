@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download } from "lucide-react";
@@ -212,7 +213,7 @@ export default function RecordsPage() {
           </button>
           {menuOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <ClickAway onClose={() => setMenuOpen(false)} />
               <div
                 role="menu"
                 className="absolute right-0 top-[calc(100%+6px)] z-50 w-[240px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5"

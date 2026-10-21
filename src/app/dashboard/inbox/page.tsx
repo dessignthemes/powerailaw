@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import PortalMessagesPanel from "@/components/mail/PortalMessagesPanel";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -218,7 +219,7 @@ function FileToMatter({
       )}
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <ClickAway onClose={() => setOpen(false)} />
           <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[320px]">
             <input
               autoFocus

@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import PortalButton from "@/components/clientCard/PortalButton";
 import InvoicesPanel from "@/components/invoices/InvoicesPanel";
 import { money as invMoney } from "@/components/invoices/shared";
@@ -159,7 +160,7 @@ export default function MatterDetailPage() {
             </button>
             {menuOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                <ClickAway onClose={() => setMenuOpen(false)} />
                 <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[170px]">
                   <button
                     onClick={() => {

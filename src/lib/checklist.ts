@@ -12,7 +12,7 @@ export type TaskTemplate = { id: string; name: string; sections: TemplateSection
 
 // na = not applicable to this deal (e.g. mortgage steps on a cash purchase): not counted, no due date.
 export type ChecklistItem = { id: string; text: string; done: boolean; doneAt?: string | null; anchor?: string; days?: number; na?: boolean; moveTo?: MoveTo };
-export type ChecklistSection = { id: string; title: string; items: ChecklistItem[] };
+export type ChecklistSection = { id: string; title: string; items: ChecklistItem[]; from?: string }; // from = the template it was added from
 // dates = the task's critical dates ("Closing date" -> "2026-11-20"), used to work out each step's due date.
 // auto = false turns automatic moving off for this task (on by default).
 export type TaskChecklist = { templates: string[]; sections: ChecklistSection[]; dates?: Record<string, string>; auto?: boolean };
@@ -67,11 +67,13 @@ export function cleanChecklist(input: unknown): TaskChecklist | null {
   const c = input as { templates?: unknown; sections?: unknown };
   const raw = Array.isArray(c.sections) ? c.sections : [];
   const sections: ChecklistSection[] = raw.slice(0, MAX_SECTIONS * 3).map((s) => {
-    const sec = (s ?? {}) as { id?: unknown; title?: unknown; items?: unknown };
+    const sec = (s ?? {}) as { id?: unknown; title?: unknown; items?: unknown; from?: unknown };
     const items = Array.isArray(sec.items) ? sec.items : [];
+    const from = clean(sec.from, 80);
     return {
       id: clean(sec.id, 64) || newId(),
       title: clean(sec.title, 120),
+      ...(from ? { from } : {}),
       items: items.slice(0, MAX_ITEMS * 2).map((i) => {
         const it = (i ?? {}) as { id?: unknown; text?: unknown; done?: unknown; doneAt?: unknown; anchor?: unknown; days?: unknown; na?: unknown; moveTo?: unknown };
         const done = it.done === true;
@@ -105,6 +107,7 @@ export function applyTemplate(current: TaskChecklist | null | undefined, t: Task
   const added: ChecklistSection[] = t.sections.map((s) => ({
     id: newId(),
     title: s.title,
+    from: t.name,
     items: s.items.map((i) => ({
       id: newId(),
       text: i.text,
@@ -120,6 +123,29 @@ export function applyTemplate(current: TaskChecklist | null | undefined, t: Task
     ...(current?.dates ? { dates: current.dates } : {}),
     ...(current?.auto === false ? { auto: false } : {}),
   };
+}
+
+// Takes one added template back out of a task's checklist: its sections and its
+// name. Checklists from before sections were tagged with their template are
+// matched by the template's section names (the last matching run is removed).
+// Nothing left → null (no checklist).
+export function removeTemplate(c: TaskChecklist, name: string, def?: TaskTemplate | null): TaskChecklist | null {
+  let sections = c.sections;
+  if (sections.some((s) => s.from === name)) {
+    sections = sections.filter((s) => s.from !== name);
+  } else if (def?.sections.length) {
+    const titles = def.sections.map((s) => s.title);
+    for (let i = sections.length - titles.length; i >= 0; i--) {
+      if (titles.every((t, k) => !sections[i + k].from && sections[i + k].title === t)) {
+        sections = [...sections.slice(0, i), ...sections.slice(i + titles.length)];
+        break;
+      }
+    }
+  }
+  const idx = c.templates.lastIndexOf(name);
+  const templates = idx >= 0 ? [...c.templates.slice(0, idx), ...c.templates.slice(idx + 1)] : c.templates;
+  if (!sections.length) return null;
+  return { ...c, templates, sections };
 }
 
 export function progress(c: TaskChecklist | null | undefined) {

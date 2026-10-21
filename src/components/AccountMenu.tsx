@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { useState } from "react";
 import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown, Users } from "lucide-react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
@@ -37,7 +38,7 @@ export default function AccountMenu({
     <div className="relative">
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <ClickAway onClose={() => setOpen(false)} />
           <div className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-[280px] bg-cream border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.35)] overflow-hidden">
             <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-line">
               <LogoMark size={28} />

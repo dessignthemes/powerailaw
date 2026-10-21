@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Calendar, List, SlidersHorizontal, Plus, X, Clock, Check, ChevronDown, Trash2, Loader2, AlertTriangle, Timer, Pencil, Users } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
@@ -238,7 +239,7 @@ export default function TimeTrackingPage() {
             </button>
             {viewMenuOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setViewMenuOpen(false)} />
+                <ClickAway onClose={() => setViewMenuOpen(false)} />
                 <div className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[190px]">
                   {(["timesheet", "entries"] as const).map((v) => (
                     <button
@@ -273,7 +274,7 @@ export default function TimeTrackingPage() {
             </button>
             {filterOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setFilterOpen(false)} />
+                <ClickAway onClose={() => setFilterOpen(false)} />
                 <div className="absolute right-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-4 w-[290px]">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[13.5px] font-medium text-muted">Billable</span>
@@ -307,7 +308,7 @@ export default function TimeTrackingPage() {
               </button>
               {whoOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setWhoOpen(false)} />
+                  <ClickAway onClose={() => setWhoOpen(false)} />
                   <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[240px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]">
                     {[
                       { key: "me", label: "My time" },

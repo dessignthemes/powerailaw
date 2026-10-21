@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2, FolderInput, Mail, Check, X, RefreshCw, Undo2, Paperclip, ChevronDown } from "lucide-react";
@@ -221,7 +222,7 @@ export default function TaskFolderPage() {
 
             {picking && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setPicking(false)} />
+                <ClickAway onClose={() => setPicking(false)} />
                 <div className="absolute right-6 top-[calc(100%-8px)] z-50 w-[320px] max-h-[60vh] overflow-y-auto bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5">
                   <div className="px-3 pt-2 pb-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
                     {pickProvider ? providerName[pickProvider] : ""} folders

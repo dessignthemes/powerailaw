@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import PortalButton from "@/components/clientCard/PortalButton";
 import ClientAvatar from "@/components/clientCard/ClientAvatar";
 import PortalView from "@/components/clientCard/PortalView";
@@ -364,7 +365,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
               </button>
               {moreOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
+                  <ClickAway onClose={() => setMoreOpen(false)} />
                   <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[200px]">
                     <button
                       onClick={() => {

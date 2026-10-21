@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import Link from "next/link";
 import EventDetailModal from "@/components/EventDetailModal";
@@ -438,7 +439,7 @@ export default function CalendarPage() {
             </button>
             {viewMenuOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setViewMenuOpen(false)} />
+                <ClickAway onClose={() => setViewMenuOpen(false)} />
                 <div className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[160px]">
                   {(["Month", "Week", "Day"] as ViewMode[]).map((v) => {
                     const Icon = viewIcons[v];

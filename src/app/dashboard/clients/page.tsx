@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -52,7 +53,7 @@ function RowStatusPicker({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <ClickAway onClose={() => setOpen(false)} />
           <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[160px]">
             {statusOrder.map((s) => {
               const OptIcon = statusMeta[s].icon;
@@ -272,7 +273,7 @@ function ClientsPageInner() {
                             </button>
                             {rowMenuFor === c.id && (
                               <>
-                                <div className="fixed inset-0 z-40" onClick={() => setRowMenuFor(null)} />
+                                <ClickAway onClose={() => setRowMenuFor(null)} />
                                 <div className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[180px]">
                                   <button
                                     onClick={() => {

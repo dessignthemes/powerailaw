@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { Check } from "lucide-react";
 import type { BoardTask, TaskPriority as Priority } from "@/components/NewTaskModal";
 import { displayName } from "@/lib/initials";
@@ -92,7 +93,7 @@ export function FilterMenu({
 }) {
   return (
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <ClickAway onClose={onClose} />
       <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[280px] max-h-[70vh] overflow-y-auto bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5">
         <div className="flex items-center justify-between px-2.5 pt-1.5">
           <span className="text-[14px] font-semibold">Filter tasks</span>
@@ -141,7 +142,7 @@ export function DisplayMenu({ value, onChange, onClose }: { value: DisplayOption
   ];
   return (
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <ClickAway onClose={onClose} />
       <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[260px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5">
         <div className="px-2.5 pt-1.5 text-[14px] font-semibold">Display</div>
         <Heading>Sort cards by</Heading>

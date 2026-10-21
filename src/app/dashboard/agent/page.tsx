@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -785,7 +786,7 @@ function MatterPicker({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <ClickAway onClose={() => setOpen(false)} />
           <div className="absolute left-0 bottom-[calc(100%+6px)] z-50 w-[300px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5">
             {matters.length > 6 && (
               <div className="flex items-center gap-2 px-3 py-2 mb-1 border-b border-line">

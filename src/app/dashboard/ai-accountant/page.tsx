@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Calculator,
@@ -212,7 +213,7 @@ function AiAccountant() {
             </button>
             {addOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setAddOpen(false)} />
+                <ClickAway onClose={() => setAddOpen(false)} />
                 <div role="menu" className="absolute right-0 top-[calc(100%+6px)] z-50 w-[280px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(20,24,33,0.25)] p-1.5">
                   {[
                     { icon: Upload, label: "Import bank or card CSV", hint: "AI categorizes every line", go: () => setModal({ kind: "import" }) },

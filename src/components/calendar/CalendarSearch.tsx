@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X, Loader2, MapPin } from "lucide-react";
 
@@ -156,7 +157,7 @@ export default function CalendarSearch({
 
   return (
     <div className="relative">
-      {showResults && <div className="fixed inset-0 z-40" onClick={() => setShowResults(false)} />}
+      {showResults && <ClickAway onClose={() => setShowResults(false)} />}
       <div className="relative z-50 flex items-center gap-2 bg-chip rounded-full pl-3 pr-1 h-9 w-[min(440px,90vw)] border border-transparent focus-within:border-btn-ring">
         {loading ? <Loader2 size={15} className="animate-spin text-muted flex-shrink-0" /> : <Search size={15} strokeWidth={1.75} className="text-muted flex-shrink-0" />}
         <input

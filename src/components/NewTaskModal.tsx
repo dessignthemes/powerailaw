@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import type { WaitingOn } from "@/lib/tasks/waitingOn";
 
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
@@ -102,7 +103,7 @@ export function GenericDropdown({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <ClickAway onClose={() => setOpen(false)} />
           <div
             className={`absolute ${
               direction === "up" ? "bottom-[calc(100%+6px)]" : "top-[calc(100%+6px)]"

@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { useState } from "react";
 import { X, Check, Plus, Copy, FlaskConical, MessageSquare, List } from "lucide-react";
 
@@ -145,7 +146,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                       </button>
                       {langMenuOpen && (
                         <>
-                          <div className="fixed inset-0 z-40" onClick={() => setLangMenuOpen(false)} />
+                          <ClickAway onClose={() => setLangMenuOpen(false)} />
                           <div className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[180px]">
                             {availableLanguages
                               .filter((l) => !languages.includes(l))

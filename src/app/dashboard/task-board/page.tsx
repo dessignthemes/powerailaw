@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import PriorityDot from "@/components/PriorityDot";
 import { progress as checklistProgress, alerts as checklistAlerts } from "@/lib/checklist";
@@ -643,7 +644,7 @@ function TaskBoard({
               </button>
               {boardMenu && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setBoardMenu(false)} />
+                  <ClickAway onClose={() => setBoardMenu(false)} />
                   <div className="absolute left-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[230px] whitespace-nowrap">
                     <button
                       onClick={() => {
@@ -805,7 +806,7 @@ function TaskBoard({
             </button>
             {jumpOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setJumpOpen(false)} />
+                <ClickAway onClose={() => setJumpOpen(false)} />
                 <div
                   role="menu"
                   className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[260px] max-h-[60vh] overflow-y-auto"
@@ -947,7 +948,7 @@ function TaskBoard({
               </button>
               {addingColumn && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setAddingColumn(false)} />
+                  <ClickAway onClose={() => setAddingColumn(false)} />
                   <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[260px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-3">
                     <input
                       autoFocus
@@ -1053,7 +1054,7 @@ function TaskBoard({
           </button>
           {matterMenuOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setMatterMenuOpen(false)} />
+              <ClickAway onClose={() => setMatterMenuOpen(false)} />
               <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[300px] max-h-[360px] overflow-y-auto">
                 {matterFilter && (
                   <button
@@ -1304,7 +1305,7 @@ function TaskBoard({
 
                     {menuOpenFor === col.id && (
                       <>
-                        <div className="fixed inset-0 z-40" onClick={() => setMenuOpenFor(null)} />
+                        <ClickAway onClose={() => setMenuOpenFor(null)} />
                         <div className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[170px]">
                           <button
                             onClick={() => {

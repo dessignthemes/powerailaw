@@ -1,5 +1,6 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import Link from "next/link";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { usePathname } from "next/navigation";
@@ -31,7 +32,7 @@ export default function PageSwitcher() {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <ClickAway onClose={() => setOpen(false)} />
           <div
             role="menu"
             className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] py-2 w-[240px] max-h-[calc(100vh-110px)] overflow-y-auto"

@@ -1,11 +1,13 @@
 "use client";
 
+import ClickAway from "@/components/ClickAway";
 import { useState } from "react";
-import { Check, ChevronDown, ChevronRight, ListChecks, Plus, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, ListChecks, Plus, Search, Trash2, X } from "lucide-react";
 import { useTemplates } from "./useTemplates";
-import { applyTemplate, progress, anchorsOf, dueState, fmtDays, alerts, hasMortgageSteps, setMortgageNa, mortgageNa, MOVE_LABEL, type TaskChecklist, type DueState } from "@/lib/checklist";
+import { applyTemplate, removeTemplate, progress, anchorsOf, dueState, fmtDays, alerts, hasMortgageSteps, setMortgageNa, mortgageNa, MOVE_LABEL, type TaskChecklist, type DueState } from "@/lib/checklist";
 
-// "Templates" button for the task's property row: pick a template to add.
+// "Templates" button for the task's property row: search and pick a template to
+// add; templates already added can be taken out again one by one.
 export function ChecklistPicker({
   checklist,
   onChange,
@@ -14,12 +16,25 @@ export function ChecklistPicker({
   onChange: (next: TaskChecklist | null) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
   const { templates, error } = useTemplates();
   const p = progress(checklist);
+  const added = checklist?.templates ?? [];
+  const query = q.trim().toLowerCase();
+  const list = (templates ?? []).filter((t) => !query || t.name.toLowerCase().includes(query));
+  const close = () => {
+    setOpen(false);
+    setQ("");
+  };
+  function removeOne(name: string) {
+    if (!checklist) return;
+    if (!confirm(`Remove “${name}” and its steps from this task?`)) return;
+    onChange(removeTemplate(checklist, name, (templates ?? []).find((t) => t.name === name)));
+  }
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? close() : setOpen(true))}
         className={`flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium ${
           p.total ? "bg-btn hover:bg-btn-hover" : "bg-chip hover:bg-btn"
         }`}
@@ -30,9 +45,40 @@ export function ChecklistPicker({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[280px] bg-white border border-line rounded-2xl shadow-[0_12px_32px_rgba(27,25,26,0.12)] p-1.5">
+          <ClickAway onClose={close} />
+          <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[320px] bg-white border border-line rounded-2xl shadow-[0_12px_32px_rgba(27,25,26,0.12)] p-1.5">
+            {added.length > 0 && (
+              <div className="mb-1 pb-1 border-b border-line">
+                <div className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Added to this task</div>
+                {added.map((name, i) => (
+                  <div key={`${name}-${i}`} className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-chip">
+                    <span className="flex-1 truncate text-[13px] font-medium" title={name}>
+                      {name}
+                    </span>
+                    <button onClick={() => removeOne(name)} className="flex items-center gap-1 text-[12px] text-muted hover:text-[#B42318] flex-shrink-0" aria-label={`Remove ${name}`}>
+                      <Trash2 size={12} strokeWidth={1.75} /> Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="px-3 pt-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">Add from template</div>
+            {(templates?.length ?? 0) > 4 && (
+              <div className="px-1.5 pb-1.5">
+                <div className="flex items-center gap-2 bg-chip rounded-full px-3 py-1.5">
+                  <Search size={13} className="text-muted flex-shrink-0" />
+                  <input
+                    autoFocus
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    onKeyDown={(e) => e.key === "Escape" && close()}
+                    placeholder="Search templates"
+                    aria-label="Search templates"
+                    className="flex-1 min-w-0 bg-transparent outline-none text-[13px]"
+                  />
+                </div>
+              </div>
+            )}
             {templates === null && <div className="px-3 py-2 text-[13px] text-muted">Loading…</div>}
             {error && <div className="px-3 py-2 text-[12.5px] text-[#8A4B14]">{error}</div>}
             {templates && templates.length === 0 && !error && (
@@ -40,33 +86,38 @@ export function ChecklistPicker({
                 No templates yet. Create one with the <b>Templates</b> button on the Task Board.
               </div>
             )}
-            {(templates ?? []).map((t) => {
-              const n = t.sections.reduce((k, s) => k + s.items.length, 0);
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    onChange(applyTemplate(checklist, t));
-                    setOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-chip transition-colors text-left"
-                >
-                  <span className="truncate">{t.name}</span>
-                  <span className="text-[12px] text-muted flex-shrink-0">{n} steps</span>
-                </button>
-              );
-            })}
-            {checklist && (
+            {templates && templates.length > 0 && list.length === 0 && <div className="px-3 py-2 text-[12.5px] text-muted">No templates match “{q.trim()}”.</div>}
+            <div className="max-h-[min(320px,45vh)] overflow-y-auto">
+              {list.map((t) => {
+                const n = t.sections.reduce((k, s) => k + s.items.length, 0);
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      onChange(applyTemplate(checklist, t));
+                      close();
+                    }}
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-chip transition-colors text-left"
+                  >
+                    <span className="truncate" title={t.name}>
+                      {t.name}
+                    </span>
+                    <span className="text-[12px] text-muted flex-shrink-0">{n} steps</span>
+                  </button>
+                );
+              })}
+            </div>
+            {checklist && added.length > 1 && (
               <>
                 <div className="my-1 border-t border-line" />
                 <button
                   onClick={() => {
-                    if (confirm("Remove the template and its checklist from this task?")) onChange(null);
-                    setOpen(false);
+                    if (confirm("Remove all templates and the whole checklist from this task?")) onChange(null);
+                    close();
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] text-muted hover:text-[#B42318] hover:bg-chip transition-colors text-left"
                 >
-                  <Trash2 size={13} strokeWidth={1.75} /> Remove template
+                  <Trash2 size={13} strokeWidth={1.75} /> Remove all templates
                 </button>
               </>
             )}
@@ -101,6 +152,7 @@ export default function ChecklistPanel({
   onChange: (next: TaskChecklist | null) => void;
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const { templates } = useTemplates();
   const [adding, setAdding] = useState<string | null>(null);
   const [newText, setNewText] = useState("");
   const p = progress(checklist);
@@ -123,7 +175,25 @@ export default function ChecklistPanel({
       <div className="flex items-center gap-3 mb-3">
         <ListChecks size={15} strokeWidth={1.75} className="text-muted" />
         <div className="text-[14px] font-semibold">Checklist</div>
-        {checklist.templates.length > 0 && <div className="text-[12.5px] text-muted truncate">{checklist.templates.join(" + ")}</div>}
+        {checklist.templates.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            {checklist.templates.map((name, i) => (
+              <span key={`${name}-${i}`} className="flex items-center gap-1 bg-white rounded-full pl-2.5 pr-1 py-0.5 text-[12px] text-muted max-w-[260px]" title={name}>
+                <span className="truncate">{name}</span>
+                <button
+                  onClick={() => {
+                    if (confirm(`Remove “${name}” and its steps from this task?`)) onChange(removeTemplate(checklist, name, (templates ?? []).find((t) => t.name === name)));
+                  }}
+                  className="w-4 h-4 rounded-full hover:bg-chip hover:text-[#B42318] flex items-center justify-center flex-shrink-0"
+                  aria-label={`Remove ${name}`}
+                  title={`Remove ${name} from this task`}
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         <label
           className="ml-auto flex items-center gap-1.5 text-[12.5px] text-muted flex-shrink-0 cursor-pointer"
           title="Ticking steps moves the task: first step → In progress, steps marked 'move to' → their column, all done → Done. You can still move it by hand."
