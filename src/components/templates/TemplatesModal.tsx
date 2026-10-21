@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { X, Plus, Trash2, ListChecks, Loader2, ClipboardPaste, FileUp } from "lucide-react";
 import { templateFromDocx } from "@/lib/templates/fromDocx";
+import { templateFromPdf } from "@/lib/templates/fromPdf";
 import { useTemplates } from "./useTemplates";
 import { parseOutline, toOutline, outlineName, COMMON_ANCHORS, MOVE_LABEL, type MoveTo, type TemplateSection } from "@/lib/checklist";
 import { parseCodes } from "@/lib/matters/numbering";
@@ -35,19 +36,21 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
     return { ...d, sections: parsed, name: d.name.trim() ? d.name : outlineName(parsed) };
   }
 
-  // A Word checklist becomes a new template (not saved until Save template).
+  // A Word or PDF checklist becomes a new template (not saved until Save template).
   async function importDocx(file: File | undefined) {
     if (!file) return;
     setImporting(true);
     setError(null);
     setNotice(null);
     try {
-      const { name, text } = await templateFromDocx(file);
+      const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+      if (!isPdf && !/\.docx$/i.test(file.name)) throw new Error("Choose a Word (.docx) or PDF file. Older .doc files: open in Word and save as .docx first.");
+      const { name, text } = isPdf ? await templateFromPdf(file) : await templateFromDocx(file);
       const sections = parseOutline(text);
       const steps = sections.reduce((n, x) => n + x.items.length, 0);
-      if (!steps) throw new Error("No checklist steps were found in that Word file. Steps should be bullet or numbered list items.");
+      if (!steps) throw new Error(`No checklist steps were found in that ${isPdf ? "PDF" : "Word file"}. Steps should be bullet or numbered list items.`);
       setPasteOpen(false);
-      setDraft({ name: (name || outlineName(sections) || file.name.replace(/\.docx$/i, "")).slice(0, 80), codes: "", sections });
+      setDraft({ name: (name || outlineName(sections) || file.name.replace(/\.(docx|pdf)$/i, "")).slice(0, 80), codes: "", sections });
       setNotice(`Read ${steps} steps in ${sections.length} sections from ${file.name}. Check the name and steps, change anything you like, then Save template.`);
     } catch (e) {
       setError((e as Error).message);
@@ -224,12 +227,12 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                   <button
                     onClick={() => fileInput.current?.click()}
                     disabled={importing}
-                    title="Turn a Word checklist into a new template"
+                    title="Turn a Word or PDF checklist into a new template"
                     className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors disabled:opacity-60"
                   >
-                    {importing ? <Loader2 size={13} className="animate-spin" /> : <FileUp size={13} strokeWidth={1.75} />} Import from Word (.docx)
+                    {importing ? <Loader2 size={13} className="animate-spin" /> : <FileUp size={13} strokeWidth={1.75} />} Import from Word or PDF
                   </button>
-                  <input ref={fileInput} type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={(e) => void importDocx(e.target.files?.[0])} />
+                  <input ref={fileInput} type="file" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={(e) => void importDocx(e.target.files?.[0])} />
                   <span className="text-[12px] text-muted">{itemCount(draft)} items</span>
                 </div>
 

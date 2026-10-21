@@ -13,7 +13,7 @@ const SYMBOL_START = /^[*\-+•◦▪▫●○■□☐☑☒✓✔–—➢➤�
 const NUMBERED_HEADING = /^\d{1,3}[.)]\s+\S/;
 const LETTERED_HEADING = /^[A-Z][.)]\s+\S/;
 
-type Para = { text: string; list: boolean; bold: boolean; heading: boolean };
+export type Para = { text: string; list: boolean; bold: boolean; heading: boolean };
 
 function paragraphs(xml: string): Para[] {
   const doc = new DOMParser().parseFromString(xml, "application/xml");
@@ -56,7 +56,13 @@ export async function templateFromDocx(file: File): Promise<{ name: string; text
     throw new Error("That doesn't look like a Word (.docx) file. In Word, use File → Save As → Word Document (.docx).");
   }
   const paras = paragraphs(xml);
-  if (!paras.length) throw new Error("The Word file is empty.");
+  return outlineFromParagraphs(paras, "Word file");
+}
+
+// Shared by the Word and PDF imports: paragraphs (text, list item?, bold?) →
+// the template name and the outline text the template editor reads.
+export function outlineFromParagraphs(paras: Para[], what: string): { name: string; text: string } {
+  if (!paras.length) throw new Error(`The ${what} is empty.`);
 
   const isStep = (p: Para) => p.list || SYMBOL_START.test(p.text);
   const firstStep = paras.findIndex(isStep);
@@ -93,6 +99,6 @@ export async function templateFromDocx(file: File): Promise<{ name: string; text
     lines.push("", p.text);
   }
   const text = lines.join("\n").replace(/^\n+/, "");
-  if (!text.trim()) throw new Error("No checklist steps were found in the Word file.");
+  if (!text.trim()) throw new Error(`No checklist steps were found in the ${what}.`);
   return { name, text };
 }
