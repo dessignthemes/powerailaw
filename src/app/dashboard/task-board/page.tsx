@@ -56,13 +56,13 @@ import {
 
 const DISPLAY_KEY = "lawpower.taskboard.display";
 
-// Columns are 227-240px wide (10% wider than the Oct 20 trim): a sixth of the
-// board each, but never under 227px on small laptops or over 240px on big monitors.
-// Card titles are 12px semibold. A 13" laptop shows about 4 columns, a large monitor 8-9.
+// Columns are 250-264px wide (10% wider again on Oct 20, evening): a sixth of the
+// board each, but never under 250px on small laptops or over 264px on big monitors.
+// Card titles are 12px semibold. A 13" laptop shows about 3-4 columns, a large monitor 8.
 // More columns sit off to the right; the board scrolls sideways.
 const VISIBLE_COLUMNS = 6;
-const COLUMN_MIN = 227;
-const COLUMN_MAX = 240;
+const COLUMN_MIN = 250;
+const COLUMN_MAX = 264;
 const COLUMN_GAP = 14;
 const COLUMN_WIDTH = `clamp(${COLUMN_MIN}px, calc((100% - ${(VISIBLE_COLUMNS - 1) * COLUMN_GAP}px) / ${VISIBLE_COLUMNS}), ${COLUMN_MAX}px)`;
 
