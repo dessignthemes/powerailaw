@@ -65,6 +65,7 @@ export default function MatterDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { matters, mattersLoaded, clients, tasks, updateMatter, deleteMatters } = useWorkspaceData();
+  const [invoiceKey, setInvoiceKey] = useState(0);
 
   const matter = matters.find((m) => m.id === params.id) ?? null;
 
@@ -84,6 +85,14 @@ export default function MatterDetailPage() {
   const [uploadNow, setUploadNow] = useState(false);
   // Unread client replies in the secure portal (cleared when the Emails tab is opened).
   const [unreadReplies, setUnreadReplies] = useState(0);
+  // A flat-fee matter whose fee was typed into the old "Custom hourly rate" box
+  // (before Oct 21, 2026): move it to the flat fee, once.
+  useEffect(() => {
+    if (matter && matter.billingType === "Flat fee" && !matter.value && matter.hourlyRate && matter.hourlyRate > 0) {
+      updateMatter({ ...matter, value: matter.hourlyRate, hourlyRate: null });
+    }
+  }, [matter, updateMatter]);
+
   const matterIdForCount = matter?.id;
   useEffect(() => {
     if (!matterIdForCount || activeTab === "emails") return;
@@ -436,48 +445,44 @@ export default function MatterDetailPage() {
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-[13px] text-muted mb-2">Custom hourly rate</div>
-                  <div className="flex items-center gap-2 bg-card-alt rounded-xl px-3.5 py-2.5 w-full max-w-[220px]">
-                    <span className="text-muted">$</span>
-                    <input
-                      type="number"
-                      value={matter.hourlyRate ?? ""}
-                      onChange={(e) =>
-                        patch({ hourlyRate: e.target.value ? Number(e.target.value) : null })
-                      }
-                      placeholder="0"
-                      className="w-full bg-transparent outline-none text-[13.5px]"
-                    />
-                    {matter.billingType !== "Flat fee" && <span className="text-muted text-[13px] flex-shrink-0">/h</span>}
-                  </div>
-                  <div className="text-[12.5px] text-muted mt-1.5">
-                    Leave empty or 0 to use the firm default.
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+                {matter.billingType === "Flat fee" ? (
                   <div>
-                    <div className="text-[13px] text-muted mb-1">Total billed</div>
-                    <div className="text-[16px] font-semibold text-green-600">$0.00</div>
-                  </div>
-                  <div>
-                    <div className="text-[13px] text-muted mb-1">Hourly value</div>
-                    <div className="text-[16px] font-semibold">$0.00</div>
-                  </div>
-                  <div>
-                    <div className="text-[13px] text-muted mb-1">Flat fees</div>
-                    <div className="text-[16px] font-semibold">
-                      ${matter.billingType === "Flat fee" && matter.value ? matter.value.toFixed(2) : "0.00"}
+                    <div className="text-[13px] text-muted mb-2">Flat fee</div>
+                    <div className="flex items-center gap-2 bg-card-alt rounded-xl px-3.5 py-2.5 w-full max-w-[220px]">
+                      <span className="text-muted">$</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={matter.value ?? ""}
+                        onChange={(e) => patch({ value: e.target.value ? Number(e.target.value) : null })}
+                        placeholder="0"
+                        aria-label="Flat fee"
+                        className="w-full bg-transparent outline-none text-[13.5px]"
+                      />
                     </div>
+                    <div className="text-[12.5px] text-muted mt-1.5">The fee for this matter. New invoice fills it in.</div>
                   </div>
+                ) : (
                   <div>
-                    <div className="text-[13px] text-muted mb-1">Billable hours</div>
-                    <div className="text-[16px] font-semibold">0h</div>
+                    <div className="text-[13px] text-muted mb-2">Custom hourly rate</div>
+                    <div className="flex items-center gap-2 bg-card-alt rounded-xl px-3.5 py-2.5 w-full max-w-[220px]">
+                      <span className="text-muted">$</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={matter.hourlyRate ?? ""}
+                        onChange={(e) => patch({ hourlyRate: e.target.value ? Number(e.target.value) : null })}
+                        placeholder="0"
+                        aria-label="Custom hourly rate"
+                        className="w-full bg-transparent outline-none text-[13.5px]"
+                      />
+                      <span className="text-muted text-[13px] flex-shrink-0">/h</span>
+                    </div>
+                    <div className="text-[12.5px] text-muted mt-1.5">Leave empty or 0 to use the firm default.</div>
                   </div>
-                </div>
+                )}
 
-                <div className="text-[13px] text-muted pt-1">0 time entries</div>
+                <BillingTotals matterId={matter.id} flat={matter.billingType === "Flat fee"} fee={matter.billingType === "Flat fee" ? matter.value ?? 0 : matter.hourlyRate ?? 0} reloadKey={invoiceKey} />
 
                 {/* Invoices for this matter (they also show in AI Accountant → Operating → Invoices). */}
                 <div className="border-t border-line pt-5">
@@ -485,7 +490,7 @@ export default function MatterDetailPage() {
                     Invoices
                     <MatterTrustBalance matterId={matter.id} />
                   </div>
-                  <InvoicesPanel matters={matters} clientName={(id) => clients.find((c) => c.id === id)?.name ?? ""} matterId={matter.id} compact />
+                  <InvoicesPanel matters={matters} clientName={(id) => clients.find((c) => c.id === id)?.name ?? ""} matterId={matter.id} compact onChanged={() => setInvoiceKey((k) => k + 1)} />
                 </div>
               </div>
             </div>
@@ -587,5 +592,46 @@ function MatterTrustBalance({ matterId }: { matterId: string }) {
     <span className="ml-auto text-[12.5px] font-medium bg-card-alt rounded-md px-2 py-0.5" title="Client money held in trust for this matter (AI Accountant → Trust)">
       In trust: {invMoney(bal)}
     </span>
+  );
+}
+
+// Billing totals from the matter's real invoices (all $0 until an invoice exists).
+function BillingTotals({ matterId, flat, fee, reloadKey }: { matterId: string; flat: boolean; fee: number; reloadKey: number }) {
+  const [t, setT] = useState<{ billed: number; paid: number } | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/invoices?matterId=${matterId}`)
+      .then((r) => (r.ok ? r.json() : { invoices: [] }))
+      .then((d: { invoices?: { status: string; total: number; amountPaid: number }[] }) => {
+        if (!live) return;
+        const list = (d.invoices ?? []).filter((i) => i.status !== "void");
+        setT({ billed: list.reduce((n, i) => n + Number(i.total || 0), 0), paid: list.reduce((n, i) => n + Number(i.amountPaid || 0), 0) });
+      })
+      .catch(() => live && setT({ billed: 0, paid: 0 }));
+    return () => {
+      live = false;
+    };
+  }, [matterId, reloadKey]);
+  const m = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const owed = t ? Math.max(0, t.billed - t.paid) : 0;
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+      <div>
+        <div className="text-[13px] text-muted mb-1">{flat ? "Flat fee" : "Hourly rate"}</div>
+        <div className="text-[16px] font-semibold">{fee ? `${m(fee)}${flat ? "" : "/h"}` : "—"}</div>
+      </div>
+      <div>
+        <div className="text-[13px] text-muted mb-1">Total billed</div>
+        <div className="text-[16px] font-semibold">{t ? m(t.billed) : "…"}</div>
+      </div>
+      <div>
+        <div className="text-[13px] text-muted mb-1">Paid</div>
+        <div className="text-[16px] font-semibold text-green-600">{t ? m(t.paid) : "…"}</div>
+      </div>
+      <div>
+        <div className="text-[13px] text-muted mb-1">Still owed</div>
+        <div className={`text-[16px] font-semibold ${owed > 0 ? "text-[#B42318]" : ""}`}>{t ? m(owed) : "…"}</div>
+      </div>
+    </div>
   );
 }
