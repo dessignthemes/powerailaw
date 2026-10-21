@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { X, Plus, Trash2, ListChecks, Loader2, ClipboardPaste } from "lucide-react";
+import { useRef, useState } from "react";
+import { X, Plus, Trash2, ListChecks, Loader2, ClipboardPaste, FileUp } from "lucide-react";
+import { templateFromDocx } from "@/lib/templates/fromDocx";
 import { useTemplates } from "./useTemplates";
 import { parseOutline, toOutline, outlineName, COMMON_ANCHORS, MOVE_LABEL, type MoveTo, type TemplateSection } from "@/lib/checklist";
 import { parseCodes } from "@/lib/matters/numbering";
@@ -14,7 +15,10 @@ const blank = (): Draft => ({ name: "", codes: "", sections: [{ id: uid(), title
 // Create and edit checklist templates (e.g. "Real Estate Purchase").
 export default function TemplatesModal({ onClose }: { onClose: () => void }) {
   const { templates, error: loadError, save, remove } = useTemplates();
-  const [draft, setDraft] = useState<Draft | null>(null);
+  // Opens on a new, empty template (the quickest way to add one); pick any template on the left to edit it.
+  const [draft, setDraft] = useState<Draft | null>(() => blank());
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -29,6 +33,28 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
     const parsed = parseOutline(pasteText);
     if (!parsed.length) return d;
     return { ...d, sections: parsed, name: d.name.trim() ? d.name : outlineName(parsed) };
+  }
+
+  // A Word checklist becomes a new template (not saved until Save template).
+  async function importDocx(file: File | undefined) {
+    if (!file) return;
+    setImporting(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const { name, text } = await templateFromDocx(file);
+      const sections = parseOutline(text);
+      const steps = sections.reduce((n, x) => n + x.items.length, 0);
+      if (!steps) throw new Error("No checklist steps were found in that Word file. Steps should be bullet or numbered list items.");
+      setPasteOpen(false);
+      setDraft({ name: (name || outlineName(sections) || file.name.replace(/\.docx$/i, "")).slice(0, 80), codes: "", sections });
+      setNotice(`Read ${steps} steps in ${sections.length} sections from ${file.name}. Check the name and steps, change anything you like, then Save template.`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setImporting(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
   }
 
   function open(d: Draft) {
@@ -195,6 +221,15 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
                   >
                     <ClipboardPaste size={13} strokeWidth={1.75} /> {pasteOpen ? "Close text view" : "Edit as text / paste a list"}
                   </button>
+                  <button
+                    onClick={() => fileInput.current?.click()}
+                    disabled={importing}
+                    title="Turn a Word checklist into a new template"
+                    className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors disabled:opacity-60"
+                  >
+                    {importing ? <Loader2 size={13} className="animate-spin" /> : <FileUp size={13} strokeWidth={1.75} />} Import from Word (.docx)
+                  </button>
+                  <input ref={fileInput} type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={(e) => void importDocx(e.target.files?.[0])} />
                   <span className="text-[12px] text-muted">{itemCount(draft)} items</span>
                 </div>
 
