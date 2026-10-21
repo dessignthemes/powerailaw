@@ -18,10 +18,14 @@ import {
   TriangleAlert,
   DollarSign,
   Link2,
+  Search,
 } from "lucide-react";
 import { GenericDropdown } from "@/components/NewTaskModal";
 import { Client, getInitials, getAvatarColor } from "@/components/NewClientModal";
 import { SUGGESTED_CODES, cleanCode, isValidCode, formatMatterNumber, NUMBER_PATTERN, cleanNumber } from "@/lib/matters/numbering";
+
+// Alphabetical by name, ignoring titles ("Mr. Adam Nowak" sorts under A).
+const sortName = (n: string) => n.replace(/^(mr|mrs|ms|miss|dr|prof|hon|rev)\.?\s+/i, "").trim().toLowerCase();
 
 // Matter types shown first when creating a matter.
 const MAIN_TYPES: MatterCategory[] = ["Real Estate", "Litigation", "Estate Planning"];
@@ -231,6 +235,8 @@ export default function NewMatterModal({
   const [clientOpen, setClientOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [typeOpen, setTypeOpen] = useState(false);
+  const [clientQ, setClientQ] = useState("");
   const [billingOpen, setBillingOpen] = useState(false);
 
   const StatusIcon = matterStatusMeta[status].icon;
@@ -263,12 +269,12 @@ export default function NewMatterModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 px-4"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-cream rounded-3xl w-full max-w-[720px] max-h-[90vh] overflow-y-auto"
+        className="bg-cream rounded-3xl w-full max-w-[864px] max-h-[90vh] overflow-y-auto shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)]"
       >
         <div className="flex items-center justify-between px-7 pt-6 pb-2">
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
@@ -287,25 +293,33 @@ export default function NewMatterModal({
           <div className="px-7 pt-3 flex flex-col gap-4">
             <div>
               <div className="text-[12.5px] font-semibold text-muted mb-2">Matter type</div>
-              <div className="flex flex-wrap gap-1.5">
-                {[...MAIN_TYPES, ...matterCategories.filter((c) => c !== "None" && !MAIN_TYPES.includes(c))].map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => {
-                      setCategory(t);
-                      const first = SUGGESTED_CODES[t]?.[0]?.code;
-                      // Fill in the usual abbreviation unless one was typed for this type already.
-                      if (first && !SUGGESTED_CODES[t].some((x) => x.code === matterCode)) setMatterCode(first);
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                      category === t ? "bg-btn-hover text-ink font-semibold" : "bg-chip hover:bg-btn"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              <GenericDropdown
+                open={typeOpen}
+                setOpen={setTypeOpen}
+                trigger={
+                  <span className={`min-w-[180px] text-left ${category ? "text-ink" : "text-muted"}`}>{category ?? "Select matter type"}</span>
+                }
+              >
+                <div className="max-h-[min(360px,50vh)] overflow-y-auto min-w-[240px]">
+                  {[...MAIN_TYPES, ...matterCategories.filter((c) => c !== "None" && !MAIN_TYPES.includes(c))].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        setCategory(t);
+                        setTypeOpen(false);
+                        const first = SUGGESTED_CODES[t]?.[0]?.code;
+                        // Fill in the usual abbreviation unless one was typed for this type already.
+                        if (first && !SUGGESTED_CODES[t].some((x) => x.code === matterCode)) setMatterCode(first);
+                      }}
+                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors whitespace-nowrap"
+                    >
+                      {t}
+                      {category === t && <Check size={14} strokeWidth={2} />}
+                    </button>
+                  ))}
+                </div>
+              </GenericDropdown>
             </div>
             <div>
               <div className="text-[12.5px] font-semibold text-muted mb-2">Abbreviation</div>
@@ -438,6 +452,7 @@ export default function NewMatterModal({
           <GenericDropdown
             open={clientOpen}
             setOpen={setClientOpen}
+            direction="up"
             trigger={
               selectedClient ? (
                 <>
@@ -460,27 +475,49 @@ export default function NewMatterModal({
             {clients.length === 0 ? (
               <div className="px-3 py-2.5 text-[13.5px] text-muted">No clients yet</div>
             ) : (
-              clients.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => {
-                    setClientId(c.id);
-                    setClientOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold"
-                      style={{ backgroundColor: getAvatarColor(c.name), color: "#fff" }}
-                    >
-                      {getInitials(c.name)}
-                    </span>
-                    {c.name}
-                  </span>
-                  {c.id === clientId && <Check size={14} strokeWidth={2} />}
-                </button>
-              ))
+              <div className="w-[min(380px,80vw)]">
+                <div className="flex items-center gap-2 bg-chip rounded-full px-3 py-1.5 mb-1.5 mx-0.5">
+                  <Search size={13} className="text-muted flex-shrink-0" />
+                  <input
+                    autoFocus
+                    value={clientQ}
+                    onChange={(e) => setClientQ(e.target.value)}
+                    placeholder="Search clients by name"
+                    aria-label="Search clients"
+                    className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px]"
+                  />
+                </div>
+                <div className="max-h-[min(230px,30vh)] overflow-y-auto">
+                  {(() => {
+                    const q = clientQ.trim().toLowerCase();
+                    const list = clients.filter((c) => !q || c.name.toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q)).sort((a, b) => sortName(a.name).localeCompare(sortName(b.name)));
+                    if (!list.length) return <div className="px-3 py-2.5 text-[13.5px] text-muted">No clients match “{clientQ.trim()}”.</div>;
+                    return list.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => {
+                          setClientId(c.id);
+                          setClientOpen(false);
+                          setClientQ("");
+                        }}
+                        title={c.name}
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-chip transition-colors text-left"
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <span
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0"
+                            style={{ backgroundColor: getAvatarColor(c.name), color: "#fff" }}
+                          >
+                            {getInitials(c.name)}
+                          </span>
+                          <span className="truncate whitespace-nowrap">{c.name}</span>
+                        </span>
+                        {c.id === clientId && <Check size={14} strokeWidth={2} className="flex-shrink-0" />}
+                      </button>
+                    ));
+                  })()}
+                </div>
+              </div>
             )}
           </GenericDropdown>
 
