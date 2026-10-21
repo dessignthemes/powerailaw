@@ -27,8 +27,15 @@ export async function accessibleMatterIds(u: PortalPerson): Promise<string[]> {
     return ((data ?? []) as { matter_id: string }[]).map((r) => r.matter_id);
   }
   if (!u.client_id) return [];
-  const { data } = await db().from("matters").select("id").eq("org_id", u.org_id).eq("client_id", u.client_id);
-  return ((data ?? []) as { id: string }[]).map((r) => r.id);
+  // Their own matters, plus matters they were linked to as a contact (e.g. co-client)
+  // where the firm turned on "can see this matter in their client portal".
+  const [{ data }, linked] = await Promise.all([
+    db().from("matters").select("id").eq("org_id", u.org_id).eq("client_id", u.client_id),
+    db().from("matter_contacts").select("matter_id").eq("org_id", u.org_id).eq("client_id", u.client_id).eq("portal_access", true),
+  ]);
+  const own = ((data ?? []) as { id: string }[]).map((r) => r.id);
+  const extra = linked.error ? [] : ((linked.data ?? []) as { matter_id: string }[]).map((r) => r.matter_id); // before 0047/0048: none
+  return [...new Set([...own, ...extra])];
 }
 
 export async function accessibleMatter(u: PortalPerson, matterId: unknown): Promise<string> {

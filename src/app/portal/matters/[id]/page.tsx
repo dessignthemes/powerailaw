@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, TrendingUp, Building2, Users, PenLine, Star, AlertTriangle } from "lucide-react";
 import PortalMessages from "@/app/portal/PortalMessages";
+import PortalUploads from "@/app/portal/PortalUploads";
 
 type Stage = { key: string; label: string; date: string | null; state: "done" | "current" | "upcoming" | "skipped"; star?: boolean };
 type View = {
@@ -190,6 +191,9 @@ export default function PortalMatterPage() {
       </div>
 
       {/* Messages and files for this matter */}
+      <div className="mt-6">
+        <PortalUploads firm={view.firm.includes("@") || view.firm === "Your law firm" ? "your law firm" : view.firm} matters={[{ id: view.matter.id, title: view.matter.title }]} fixedMatterId={view.matter.id} />
+      </div>
       <PortalMessages firm={view.firm} matters={[{ id: view.matter.id, title: "Messages about this file" }]} onlyMatters />
     </div>
   );

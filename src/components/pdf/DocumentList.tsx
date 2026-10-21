@@ -195,7 +195,7 @@ export default function DocumentList({
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} strokeWidth={2} />}
           {uploading ? "Checking and uploading…" : "Upload PDF"}
         </button>
-        <span className="text-[12.5px] text-muted">PDF only, up to 25 MB</span>
+        <span className="text-[12.5px] text-muted">PDF only, up to 100 MB</span>
       </div>
 
       {error && (

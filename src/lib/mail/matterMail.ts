@@ -305,7 +305,7 @@ async function copyAttachments(o: {
       continue;
     }
     if (a.size > MAX_DOCUMENT_BYTES) {
-      skipped.push({ name, why: "it's over 25 MB" });
+      skipped.push({ name, why: "it's over 100 MB" });
       continue;
     }
     try {

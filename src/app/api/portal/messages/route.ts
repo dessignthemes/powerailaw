@@ -3,6 +3,7 @@ import { portalMessages, portalReply } from "@/lib/portal/messages";
 import { portalFail } from "@/lib/portal/server";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // large files (up to 100 MB) are checked here
 
 // Client portal: the client's secure messages (marks the firm's messages read).
 export async function GET() {

@@ -1,5 +1,6 @@
 "use client";
 
+import PortalUploads from "./PortalUploads";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2, FileText, Eye, Download, LogOut, Folder, ClipboardList } from "lucide-react";
@@ -28,6 +29,7 @@ export default function PortalHome() {
   const [home, setHome] = useState<Home | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
+  const [reload, setReload] = useState(0); // after sending documents, show them in the list
 
   useEffect(() => {
     let live = true;
@@ -45,7 +47,7 @@ export default function PortalHome() {
       live = false;
       clearTimeout(t);
     };
-  }, [router]);
+  }, [router, reload]);
 
   async function signOut() {
     await fetch("/api/portal/logout", { method: "POST" }).catch(() => null);
@@ -108,19 +110,22 @@ export default function PortalHome() {
             )}
             {home.matters.length > 0 && (
               <section className="mb-6">
-                <h2 className="text-[15px] font-semibold mb-2.5" style={{ letterSpacing: 0 }}>Your files</h2>
+                <h2 className="text-[15px] font-semibold mb-2.5" style={{ letterSpacing: 0 }}>
+                  Your matters with {inSentence(home.firm)} ({home.matters.length})
+                </h2>
                 <div className="flex flex-col gap-2">
                   {home.matters.map((m) => (
                     <Link key={m.id} href={`/portal/matters/${m.id}`} className="flex items-center gap-3 bg-card-alt hover:bg-chip rounded-xl px-4 py-3 transition-colors">
                       <Folder size={16} className="text-muted flex-shrink-0" />
                       <span className="flex-1 min-w-0 text-[14px] font-medium truncate">{m.title}</span>
                       {m.status && <span className="text-[12px] text-muted bg-white rounded-md px-1.5 py-0.5">{m.status}</span>}
-                      <span className="text-[13px] font-medium">View status →</span>
+                      <span className="text-[13px] font-medium">Open →</span>
                     </Link>
                   ))}
                 </div>
               </section>
             )}
+            {!home.isParty && home.matters.length > 0 && <PortalUploads firm={inSentence(home.firm)} matters={home.matters} onSent={() => setReload((r) => r + 1)} />}
             <PortalMessages firm={home.firm} matters={home.matters} />
 
             {home.documents.length === 0 ? (

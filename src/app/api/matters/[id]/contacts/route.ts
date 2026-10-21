@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getCurrentOrgId, NoWorkspaceError } from "@/lib/data/org";
-import { listMatterContacts, addMatterContact, updateMatterContactRole, removeMatterContact, MatterContactError } from "@/lib/data/matterContacts";
+import { listMatterContacts, addMatterContact, updateMatterContact, removeMatterContact, MatterContactError } from "@/lib/data/matterContacts";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ async function ctx(params: Promise<{ id: string }>) {
 }
 
 // GET → the matter's contacts. POST { contactId | clientId | newContact, role } → add one.
-// PATCH { linkId, role } → change a role. DELETE ?linkId= → take someone off the matter.
+// PATCH { linkId, role?, portalAccess? } → change a role, or whether a linked client sees it in their portal. DELETE ?linkId= → take someone off the matter.
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { orgId, matterId } = await ctx(params);
@@ -45,9 +45,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { orgId } = await ctx(params);
-    const b = (await request.json().catch(() => ({}))) as { linkId?: unknown; role?: unknown };
+    const b = (await request.json().catch(() => ({}))) as { linkId?: unknown; role?: unknown; portalAccess?: unknown };
     if (!isId(b.linkId)) throw new MatterContactError("Nothing to change.");
-    await updateMatterContactRole(orgId, b.linkId, b.role);
+    await updateMatterContact(orgId, b.linkId, { role: b.role, portalAccess: b.portalAccess });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return fail("PATCH /api/matters/[id]/contacts", e);

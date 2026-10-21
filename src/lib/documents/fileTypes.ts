@@ -1,7 +1,7 @@
 // File types the Documents section accepts. Shared by the browser pre-check
 // and the server validation, so both agree on what's allowed.
 
-export const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
+export const MAX_DOCUMENT_BYTES = 100 * 1024 * 1024;
 
 export type FileType =
   | "pdf"
@@ -52,7 +52,7 @@ export const ACCEPT_ATTR = Object.values(FILE_TYPES)
   .flatMap((t) => t.exts.map((e) => `.${e}`))
   .join(",");
 
-export const ACCEPTED_SUMMARY = "PDF, Word, Excel, PowerPoint, text, images and emails, up to 25 MB";
+export const ACCEPTED_SUMMARY = "PDF, Word, Excel, PowerPoint, text, images and emails, up to 100 MB";
 
 export function fileTypeFromName(name: string): FileType | null {
   const ext = name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
@@ -82,7 +82,7 @@ export type FileProblem = "empty" | "too_large" | "unsupported" | "mismatch" | "
 
 export const fileProblemMessages: Record<FileProblem, string> = {
   empty: "That file is empty.",
-  too_large: "Files must be 25 MB or smaller.",
+  too_large: "Files must be 100 MB or smaller.",
   unsupported: `This file type isn't supported. You can add ${ACCEPTED_SUMMARY}.`,
   mismatch: "This file's contents don't match its name. Save it again from the app that created it and upload that copy.",
   protected:

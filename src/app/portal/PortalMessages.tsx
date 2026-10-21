@@ -5,7 +5,7 @@ import { Loader2, MessageSquare, FileText, Download, Send, ShieldCheck, Papercli
 import { createClient } from "@/lib/supabase/client";
 
 const ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg";
-const MAX_BYTES = 25 * 1024 * 1024;
+const MAX_BYTES = 100 * 1024 * 1024;
 const fmtSize = (n: number) => (n < 1024 ** 2 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 ** 2).toFixed(1)} MB`);
 
 // Uploads one file straight to the firm's secure storage; returns its storage path.
@@ -114,7 +114,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
     for (const f of Array.from(list)) {
       const ext = f.name.toLowerCase().split(".").pop() ?? "";
       if (!ACCEPT.split(",").includes(`.${ext}`)) bad.push(`"${f.name}" isn't a supported file (use PDF, Word, Excel, text, JPG or PNG).`);
-      else if (f.size > MAX_BYTES) bad.push(`"${f.name}" is larger than 25 MB.`);
+      else if (f.size > MAX_BYTES) bad.push(`"${f.name}" is larger than 100 MB.`);
       else if (f.size === 0) bad.push(`"${f.name}" is empty.`);
       else ok.push(f);
     }
@@ -248,7 +248,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
             </span>
           )}
           <span className="text-[12px] text-muted flex items-center gap-1">
-            <ShieldCheck size={12} /> {visibility === "shared" ? "Everyone on this file can read this." : `Only you and ${firm} can read this.`} PDF, Word, Excel, JPG or PNG, up to 25 MB.
+            <ShieldCheck size={12} /> {visibility === "shared" ? "Everyone on this file can read this." : `Only you and ${firm} can read this.`} PDF, Word, Excel, JPG or PNG, up to 100 MB.
           </span>
           <button
             onClick={() => void send()}

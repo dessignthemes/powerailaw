@@ -6,7 +6,7 @@ import { openPdf, openProblemMessages } from "@/lib/pdf/pdfjsClient";
 import { hasPdfHeader, looksEncrypted, PASSWORD_PDF_MESSAGE } from "@/lib/pdf/sniff";
 import { FILE_TYPES, checkFileBytes, fileProblemMessages, fileTypeFromName, MAX_DOCUMENT_BYTES } from "@/lib/documents/fileTypes";
 
-export const MAX_PDF_BYTES = 25 * 1024 * 1024;
+export const MAX_PDF_BYTES = 100 * 1024 * 1024;
 const BUCKET = "matter-documents";
 
 export class UploadError extends Error {}
@@ -22,7 +22,7 @@ async function readJson(res: Response) {
 export async function precheckPdf(file: File | Blob, name?: string): Promise<Uint8Array> {
   if (name && !/\.pdf$/i.test(name)) throw new UploadError("This file isn't a PDF. Please upload a .pdf file.");
   if (file.size === 0) throw new UploadError("That file is empty.");
-  if (file.size > MAX_PDF_BYTES) throw new UploadError("PDFs must be 25 MB or smaller.");
+  if (file.size > MAX_PDF_BYTES) throw new UploadError("PDFs must be 100 MB or smaller.");
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (!hasPdfHeader(bytes)) throw new UploadError("This file isn't a PDF. Please upload a .pdf file.");
@@ -157,7 +157,7 @@ export async function convertWordVersionToPdf(documentId: string, title: string,
     if (e instanceof ConvertError) throw new UploadError(e.message);
     throw new UploadError("This Word file couldn't be converted. Open it in Word, use Save as PDF and upload that PDF instead.");
   }
-  if (pdf.byteLength > MAX_PDF_BYTES) throw new UploadError("The converted PDF is larger than 25 MB, so it can't be saved.");
+  if (pdf.byteLength > MAX_PDF_BYTES) throw new UploadError("The converted PDF is larger than 100 MB, so it can't be saved.");
   const document = await uploadNewVersion(documentId, pdf, version.id, `Converted to PDF from version ${version.versionNumber} (Word)`);
   return { document, skippedImages };
 }

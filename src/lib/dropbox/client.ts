@@ -272,9 +272,9 @@ export async function download(s: Session, path: string, maxBytes: number) {
   const meta = JSON.parse(res.headers.get("dropbox-api-result") ?? "{}") as Meta;
   if ((meta.size ?? 0) > maxBytes || Number(res.headers.get("content-length") ?? 0) > maxBytes) {
     await res.body?.cancel();
-    throw new DropboxError("too_large", "This file is larger than 25 MB, so it can't be added to LawPower.", 413);
+    throw new DropboxError("too_large", "This file is larger than 100 MB, so it can't be added to LawPower.", 413);
   }
   const bytes = new Uint8Array(await res.arrayBuffer());
-  if (bytes.byteLength > maxBytes) throw new DropboxError("too_large", "This file is larger than 25 MB, so it can't be added to LawPower.", 413);
+  if (bytes.byteLength > maxBytes) throw new DropboxError("too_large", "This file is larger than 100 MB, so it can't be added to LawPower.", 413);
   return { bytes, name: meta.name ?? path.split("/").pop() ?? "file" };
 }

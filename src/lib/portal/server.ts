@@ -1,4 +1,5 @@
 import "server-only";
+import { accessibleMatterIds } from "@/lib/portal/parties";
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -303,7 +304,7 @@ export async function portalHome() {
   const [{ data: client }, firm, { data: matters }] = await Promise.all([
     db().from("clients").select("name").eq("id", u.client_id).maybeSingle(),
     firmName(u.org_id),
-    db().from("matters").select("id, title, status, category, updated_at").eq("org_id", u.org_id).eq("client_id", u.client_id).order("updated_at", { ascending: false }),
+    clientMatters(u),
   ]);
   const ids = (matters ?? []).map((m) => m.id as string);
   const { data: docs } = ids.length
@@ -333,24 +334,32 @@ export async function portalHome() {
   };
 }
 
+// Every matter a client can open in the portal, newest activity first.
+async function clientMatters(u: UserRow) {
+  const ids = await accessibleMatterIds(u);
+  if (!ids.length) return { data: [] as { id: string; title: string; status: string; category: string | null; updated_at: string }[] };
+  const { data } = await db().from("matters").select("id, title, status, category, updated_at").eq("org_id", u.org_id).in("id", ids).order("updated_at", { ascending: false });
+  return { data: (data ?? []) as { id: string; title: string; status: string; category: string | null; updated_at: string }[] };
+}
+
 // Short-lived link to one shared file (inline preview, or download).
 export async function portalFileUrl(versionId: string, download: boolean) {
   const u = await currentPortalUser();
   if (!/^[0-9a-f-]{36}$/i.test(versionId)) throw new PortalError(404, "File not found.");
   const { data: v } = await db()
     .from("document_versions")
-    .select("storage_path, version_number, documents!inner(id, title, org_id, portal_shared, matters!inner(client_id))")
+    .select("storage_path, version_number, documents!inner(id, title, org_id, portal_shared, matter_id)")
     .eq("id", versionId)
     .eq("org_id", u.org_id)
     .maybeSingle();
-  const doc = (v as unknown as { documents: { id: string; title: string; org_id: string; portal_shared: boolean; matters: { client_id: string | null } } } | null)?.documents;
+  const doc = (v as unknown as { documents: { id: string; title: string; org_id: string; portal_shared: boolean; matter_id: string | null } } | null)?.documents;
   if (!v || !doc) throw new PortalError(404, "File not found.");
   if (u.kind === "party") {
     // A realtor / party: only files attached to a message they can see.
     const { portalMessages } = await import("@/lib/portal/messages");
     const { messages } = await portalMessages();
     if (!messages.some((m) => m.attachments.some((a) => a.id === doc.id))) throw new PortalError(404, "File not found.");
-  } else if (!doc.portal_shared || doc.matters?.client_id !== u.client_id) throw new PortalError(404, "File not found.");
+  } else if (!doc.portal_shared || !doc.matter_id || !(await accessibleMatterIds(u)).includes(doc.matter_id)) throw new PortalError(404, "File not found.");
   const path = v.storage_path as string;
   const ext = path.split(".").pop() ?? "pdf";
   const name = (doc.title.replace(/[\\/:*?"<>|]+/g, "-") || "document").replace(new RegExp(`\\.${ext}$`, "i"), "") + "." + ext;

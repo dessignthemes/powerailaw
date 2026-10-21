@@ -559,7 +559,7 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
             <button
               onClick={send}
               disabled={saving || tooLarge}
-              title={tooLarge ? "Files over 25 MB can't be added to LawPower" : undefined}
+              title={tooLarge ? "Files over 100 MB can't be added to LawPower" : undefined}
               className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 size={14} className="animate-spin" /> : type === "pdf" ? <PenLine size={14} strokeWidth={2} /> : <FolderInput size={14} strokeWidth={2} />}
@@ -589,7 +589,7 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
           <div className={`px-5 py-2.5 text-[13px] border-b border-line ${saveError ? "bg-red-50 text-red-700" : "bg-card-alt"}`}>
             {saveError ??
               (tooLarge ? (
-                "This file is larger than 25 MB, so it can’t be added to LawPower. You can still preview and download it."
+                "This file is larger than 100 MB, so it can’t be added to LawPower. You can still preview and download it."
               ) : (
                 <>
                   Files are saved to a matter.{" "}

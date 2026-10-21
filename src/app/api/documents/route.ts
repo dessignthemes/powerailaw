@@ -8,6 +8,7 @@ import {
 import { errorResponse } from "@/lib/apiErrors";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // large files (up to 100 MB) are checked here
 
 // GET /api/documents?matterId=… (omit matterId for every matter you can see)
 export async function GET(request: Request) {

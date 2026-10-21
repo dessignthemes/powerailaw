@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Bookmark, Plus, X, Mail, Phone } from "lucide-react";
 import AddMatterContactModal from "@/components/matters/AddMatterContactModal";
 
-type MC = { id: string; role: string; kind: "contact" | "client"; targetId: string; name: string; type: string; email: string | null; phone: string | null; company: string };
+type MC = { id: string; role: string; portalAccess?: boolean; kind: "contact" | "client"; targetId: string; name: string; type: string; email: string | null; phone: string | null; company: string };
 
 // The matter's Contacts card: everyone on the matter with their role.
 export default function MatterContactsCard({ matterId, clientId, clients }: { matterId: string; clientId: string | null; clients: { id: string; name: string; email?: string | null }[] }) {
@@ -29,6 +29,17 @@ export default function MatterContactsCard({ matterId, clientId, clients }: { ma
       live = false;
     };
   }, [matterId, reload]);
+
+  async function togglePortal(c: MC) {
+    const on = !c.portalAccess;
+    if (on && !confirm(`Let ${c.name} see this matter in their client portal (status, shared documents and messages)? Only do this for someone on your client's side.`)) return;
+    const res = await fetch(`/api/matters/${matterId}/contacts`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ linkId: c.id, portalAccess: on }) });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      alert(d?.error ?? "Couldn't change portal access.");
+    }
+    refresh();
+  }
 
   async function remove(c: MC) {
     if (!confirm(`Take ${c.name} off this matter? They stay in Contacts.`)) return;
@@ -68,6 +79,15 @@ export default function MatterContactsCard({ matterId, clientId, clients }: { ma
                     {c.name}
                   </Link>
                   {c.role && <span className="text-[11.5px] bg-[#E1E7F4] rounded-md px-1.5 py-px flex-shrink-0">{c.role}</span>}
+                  {c.kind === "client" && (
+                    <button
+                      onClick={() => void togglePortal(c)}
+                      title={c.portalAccess ? "Sees this matter in their client portal. Click to turn off." : "Doesn't see this matter in their client portal. Click to turn on."}
+                      className={`text-[11px] rounded-md px-1.5 py-px flex-shrink-0 ${c.portalAccess ? "bg-[#CAF0D9] text-[#14532D]" : "bg-card-alt text-muted"}`}
+                    >
+                      Portal {c.portalAccess ? "on" : "off"}
+                    </button>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 text-[12px] text-muted mt-0.5 min-w-0">
                   {c.email && (

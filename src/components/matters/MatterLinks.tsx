@@ -27,6 +27,8 @@ export function LinkToMatterModal({
   const [matterId, setMatterId] = useState("");
   const [asClient, setAsClient] = useState(false);
   const [role, setRole] = useState("");
+  const [portal, setPortal] = useState<boolean | null>(null);
+  const portalOn = portal ?? /client/i.test(role);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const matter = matters.find((m) => m.id === matterId) ?? null;
@@ -46,7 +48,7 @@ export function LinkToMatterModal({
         const res = await fetch(`/api/matters/${matter.id}/contacts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(who.kind === "client" ? { clientId: who.id, role } : { contactId: who.id, role }),
+          body: JSON.stringify(who.kind === "client" ? { clientId: who.id, role, portalAccess: portalOn } : { contactId: who.id, role }),
         });
         const d = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(d?.error ?? "Couldn't link them. Please try again.");
@@ -124,6 +126,15 @@ export function LinkToMatterModal({
                       <option key={r} value={r} />
                     ))}
                   </datalist>
+                </label>
+              )}
+              {!asClient && who.kind === "client" && (
+                <label className="flex items-start gap-2.5 mt-3 cursor-pointer">
+                  <input type="checkbox" checked={portalOn} onChange={(e) => setPortal(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#5E6E8C]" />
+                  <span>
+                    <span className="font-medium">Can see this matter in their client portal</span>
+                    <span className="block text-[12.5px] text-muted">Only for someone on your client&apos;s side (e.g. a co-client).</span>
+                  </span>
                 </label>
               )}
             </>

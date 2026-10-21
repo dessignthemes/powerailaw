@@ -30,6 +30,7 @@ export type MatterContact = {
   id: string; // the link
   matterId: string;
   role: string;
+  portalAccess: boolean; // a linked client sees this matter in their portal
   kind: "contact" | "client";
   targetId: string;
   name: string;
@@ -39,7 +40,7 @@ export type MatterContact = {
   company: string;
 };
 
-type LinkRow = { id: string; matter_id: string; contact_id: string | null; client_id: string | null; role: string };
+type LinkRow = { id: string; matter_id: string; contact_id: string | null; client_id: string | null; role: string; portal_access?: boolean };
 
 async function describe(orgId: string, rows: LinkRow[]): Promise<MatterContact[]> {
   const contactIds = [...new Set(rows.map((r) => r.contact_id).filter(Boolean))] as string[];
@@ -55,18 +56,20 @@ async function describe(orgId: string, rows: LinkRow[]): Promise<MatterContact[]
       if (r.contact_id) {
         const c = cMap.get(r.contact_id);
         if (!c) return null;
-        return { id: r.id, matterId: r.matter_id, role: r.role, kind: "contact", targetId: c.id, name: c.name, type: c.kind, email: c.email, phone: c.phone, company: c.company ?? "" };
+        return { id: r.id, matterId: r.matter_id, role: r.role, portalAccess: false, kind: "contact", targetId: c.id, name: c.name, type: c.kind, email: c.email, phone: c.phone, company: c.company ?? "" };
       }
       const k = r.client_id ? kMap.get(r.client_id) : null;
       if (!k) return null;
-      return { id: r.id, matterId: r.matter_id, role: r.role, kind: "client", targetId: k.id, name: k.name, type: k.type, email: k.email, phone: k.phone, company: "" };
+      return { id: r.id, matterId: r.matter_id, role: r.role, portalAccess: !!r.portal_access, kind: "client", targetId: k.id, name: k.name, type: k.type, email: k.email, phone: k.phone, company: "" };
     })
     .filter((x): x is MatterContact => !!x);
 }
 
 export async function listMatterContacts(orgId: string, matterId: string) {
-  const rows = check(await db().from("matter_contacts").select("id, matter_id, contact_id, client_id, role").eq("org_id", orgId).eq("matter_id", matterId).order("created_at")) as LinkRow[];
-  return describe(orgId, rows);
+  const q = (cols: string) => db().from("matter_contacts").select(cols).eq("org_id", orgId).eq("matter_id", matterId).order("created_at");
+  let r = await q("id, matter_id, contact_id, client_id, role, portal_access");
+  if (r.error && /portal_access/.test(r.error.message ?? "")) r = await q("id, matter_id, contact_id, client_id, role"); // before 0048
+  return describe(orgId, check(r) as unknown as LinkRow[]);
 }
 
 // The matters a contact or client is on (as a linked contact, not as the matter's own client).
@@ -90,7 +93,7 @@ export async function addMatterContact(
   orgId: string,
   userId: string,
   matterId: string,
-  body: { contactId?: unknown; clientId?: unknown; role?: unknown; newContact?: { name?: unknown; kind?: unknown; email?: unknown; phone?: unknown; company?: unknown } }
+  body: { contactId?: unknown; clientId?: unknown; role?: unknown; portalAccess?: unknown; newContact?: { name?: unknown; kind?: unknown; email?: unknown; phone?: unknown; company?: unknown } }
 ) {
   const { data: matter } = await db().from("matters").select("id, client_id").eq("org_id", orgId).eq("id", matterId).maybeSingle();
   if (!matter) throw new MatterContactError("That matter wasn't found.", 404);
@@ -131,18 +134,30 @@ export async function addMatterContact(
     if (!ok.data) throw new MatterContactError("That client wasn't found.", 404);
   }
 
+  const base = { org_id: orgId, matter_id: matterId, contact_id: contactId, client_id: clientId, role, created_by: userId };
+  const portal = !!clientId && body.portalAccess === true;
   const r = await db()
     .from("matter_contacts")
-    .insert({ org_id: orgId, matter_id: matterId, contact_id: contactId, client_id: clientId, role, created_by: userId })
+    .insert({ ...base, ...(portal ? { portal_access: true } : {}) })
     .select("id, matter_id, contact_id, client_id, role")
     .single();
+  if (r.error && portal && /portal_access/.test(r.error.message ?? "")) {
+    throw new MatterContactError("Portal access for linked clients needs a database update. Run supabase/migrations/0048_large_files_portal_access.sql, then try again.", 503, "setup_required");
+  }
   if (r.error?.code === "23505") throw new MatterContactError("They're already on this matter.", 409);
-  const row = check(r) as LinkRow;
+  const row = { ...(check(r) as LinkRow), portal_access: portal };
   return (await describe(orgId, [row]))[0];
 }
 
-export async function updateMatterContactRole(orgId: string, linkId: string, role: unknown) {
-  check(await db().from("matter_contacts").update({ role: clip(role, 80) }).eq("org_id", orgId).eq("id", linkId));
+export async function updateMatterContact(orgId: string, linkId: string, patch: { role?: unknown; portalAccess?: unknown }) {
+  const fields: Record<string, unknown> = {};
+  if (patch.role !== undefined) fields.role = clip(patch.role, 80);
+  if (typeof patch.portalAccess === "boolean") fields.portal_access = patch.portalAccess;
+  if (!Object.keys(fields).length) return;
+  // Portal access only means something for a linked client.
+  let q = db().from("matter_contacts").update(fields).eq("org_id", orgId).eq("id", linkId);
+  if (fields.portal_access === true) q = q.not("client_id", "is", null);
+  check(await q);
 }
 
 export async function removeMatterContact(orgId: string, linkId: string) {

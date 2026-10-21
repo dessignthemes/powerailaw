@@ -26,6 +26,10 @@ export default function AddMatterContactModal({
   const [creating, setCreating] = useState(false);
   const [nc, setNc] = useState({ name: "", kind: "person", email: "", phone: "", company: "" });
   const [role, setRole] = useState("");
+  // A linked client can see this matter in their portal: on for co-clients, off
+  // otherwise (they may be on the other side), unless changed here.
+  const [portal, setPortal] = useState<boolean | null>(null);
+  const portalOn = portal ?? /client/i.test(role);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +58,7 @@ export default function AddMatterContactModal({
     setBusy(true);
     setError(null);
     try {
-      const body = creating ? { newContact: nc, role } : picked?.kind === "client" ? { clientId: picked.id, role } : { contactId: picked?.id, role };
+      const body = creating ? { newContact: nc, role } : picked?.kind === "client" ? { clientId: picked.id, role, portalAccess: portalOn } : { contactId: picked?.id, role };
       const res = await fetch(`/api/matters/${matterId}/contacts`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? "Couldn't add them. Please try again.");
@@ -156,6 +160,15 @@ export default function AddMatterContactModal({
                   <option key={r} value={r} />
                 ))}
               </datalist>
+            </label>
+          )}
+          {ready && !creating && picked?.kind === "client" && (
+            <label className="flex items-start gap-2.5 mt-3 cursor-pointer">
+              <input type="checkbox" checked={portalOn} onChange={(e) => setPortal(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#5E6E8C]" />
+              <span>
+                <span className="font-medium">Can see this matter in their client portal</span>
+                <span className="block text-[12.5px] text-muted">Only for someone on your client&apos;s side (e.g. a co-client): they&apos;ll see its status, shared documents and messages.</span>
+              </span>
             </label>
           )}
           {error && <div className="mt-3 rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-4 py-3">{error}</div>}

@@ -239,7 +239,7 @@ export async function portalUploadUrl(input: { matterId?: unknown; name?: unknow
   if (!type || !CLIENT_UPLOAD_TYPES.includes(type)) throw new PortalError(400, `"${name || "This file"}" can't be sent. Use PDF, Word, Excel, text, JPG or PNG.`);
   const size = Number(input.size);
   if (!Number.isFinite(size) || size <= 0) throw new PortalError(400, `"${name}" is empty.`);
-  if (size > MAX_DOCUMENT_BYTES) throw new PortalError(400, `"${name}" is larger than 25 MB.`);
+  if (size > MAX_DOCUMENT_BYTES) throw new PortalError(400, `"${name}" is larger than 100 MB.`);
   const since = new Date(Date.now() - 86_400_000).toISOString();
   const { count } = await db().from("client_portal_events").select("id", { count: "exact", head: true }).eq("portal_user_id", u.id).eq("type", "uploaded").gte("at", since);
   if ((count ?? 0) >= MAX_UPLOADS_PER_DAY) throw new PortalError(429, "You've sent a lot of files today. Please try again tomorrow or contact your law firm.");

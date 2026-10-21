@@ -2,13 +2,13 @@ import "server-only";
 import { PDFDocument, EncryptedPDFError } from "pdf-lib";
 import { hasPdfHeader, looksEncrypted, PASSWORD_PDF_MESSAGE } from "@/lib/pdf/sniff";
 
-export const MAX_PDF_BYTES = 25 * 1024 * 1024;
+export const MAX_PDF_BYTES = 100 * 1024 * 1024;
 
 export type PdfProblem = "empty" | "too_large" | "not_pdf" | "encrypted" | "damaged";
 
 export const pdfProblemMessages: Record<PdfProblem, string> = {
   empty: "That file is empty.",
-  too_large: "PDFs must be 25 MB or smaller.",
+  too_large: "PDFs must be 100 MB or smaller.",
   not_pdf: "This file isn't a PDF. Please upload a .pdf file.",
   encrypted: PASSWORD_PDF_MESSAGE,
   damaged:
