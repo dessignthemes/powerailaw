@@ -23,12 +23,15 @@ import {
   ListChecks,
   Forward,
   PenSquare,
+  ChevronDown,
+  FolderInput,
 } from "lucide-react";
 import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/ComposeEmail";
 import CreateTaskFromEmail, { htmlToText } from "@/components/mail/CreateTaskFromEmail";
 import type { MailFolder, MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
 import FolderPanel from "@/components/mail/FolderPanel";
-import AttachmentPreview from "@/components/mail/AttachmentPreview";
+import AttachmentPreview, { attachmentUrl } from "@/components/mail/AttachmentPreview";
+import SaveAttachmentsModal, { type SaveMode } from "@/components/mail/SaveAttachmentsModal";
 import { emailDocument } from "@/lib/mail/emailDocument";
 import { AutoHeightFrame, ThreadView } from "@/components/mail/ThreadView";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
@@ -241,10 +244,12 @@ function FileToMatter({
 }
 
 export default function InboxPage() {
-  const { teamMembers, boards, addTask } = useWorkspaceData();
+  const { teamMembers, boards, addTask, matters } = useWorkspaceData();
   // New email / forward (opens in the person's Gmail or Outlook) and "Turn into task".
   const [composing, setComposing] = useState<"new" | "forward" | null>(null);
   const [taskFrom, setTaskFrom] = useState<MailSummary | null>(null);
+  const [attMenu, setAttMenu] = useState<number | null>(null);
+  const [saveAtt, setSaveAtt] = useState<{ mode: SaveMode; index?: number } | null>(null);
   const [previewAtt, setPreviewAtt] = useState<{ provider: MailProvider; messageId: string; index: number; attachment: MailMessage["attachments"][number] } | null>(null);
   const [actionNote, setActionNote] = useState<string | null>(null);
   const [conns, setConns] = useState<Conn[] | null>(null);
@@ -463,6 +468,8 @@ export default function InboxPage() {
 
   function open(m: MailSummary) {
     if (!provider) return;
+    setAttMenu(null);
+    setSaveAtt(null);
     setSelectedId(m.id);
     setMessage(null);
     setMsgError(null);
@@ -981,20 +988,75 @@ export default function InboxPage() {
                     )}
                   </div>
                   {message.attachments.length > 0 && (
-                    <div className="flex gap-2 flex-wrap mt-3">
+                    <div className="flex gap-2 flex-wrap items-center mt-3">
                       {message.attachments.map((a, i) => (
-                        <button
-                          key={i}
-                          onClick={() => provider && setPreviewAtt({ provider, messageId: message.id, index: i, attachment: a })}
-                          title={`Preview ${a.name}`}
-                          className="flex items-center gap-1.5 text-[12.5px] bg-white border border-line rounded-lg px-2.5 py-1 hover:bg-chip hover:border-btn transition-colors"
-                        >
-                          <Paperclip size={12} className="text-muted" />
-                          <span className="max-w-[220px] truncate">{a.name}</span>
-                          <span className="text-muted">{sizeLabel(a.size)}</span>
-                        </button>
+                        <div key={i} className="relative flex items-stretch bg-white border border-line rounded-lg hover:border-btn transition-colors">
+                          <button
+                            onClick={() => provider && setPreviewAtt({ provider, messageId: message.id, index: i, attachment: a })}
+                            title={`Preview ${a.name}`}
+                            className="flex items-center gap-1.5 text-[12.5px] pl-2.5 pr-1.5 py-1 rounded-l-lg hover:bg-chip"
+                          >
+                            <Paperclip size={12} className="text-muted" />
+                            <span className="max-w-[220px] truncate">{a.name}</span>
+                            <span className="text-muted">{sizeLabel(a.size)}</span>
+                          </button>
+                          <button
+                            onClick={() => setAttMenu(attMenu === i ? null : i)}
+                            aria-label={`More for ${a.name}`}
+                            title="Preview, download or save to a matter"
+                            className="px-1.5 border-l border-line rounded-r-lg hover:bg-chip text-muted"
+                          >
+                            <ChevronDown size={12} />
+                          </button>
+                          {attMenu === i && provider && (
+                            <>
+                              <ClickAway onClose={() => setAttMenu(null)} />
+                              <div className="absolute left-0 top-[calc(100%+4px)] z-50 w-[250px] bg-white border border-line rounded-xl shadow-[0_12px_32px_rgba(27,25,26,0.14)] p-1.5 text-[13px]">
+                                {(
+                                  [
+                                    ["Preview", () => setPreviewAtt({ provider, messageId: message.id, index: i, attachment: a })],
+                                    ["Download", () => window.open(attachmentUrl(provider, message.id, i, true), "_blank")],
+                                    ["Save attachment to matter…", () => setSaveAtt({ mode: "one", index: i })],
+                                    ["Rename and save to matter…", () => setSaveAtt({ mode: "rename", index: i })],
+                                    ...(message.attachments.length > 1 ? ([["Save all attachments to matter…", () => setSaveAtt({ mode: "all" })]] as [string, () => void][]) : []),
+                                  ] as [string, () => void][]
+                                ).map(([label, fn]) => (
+                                  <button
+                                    key={label}
+                                    onClick={() => {
+                                      setAttMenu(null);
+                                      fn();
+                                    }}
+                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-chip"
+                                  >
+                                    {label}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       ))}
+                      <button
+                        onClick={() => setSaveAtt({ mode: "all" })}
+                        className="flex items-center gap-1.5 text-[12.5px] font-medium bg-chip hover:bg-btn rounded-full px-3 py-1 transition-colors"
+                        title="Save the attachments to a matter's Documents"
+                      >
+                        <FolderInput size={12} /> {message.attachments.length > 1 ? `Save all ${message.attachments.length} to matter` : "Save to matter"}
+                      </button>
                     </div>
+                  )}
+                  {saveAtt && provider && (
+                    <SaveAttachmentsModal
+                      provider={provider}
+                      messageId={message.id}
+                      attachments={message.attachments}
+                      mode={saveAtt.mode}
+                      index={saveAtt.index}
+                      matters={matters}
+                      defaultMatterId={messages.find((x) => x.id === message.id)?.matter?.id ?? null}
+                      onClose={() => setSaveAtt(null)}
+                    />
                   )}
                 </div>
                 {threaded && message.threadId && provider ? (

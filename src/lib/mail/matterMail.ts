@@ -269,10 +269,16 @@ async function copyAttachments(o: {
   token: string;
   messageId: string;
   msg: MailMessage;
+  // Only these attachments (by position), each saved under the given name.
+  // Without it: every attachment, under its own name.
+  picks?: { index: number; name: string }[];
 }) {
   const added: string[] = [];
   const skipped: { name: string; why: string }[] = [];
   if (!o.msg.attachments.length) return { added, skipped };
+  const chosen = (o.picks ?? o.msg.attachments.map((a, index) => ({ index, name: a.name })))
+    .filter((p) => p.index >= 0 && p.index < o.msg.attachments.length)
+    .map((p) => ({ index: p.index, name: keepExtension(p.name, o.msg.attachments[p.index].name) }));
   const note = `Attachment from email: ${o.msg.subject || "(no subject)"} (${o.msg.from || "unknown sender"})`.slice(0, 300);
 
   // Already on this matter from this email?
@@ -281,16 +287,17 @@ async function copyAttachments(o: {
     .select("title, document_versions(note)")
     .eq("org_id", o.orgId)
     .eq("matter_id", o.matterId)
-    .in("title", o.msg.attachments.map((a) => a.name.slice(0, 200)));
+    .in("title", chosen.map((c) => c.name));
   const already = new Set(
     ((existing ?? []) as { title: string; document_versions?: { note: string | null }[] }[])
       .filter((d) => (d.document_versions ?? []).some((v) => v.note === note))
       .map((d) => d.title)
   );
 
-  for (let i = 0; i < o.msg.attachments.length; i++) {
+  for (const c of chosen) {
+    const i = c.index;
     const a = o.msg.attachments[i];
-    const name = a.name.slice(0, 200);
+    const name = c.name;
     if (already.has(name)) continue;
     const type = fileTypeFromName(name);
     if (!type) {
@@ -315,6 +322,33 @@ async function copyAttachments(o: {
     }
   }
   return { added, skipped };
+}
+
+// A new name keeps the file's own extension ("Loan approval" → "Loan approval.pdf"),
+// so the file still opens as the right kind of document.
+function keepExtension(name: string, original: string) {
+  const ext = original.match(/\.[A-Za-z0-9]{1,8}$/)?.[0] ?? "";
+  let n = String(name ?? "").replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim();
+  if (!n) n = original;
+  if (ext && !n.toLowerCase().endsWith(ext.toLowerCase())) n = `${n}${ext}`;
+  return n.slice(0, 200);
+}
+
+// Saves some or all of an email's attachments to a matter's Documents (the email
+// itself isn't filed). Each can get a new name first.
+export async function saveAttachmentsToMatter(
+  orgId: string,
+  userId: string,
+  provider: MailProvider,
+  messageId: string,
+  matterId: string,
+  picks: { index: number; name: string }[]
+) {
+  await matterOf(orgId, matterId);
+  if (!picks.length) throw new MatterMailError(400, "Pick at least one attachment.");
+  const { token, email } = await getAccessToken(userId, provider);
+  const msg = await fetchFull(provider, token, messageId, email);
+  return copyAttachments({ orgId, userId, userEmail: email, matterId, provider, token, messageId, msg, picks });
 }
 
 // ── Matter ────────────────────────────────────────────────────────────────
