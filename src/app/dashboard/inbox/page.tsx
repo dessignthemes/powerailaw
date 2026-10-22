@@ -100,7 +100,7 @@ function cacheFolders(p: MailProvider, folders: MailFolder[]) {
   }
 }
 
-type Conn = { provider: MailProvider; email: string | null; status: "ok" | "reconnect" | "missing_scope"; autoRefresh: boolean; syncsRead?: boolean };
+type Conn = { provider: MailProvider; email: string | null; status: "ok" | "reconnect" | "missing_scope"; autoRefresh: boolean; syncsRead?: boolean; canSend?: boolean };
 type Problem = { message: string; code?: string };
 
 const providerLabel: Record<MailProvider, string> = { google: "Gmail", microsoft: "Outlook" };
@@ -758,7 +758,23 @@ export default function InboxPage() {
           </button>
         </div>
 
-        {!needsReconnect && provider && conn?.status === "ok" && conn.syncsRead === false && !syncNoteHidden && (
+        {!needsReconnect && provider && conn?.status === "ok" && conn.canSend === false && !syncNoteHidden && (
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#EEF3FB] border-b border-line text-[13px] flex-wrap">
+            <span>
+              <b>Send email from LawPower, free:</b> reconnect {providerLabel[provider]} once and keep <b>Send email</b> ticked. Emails then go from your own address and appear in your Sent folder.
+            </span>
+            <span className="flex items-center gap-2">
+              <Link href={connectHref(provider)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-btn-hover">
+                Reconnect {providerLabel[provider]}
+              </Link>
+              <button onClick={() => setSyncNoteHidden(true)} className="text-muted hover:text-ink text-[12.5px]">
+                Later
+              </button>
+            </span>
+          </div>
+        )}
+
+        {!needsReconnect && provider && conn?.status === "ok" && conn.canSend !== false && conn.syncsRead === false && !syncNoteHidden && (
           <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#EEF3FB] border-b border-line text-[13px] flex-wrap">
             <span>Read / unread only changes in LawPower for now. Reconnect {providerLabel[provider]} once so it stays in step with {providerLabel[provider]} both ways.</span>
             <span className="flex items-center gap-2">
