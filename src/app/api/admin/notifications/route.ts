@@ -27,7 +27,14 @@ export async function GET() {
         return { id: p.id, email: p.email, name: p.full_name, role: p.role, digest: p.daily_digest !== false, canSend: conns.some((c) => canSend(c)) };
       })
     );
-    return NextResponse.json({ settings, people: withSend });
+    // The last morning check-in run: when, and how many went out / failed.
+    const since = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
+    const { data: log } = await s.from("email_log").select("status, created_at, to_email").eq("org_id", orgId).eq("kind", "daily_digest").gte("created_at", since).order("created_at", { ascending: false }).limit(200);
+    const rowsLog = (log ?? []) as { status: string; created_at: string; to_email: string }[];
+    const lastDigest = rowsLog.length
+      ? { at: rowsLog[0].created_at, sent: new Set(rowsLog.filter((r) => r.status === "sent").map((r) => r.to_email)).size, failed: new Set(rowsLog.filter((r) => r.status !== "sent").map((r) => r.to_email)).size }
+      : null;
+    return NextResponse.json({ settings, people: withSend, lastDigest });
   } catch (e) {
     console.error("GET /api/admin/notifications failed:", e);
     return NextResponse.json({ error: "Couldn't load the email settings." }, { status: 500 });

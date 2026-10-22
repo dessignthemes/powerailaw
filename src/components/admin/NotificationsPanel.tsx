@@ -20,6 +20,7 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
 export default function NotificationsPanel() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [people, setPeople] = useState<Person[]>([]);
+  const [lastDigest, setLastDigest] = useState<{ at: string; sent: number; failed: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState<"digest" | "assignment" | null>(null);
@@ -33,7 +34,7 @@ export default function NotificationsPanel() {
         if (!r.ok) throw new Error(d?.error ?? "Couldn't load the email settings.");
         return d;
       })
-      .then((d) => live && (setSettings(d.settings), setPeople(d.people ?? [])))
+      .then((d) => live && (setSettings(d.settings), setPeople(d.people ?? []), setLastDigest(d.lastDigest ?? null)))
       .catch((e: Error) => live && setError(e.message));
     return () => {
       live = false;
@@ -94,6 +95,13 @@ export default function NotificationsPanel() {
               </div>
               <Switch on={settings.digest} onChange={(v) => update({ digest: v })} label="Morning check-in" />
             </div>
+            {settings.digest && (
+              <div className="mt-3 text-[12.5px] text-muted">
+                {lastDigest
+                  ? `Last sent ${new Date(lastDigest.at).toLocaleString("en-US", { weekday: "long", hour: "numeric", minute: "2-digit" })} to ${lastDigest.sent} ${lastDigest.sent === 1 ? "person" : "people"}${lastDigest.failed ? `; ${lastDigest.failed} couldn't be reached (retried at the next hour)` : ""}.`
+                  : "Not sent yet. The first check-in goes out at the next chosen time."}
+              </div>
+            )}
             {settings.digest && (
               <div className="flex flex-wrap items-center gap-3 mt-4 text-[13.5px]">
                 <label className="flex items-center gap-2">

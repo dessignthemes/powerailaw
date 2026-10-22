@@ -92,7 +92,8 @@ export async function sendMorningDigests(opts: { force?: boolean; onlyEmail?: st
     }
     const settings = await getNotificationSettings(org.id);
     if (!opts.force) {
-      if (!settings.digest || hour !== settings.digestHour) continue;
+      // At the chosen hour, then up to two retries (an hour apart) for anyone it didn't reach.
+      if (!settings.digest || hour < settings.digestHour || hour > settings.digestHour + 2) continue;
       const wd = localParts(tz).weekday;
       if (settings.digestDays === "weekdays" && (wd === "Saturday" || wd === "Sunday")) continue;
     }
@@ -101,9 +102,15 @@ export async function sendMorningDigests(opts: { force?: boolean; onlyEmail?: st
     for (const p of (people ?? []) as { id: string; email: string | null; full_name: string | null; daily_digest?: boolean | null }[]) {
       if (!p.email || p.daily_digest === false) continue;
       if (opts.onlyEmail && p.email.toLowerCase() !== opts.onlyEmail.toLowerCase()) continue;
+      // Never twice in one morning (the retries skip anyone already reached).
+      if (!opts.force) {
+        const since = new Date(Date.now() - 16 * 3600 * 1000).toISOString();
+        const { data: already } = await s.from("email_log").select("id").eq("kind", "daily_digest").eq("status", "sent").ilike("to_email", p.email).gte("created_at", since).limit(1);
+        if (already?.length) continue;
+      }
       const mail = await buildDigest(org.id, { id: p.id, email: p.email, full_name: p.full_name }, tz);
       // From their own mailbox to themselves (free).
-      const r = await sendEmail({ orgId: org.id, to: p.email, kind: "daily_digest", via: [p.id], ...mail });
+      const r = await sendEmail({ orgId: org.id, to: p.email, kind: opts.force ? "daily_digest_test" : "daily_digest", via: [p.id], ...mail });
       if (r.ok) sent++;
       else skipped++;
     }
