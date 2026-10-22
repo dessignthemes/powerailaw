@@ -283,13 +283,13 @@ export default function AiTemplatesPage() {
                     [<FileText key="b" size={18} />, "Start blank", "Write it yourself and insert fields.", () => fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" })],
                   ] as [React.ReactNode, string, string, () => void][]
                 ).map(([icon, title, sub, fn]) => (
-                  <button key={title} onClick={fn} className="bg-white hover:bg-btn rounded-2xl p-5 text-left transition-colors">
+                  <button key={title} onClick={fn} className="bg-white hover:bg-btn rounded-2xl p-5 text-left transition-[background-color,box-shadow] shadow-[0_1px_2px_rgba(27,25,26,0.14)] hover:shadow-[0_2px_6px_rgba(27,25,26,0.16)]">
                     <div className="text-muted mb-2">{icon}</div>
                     <div className="text-[14.5px] font-semibold">{title}</div>
                     <div className="text-[12.5px] text-muted mt-1">{sub}</div>
                   </button>
                 ))}
-                <div className="bg-white rounded-2xl p-5 text-left">
+                <div className="bg-white rounded-2xl p-5 text-left shadow-[0_1px_2px_rgba(27,25,26,0.14)]">
                   <div className="text-muted mb-2">
                     <FileText size={18} />
                   </div>
