@@ -72,11 +72,13 @@ export default function AiTemplatesPage() {
   }, [reload]);
 
   const show = (t: DocTemplate) => {
+    setWorkflowModal(null);
     setOpen({ id: t.sample ? undefined : t.id, name: t.name, category: t.category, description: t.description, body: t.body, fields: t.fields, source: t.source, sample: t.sample });
     setEditorKey((k) => k + 1);
   };
   const fromDraft = (d: Draft) => {
     setModal(null);
+    setWorkflowModal(null);
     setOpen({ ...d });
     setEditorKey((k) => k + 1);
   };
@@ -120,7 +122,10 @@ export default function AiTemplatesPage() {
             setNewOpen(false);
             if (k === "ai") setModal({ kind: "ai" });
             else if (k === "paste") setModal({ kind: "text", source: "paste" });
-            else if (k === "workflow") setWorkflowModal({ id: null });
+            else if (k === "workflow") {
+              setOpen(null);
+              setWorkflowModal({ id: null });
+            }
             else fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" });
           }}
           className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-chip"
@@ -221,7 +226,7 @@ export default function AiTemplatesPage() {
           ) : (
             <div className="flex flex-col gap-1.5">
               {wfList.map((t) => (
-                <button key={t.id} onClick={() => setWorkflowModal({ id: t.id })} className="w-full text-left px-3.5 py-2.5 rounded-xl bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors">
+                <button key={t.id} onClick={() => (setOpen(null), setWorkflowModal({ id: t.id }))} className={`w-full text-left px-3.5 py-2.5 rounded-xl transition-colors ${workflowModal?.id === t.id ? "bg-btn" : "bg-[#E1E7F5] hover:bg-[#D5DDEE]"}`}>
                   <div className="text-[13.5px] font-medium truncate flex items-center gap-1.5">
                     <span className="truncate">{t.name}</span>
                     {t.example && <span className="text-[10px] font-semibold bg-white rounded px-1 flex-shrink-0">SAMPLE</span>}
@@ -236,7 +241,17 @@ export default function AiTemplatesPage() {
         </aside>
 
         <section className="bg-card-alt rounded-2xl p-6 min-h-[560px]">
-          {open ? (
+          {workflowModal ? (
+            <TemplatesModal
+              key={workflowModal.id ?? "new"}
+              inline
+              initialId={workflowModal.id}
+              onClose={() => {
+                setWorkflowModal(null);
+                setWfReload((r) => r + 1);
+              }}
+            />
+          ) : open ? (
             <TemplateEditor
               key={editorKey}
               value={open}
@@ -289,15 +304,6 @@ export default function AiTemplatesPage() {
         </section>
       </div>
 
-      {workflowModal && (
-        <TemplatesModal
-          initialId={workflowModal.id}
-          onClose={() => {
-            setWorkflowModal(null);
-            setWfReload((r) => r + 1);
-          }}
-        />
-      )}
       {modal?.kind === "ai" && <CreateWithAiModal onClose={() => setModal(null)} onDraft={fromDraft} />}
       {modal?.kind === "text" && <FromTextModal source={modal.source} initialText={modal.text} initialName={modal.name} onClose={() => setModal(null)} onDraft={fromDraft} />}
     </div>

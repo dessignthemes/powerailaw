@@ -15,7 +15,8 @@ const blank = (): Draft => ({ name: "", codes: "", sections: [{ id: uid(), title
 
 // Create and edit checklist templates (e.g. "Real Estate Purchase").
 // initialId: open on that template (from the AI Templates page) instead of a new one.
-export default function TemplatesModal({ onClose, initialId }: { onClose: () => void; initialId?: string | null }) {
+// inline: just the editor, inside the AI Templates page (no popup, no template list).
+export default function TemplatesModal({ onClose, initialId, inline = false }: { onClose: () => void; initialId?: string | null; inline?: boolean }) {
   const { templates, error: loadError, save, remove } = useTemplates();
   // Opens on a new, empty template (the quickest way to add one); pick any template on the left to edit it.
   const [draft, setDraft] = useState<Draft | null>(() => blank());
@@ -120,11 +121,15 @@ export default function TemplatesModal({ onClose, initialId }: { onClose: () => 
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4" onClick={onClose}>
+    <div className={inline ? "" : "fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4"} onClick={inline ? undefined : onClose}>
       <div
-        className="bg-page rounded-3xl w-full max-w-[1060px] h-[min(760px,92vh)] flex overflow-hidden shadow-[0_20px_60px_rgba(27,25,26,0.18)]"
+        className={
+          inline
+            ? "bg-page rounded-2xl w-full min-h-[600px] max-h-[82vh] flex overflow-hidden border border-line"
+            : "bg-page rounded-3xl w-full max-w-[1060px] h-[min(760px,92vh)] flex overflow-hidden shadow-[0_20px_60px_rgba(27,25,26,0.18)]"
+        }
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
+        role={inline ? undefined : "dialog"}
         aria-label="Checklist templates"
       >
         <datalist id="lp-anchors">
@@ -132,7 +137,8 @@ export default function TemplatesModal({ onClose, initialId }: { onClose: () => 
             <option key={a} value={a} />
           ))}
         </datalist>
-        {/* Template list */}
+        {/* Template list (the AI Templates page has its own list, so not inline) */}
+        {!inline && (
         <div className="w-[300px] flex-shrink-0 bg-sidebar border-r border-line flex flex-col">
           <div className="px-5 pt-5 pb-3">
             <div className="text-[15px] font-semibold flex items-center gap-2">
@@ -177,12 +183,13 @@ export default function TemplatesModal({ onClose, initialId }: { onClose: () => 
             </button>
           </div>
         </div>
+        )}
 
         {/* Editor */}
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
-            <div className="text-[13px] text-muted">{draft ? (draft.example ? "Example template" : draft.id ? "Edit template" : "New template") : "Checklist templates"}</div>
-            <button onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">
+            <div className="text-[13px] text-muted">{draft ? (draft.example ? "Sample workflow checklist" : draft.id ? "Edit workflow checklist" : "New workflow checklist") : "Workflow checklists"}</div>
+            <button onClick={onClose} aria-label="Close" title={inline ? "Back" : "Close"} className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">
               <X size={16} strokeWidth={1.75} />
             </button>
           </div>
