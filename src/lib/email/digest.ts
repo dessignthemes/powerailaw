@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, layout, button, h, APP_URL } from "@/lib/email/send";
+import { getNotificationSettings } from "@/lib/email/settings";
 
 // The 9 AM check-in: one email per team member with what needs them today, so
 // they open LawPower. Sent when it's 9 in the firm's time zone.
@@ -68,14 +69,16 @@ export async function buildDigest(orgId: string, user: { id: string; email: stri
   const counts = [overdue.length ? `${overdue.length} overdue` : "", today.length ? `${today.length} due today` : "", portalMsgs.length ? `${portalMsgs.length} client message${portalMsgs.length === 1 ? "" : "s"}` : ""].filter(Boolean);
   const subject = `${weekday} check-in: ${counts.length ? counts.join(", ") : "you're all caught up"}`;
   const text = `Good morning ${first}.\n\n${overdue.length ? `Overdue: ${overdue.map((x) => x.title).join("; ")}\n` : ""}${today.length ? `Due today: ${today.map((x) => x.title).join("; ")}\n` : ""}${portalMsgs.length ? `Clients waiting: ${portalMsgs.length}\n` : ""}\nOpen your dashboard: ${APP_URL}/dashboard`;
-  return { subject, html: layout("Your LawPower check-in", body, "Sent every morning at 9 by LawPower AI. To stop these, click your name at the bottom left of LawPower and switch off Morning check-in email."), text };
+  return { subject, html: layout("Your LawPower check-in", body, "Your morning check-in from LawPower AI. To stop these, click your name at the bottom left of LawPower and switch off Morning check-in email."), text };
 }
 
 // Sends the check-in to everyone in every firm where it's currently 9 AM
 // (unless hour is given: then to firms where the local hour equals it).
-export async function sendMorningDigests(opts: { force?: boolean; onlyEmail?: string } = {}) {
+export async function sendMorningDigests(opts: { force?: boolean; onlyEmail?: string; orgId?: string } = {}) {
   const s = createAdminClient();
-  const { data: orgs } = await s.from("organizations").select("id, timezone").limit(500);
+  let oq = s.from("organizations").select("id, timezone");
+  if (opts.orgId) oq = oq.eq("id", opts.orgId);
+  const { data: orgs } = await oq.limit(500);
   let sent = 0;
   let skipped = 0;
   const firms: string[] = [];
@@ -87,7 +90,12 @@ export async function sendMorningDigests(opts: { force?: boolean; onlyEmail?: st
     } catch {
       hour = localParts("America/New_York").hour;
     }
-    if (hour !== 9 && !opts.force) continue;
+    const settings = await getNotificationSettings(org.id);
+    if (!opts.force) {
+      if (!settings.digest || hour !== settings.digestHour) continue;
+      const wd = localParts(tz).weekday;
+      if (settings.digestDays === "weekdays" && (wd === "Saturday" || wd === "Sunday")) continue;
+    }
     firms.push(org.id);
     const { data: people } = await s.from("profiles").select("id, email, full_name, daily_digest").eq("org_id", org.id).limit(200);
     for (const p of (people ?? []) as { id: string; email: string | null; full_name: string | null; daily_digest?: boolean | null }[]) {

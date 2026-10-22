@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AiUsagePanel from "@/components/admin/AiUsagePanel";
+import NotificationsPanel from "@/components/admin/NotificationsPanel";
 import TeamMembers from "@/components/TeamMembers";
 import { createPortal } from "react-dom";
 import {
@@ -12,6 +13,7 @@ import {
   Gauge,
   ClipboardList,
   Trash2,
+  Mail,
 } from "lucide-react";
 
 const navItems = [
@@ -27,6 +29,13 @@ const navItems = [
     label: "Practice groups",
     sub: "Teams for staffing matters",
     icon: Layers,
+    group: "THE FIRM",
+  },
+  {
+    key: "emails",
+    label: "Email notifications",
+    sub: "Morning check-in, task emails",
+    icon: Mail,
     group: "THE FIRM",
   },
   {
@@ -384,6 +393,8 @@ export default function AdminModal({
             )}
 
             {page === "usage" && <AiUsagePanel />}
+
+            {page === "emails" && <NotificationsPanel />}
 
             {page === "log" && (
               <>

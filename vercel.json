@@ -10,11 +10,7 @@
     },
     {
       "path": "/api/cron/digest",
-      "schedule": "0 13 * * *"
-    },
-    {
-      "path": "/api/cron/digest",
-      "schedule": "0 14 * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }

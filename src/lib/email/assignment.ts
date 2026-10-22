@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, layout, button, h, APP_URL } from "@/lib/email/send";
+import { getNotificationSettings } from "@/lib/email/settings";
 
 // "You've been assigned a task" (or offered one, or a matter): sent to the
 // person when someone else assigns it to them.
@@ -14,6 +15,7 @@ export async function emailAssignment(opts: {
   actorName: string | null;
 }) {
   if (opts.kind !== "task_assigned" && opts.kind !== "task_offered" && opts.kind !== "matter_assigned") return;
+  if (!(await getNotificationSettings(opts.orgId)).assignEmails) return; // turned off in Administration
   const s = createAdminClient();
   const { data: who } = await s.from("profiles").select("email, full_name").eq("id", opts.toUserId).maybeSingle();
   const to = (who as { email?: string } | null)?.email;
