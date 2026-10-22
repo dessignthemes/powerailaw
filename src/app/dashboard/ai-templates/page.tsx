@@ -1,0 +1,221 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Search, Sparkles, ClipboardPaste, FileText, Plus, ChevronDown, Loader2, BookOpenText } from "lucide-react";
+import ClickAway from "@/components/ClickAway";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import TemplateEditor, { type EditorValue } from "@/components/docTemplates/TemplateEditor";
+import { CreateWithAiModal, FromTextModal, UploadButton, type Draft } from "@/components/docTemplates/CreateModals";
+import { TEMPLATE_CATEGORIES, type DocTemplate } from "@/lib/docTemplates/format";
+import { readJson, chip } from "@/components/docTemplates/shared";
+
+type Modal = { kind: "ai" } | { kind: "text"; source: "paste" | "upload"; text?: string; name?: string } | null;
+
+// AI Templates: document templates (deeds, letters, agreements…) the firm makes
+// with AI, from pasted text, from a Word/PDF upload, or by hand; filled for a
+// matter they become Word documents in the matter's Documents.
+export default function AiTemplatesPage() {
+  const { matters } = useWorkspaceData();
+  const [mine, setMine] = useState<DocTemplate[] | null>(null);
+  const [samples, setSamples] = useState<DocTemplate[]>([]);
+  const [setupRequired, setSetupRequired] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("");
+  const [open, setOpen] = useState<EditorValue | null>(null);
+  const [editorKey, setEditorKey] = useState(0);
+  const [modal, setModal] = useState<Modal>(null);
+  const [newOpen, setNewOpen] = useState(false);
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    let live = true;
+    fetch("/api/doc-templates")
+      .then(readJson)
+      .then((d) => {
+        if (!live) return;
+        setMine(d.templates ?? []);
+        setSamples(d.samples ?? []);
+        setSetupRequired(!!d.setupRequired);
+      })
+      .catch((e: Error) => live && (setError(e.message), setMine([])));
+    return () => {
+      live = false;
+    };
+  }, [reload]);
+
+  const show = (t: DocTemplate) => {
+    setOpen({ id: t.sample ? undefined : t.id, name: t.name, category: t.category, description: t.description, body: t.body, fields: t.fields, source: t.source, sample: t.sample });
+    setEditorKey((k) => k + 1);
+  };
+  const fromDraft = (d: Draft) => {
+    setModal(null);
+    setOpen({ ...d });
+    setEditorKey((k) => k + 1);
+  };
+  const filterFn = (t: DocTemplate) => (!cat || t.category === cat) && (!q.trim() || `${t.name} ${t.description}`.toLowerCase().includes(q.trim().toLowerCase()));
+  const myList = useMemo(() => (mine ?? []).filter(filterFn), [mine, q, cat]); // eslint-disable-line react-hooks/exhaustive-deps
+  const sampleList = useMemo(() => samples.filter(filterFn), [samples, q, cat]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const newMenu = (
+    <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[260px] bg-white border border-line rounded-2xl shadow-[0_12px_32px_rgba(27,25,26,0.12)] p-1.5">
+      {(
+        [
+          ["ai", <Sparkles key="a" size={14} />, "Create with AI", "Describe it; the AI drafts it"],
+          ["paste", <ClipboardPaste key="p" size={14} />, "Paste text", "From a document or email"],
+          ["blank", <FileText key="b" size={14} />, "Start blank", "Write it yourself"],
+        ] as [string, React.ReactNode, string, string][]
+      ).map(([k, icon, label, sub]) => (
+        <button
+          key={k}
+          onClick={() => {
+            setNewOpen(false);
+            if (k === "ai") setModal({ kind: "ai" });
+            else if (k === "paste") setModal({ kind: "text", source: "paste" });
+            else fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" });
+          }}
+          className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-chip"
+        >
+          <span className="mt-0.5 text-muted">{icon}</span>
+          <span>
+            <span className="block text-[13.5px] font-medium">{label}</span>
+            <span className="block text-[12px] text-muted">{sub}</span>
+          </span>
+        </button>
+      ))}
+      <div className="px-1.5 pb-1 pt-1">
+        <UploadButton className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-chip text-[13.5px] font-medium" onText={(text, name) => (setNewOpen(false), setModal({ kind: "text", source: "upload", text, name }))} />
+      </div>
+    </div>
+  );
+
+  const row = (t: DocTemplate) => (
+    <button
+      key={t.id}
+      onClick={() => show(t)}
+      className={`w-full text-left px-3.5 py-2.5 rounded-xl transition-colors ${open && (open.id === t.id || (t.sample && open.sample && open.name === t.name)) ? "bg-btn" : "bg-[#E1E7F5] hover:bg-[#D5DDEE]"}`}
+    >
+      <div className="text-[13.5px] font-medium truncate">{t.name}</div>
+      <div className="text-[12px] text-muted truncate">{[t.category, t.description].filter(Boolean).join(" · ") || "No description"}</div>
+    </button>
+  );
+
+  return (
+    <div className="px-10 py-10 max-w-[1500px]">
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
+        <div>
+          <h1 className="text-[28px] font-semibold">AI Templates</h1>
+          <p className="text-[14.5px] text-muted mt-1 max-w-[760px]">
+            Document templates for your firm: deeds, letters, agreements, notices. Create one with AI, from pasted text, from a Word or PDF, or from scratch, then fill it for a matter
+            and get a Word document in that matter&apos;s Documents.
+          </p>
+        </div>
+        <div className="relative">
+          <button onClick={() => setNewOpen((o) => !o)} className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5">
+            <Plus size={14} /> New template <ChevronDown size={13} />
+          </button>
+          {newOpen && (
+            <>
+              <ClickAway onClose={() => setNewOpen(false)} />
+              {newMenu}
+            </>
+          )}
+        </div>
+      </div>
+
+      {setupRequired && (
+        <div className="mb-5 rounded-xl bg-[#FFF8EE] border border-[#F6D4A6] px-4 py-3 text-[13.5px]">
+          Saving your own templates needs a one-time database update: run <b>supabase/migrations/0049_doc_templates.sql</b> in the Supabase SQL editor, then refresh. The samples and AI drafting work meanwhile.
+        </div>
+      )}
+      {error && <div className="mb-5 rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-4 py-3 text-[13.5px]">{error}</div>}
+
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5 items-start">
+        <aside className="bg-card-alt rounded-2xl p-4">
+          <div className="flex items-center gap-2 bg-white rounded-full px-3 py-2 mb-3">
+            <Search size={14} className="text-muted" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search templates" aria-label="Search templates" className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px]" />
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            <button onClick={() => setCat("")} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${!cat ? "bg-btn-hover" : "bg-white hover:bg-btn"}`}>
+              All
+            </button>
+            {TEMPLATE_CATEGORIES.filter((c) => [...(mine ?? []), ...samples].some((t) => t.category === c)).map((c) => (
+              <button key={c} onClick={() => setCat(c === cat ? "" : c)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${cat === c ? "bg-btn-hover" : "bg-white hover:bg-btn"}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+          <div className="text-[11.5px] font-semibold uppercase tracking-wide text-muted mb-1.5">Your templates{mine ? ` (${myList.length})` : ""}</div>
+          {mine === null ? (
+            <div className="text-[13px] text-muted flex items-center gap-2 py-2">
+              <Loader2 size={13} className="animate-spin" /> Loading…
+            </div>
+          ) : myList.length === 0 ? (
+            <div className="text-[12.5px] text-muted py-2 mb-2">{mine.length ? "No templates match." : "None yet. Use New template, or copy a sample."}</div>
+          ) : (
+            <div className="flex flex-col gap-1.5 mb-4">{myList.map(row)}</div>
+          )}
+          <div className="text-[11.5px] font-semibold uppercase tracking-wide text-muted mb-1.5 mt-3">Samples ({sampleList.length})</div>
+          <div className="flex flex-col gap-1.5">{sampleList.map(row)}</div>
+        </aside>
+
+        <section className="bg-card-alt rounded-2xl p-6 min-h-[560px]">
+          {open ? (
+            <TemplateEditor
+              key={editorKey}
+              value={open}
+              matters={matters}
+              onSaved={(t) => {
+                setReload((r) => r + 1);
+                setOpen((o) => (o ? { ...o, id: t.id, sample: false, source: t.source } : o));
+              }}
+              onDeleted={() => {
+                setOpen(null);
+                setReload((r) => r + 1);
+              }}
+              onCopy={() => {
+                if (!open) return;
+                setOpen({ ...open, id: undefined, sample: false, source: "blank", name: `${open.name} (copy)` });
+                setEditorKey((k) => k + 1);
+              }}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center py-10">
+              <BookOpenText size={30} strokeWidth={1.5} className="text-muted mb-3" />
+              <div className="text-[18px] font-semibold">Make a template</div>
+              <p className="text-[13.5px] text-muted mt-1 max-w-[560px]">Pick a sample on the left to see how templates work, or start one of these.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 w-full max-w-[720px]">
+                {(
+                  [
+                    [<Sparkles key="a" size={18} />, "Create with AI", "Describe the document; the AI drafts it with fill-in fields.", () => setModal({ kind: "ai" })],
+                    [<ClipboardPaste key="p" size={18} />, "Paste text", "From a document or email; the AI finds the fill-in parts.", () => setModal({ kind: "text", source: "paste" })],
+                    [<FileText key="b" size={18} />, "Start blank", "Write it yourself and insert fields.", () => fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" })],
+                  ] as [React.ReactNode, string, string, () => void][]
+                ).map(([icon, title, sub, fn]) => (
+                  <button key={title} onClick={fn} className="bg-white hover:bg-btn rounded-2xl p-5 text-left transition-colors">
+                    <div className="text-muted mb-2">{icon}</div>
+                    <div className="text-[14.5px] font-semibold">{title}</div>
+                    <div className="text-[12.5px] text-muted mt-1">{sub}</div>
+                  </button>
+                ))}
+                <div className="bg-white rounded-2xl p-5 text-left">
+                  <div className="text-muted mb-2">
+                    <FileText size={18} />
+                  </div>
+                  <div className="text-[14.5px] font-semibold">Upload Word or PDF</div>
+                  <div className="text-[12.5px] text-muted mt-1 mb-3">A document you already use; the AI turns it into a template.</div>
+                  <UploadButton className={chip} onText={(text, name) => setModal({ kind: "text", source: "upload", text, name })} />
+                </div>
+              </div>
+              <p className="text-[12px] text-muted mt-6 max-w-[560px]">Templates are drafts for an attorney&apos;s review. The AI uses only what you give it and the matter&apos;s facts; check names, dates, amounts and citations before sending anything.</p>
+            </div>
+          )}
+        </section>
+      </div>
+
+      {modal?.kind === "ai" && <CreateWithAiModal onClose={() => setModal(null)} onDraft={fromDraft} />}
+      {modal?.kind === "text" && <FromTextModal source={modal.source} initialText={modal.text} initialName={modal.name} onClose={() => setModal(null)} onDraft={fromDraft} />}
+    </div>
+  );
+}
