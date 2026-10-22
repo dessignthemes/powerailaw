@@ -1,8 +1,8 @@
 "use client";
 
 import ClickAway from "@/components/ClickAway";
-import { useState } from "react";
-import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown, Users, Sunrise } from "lucide-react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 import LogoMark from "@/components/LogoMark";
 
@@ -32,6 +32,24 @@ export default function AccountMenu({
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  // The 9 AM check-in email, on or off for this person.
+  const [digest, setDigest] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!open || digest !== null) return;
+    let live = true;
+    fetch("/api/me/digest")
+      .then((r) => (r.ok ? r.json() : { enabled: true }))
+      .then((d) => live && setDigest(d.enabled !== false))
+      .catch(() => live && setDigest(true));
+    return () => {
+      live = false;
+    };
+  }, [open, digest]);
+  const toggleDigest = () => {
+    const next = !(digest ?? true);
+    setDigest(next);
+    fetch("/api/me/digest", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled: next }) }).catch(() => {});
+  };
   const { openIntegrations } = useIntegrationsModal();
 
   return (
@@ -99,6 +117,22 @@ export default function AccountMenu({
               >
                 <Grid3x3 size={16} strokeWidth={1.75} />
                 Integrations
+              </button>
+            </div>
+
+            <div className="border-t border-line px-2 py-2">
+              <button
+                onClick={toggleDigest}
+                role="switch"
+                aria-checked={digest ?? true}
+                title="A short email every morning at 9 with your overdue tasks, what's due today and clients waiting for a reply"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-chip transition-colors text-left"
+              >
+                <Sunrise size={16} strokeWidth={1.75} />
+                <span className="flex-1">Morning check-in email</span>
+                <span className={`relative w-8 h-[18px] rounded-full transition-colors ${digest ?? true ? "bg-ink" : "bg-btn"}`}>
+                  <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow transition-[left] ${digest ?? true ? "left-[16px]" : "left-[2px]"}`} />
+                </span>
               </button>
             </div>
 

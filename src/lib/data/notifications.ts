@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { emailAssignment } from "@/lib/email/assignment";
 
 // The bell's alerts (0035_notifications.sql): someone assigned you a task or a matter.
 
@@ -45,6 +46,7 @@ export async function notifyAssigned(opts: {
     if (!opts.to || opts.to === opts.before) return;
     const target = /^[0-9a-f-]{36}$/i.test(opts.to) ? { id: opts.to } : await profileByEmail(opts.orgId, opts.to);
     if (!target || target.id === opts.actorId) return;
+    const actor = await actorName(opts.actorId);
     const { error } = await db().from("notifications").insert({
       org_id: opts.orgId,
       user_id: target.id,
@@ -53,9 +55,11 @@ export async function notifyAssigned(opts: {
       board_id: opts.boardId ?? null,
       title: opts.title.slice(0, 300),
       actor_id: opts.actorId,
-      actor_name: await actorName(opts.actorId),
+      actor_name: actor,
     });
     if (error && !missing(error)) console.error("notification insert failed:", error.message);
+    // Also by email (task assigned / offered, matter assigned). Never blocks the save.
+    await emailAssignment({ orgId: opts.orgId, toUserId: target.id, kind: opts.kind, refId: opts.refId, title: opts.title, actorName: actor }).catch((e) => console.error("assignment email failed:", e));
   } catch (e) {
     console.error("notifyAssigned failed:", e);
   }

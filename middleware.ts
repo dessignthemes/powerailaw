@@ -44,7 +44,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/public/share/") ||
     pathname.startsWith("/api/portal/") || // client portal: checks its own client session cookie
     pathname === "/api/cron/file-shares" ||
-    pathname === "/api/cron/contacts";
+    pathname === "/api/cron/contacts" ||
+    pathname === "/api/cron/digest";
   if (!user && pathname.startsWith("/api/") && !publicApi) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
