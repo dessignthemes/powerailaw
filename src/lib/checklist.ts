@@ -1,3 +1,4 @@
+import { COS_I539, AOS_I485, NATURALIZATION_N400 } from "@/lib/checklistSamplesImmigration";
 // Checklist templates and task checklists (shared by browser and server).
 
 // anchor = the critical date the step hangs off (e.g. "Closing date"); days = +/- days from it.
@@ -8,7 +9,7 @@ export type TemplateItem = { id: string; text: string; anchor?: string; days?: n
 export type TemplateSection = { id: string; title: string; items: TemplateItem[] };
 // example = built-in template every firm gets (read-only; saving makes the firm its own copy).
 // matterCodes = the matters it's for (e.g. ["REP"]); the matter's Tasks tab suggests it there.
-export type TaskTemplate = { id: string; name: string; sections: TemplateSection[]; matterCodes?: string[]; updatedAt?: string; example?: boolean };
+export type TaskTemplate = { id: string; name: string; sections: TemplateSection[]; matterCodes?: string[]; updatedAt?: string; example?: boolean; category?: string };
 
 // na = not applicable to this deal (e.g. mortgage steps on a cash purchase): not counted, no due date.
 export type ChecklistItem = { id: string; text: string; done: boolean; doneAt?: string | null; anchor?: string; days?: number; na?: boolean; moveTo?: MoveTo };
@@ -396,8 +397,11 @@ Not Proceeding
 
 // Built-in examples every firm sees (a firm's own template with the same name takes its place).
 export const EXAMPLE_TEMPLATES: TaskTemplate[] = [
-  { id: "example-re-purchase", name: "Real Estate Purchase Workflow", sections: parseOutline(RE_PURCHASE_NJ), matterCodes: ["REP"], example: true },
-  { id: "example-re-sale", name: "Real Estate Sale Workflow", sections: parseOutline(RE_SALE_NJ), matterCodes: ["RES"], example: true },
+  { id: "example-re-purchase", name: "Real Estate Purchase Workflow", sections: parseOutline(RE_PURCHASE_NJ), matterCodes: ["REP"], example: true, category: "Real Estate" },
+  { id: "example-re-sale", name: "Real Estate Sale Workflow", sections: parseOutline(RE_SALE_NJ), matterCodes: ["RES"], example: true, category: "Real Estate" },
+  { id: "example-imm-cos", name: "Change of Status (I-539) Workflow", sections: parseOutline(COS_I539), matterCodes: ["IL", "IMM"], example: true, category: "Immigration" },
+  { id: "example-imm-aos", name: "Adjustment of Status (I-485) Workflow", sections: parseOutline(AOS_I485), matterCodes: ["IL", "IMM"], example: true, category: "Immigration" },
+  { id: "example-imm-n400", name: "Naturalization (N-400) Workflow", sections: parseOutline(NATURALIZATION_N400), matterCodes: ["IL", "IMM"], example: true, category: "Immigration" },
 ];
 
 export function withExamples(own: TaskTemplate[]): TaskTemplate[] {

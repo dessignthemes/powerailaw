@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Sparkles, ClipboardPaste, FileText, Plus, ChevronDown, Loader2, BookOpenText } from "lucide-react";
+import { Search, Sparkles, ClipboardPaste, FileText, Plus, ChevronDown, Loader2, BookOpenText, ListChecks } from "lucide-react";
+import TemplatesModal from "@/components/templates/TemplatesModal";
+import type { TaskTemplate } from "@/lib/checklist";
 import ClickAway from "@/components/ClickAway";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import TemplateEditor, { type EditorValue } from "@/components/docTemplates/TemplateEditor";
@@ -27,6 +29,31 @@ export default function AiTemplatesPage() {
   const [modal, setModal] = useState<Modal>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [reload, setReload] = useState(0);
+  // Workflow checklists (Task Board templates) live here too, with the same filters.
+  const [workflows, setWorkflows] = useState<TaskTemplate[] | null>(null);
+  const [workflowModal, setWorkflowModal] = useState<{ id: string | null } | null>(null);
+  const [wfReload, setWfReload] = useState(0);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/task-templates")
+      .then((r) => (r.ok ? r.json() : { templates: [] }))
+      .then((d) => live && setWorkflows(d.templates ?? []))
+      .catch(() => live && setWorkflows([]));
+    return () => {
+      live = false;
+    };
+  }, [wfReload]);
+  useEffect(() => {
+    // ?workflow=new (from Task Board → Add template) opens a new workflow checklist.
+    const t = setTimeout(() => {
+      const w = new URLSearchParams(window.location.search).get("workflow");
+      if (w) {
+        setWorkflowModal({ id: w === "new" ? null : w });
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -54,6 +81,26 @@ export default function AiTemplatesPage() {
     setEditorKey((k) => k + 1);
   };
   const filterFn = (t: DocTemplate) => (!cat || t.category === cat) && (!q.trim() || `${t.name} ${t.description}`.toLowerCase().includes(q.trim().toLowerCase()));
+  const wfCategory = (t: TaskTemplate) => {
+    if (t.category) return t.category;
+    const codes = (t.matterCodes ?? []).join(" ");
+    const n = `${t.name} ${codes}`.toLowerCase();
+    if (/immigra|status|citizen|natural|visa|i-?\d{3}|\bil\b|\bimm\b/.test(n)) return "Immigration";
+    if (/real estate|purchase|sale|closing|\brep\b|\bres\b|deed|mortgage/.test(n)) return "Real Estate";
+    if (/probate|administration|estate\b|\badm\b|\bpro\b|trust/.test(n)) return "Probate";
+    if (/litigation|\blit\b|complaint|discovery/.test(n)) return "Litigation";
+    return "Other";
+  };
+  const wfList = useMemo(
+    () => (workflows ?? []).filter((t) => (!cat || wfCategory(t) === cat) && (!q.trim() || t.name.toLowerCase().includes(q.trim().toLowerCase()))),
+    [workflows, q, cat]  
+  );
+  const allCategories = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of [...(mine ?? []), ...samples]) if (t.category) set.add(t.category);
+    for (const t of workflows ?? []) set.add(wfCategory(t));
+    return TEMPLATE_CATEGORIES.filter((c) => set.has(c)).concat([...set].filter((c) => !TEMPLATE_CATEGORIES.includes(c)));
+  }, [mine, samples, workflows]);  
   const myList = useMemo(() => (mine ?? []).filter(filterFn), [mine, q, cat]); // eslint-disable-line react-hooks/exhaustive-deps
   const sampleList = useMemo(() => samples.filter(filterFn), [samples, q, cat]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -64,6 +111,7 @@ export default function AiTemplatesPage() {
           ["ai", <Sparkles key="a" size={14} />, "Create with AI", "Describe it; the AI drafts it"],
           ["paste", <ClipboardPaste key="p" size={14} />, "Paste text", "From a document or email"],
           ["blank", <FileText key="b" size={14} />, "Start blank", "Write it yourself"],
+          ["workflow", <ListChecks key="w" size={14} />, "Workflow checklist", "Steps for a task (Task Board)"],
         ] as [string, React.ReactNode, string, string][]
       ).map(([k, icon, label, sub]) => (
         <button
@@ -72,6 +120,7 @@ export default function AiTemplatesPage() {
             setNewOpen(false);
             if (k === "ai") setModal({ kind: "ai" });
             else if (k === "paste") setModal({ kind: "text", source: "paste" });
+            else if (k === "workflow") setWorkflowModal({ id: null });
             else fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" });
           }}
           className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-chip"
@@ -106,8 +155,8 @@ export default function AiTemplatesPage() {
         <div>
           <h1 className="text-[28px] font-semibold">AI Templates</h1>
           <p className="text-[14.5px] text-muted mt-1 max-w-[760px]">
-            Document templates for your firm: deeds, letters, agreements, notices. Create one with AI, from pasted text, from a Word or PDF, or from scratch, then fill it for a matter
-            and get a Word document in that matter&apos;s Documents.
+            All your templates in one place. <b>Document templates</b> (deeds, letters, agreements): create one with AI, from pasted text, from a Word or PDF, or from scratch, then fill it
+            for a matter and get a Word document. <b>Workflow checklists</b>: the step-by-step lists you add to tasks on the Task Board.
           </p>
         </div>
         <div className="relative">
@@ -140,7 +189,7 @@ export default function AiTemplatesPage() {
             <button onClick={() => setCat("")} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${!cat ? "bg-btn-hover" : "bg-white hover:bg-btn"}`}>
               All
             </button>
-            {TEMPLATE_CATEGORIES.filter((c) => [...(mine ?? []), ...samples].some((t) => t.category === c)).map((c) => (
+            {allCategories.map((c) => (
               <button key={c} onClick={() => setCat(c === cat ? "" : c)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${cat === c ? "bg-btn-hover" : "bg-white hover:bg-btn"}`}>
                 {c}
               </button>
@@ -158,6 +207,32 @@ export default function AiTemplatesPage() {
           )}
           <div className="text-[11.5px] font-semibold uppercase tracking-wide text-muted mb-1.5 mt-3">Samples ({sampleList.length})</div>
           <div className="flex flex-col gap-1.5">{sampleList.map(row)}</div>
+
+          <div className="text-[11.5px] font-semibold uppercase tracking-wide text-muted mb-1.5 mt-5 flex items-center gap-1.5">
+            <ListChecks size={12} /> Workflow checklists{workflows ? ` (${wfList.length})` : ""}
+          </div>
+          <p className="text-[12px] text-muted mb-2">Step-by-step checklists for tasks on the Task Board.</p>
+          {workflows === null ? (
+            <div className="text-[13px] text-muted flex items-center gap-2 py-2">
+              <Loader2 size={13} className="animate-spin" /> Loading…
+            </div>
+          ) : wfList.length === 0 ? (
+            <div className="text-[12.5px] text-muted py-2">No workflows match.</div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {wfList.map((t) => (
+                <button key={t.id} onClick={() => setWorkflowModal({ id: t.id })} className="w-full text-left px-3.5 py-2.5 rounded-xl bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors">
+                  <div className="text-[13.5px] font-medium truncate flex items-center gap-1.5">
+                    <span className="truncate">{t.name}</span>
+                    {t.example && <span className="text-[10px] font-semibold bg-white rounded px-1 flex-shrink-0">SAMPLE</span>}
+                  </div>
+                  <div className="text-[12px] text-muted truncate">
+                    {wfCategory(t)} · {t.sections.reduce((n, s) => n + s.items.length, 0)} steps
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </aside>
 
         <section className="bg-card-alt rounded-2xl p-6 min-h-[560px]">
@@ -214,6 +289,15 @@ export default function AiTemplatesPage() {
         </section>
       </div>
 
+      {workflowModal && (
+        <TemplatesModal
+          initialId={workflowModal.id}
+          onClose={() => {
+            setWorkflowModal(null);
+            setWfReload((r) => r + 1);
+          }}
+        />
+      )}
       {modal?.kind === "ai" && <CreateWithAiModal onClose={() => setModal(null)} onDraft={fromDraft} />}
       {modal?.kind === "text" && <FromTextModal source={modal.source} initialText={modal.text} initialName={modal.name} onClose={() => setModal(null)} onDraft={fromDraft} />}
     </div>

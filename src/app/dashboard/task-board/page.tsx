@@ -929,7 +929,7 @@ function TaskBoard({
             <Plus size={14} strokeWidth={2} /> Add task
           </button>
           <button
-            onClick={() => setTemplatesOpen(true)}
+            onClick={() => router.push("/dashboard/ai-templates?workflow=new")}
             title="Checklist templates you can add to any task"
             className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
           >

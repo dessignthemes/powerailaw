@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Plus, Trash2, ListChecks, Loader2, ClipboardPaste, FileUp } from "lucide-react";
 import { templateFromDocx } from "@/lib/templates/fromDocx";
 import { templateFromPdf } from "@/lib/templates/fromPdf";
@@ -14,7 +14,8 @@ const uid = () => crypto.randomUUID();
 const blank = (): Draft => ({ name: "", codes: "", sections: [{ id: uid(), title: "", items: [{ id: uid(), text: "" }] }] });
 
 // Create and edit checklist templates (e.g. "Real Estate Purchase").
-export default function TemplatesModal({ onClose }: { onClose: () => void }) {
+// initialId: open on that template (from the AI Templates page) instead of a new one.
+export default function TemplatesModal({ onClose, initialId }: { onClose: () => void; initialId?: string | null }) {
   const { templates, error: loadError, save, remove } = useTemplates();
   // Opens on a new, empty template (the quickest way to add one); pick any template on the left to edit it.
   const [draft, setDraft] = useState<Draft | null>(() => blank());
@@ -59,6 +60,18 @@ export default function TemplatesModal({ onClose }: { onClose: () => void }) {
       if (fileInput.current) fileInput.current.value = "";
     }
   }
+
+  // Opens on the template the AI Templates page asked for, once it has loaded.
+  const [openedInitial, setOpenedInitial] = useState(false);
+  useEffect(() => {
+    if (openedInitial || !initialId || !templates) return;
+    const t = templates.find((x) => x.id === initialId);
+    const timer = setTimeout(() => {
+      if (t) setDraft({ id: t.id, name: t.name, sections: t.sections, codes: (t.matterCodes ?? []).join(", "), example: t.example });
+      setOpenedInitial(true);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [initialId, templates, openedInitial]);
 
   function open(d: Draft) {
     setDraft(d);
