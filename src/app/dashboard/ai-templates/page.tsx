@@ -273,7 +273,7 @@ export default function AiTemplatesPage() {
           ) : (
             <div className="flex flex-col items-center justify-center text-center py-10">
               <BookOpenText size={30} strokeWidth={1.5} className="text-muted mb-3" />
-              <div className="text-[18px] font-semibold">Make a template</div>
+              <div className="text-[23px] font-semibold">Make a template</div>
               <p className="text-[13.5px] text-muted mt-1 max-w-[560px]">Pick a sample on the left to see how templates work, or start one of these.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 w-full max-w-[720px]">
                 {(
