@@ -59,7 +59,7 @@ export async function notifyAssigned(opts: {
     });
     if (error && !missing(error)) console.error("notification insert failed:", error.message);
     // Also by email (task assigned / offered, matter assigned). Never blocks the save.
-    await emailAssignment({ orgId: opts.orgId, toUserId: target.id, kind: opts.kind, refId: opts.refId, title: opts.title, actorName: actor }).catch((e) => console.error("assignment email failed:", e));
+    await emailAssignment({ orgId: opts.orgId, toUserId: target.id, actorId: opts.actorId, kind: opts.kind, refId: opts.refId, title: opts.title, actorName: actor }).catch((e) => console.error("assignment email failed:", e));
   } catch (e) {
     console.error("notifyAssigned failed:", e);
   }

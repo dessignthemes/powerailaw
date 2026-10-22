@@ -635,6 +635,7 @@ export default function InboxPage() {
             matterNumber={fwd ? summary?.matter?.number ?? null : null}
             providers={(conns ?? []).map((c) => c.provider)}
             forwardOriginal={fwd && message.webLink && provider ? { provider, url: message.webLink } : null}
+            forwardMessage={fwd && provider ? { provider, id: message.id } : null}
             onClose={() => setComposing(null)}
             onOpened={() => setComposing(null)}
           />

@@ -16,6 +16,13 @@ const GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly", "https:/
 const GMAIL_MODIFY = "https://www.googleapis.com/auth/gmail.modify";
 
 // Can LawPower change read / unread in this mailbox? (Reconnected with the newer permission.)
+// Allowed to send email from this mailbox (Outlook Mail.Send / Gmail gmail.send).
+export function canSend(conn: Pick<ConnectionRow, "provider" | "scopes">) {
+  return conn.provider === "google"
+    ? conn.scopes.some((s) => /gmail\.send$|gmail\.compose$|^https:\/\/mail\.google\.com\/?$/.test(s))
+    : conn.scopes.some((s) => /(^|\/)Mail\.Send$/i.test(s));
+}
+
 export function canSyncRead(conn: Pick<ConnectionRow, "provider" | "scopes">) {
   return conn.provider === "google"
     ? conn.scopes.includes(GMAIL_MODIFY)
@@ -63,7 +70,7 @@ async function refresh(conn: ConnectionRow): Promise<string> {
           // Mail.ReadWrite only once the person reconnected and approved it.
           scope: `offline_access User.Read ${canSyncRead(conn) ? "Mail.ReadWrite" : "Mail.Read"} Calendars.ReadWrite Files.Read${
             conn.scopes.some((x) => /(^|\/)Contacts\.Read$/i.test(x)) ? " Contacts.Read" : ""
-          }`,
+          }${canSend(conn) ? " Mail.Send" : ""}`,
         });
 
   const url =
@@ -127,6 +134,7 @@ export async function connectionStatus(userId: string) {
       status,
       autoRefresh: !!c.refresh_token && canRefresh(c.provider),
       syncsRead: canSyncRead(c), // read / unread kept in step with Outlook / Gmail
+      canSend: canSend(c), // can send email from LawPower through this mailbox
     };
   });
 }

@@ -94,7 +94,8 @@ export async function sendMorningDigests(opts: { force?: boolean; onlyEmail?: st
       if (!p.email || p.daily_digest === false) continue;
       if (opts.onlyEmail && p.email.toLowerCase() !== opts.onlyEmail.toLowerCase()) continue;
       const mail = await buildDigest(org.id, { id: p.id, email: p.email, full_name: p.full_name }, tz);
-      const r = await sendEmail({ orgId: org.id, to: p.email, kind: "daily_digest", ...mail });
+      // From their own mailbox to themselves (free).
+      const r = await sendEmail({ orgId: org.id, to: p.email, kind: "daily_digest", via: [p.id], ...mail });
       if (r.ok) sent++;
       else skipped++;
     }

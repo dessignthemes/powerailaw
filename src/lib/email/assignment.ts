@@ -7,6 +7,7 @@ import { sendEmail, layout, button, h, APP_URL } from "@/lib/email/send";
 export async function emailAssignment(opts: {
   orgId: string;
   toUserId: string;
+  actorId?: string | null;
   kind: "task_assigned" | "task_offered" | "matter_assigned" | "task_accepted" | "portal_message";
   refId: string;
   title: string;
@@ -39,5 +40,6 @@ export async function emailAssignment(opts: {
   const subject = `${opts.kind === "task_offered" ? "Task offered" : opts.kind === "matter_assigned" ? "Matter assigned" : "New task"}: ${opts.title}`.slice(0, 200);
   const html = layout(what, `<p style="font-size:15px;line-height:1.6"><b>${h(opts.title)}</b>${h(by)}.</p>${details}${button(link, action)}`);
   const text = `${what}${by}: ${opts.title}\n\n${action}: ${link}`;
-  await sendEmail({ orgId: opts.orgId, to, subject, html, text, kind: opts.kind });
+  // From the person who assigned it (their own Outlook / Gmail); else to themself from their own mailbox.
+  await sendEmail({ orgId: opts.orgId, to, subject, html, text, kind: opts.kind, via: [opts.actorId, opts.toUserId] });
 }

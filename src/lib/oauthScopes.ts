@@ -5,7 +5,7 @@ export const GOOGLE_BASE_SCOPES = ["openid", "email", "profile"];
 export const MICROSOFT_BASE_SCOPES = ["openid", "email", "profile", "offline_access", "User.Read"];
 
 export type MailboxItem = {
-  key: "mail" | "calendar" | "files" | "contacts";
+  key: "mail" | "send" | "calendar" | "files" | "contacts";
   label: string;
   desc: string;
   scope: string;
@@ -18,6 +18,12 @@ export const GOOGLE_MAILBOX_ITEMS: MailboxItem[] = [
     desc: "New client emails and documents get routed to your team the moment they arrive.",
     // Read mail and change read / unread (no sending, no deleting).
     scope: "https://www.googleapis.com/auth/gmail.modify",
+  },
+  {
+    key: "send",
+    label: "Send email",
+    desc: "Send emails from LawPower (and the team's task and morning emails) through your own Gmail, free. They appear in your Sent folder.",
+    scope: "https://www.googleapis.com/auth/gmail.send",
   },
   {
     key: "calendar",
@@ -40,6 +46,12 @@ export const MICROSOFT_MAILBOX_ITEMS: MailboxItem[] = [
     desc: "New client emails and documents get routed to your team the moment they arrive.",
     // Read mail and change read / unread (LawPower doesn't send or delete mail).
     scope: "Mail.ReadWrite",
+  },
+  {
+    key: "send",
+    label: "Send email",
+    desc: "Send emails from LawPower (and the team's task and morning emails) through your own Outlook, free. They appear in your Sent Items.",
+    scope: "Mail.Send",
   },
   {
     key: "calendar",

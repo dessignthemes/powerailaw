@@ -1,12 +1,13 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// Outgoing email from LawPower itself (not the person's Outlook): task
-// assignments and the morning check-in. Sent through Resend; set RESEND_API_KEY
-// and EMAIL_FROM (e.g. "LawPower <notifications@lawpower.ai>") in Vercel.
-// Without a key nothing is sent and the attempt is logged as "skipped".
+// The firm's notification emails (task assignments, morning check-in).
+// First choice, free: send through a team member's own connected Outlook / Gmail
+// (`via`: whose mailbox, in order, e.g. the person who assigned the task, then
+// the recipient themself). Backup: Resend, if RESEND_API_KEY is set in Vercel.
+// Otherwise nothing is sent and the attempt is logged as "skipped".
 
-export type OutgoingEmail = { orgId: string | null; to: string; subject: string; html: string; text: string; kind: string };
+export type OutgoingEmail = { orgId: string | null; to: string; subject: string; html: string; text: string; kind: string; via?: (string | null | undefined)[] };
 
 export function emailConfigured() {
   return !!process.env.RESEND_API_KEY;
@@ -20,9 +21,20 @@ export async function sendEmail(mail: OutgoingEmail): Promise<{ ok: boolean; rea
       .from("email_log")
       .insert({ org_id: mail.orgId, to_email: mail.to.slice(0, 320), kind: mail.kind, subject: mail.subject.slice(0, 300), status, ...extra })
       .then(() => undefined, () => undefined); // the log must never break the send
+  // Through a team member's own mailbox (free; logged by sendFromMailbox).
+  for (const userId of (mail.via ?? []).filter((x): x is string => !!x)) {
+    try {
+      const { sendFromMailbox, sendingMailbox } = await import("@/lib/mail/sendMail");
+      if (!(await sendingMailbox(userId))) continue;
+      await sendFromMailbox(mail.orgId, userId, { to: [mail.to], subject: mail.subject, text: mail.text, html: mail.html }, { kind: mail.kind });
+      return { ok: true };
+    } catch (e) {
+      console.error("notification via mailbox failed, trying the next way:", (e as Error).message);
+    }
+  }
   if (!key) {
-    await log("skipped", { error: "RESEND_API_KEY not set" });
-    return { ok: false, reason: "Email isn't set up yet (RESEND_API_KEY)." };
+    await log("skipped", { error: "No mailbox with send permission, and RESEND_API_KEY not set" });
+    return { ok: false, reason: "No connected mailbox can send yet. Reconnect Outlook once and allow “Send email”." };
   }
   try {
     const res = await fetch("https://api.resend.com/emails", {

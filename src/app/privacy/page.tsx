@@ -29,7 +29,13 @@ export default function PrivacyPage() {
         <li>
           <strong>Email (Gmail or Outlook):</strong> access to show your mailbox inside LawPower, to keep read / unread in step with your mailbox
           (an email you open in LawPower is marked read there, and one you mark unread is marked unread there), to turn emails you choose into
-          tasks, and, when you ask, to let the AI Agent search and read messages to answer your question. We do not send, move or delete email.
+          tasks, and, when you ask, to let the AI Agent search and read messages to answer your question. We do not move or delete email.
+        </li>
+        <li>
+          <strong>Sending email (Gmail or Outlook), if you allow it:</strong> an email you write or forward in LawPower is sent from your own mailbox
+          when you click Send, and saved in your Sent folder. LawPower also uses it for your firm&apos;s notifications: an email to a colleague when you
+          assign them a task (from your address), and your own 9 AM check-in (from your mailbox to yourself). The AI may draft text, but it never
+          sends email by itself; a person always clicks Send. We keep a log of what was sent (recipient, subject, date) for your firm&apos;s records.
         </li>
         <li>
           <strong>Calendar (Google Calendar or Outlook):</strong> access to show your events, and to create, edit or delete events when you do so in

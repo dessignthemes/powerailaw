@@ -10,6 +10,7 @@ import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/Compose
 
 type Msg = {
   id: string;
+  messageId?: string | null; // the email's id in the mailbox (for forwarding from LawPower)
   channel: "email" | "sms";
   direction: "in" | "out";
   source: "tagged" | "number" | "thread" | "logged";
@@ -222,6 +223,7 @@ export default function MatterEmails({ matter, client }: { matter: Matter; clien
           matterNumber={numberOf(matter)}
           providers={conns.map((c) => c.provider)}
           forwardOriginal={forwarding?.webLink && forwarding.mine && forwarding.provider ? { provider: forwarding.provider, url: forwarding.webLink } : null}
+          forwardMessage={forwarding?.mine && forwarding.provider && forwarding.messageId ? { provider: forwarding.provider, id: forwarding.messageId } : null}
           footnote="The email opens in your own mailbox, ready to send. Once sent, it's saved to this matter."
           onClose={() => {
             setCompose(null);
