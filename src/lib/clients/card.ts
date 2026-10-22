@@ -71,6 +71,15 @@ export type Profile = {
 };
 
 export const TITLES = ["", "Mr.", "Mrs.", "Ms.", "Miss", "Dr.", "Prof.", "Hon.", "Rev."];
+
+// The gender a title tells us: Mr. → Male; Mrs. / Ms. / Miss → Female; anything
+// else (Dr., Prof., no title…) tells us nothing, so it stays blank.
+export function genderForTitle(title: string): "" | "Male" | "Female" {
+  const t = title.trim().toLowerCase().replace(/\.$/, "");
+  if (t === "mr") return "Male";
+  if (t === "mrs" || t === "ms" || t === "miss") return "Female";
+  return "";
+}
 export const RELATIONSHIP = ["", "Single", "Married", "Domestic partnership", "Separated", "Divorced", "Widowed"];
 export const CONTACT_KINDS: ContactKind[] = ["Email", "Phone", "Cell", "Fax", "Web", "Other"];
 // The firm's practice areas (from its intake sheet).
@@ -133,7 +142,7 @@ export function normalizeProfile(raw: unknown): Profile {
   return {
     ...base,
     ...p,
-    people: Array.isArray(p.people) && p.people.length ? p.people.map((x) => ({ ...newPerson(), ...x, contacts: x.contacts?.length ? x.contacts : newPerson().contacts, extra: x.extra ?? [] })) : base.people,
+    people: Array.isArray(p.people) && p.people.length ? p.people.map((x) => ({ ...newPerson(), ...x, gender: x.gender || genderForTitle(x.title ?? ""), contacts: x.contacts?.length ? x.contacts : newPerson().contacts, extra: x.extra ?? [] })) : base.people,
     company: { ...base.company, ...(p.company ?? {}), contactPeople: cleanContactPeople((p.company as { contactPeople?: unknown } | undefined)?.contactPeople) },
     letter: { ...base.letter, ...(p.letter ?? {}) },
     address: {
@@ -278,6 +287,7 @@ export function mergePortalIntake(type: CardType, pr: Profile, raw: unknown): Pr
     target.suffix = txt(p.suffix, 20);
     target.previousNames = txt(p.previousNames, 200);
     target.gender = oneOf(txt(p.gender, 10), ["", "Male", "Female", "Other"] as const, "");
+    if (!target.gender) target.gender = genderForTitle(target.title); // known from the title (Mr. / Ms. …)
     target.relationship = oneOf(txt(p.relationship, 30), RELATIONSHIP, "");
     target.dob = ymdOrEmpty(p.dob);
     target.placeOfBirth = txt(p.placeOfBirth, 120);

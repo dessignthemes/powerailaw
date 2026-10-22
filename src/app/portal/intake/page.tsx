@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Check, Plus, UserRound, MapPin, ClipboardList, Building2 } from "lucide-react";
 import PortalHeader from "../PortalHeader";
-import { TITLES, RELATIONSHIP, CONTACT_PREFERENCES, APT_TYPES, ENTITY_TYPES, type PortalIntake, type PortalPerson } from "@/lib/clients/card";
+import { TITLES, RELATIONSHIP, CONTACT_PREFERENCES, APT_TYPES, ENTITY_TYPES, genderForTitle, type PortalIntake, type PortalPerson } from "@/lib/clients/card";
 
 // The client completes or corrects their intake sheet; saving updates the firm's client card.
 
@@ -162,7 +162,15 @@ export default function PortalIntakePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="grid grid-cols-[96px_1fr] gap-2 sm:col-span-2">
                     <Field label="Title">
-                      <select className={input} value={p.title} onChange={(e) => setPerson(i, { title: e.target.value })}>
+                      <select
+                        className={input}
+                        value={p.title}
+                        onChange={(e) => {
+                          const title = e.target.value;
+                          const followsTitle = !p.gender || p.gender === genderForTitle(p.title);
+                          setPerson(i, followsTitle ? { title, gender: genderForTitle(title) } : { title });
+                        }}
+                      >
                         {TITLES.map((t) => (
                           <option key={t} value={t}>
                             {t || "—"}

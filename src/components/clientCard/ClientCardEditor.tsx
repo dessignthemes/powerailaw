@@ -17,6 +17,7 @@ import type { Doc } from "@/components/pdf/DocumentList";
 import {
   APT_TYPES, CONTACT_KINDS, CONTACT_PREFERENCES, ENTITY_TYPES, PRACTICE_AREAS, RELATIONSHIP, TITLES, ageFrom, autoLetter, emptyProfile, personName, newPerson, normalizeProfile,
   personFullTitle, newContactPerson, rolesFor, type CardType, type ContactLine, type ContactPerson, type Person, type Profile,
+  genderForTitle,
 } from "@/lib/clients/card";
 
 type Section = "person" | "intake" | "details" | "address" | "notes" | "documents" | "mailings" | "matters" | "portal";
@@ -541,7 +542,17 @@ function PersonView({ person: p, setPerson, photo, setPhoto }: { person: Person;
           <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
             <label className="grid grid-cols-[130px_96px_1fr] items-center gap-2">
               <span className="text-[13.5px] text-muted">First name</span>
-              <select value={p.title} onChange={(e) => setPerson({ title: e.target.value })} className={smallSelect} aria-label="Title">
+              <select
+                value={p.title}
+                onChange={(e) => {
+                  const title = e.target.value;
+                  // Gender follows the title (Mr. → Male, Ms. → Female) unless someone picked it themselves.
+                  const followsTitle = !p.gender || p.gender === genderForTitle(p.title);
+                  setPerson(followsTitle ? { title, gender: genderForTitle(title) } : { title });
+                }}
+                className={smallSelect}
+                aria-label="Title"
+              >
                 {TITLES.map((t) => <option key={t} value={t}>{t || "—"}</option>)}
               </select>
               <input value={p.first} onChange={(e) => setPerson({ first: e.target.value })} className={input} />
