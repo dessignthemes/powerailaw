@@ -1,4 +1,5 @@
 import "server-only";
+import { cidsIn, replaceCids, normalizeCid, MAX_INLINE_IMAGE, MAX_INLINE_TOTAL } from "@/lib/mail/inlineImages";
 import { MailError } from "@/lib/mail/tokens";
 import { fetchWithRetry, mapLimit } from "@/lib/mail/limit";
 import type { FolderKind, MailFolder, MailMessage, MailPage, MailSummary } from "@/lib/mail/types";
@@ -80,6 +81,27 @@ export async function listOutlook(token: string, opts: { q?: string; pageToken?:
   return { messages: data.value.map(toSummary), nextPageToken: data["@odata.nextLink"] ?? null };
 }
 
+async function withOutlookInlineImages(token: string, enc: string, html: string, cids: Set<string>) {
+  const list = await graph<{ value: { id: string; size: number; contentType: string; isInline?: boolean }[] }>(
+    token,
+    `/me/messages/${enc}/attachments?$select=id,size,contentType,isInline`
+  );
+  const images = new Map<string, { mime: string; base64: string }>();
+  let total = 0;
+  for (const a of list.value) {
+    if (!/^image\//i.test(a.contentType ?? "") || a.size > MAX_INLINE_IMAGE || total + a.size > MAX_INLINE_TOTAL) continue;
+    const full = await graph<{ contentId?: string | null; name?: string; contentBytes?: string; contentType?: string }>(token, `/me/messages/${enc}/attachments/${encodeURIComponent(a.id)}`).catch(() => null);
+    if (!full?.contentBytes) continue;
+    const key = normalizeCid(full.contentId ?? "");
+    const byName = normalizeCid(full.name ?? "");
+    const match = cids.has(key) ? key : [...cids].find((c) => c.split("@")[0] === byName || c.split("@")[0] === key.split("@")[0]);
+    if (!match) continue;
+    images.set(match, { mime: full.contentType || a.contentType, base64: full.contentBytes });
+    total += a.size;
+  }
+  return replaceCids(html, images);
+}
+
 export async function getOutlook(token: string, id: string): Promise<MailMessage> {
   if (!/^[A-Za-z0-9_=+/-]+$/.test(id)) throw new MailError("provider_error", "Invalid message id.");
   const enc = encodeURIComponent(id);
@@ -96,11 +118,16 @@ export async function getOutlook(token: string, id: string): Promise<MailMessage
     attachments = a.value.filter((x) => !x.isInline).map((x) => ({ name: x.name, size: x.size, mimeType: x.contentType }));
   }
   const isHtml = m.body?.contentType === "html";
+  let html = isHtml ? m.body?.content ?? null : null;
+  // Inline images (signature logos, pasted pictures): Outlook lists them as
+  // attachments even when hasAttachments is false, so check the HTML instead.
+  const cids = cidsIn(html);
+  if (html && cids.size) html = await withOutlookInlineImages(token, enc, html, cids).catch(() => html);
   return {
     ...toSummary(m),
     to: (m.toRecipients ?? []).map(fmt).join(", "),
     cc: (m.ccRecipients ?? []).map(fmt).join(", "),
-    html: isHtml ? m.body?.content ?? null : null,
+    html,
     text: isHtml ? null : m.body?.content ?? null,
     attachments,
     webLink: m.webLink ?? null,

@@ -1,4 +1,5 @@
 import "server-only";
+import { cidsIn, replaceCids, normalizeCid, MAX_INLINE_IMAGE, MAX_INLINE_TOTAL } from "@/lib/mail/inlineImages";
 import { MailError } from "@/lib/mail/tokens";
 import { fetchWithRetry, mapLimit } from "@/lib/mail/limit";
 import type { FolderKind, MailFolder, MailMessage, MailPage, MailSummary } from "@/lib/mail/types";
@@ -129,6 +130,34 @@ export async function getGmail(token: string, id: string, accountEmail: string |
     (p.parts ?? []).forEach(walk);
   };
   walk(m.payload);
+  // Inline images (signature logos, pasted pictures), referenced as cid:… in the HTML.
+  const cids = cidsIn(html);
+  if (html && cids.size) {
+    const images = new Map<string, { mime: string; base64: string }>();
+    let total = 0;
+    const visit = async (p: Part | undefined): Promise<void> => {
+      if (!p) return;
+      const cidHeader = p.headers?.find((h) => h.name.toLowerCase() === "content-id")?.value;
+      const key = cidHeader ? normalizeCid(cidHeader) : "";
+      if (key && cids.has(key) && /^image\//i.test(p.mimeType ?? "")) {
+        const size = p.body?.size ?? 0;
+        if (size <= MAX_INLINE_IMAGE && total + size <= MAX_INLINE_TOTAL) {
+          let data = p.body?.data ?? null;
+          if (!data && p.body?.attachmentId) {
+            const a = await gmail<{ data?: string }>(token, `/messages/${id}/attachments/${p.body.attachmentId}`).catch(() => null);
+            data = a?.data ?? null;
+          }
+          if (data) {
+            images.set(key, { mime: p.mimeType ?? "image/png", base64: data.replace(/-/g, "+").replace(/_/g, "/") });
+            total += size;
+          }
+        }
+      }
+      for (const c of p.parts ?? []) await visit(c);
+    };
+    await visit(m.payload).catch(() => undefined);
+    html = replaceCids(html, images);
+  }
 
   const authuser = accountEmail ? `?authuser=${encodeURIComponent(accountEmail)}` : "";
   return {
