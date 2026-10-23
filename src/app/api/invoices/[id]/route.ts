@@ -4,7 +4,7 @@ import { who, fail, isId } from "@/lib/data/invoiceApi";
 
 export const dynamic = "force-dynamic";
 
-// GET → the invoice with its lines and payments. DELETE → only when nothing has been paid.
+// GET → the invoice with its lines and payments. DELETE → the invoice and its payment entries.
 
 // GET ?print=1 → also the firm, client and matter, for the printable invoice.
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {

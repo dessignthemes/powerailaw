@@ -318,10 +318,12 @@ export async function recordPayment(orgId: string, userId: string, invoiceId: st
   return getInvoice(orgId, inv.id);
 }
 
-// Only an invoice with no payments can be deleted; its time becomes unbilled again.
+// Deletes an invoice made by mistake. Its payment entries in the books (the
+// income entry, and the trust transfer if paid from trust) go with it, and any
+// time billed on it becomes unbilled again.
 export async function deleteInvoice(orgId: string, id: string) {
-  const inv = await getInvoice(orgId, id);
-  if (inv.amountPaid > 0) throw new InvoiceError("This invoice has payments recorded, so it can't be deleted.");
+  await getInvoice(orgId, id);
+  check(await db().from("acct_transactions").delete().eq("org_id", orgId).eq("invoice_id", id));
   await db().from("time_entries").update({ invoice_id: null }).eq("org_id", orgId).eq("invoice_id", id);
   check(await db().from("invoices").delete().eq("org_id", orgId).eq("id", id));
 }

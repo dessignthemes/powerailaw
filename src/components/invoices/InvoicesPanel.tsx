@@ -58,7 +58,12 @@ export default function InvoicesPanel({
   }, [onChanged]);
 
   async function remove(inv: Invoice) {
-    if (!confirm(`Delete ${inv.number}? Any time on it becomes unbilled again.`)) return;
+    const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+    const msg =
+      inv.amountPaid > 0
+        ? `Delete ${inv.number}?\n\nIt has ${money(inv.amountPaid)} in payments recorded. Those payment entries will also be removed from the books (Operating, and Trust if it was paid from trust). Any time on it becomes unbilled again.\n\nThis can't be undone.`
+        : `Delete ${inv.number}? Any time on it becomes unbilled again.`;
+    if (!confirm(msg)) return;
     try {
       await fetch(`/api/invoices/${inv.id}`, { method: "DELETE" }).then(readJson);
       changed();
@@ -165,11 +170,9 @@ export default function InvoicesPanel({
                         <a href={`/invoice/${inv.id}`} target="_blank" rel="noopener" title="Open / print" aria-label={`Open ${inv.number}`} className="w-7 h-7 rounded-full hover:bg-chip flex items-center justify-center text-muted">
                           <Printer size={13} />
                         </a>
-                        {inv.amountPaid === 0 && (
-                          <button onClick={() => void remove(inv)} title="Delete" aria-label={`Delete ${inv.number}`} className="w-7 h-7 rounded-full hover:bg-chip flex items-center justify-center text-muted">
-                            <Trash2 size={13} />
-                          </button>
-                        )}
+                        <button onClick={() => void remove(inv)} title="Delete invoice" aria-label={`Delete ${inv.number}`} className="w-7 h-7 rounded-full hover:bg-chip hover:text-[#B42318] flex items-center justify-center text-muted">
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                     </td>
                   </tr>
