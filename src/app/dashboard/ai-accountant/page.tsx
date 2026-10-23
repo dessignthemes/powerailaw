@@ -1,5 +1,6 @@
 "use client";
 
+import LawPayImportModal from "@/components/accounting/LawPayImportModal";
 import ClickAway from "@/components/ClickAway";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -17,8 +18,7 @@ import {
   Sparkles,
   CircleCheck,
   Circle,
-  ShieldCheck,
-} from "lucide-react";
+  ShieldCheck, CreditCard } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import InvoicesPanel from "@/components/invoices/InvoicesPanel";
 import TrustBalances from "@/components/invoices/TrustBalances";
@@ -87,7 +87,7 @@ function AiAccountant() {
   const [book, setBook] = useState<Book>("operating");
   const [trustTab, setTrustTab] = useState<TrustTab>("balances");
   const [addOpen, setAddOpen] = useState(false);
-  const [modal, setModal] = useState<null | { kind: "txn"; txn?: Txn; file?: File | null } | { kind: "import" }>(null);
+  const [modal, setModal] = useState<null | { kind: "txn"; txn?: Txn; file?: File | null } | { kind: "import" } | { kind: "lawpay" }>(null);
   const [exporting, setExporting] = useState<string | null>(null);
   const [firm, setFirm] = useState("");
 
@@ -217,6 +217,7 @@ function AiAccountant() {
                 <div role="menu" className="absolute right-0 top-[calc(100%+6px)] z-50 w-[280px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(20,24,33,0.25)] p-1.5">
                   {[
                     { icon: Upload, label: "Import bank or card CSV", hint: "AI categorizes every line", go: () => setModal({ kind: "import" }) },
+                    { icon: CreditCard, label: "Import from LawPay", hint: "Payments matched to invoices", go: () => setModal({ kind: "lawpay" }) },
                     { icon: Receipt, label: "Add a receipt", hint: "PDF receipts are read by AI", go: () => setModal({ kind: "txn" }) },
                     { icon: PenLine, label: "Add manually", hint: "A payment, fee or expense", go: () => setModal({ kind: "txn" }) },
                   ].map((o) => (
@@ -363,6 +364,17 @@ function AiAccountant() {
           onDeleted={(id) => {
             setModal(null);
             setTxns((l) => l.filter((x) => x.id !== id));
+          }}
+        />
+      )}
+      {modal?.kind === "lawpay" && (
+        <LawPayImportModal
+          onClose={() => setModal(null)}
+          onImported={(msg) => {
+            setModal(null);
+            setNotice(msg);
+            setTab("review");
+            setReload((n) => n + 1);
           }}
         />
       )}

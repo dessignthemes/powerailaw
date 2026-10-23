@@ -12,7 +12,8 @@ type Home = {
   firm: string;
   clientName: string;
   email: string;
-  isParty?: boolean; // a realtor / other party (no intake sheet, documents come through messages)
+  isParty?: boolean;
+  payments?: { lawpayOperatingUrl: string; lawpayTrustUrl: string }; // a realtor / other party (no intake sheet, documents come through messages)
   matters: { id: string; title: string; status: string; category: string | null }[];
   documents: { id: string; matterId: string; title: string; sharedAt: string | null; versionId: string; fileType: string; size: number; updatedAt: string }[];
 };
@@ -122,6 +123,28 @@ export default function PortalHome() {
                       <span className="text-[13px] font-medium">Open →</span>
                     </Link>
                   ))}
+                </div>
+              </section>
+            )}
+            {!home.isParty && (home.payments?.lawpayOperatingUrl || home.payments?.lawpayTrustUrl) && (
+              <section className="bg-card-alt rounded-2xl p-5 mb-8 flex flex-wrap items-center gap-4">
+                <div className="flex-1 min-w-[240px]">
+                  <h2 className="text-[15px] font-semibold" style={{ letterSpacing: 0 }}>
+                    Make a payment
+                  </h2>
+                  <p className="text-[13px] text-muted mt-0.5">Pay securely by card or eCheck through LawPay. Please include your invoice number or matter name.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {home.payments?.lawpayOperatingUrl && (
+                    <a href={home.payments.lawpayOperatingUrl} target="_blank" rel="noopener noreferrer" className="bg-[#1B191A] text-white px-4 py-2 rounded-full text-[13.5px] font-semibold hover:opacity-90">
+                      Pay an invoice
+                    </a>
+                  )}
+                  {home.payments?.lawpayTrustUrl && (
+                    <a href={home.payments.lawpayTrustUrl} target="_blank" rel="noopener noreferrer" className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-semibold" title="For a retainer or other money held in trust for you">
+                      Pay a retainer (trust)
+                    </a>
+                  )}
                 </div>
               </section>
             )}

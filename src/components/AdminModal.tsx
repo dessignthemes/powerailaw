@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AiUsagePanel from "@/components/admin/AiUsagePanel";
 import NotificationsPanel from "@/components/admin/NotificationsPanel";
+import PaymentsPanel from "@/components/admin/PaymentsPanel";
 import TeamMembers from "@/components/TeamMembers";
 import { createPortal } from "react-dom";
 import {
@@ -14,6 +15,7 @@ import {
   ClipboardList,
   Trash2,
   Mail,
+  CreditCard as CardIcon,
 } from "lucide-react";
 
 const navItems = [
@@ -36,6 +38,13 @@ const navItems = [
     label: "Email notifications",
     sub: "Morning check-in, task emails",
     icon: Mail,
+    group: "THE FIRM",
+  },
+  {
+    key: "payments",
+    label: "Online payments",
+    sub: "LawPay payment pages",
+    icon: CardIcon,
     group: "THE FIRM",
   },
   {
@@ -395,6 +404,8 @@ export default function AdminModal({
             {page === "usage" && <AiUsagePanel />}
 
             {page === "emails" && <NotificationsPanel />}
+
+            {page === "payments" && <PaymentsPanel />}
 
             {page === "log" && (
               <>

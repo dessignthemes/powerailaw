@@ -1,4 +1,5 @@
 import "server-only";
+import { getPaymentSettings, payLink } from "@/lib/payments/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Invoices (operating account) and client trust balances.
@@ -263,7 +264,7 @@ const METHODS: Record<string, string> = { check: "Check", wire: "Wire", ach: "AC
 // Records money received for an invoice. It goes into the operating ledger
 // (income, linked to the matter, client and invoice). "From trust" also takes it
 // out of the matter's trust balance (never more than what's in trust).
-export async function recordPayment(orgId: string, userId: string, invoiceId: string, body: { date?: unknown; amount?: unknown; method?: unknown }) {
+export async function recordPayment(orgId: string, userId: string, invoiceId: string, body: { date?: unknown; amount?: unknown; method?: unknown; externalRef?: string; note?: string }) {
   const inv = await getInvoice(orgId, invoiceId);
   if (inv.status === "void") throw new InvoiceError("This invoice was voided.");
   const remaining = round2(inv.total - inv.amountPaid);
@@ -307,7 +308,15 @@ export async function recordPayment(orgId: string, userId: string, invoiceId: st
     ...(fromTrust
       ? [{ ...base, kind: "transfer", description: `Earned fees moved to operating: ${inv.number}`, category: "trust_activity", account: "trust", payment_method: "Transfer to operating" }]
       : []),
-    { ...base, kind: "income", description: `Payment for ${inv.number}`, category: fromTrust ? "retainer_earned" : "legal_fees", account: "operating", payment_method: METHODS[method] },
+    {
+      ...base,
+      kind: "income",
+      description: `Payment for ${inv.number}${body.note ? ` · ${body.note}` : ""}`.slice(0, 500),
+      category: fromTrust ? "retainer_earned" : "legal_fees",
+      account: "operating",
+      payment_method: METHODS[method],
+      ...(body.externalRef ? { external_ref: body.externalRef } : {}), // e.g. the LawPay transaction, so it's never imported twice
+    },
   ];
   const ins = await db().from("acct_transactions").insert(rows);
   if (ins.error) {
@@ -337,8 +346,13 @@ export async function invoiceForPrint(orgId: string, id: string) {
     inv.matterId ? db().from("matters").select("title, matter_number").eq("org_id", orgId).eq("id", inv.matterId).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   const firm = ((org.data as { name?: string } | null)?.name ?? "").trim();
+  // "Pay online" with LawPay (Administration → Online payments), while money is owed.
+  const owed = round2(inv.total - inv.amountPaid);
+  const pay = await getPaymentSettings(orgId);
   return {
     invoice: inv,
+    payUrl: owed > 0 && inv.status !== "void" && pay.lawpayOperatingUrl ? payLink(pay.lawpayOperatingUrl, { amount: owed, reference: inv.number }) : null,
+    payPage: pay.lawpayOperatingUrl || null,
     // A placeholder (the owner's email) isn't a firm name.
     firm: { name: firm && !firm.includes("@") ? firm : "", logoUrl: (org.data as { logo_url?: string | null } | null)?.logo_url ?? null },
     client: client.data as { name: string; email: string | null; phone: string | null; address: string | null } | null,

@@ -1,5 +1,6 @@
 import "server-only";
 import { accessibleMatterIds } from "@/lib/portal/parties";
+import { getPaymentSettings } from "@/lib/payments/settings";
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -331,6 +332,7 @@ export async function portalHome() {
     isParty: false,
     matters: (matters ?? []).map((m) => ({ id: m.id as string, title: m.title as string, status: m.status as string, category: (m.category as string | null) ?? null })),
     documents: docList,
+    payments: await getPaymentSettings(u.org_id), // LawPay pages (Make a payment)
   };
 }
 

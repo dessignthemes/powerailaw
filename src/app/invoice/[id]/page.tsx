@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Printer, Loader2 } from "lucide-react";
+import { Printer, Loader2, CreditCard } from "lucide-react";
 import { type Invoice, money, shortDate, statusOf, readJson } from "@/components/invoices/shared";
 
 type Data = {
@@ -10,6 +10,8 @@ type Data = {
   firm: { name: string; logoUrl: string | null };
   client: { name: string; email: string | null; phone: string | null; address: string | null } | null;
   matter: { title: string; number: string | null } | null;
+  payUrl?: string | null; // LawPay, while something is owed
+  payPage?: string | null;
 };
 
 // Printable invoice (outside the app menu, so only the invoice prints).
@@ -128,6 +130,20 @@ export default function InvoicePrintPage() {
             <span className="tabular-nums">{money(owed)}</span>
           </div>
         </section>
+        {d.payUrl && (
+          <section className="mt-8 rounded-2xl border border-line bg-[#F6F8FC] px-5 py-4 flex flex-wrap items-center gap-4 print:bg-white">
+            <div className="flex-1 min-w-[240px]">
+              <div className="font-semibold">Pay online by card or eCheck</div>
+              <div className="text-[12.5px] text-muted mt-0.5">
+                Secure payment through LawPay. Please include invoice number <b>{inv.number}</b>.
+                <span className="hidden print:inline"> Pay at: {d.payPage}</span>
+              </div>
+            </div>
+            <a href={d.payUrl} target="_blank" rel="noopener noreferrer" className="print:hidden flex items-center gap-2 bg-[#1B191A] text-white px-5 py-2.5 rounded-full text-[14px] font-semibold hover:opacity-90">
+              <CreditCard size={15} /> Pay {money(owed)} online
+            </a>
+          </section>
+        )}
         {inv.notes && <p className="mt-10 whitespace-pre-line text-muted">{inv.notes}</p>}
       </article>
     </div>
