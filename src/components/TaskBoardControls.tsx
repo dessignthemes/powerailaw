@@ -1,5 +1,6 @@
 "use client";
 
+import { descriptionText } from "@/components/RichTextEditor";
 import ClickAway from "@/components/ClickAway";
 import { Check } from "lucide-react";
 import type { BoardTask, TaskPriority as Priority } from "@/components/NewTaskModal";
@@ -39,7 +40,7 @@ export function matchesFilters(t: BoardTask, f: AdvancedFilters) {
 export function matchesSearch(t: BoardTask, q: string) {
   const s = q.trim().toLowerCase();
   if (!s) return true;
-  return t.title.toLowerCase().includes(s) || (t.description ?? "").toLowerCase().includes(s) || (t.assignee ?? "").toLowerCase().includes(s);
+  return t.title.toLowerCase().includes(s) || descriptionText(t.description ?? "").toLowerCase().includes(s) || (t.assignee ?? "").toLowerCase().includes(s);
 }
 
 const PRIORITY_RANK: Record<Priority, number> = { High: 0, Medium: 1, Low: 2 };

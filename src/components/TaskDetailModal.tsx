@@ -1,5 +1,6 @@
 "use client";
 
+import RichTextEditor, { descriptionText } from "@/components/RichTextEditor";
 import AssigneeMultiPicker from "@/components/tasks/AssigneeMultiPicker";
 import { useCallback, useState, useEffect, useRef } from "react";
 import ChecklistPanel, { ChecklistPicker } from "@/components/templates/ChecklistPanel";
@@ -26,19 +27,6 @@ import {
   Pause,
   Trash2,
   ExternalLink,
-  Bold,
-  Italic,
-  Strikethrough,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  ListChecks,
-  Quote,
-  Code,
-  SquareCode,
-  Link2,
   Folder,
   CalendarDays,
   Check,
@@ -59,21 +47,7 @@ import {
   PrivateToggle,
 } from "@/components/NewTaskModal";
 
-const toolbarIcons = [
-  Bold,
-  Italic,
-  Strikethrough,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  ListChecks,
-  Quote,
-  Code,
-  SquareCode,
-  Link2,
-];
+
 
 const detailTabs = ["Comments", "Attachments", "Time tracking", "Contacts"];
 
@@ -411,29 +385,19 @@ export default function TaskDetailModal({
             </div>
           )}
 
-          <div className="flex items-center gap-1 flex-wrap mb-3 border-b border-line pb-3">
-            {toolbarIcons.map((Icon, i) => (
-              <button
-                key={i}
-                className="w-7 h-7 rounded-lg hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
-              >
-                <Icon size={14} strokeWidth={1.75} />
-              </button>
-            ))}
-          </div>
-
-          <textarea
+          <RichTextEditor
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={() => commit({ description })}
+            onChange={setDescription}
+            onBlur={(html) => commit({ description: html })}
             placeholder="Add more detail..."
-            className={`w-full bg-transparent outline-none text-[15px] leading-relaxed placeholder:text-muted resize-y mb-2 overflow-y-auto ${
-              expanded ? "h-[58vh]" : "h-[44vh]"
-            } min-h-[180px]`}
+            className={`mb-2 ${expanded ? "h-[58vh]" : "h-[44vh]"} min-h-[180px]`}
           />
           {/* Links in the notes (e.g. "Open email: https://…") as clean buttons */}
           {(() => {
-            const links = [...description.matchAll(/(?:(open email):\s*)?(https?:\/\/[^\s<>()]+)/gi)].slice(0, 6);
+            const seen = new Set<string>();
+            const links = [...descriptionText(description).matchAll(/(?:(open email):\s*)?(https?:\/\/[^\s<>()]+)/gi)]
+              .filter((m) => (seen.has(m[2]) ? false : (seen.add(m[2]), true)))
+              .slice(0, 6);
             if (!links.length) return <div className="mb-4" />;
             return (
               <div className="flex flex-wrap gap-2 mb-5">
