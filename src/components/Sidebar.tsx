@@ -37,7 +37,7 @@ function NavItem({
       title={compact ? label : undefined}
       aria-label={compact ? label : undefined}
       className={`flex items-center gap-2 py-[6px] rounded-lg text-[13px] font-medium transition-colors ${compact ? "justify-center px-0 h-8" : "px-3"} ${
-        active ? "bg-nav text-ink" : "text-muted hover:bg-nav hover:text-ink"
+        active ? "bg-nav text-ink" : "text-ink hover:bg-chip"
       }`}
     >
       <Icon size={compact ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
@@ -100,7 +100,7 @@ export default function Sidebar() {
       {collapsed ? (
         <div className="flex flex-col items-center gap-2 mb-4">
           <LogoMark size={28} />
-          <button onClick={toggleCollapsed} title="Expand menu" aria-label="Expand menu" className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:bg-nav hover:text-ink transition-colors">
+          <button onClick={toggleCollapsed} title="Expand menu" aria-label="Expand menu" className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:bg-chip hover:text-ink transition-colors">
             <PanelLeftOpen size={17} strokeWidth={1.75} />
           </button>
         </div>
@@ -108,7 +108,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-2.5 px-2 mb-8">
           <LogoMark size={28} />
           <span className="font-display font-semibold text-[16px] flex-1">LawPower AI</span>
-          <button onClick={toggleCollapsed} title="Collapse menu" aria-label="Collapse menu" className="w-8 h-8 -mr-1 rounded-lg flex items-center justify-center text-muted hover:bg-nav hover:text-ink transition-colors">
+          <button onClick={toggleCollapsed} title="Collapse menu" aria-label="Collapse menu" className="w-8 h-8 -mr-1 rounded-lg flex items-center justify-center text-muted hover:bg-chip hover:text-ink transition-colors">
             <PanelLeftClose size={16} strokeWidth={1.75} />
           </button>
         </div>
@@ -156,7 +156,7 @@ export default function Sidebar() {
           onClick={() => openIntegrations("integrations")}
           title={collapsed ? "Integrations" : undefined}
           aria-label={collapsed ? "Integrations" : undefined}
-          className={`w-full flex items-center gap-2 py-[6px] rounded-lg text-[13px] font-medium text-muted hover:bg-nav hover:text-ink transition-colors mb-2 text-left ${collapsed ? "justify-center h-9" : "px-3"}`}
+          className={`w-full flex items-center gap-2 py-[6px] rounded-lg text-[13px] font-medium text-ink hover:bg-chip transition-colors mb-2 text-left ${collapsed ? "justify-center h-9" : "px-3"}`}
         >
           <Grid3x3 size={collapsed ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
           {!collapsed && (
