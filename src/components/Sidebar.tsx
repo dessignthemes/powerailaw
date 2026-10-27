@@ -37,7 +37,7 @@ function NavItem({
       title={compact ? label : undefined}
       aria-label={compact ? label : undefined}
       className={`flex items-center gap-2 py-[6px] rounded-lg text-[13px] font-medium transition-colors ${compact ? "justify-center px-0 h-8" : "px-3"} ${
-        active ? "bg-nav text-ink" : "text-ink hover:bg-chip"
+        active ? "bg-chip text-ink" : "text-ink hover:bg-chip"
       }`}
     >
       <Icon size={compact ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
