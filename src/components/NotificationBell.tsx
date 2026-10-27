@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, ListChecks, Folder , MessageSquare } from "lucide-react";
 
-type Item = { id: string; kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message"; refId: string; boardId: string | null; title: string; actorName: string; createdAt: string; read: boolean };
+type Item = { id: string; kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message" | "internal_message"; refId: string; boardId: string | null; title: string; actorName: string; createdAt: string; read: boolean };
 
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -14,7 +14,9 @@ const ago = (iso: string) => {
   return h < 24 ? `${h}h ago` : `${Math.round(h / 24)}d ago`;
 };
 const hrefOf = (n: Item) =>
-  n.kind === "portal_message"
+  n.kind === "internal_message"
+    ? `/dashboard/communications?view=internal`
+    : n.kind === "portal_message"
     ? n.boardId === n.refId
       ? `/dashboard/client-intake?card=${n.refId}` // a message not tied to a matter: the client's card
       : `/dashboard/matters/${n.refId}?tab=emails`
@@ -95,13 +97,15 @@ export default function NotificationBell() {
           ) : (
             <div className="max-h-[420px] overflow-y-auto">
               {items.map((n) => {
-                const Icon = n.kind === "portal_message" ? MessageSquare : n.kind === "matter_assigned" ? Folder : ListChecks;
+                const Icon = n.kind === "portal_message" || n.kind === "internal_message" ? MessageSquare : n.kind === "matter_assigned" ? Folder : ListChecks;
                 return (
                   <Link key={n.id} href={hrefOf(n)} onClick={() => setOpen(false)} className={`flex gap-3 px-4 py-3 hover:bg-chip/60 border-b border-line last:border-b-0 ${n.read ? "" : "bg-[#FFF6F6]"}`}>
                     <Icon size={16} strokeWidth={1.75} className="text-muted mt-0.5 flex-shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[13px] text-muted">
-                        {n.kind === "portal_message"
+                        {n.kind === "internal_message"
+                          ? `${n.actorName} sent you a message`
+                          : n.kind === "portal_message"
                           ? `${n.actorName} sent a message through the client portal`
                           : n.kind === "task_offered"
                           ? `${n.actorName} offered you a task: accept it to take it`

@@ -9,7 +9,7 @@ const missing = (e: { code?: string; message?: string } | null) => !!e && (e.cod
 
 export type Notification = {
   id: string;
-  kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message";
+  kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message" | "internal_message";
   refId: string;
   boardId: string | null;
   title: string;

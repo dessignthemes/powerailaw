@@ -9,7 +9,7 @@ export async function emailAssignment(opts: {
   orgId: string;
   toUserId: string;
   actorId?: string | null;
-  kind: "task_assigned" | "task_offered" | "matter_assigned" | "task_accepted" | "portal_message";
+  kind: "task_assigned" | "task_offered" | "matter_assigned" | "task_accepted" | "portal_message" | "internal_message";
   refId: string;
   title: string;
   actorName: string | null;

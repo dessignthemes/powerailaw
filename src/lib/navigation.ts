@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   PieChart,
   FileText,
+  MessagesSquare,
   type LucideIcon,
 } from "lucide-react";
 
@@ -42,6 +43,7 @@ export const toolLinks: NavLink[] = [
   { label: "AI Accountant", href: "/dashboard/ai-accountant", icon: Calculator },
   { label: "AI Matter", href: "/dashboard/ai-matter", icon: FolderSearch },
   { label: "AI Templates", href: "/dashboard/ai-templates", icon: FileText },
+  { label: "Communications", href: "/dashboard/communications", icon: MessagesSquare },
   { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
   { label: "Secure Files", href: "/dashboard/secure-files", icon: ShieldCheck },
