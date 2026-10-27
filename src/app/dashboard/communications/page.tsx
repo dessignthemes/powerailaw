@@ -351,8 +351,8 @@ export default function CommunicationsPage() {
   );
 
   return (
-    <div className="px-10 py-10 max-w-[1400px]">
-      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-start">
+    <div className="px-10 py-10 max-w-[1400px] min-w-0">
+      <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-6 items-start">
         <aside>
           <h1 className="text-[26px] font-semibold mb-4">Communications</h1>
           <div className="relative mb-5">
@@ -402,7 +402,7 @@ export default function CommunicationsPage() {
           </nav>
         </aside>
 
-        <section className="bg-card-alt rounded-2xl p-5 min-h-[520px]">
+        <section className="bg-card-alt rounded-2xl p-5 min-h-[520px] min-w-0 overflow-hidden">
           {notice && (
             <div className="mb-4 rounded-xl bg-[#E7F6EE] text-[#155C3A] px-4 py-2.5 text-[13.5px] flex items-center gap-2">
               <Check size={15} /> {notice}
@@ -442,7 +442,7 @@ export default function CommunicationsPage() {
                   {calls.map((c) => {
                     const waiting = c.callbackNeeded && !c.callbackDoneAt;
                     return (
-                      <div key={c.id} className={`group bg-white rounded-xl px-4 py-3 flex items-start gap-3 ${waiting ? "border-l-[6px] border-[#FB5D67]" : ""}`}>
+                      <div key={c.id} className={`group bg-white rounded-xl px-4 py-3 flex items-start gap-3 min-w-0 overflow-hidden ${waiting ? "border-l-[6px] border-[#FB5D67]" : ""}`}>
                         <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${c.direction === "in" ? "bg-[#EEF3FB] text-[#2B6CB0]" : "bg-chip text-muted"}`} title={c.direction === "in" ? "Incoming" : "Outgoing"}>
                           {c.direction === "in" ? <PhoneIncoming size={15} /> : <PhoneOutgoing size={15} />}
                         </span>
@@ -456,7 +456,7 @@ export default function CommunicationsPage() {
                             )}
                             <MatterBadge m={c.matter} />
                           </div>
-                          {(c.subject || c.body) && <div className="text-[13px] text-muted mt-0.5 line-clamp-2">{[c.subject, c.body].filter(Boolean).join(": ")}</div>}
+                          {(c.subject || c.body) && <div className="text-[13px] text-muted mt-0.5 line-clamp-2 [overflow-wrap:anywhere]">{[c.subject, c.body].filter(Boolean).join(": ")}</div>}
                           <div className="text-[12px] text-muted mt-1">
                             {when(c.occurredAt)}
                             {c.durationMin ? ` · ${c.durationMin} min` : ""}
@@ -498,8 +498,8 @@ export default function CommunicationsPage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {(items as { id: string; from: string; clientId: string; matterId: string | null; matter: string | null; preview: string; unread: boolean; at: string }[]).map((m) => (
-                  <Link key={m.id} href={m.matterId ? `/dashboard/matters/${m.matterId}?tab=emails` : `/dashboard/client-intake?card=${m.clientId}`} className="bg-white rounded-xl px-4 py-3 hover:bg-chip/40 block">
-                    <div className="flex items-center gap-2">
+                  <Link key={m.id} href={m.matterId ? `/dashboard/matters/${m.matterId}?tab=emails` : `/dashboard/client-intake?card=${m.clientId}`} className="bg-white rounded-xl px-4 py-3 hover:bg-chip/40 block min-w-0 overflow-hidden">
+                    <div className="flex items-center gap-2 min-w-0">
                       {m.unread && <span className="w-2 h-2 rounded-full bg-[#3B82F6]" />}
                       <span className="font-semibold text-[14px]">{m.from}</span>
                       {m.matter && <span className="text-[11.5px] font-semibold bg-[#E1E7F4] rounded-md px-1.5 py-px">{m.matter}</span>}
@@ -521,9 +521,9 @@ export default function CommunicationsPage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {(items as { id: string; direction: "in" | "out"; subject: string; from: string; to: string; at: string; snippet: string; matter: MatterRef }[]).map((m) => (
-                  <div key={m.id} className="bg-white rounded-xl px-4 py-3">
+                  <div key={m.id} className="bg-white rounded-xl px-4 py-3 min-w-0 overflow-hidden">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[14px] truncate">{m.direction === "out" ? `To ${m.to}` : m.from}</span>
+                      <span className="font-semibold text-[14px] truncate min-w-0">{m.direction === "out" ? `To ${m.to}` : m.from}</span>
                       <MatterBadge m={m.matter} />
                       <span className="ml-auto text-[12px] text-muted flex-shrink-0">{when(m.at)}</span>
                     </div>
@@ -542,7 +542,7 @@ export default function CommunicationsPage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {(items as { id: string; title: string; start: string; allDay: boolean; location: string | null; link: string | null }[]).map((e) => (
-                  <div key={e.id} className="bg-white rounded-xl px-4 py-3 flex items-center gap-3">
+                  <div key={e.id} className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 min-w-0 overflow-hidden">
                     <div className="w-[120px] flex-shrink-0 text-[13px] font-semibold">
                       {e.allDay ? new Date(`${e.start.slice(0, 10)}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : when(e.start)}
                     </div>
@@ -574,14 +574,14 @@ export default function CommunicationsPage() {
               ) : (
                 <div className="flex flex-col gap-2">
                   {(items as Comm[]).map((m) => (
-                    <div key={m.id} className="bg-white rounded-xl px-4 py-3">
+                    <div key={m.id} className="bg-white rounded-xl px-4 py-3 min-w-0 overflow-hidden">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-[14px]">{m.createdBy?.name ?? "Someone"}</span>
                         <span className="text-[12.5px] text-muted">to {m.recipients.map((r) => r.name).join(", ")}</span>
                         <MatterBadge m={m.matter} />
                         <span className="ml-auto text-[12px] text-muted">{when(m.occurredAt)}</span>
                       </div>
-                      <div className="text-[13.5px] mt-1 whitespace-pre-line">{m.body}</div>
+                      <div className="text-[13.5px] mt-1 whitespace-pre-line [overflow-wrap:anywhere]">{m.body}</div>
                     </div>
                   ))}
                 </div>
