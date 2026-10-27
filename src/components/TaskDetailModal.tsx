@@ -56,6 +56,7 @@ import {
   TaskPriority,
   statusMeta,
   GenericDropdown,
+  PrivateToggle,
 } from "@/components/NewTaskModal";
 
 const toolbarIcons = [
@@ -98,6 +99,7 @@ export default function TaskDetailModal({
   const [statusOpen, setStatusOpen] = useState(false);
   // Who the task is waiting on (Task Board filters "Waiting on lender" etc.).
   const [waitingOn, setWaitingOn] = useState<WaitingOn | null>(task.waitingOn ?? null);
+  const [isPrivate, setIsPrivate] = useState<boolean>(!!task.isPrivate);
   const [waitingOpen, setWaitingOpen] = useState(false);
   const [otherParty, setOtherParty] = useState("");
   // The usual parties, the ones the firm's boards filter by, and this task's own.
@@ -282,7 +284,7 @@ export default function TaskDetailModal({
 
   function commit(patch: Partial<BoardTask>) {
     if (!(patch.title ?? title).trim()) return;
-    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, instructions, boardId, offeredTo, ...patch });
+    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, instructions, boardId, offeredTo, isPrivate, ...patch });
   }
 
   return (
@@ -487,6 +489,13 @@ export default function TaskDetailModal({
                 );
               })}
             </GenericDropdown>
+            <PrivateToggle
+              on={isPrivate}
+              onChange={(v) => {
+                setIsPrivate(v);
+                commit({ isPrivate: v });
+              }}
+            />
             <GenericDropdown
               open={waitingOpen}
               setOpen={setWaitingOpen}

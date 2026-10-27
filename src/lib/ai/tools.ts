@@ -1,4 +1,5 @@
 import "server-only";
+import { canSeeTask } from "@/lib/data/tasks";
 import { z } from "zod";
 import type { ToolSpec } from "@/lib/ai/provider/types";
 import {
@@ -216,12 +217,21 @@ export async function runTool(t: ToolContext, name: string, rawInput: unknown): 
 
     case "listMatterTasks": {
       const s = createAdminClient();
-      let q = s.from("tasks").select("id, title, status, priority, due_date, assignee").eq("org_id", t.ctx.orgId);
+      let q = s.from("tasks").select("*").eq("org_id", t.ctx.orgId);
       if (t.conv.matter_id) q = q.eq("matter_id", t.conv.matter_id);
       if ((input.status ?? "open") === "open") q = q.neq("status", "done");
-      const { data, error } = await q.order("due_date", { ascending: true, nullsFirst: false }).limit(50);
+      const { data, error } = await q.order("due_date", { ascending: true, nullsFirst: false }).limit(100);
       if (error) return fail("Couldn't load tasks.");
-      return ok({ scope: t.conv.matter_id ? "this matter" : "firm-wide open tasks", tasks: data ?? [] });
+      // Someone else's private tasks are never shown to the AI.
+      const me = { id: t.ctx.userId, email: t.ctx.email ?? null };
+      const visible = ((data ?? []) as Parameters<typeof canSeeTask>[0][])
+        .filter((r) => canSeeTask(r, me))
+        .slice(0, 50)
+        .map((r) => {
+          const x = r as unknown as { id: string; title: string; status: string; priority: string; due_date: string | null; assignee: string | null };
+          return { id: x.id, title: x.title, status: x.status, priority: x.priority, due_date: x.due_date, assignee: x.assignee };
+        });
+      return ok({ scope: t.conv.matter_id ? "this matter" : "firm-wide open tasks", tasks: visible });
     }
 
     case "createClient":

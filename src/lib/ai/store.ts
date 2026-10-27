@@ -1,4 +1,5 @@
 import "server-only";
+import { canSeeTask } from "@/lib/data/tasks";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUserOrg, AccessError, DOCUMENTS_BUCKET } from "@/lib/data/documents";
@@ -56,7 +57,7 @@ export async function getMatterContext(ctx: AiCtx, matterId: string): Promise<Ma
       .limit(50),
     s
       .from("tasks")
-      .select("id, title, status, priority, due_date")
+      .select("*")
       .eq("org_id", ctx.orgId)
       .eq("matter_id", matterId)
       .order("due_date", { ascending: true, nullsFirst: false })
@@ -80,7 +81,9 @@ export async function getMatterContext(ctx: AiCtx, matterId: string): Promise<Ma
     matter: m as MatterContext["matter"],
     client: (client.data as MatterContext["client"]) ?? null,
     documents: latest.map((d) => ({ ...d, indexStatus: statusBy.get(d.versionId) ?? null })),
-    tasks: ((tasks.data ?? []) as { id: string; title: string; status: string; priority: string; due_date: string | null }[]).map((t) => ({
+    tasks: ((tasks.data ?? []) as ({ id: string; title: string; status: string; priority: string; due_date: string | null } & Parameters<typeof canSeeTask>[0])[])
+      .filter((t) => canSeeTask(t, { id: ctx.userId, email: ctx.email ?? null })) // never someone else's private task
+      .map((t) => ({
       id: t.id,
       title: t.title,
       status: t.status,

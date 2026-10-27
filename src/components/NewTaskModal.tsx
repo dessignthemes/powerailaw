@@ -16,8 +16,7 @@ import {
   Flag,
   User,
   Folder,
-  CalendarDays,
-} from "lucide-react";
+  CalendarDays, Lock, LockOpen } from "lucide-react";
 
 export type TaskStatus = "todo" | "inprogress" | "waiting" | "done";
 export type TaskPriority = "Low" | "Medium" | "High";
@@ -33,6 +32,7 @@ export type BoardTask = {
   offeredTo?: string[];
   instructions?: string; // what the assigner expects ("Call the lender and confirm…")
   assignedBy?: string | null; // email of the person who assigned / offered it
+  isPrivate?: boolean; // only the creator and the assignee see it
   dueDate: string | null;
   comments?: TaskComment[];
   boardId?: string | null; // null/undefined = main Task Board
@@ -76,6 +76,22 @@ export const statusMeta: Record<TaskStatus, { label: string; icon: typeof Circle
   waiting: { label: "Waiting", icon: Clock, color: "text-blue-500" },
   done: { label: "Done", icon: CheckCircle2, color: "text-green-600" },
 };
+
+// Private: only the person who creates the task and the person it's assigned to see it.
+export function PrivateToggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => onChange(!on)}
+      title={on ? "Private: only you and the person it's assigned to can see this task. Click to share with the firm." : "Visible to the whole firm. Click to make it private (only you and the assignee)."}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${on ? "bg-[#1B191A] text-white" : "bg-chip hover:bg-btn text-muted"}`}
+    >
+      {on ? <Lock size={13} strokeWidth={2} /> : <LockOpen size={13} strokeWidth={1.75} />} {on ? "Private" : "Firm"}
+    </button>
+  );
+}
 
 export function GenericDropdown({
   trigger,
@@ -132,6 +148,7 @@ export default function NewTaskModal({
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
   const [priority, setPriority] = useState<TaskPriority>("Medium");
+  const [isPrivate, setIsPrivate] = useState(false); // only the creator and the assignee see it
   // One person: assigned now. Several: offered to all, the first to accept takes it.
   const [assignees, setAssignees] = useState<string[]>([]);
   const { teamMembers, meEmail } = useWorkspaceData();
@@ -160,6 +177,7 @@ export default function NewTaskModal({
       offeredTo: assignees.length > 1 ? assignees : [],
       assignedBy: assignees.length ? meEmail : null,
       dueDate,
+      isPrivate,
     });
   }
 
@@ -201,6 +219,7 @@ export default function NewTaskModal({
         </div>
 
         <div className="px-7 pb-6 flex flex-wrap items-center gap-2">
+          <PrivateToggle on={isPrivate} onChange={setIsPrivate} />
           <GenericDropdown
             open={statusOpen}
             setOpen={setStatusOpen}

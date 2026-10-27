@@ -26,8 +26,7 @@ import {
   Columns3,
   ChevronsRightLeft,
   Check,
-  ListChecks,
-} from "lucide-react";
+  ListChecks, Lock } from "lucide-react";
 import NewTaskModal, {
   BoardTask,
   TaskStatus,
@@ -1153,7 +1152,10 @@ function TaskBoard({
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={15} strokeWidth={2} className={statusMeta[t.status].color} />
-                      <span className="text-[14.5px] font-medium">{t.title}</span>
+                      <span className="text-[14.5px] font-medium">
+                        {t.isPrivate && <Lock size={12} strokeWidth={2.25} className="inline -mt-0.5 mr-1 text-muted" aria-label="Private" />}
+                        {t.title}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       {(() => {
@@ -1441,7 +1443,10 @@ function TaskBoard({
                           )}
                           <div className="flex items-start justify-between gap-1.5 mb-2.5">
                             <div className="min-w-0">
-                              <div className="text-[12px] font-semibold leading-snug line-clamp-2 break-words" title={t.title}>{t.title}</div>
+                              <div className="text-[12px] font-semibold leading-snug line-clamp-2 break-words" title={t.isPrivate ? `Private: ${t.title}` : t.title}>
+                                {t.isPrivate && <Lock size={11} strokeWidth={2.25} className="inline -mt-0.5 mr-1 text-muted" aria-label="Private" />}
+                                {t.title}
+                              </div>
                               {t.status !== "done" && (
                                 <div className="mt-1">
                                   <NextStepLine task={t} />

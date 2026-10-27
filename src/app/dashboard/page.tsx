@@ -19,8 +19,7 @@ import {
   CalendarCheck,
   Circle,
   CheckCircle2,
-  ArrowUpRight,
-} from "lucide-react";
+  ArrowUpRight, Lock } from "lucide-react";
 
 const rangeTabs = [
   { key: "today", label: "Today", due: "Due today" },
@@ -608,7 +607,10 @@ export default function DashboardHome() {
                 >
                   <div className="text-[14px] truncate">
                     <span className="text-muted">{verb} task</span>{" "}
-                    <span className="font-medium">{t.title}</span>
+                    <span className="font-medium">
+                      {t.isPrivate && <Lock size={12} strokeWidth={2.25} className="inline -mt-0.5 mr-1 text-muted" aria-label="Private" />}
+                      {t.title}
+                    </span>
                   </div>
                   <span className="flex items-center gap-3 flex-shrink-0">
                     <span className="mono text-[12px] text-muted">{timeAgo((t.updatedAt ?? t.createdAt)!)}</span>
