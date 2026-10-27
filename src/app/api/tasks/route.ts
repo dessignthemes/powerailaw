@@ -1,6 +1,6 @@
 import { NoWorkspaceError } from "@/lib/data/org";
 import { NextResponse } from "next/server";
-import { listTasks, createTaskRow, deleteTaskRows } from "@/lib/data/tasks";
+import { listTasks, createTaskRow, deleteTaskRows, TaskSetupError } from "@/lib/data/tasks";
 import { getSessionUserId } from "@/lib/auth";
 import type { BoardTask } from "@/components/NewTaskModal";
 
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     console.error("POST /api/tasks failed:", error);
+    if (error instanceof TaskSetupError) return NextResponse.json({ error: error.message }, { status: 503 });
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
   }
 }

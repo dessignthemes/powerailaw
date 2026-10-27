@@ -118,6 +118,14 @@ export function canSeeTask(row: { is_private?: boolean | null; created_by?: stri
   return row.created_by === me.id || (!!email && ((row.assignee ?? "").toLowerCase() === email || (row.assigned_by ?? "").toLowerCase() === email || (row.offered_to ?? []).some((e) => e.toLowerCase() === email)));
 }
 
+// Private needs migration 0054; never drop it silently (the task would quietly become visible to all).
+export class TaskSetupError extends Error {
+  status = 503;
+  constructor() {
+    super("Private tasks need a one-time database update: run supabase/migrations/0054_private_tasks.sql in the Supabase SQL editor, then try again.");
+  }
+}
+
 export class TaskAccessError extends Error {
   status = 404;
   constructor() {
@@ -153,6 +161,7 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
     .then(async (r) => {
       // Before 0010 / 0031 are run there's no column_id / waiting_on; save without them.
       if (!r.error || !/column_id|waiting_on|offered_to|instructions|assigned_by|is_private/.test(r.error.message ?? "")) return r;
+      if (/is_private/.test(r.error.message ?? "") && (row as { is_private?: boolean }).is_private === true) throw new TaskSetupError();
       const { waiting_on: _w, offered_to: _o, instructions: _i, assigned_by: _a, is_private: _p, ...plain } = row as typeof row & {
         waiting_on?: unknown;
         offered_to?: unknown;
@@ -200,6 +209,7 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   let { data, error } = await run(fields);
   for (const col of ["updated_by", "column_id", "position", "checklist", "waiting_on", "offered_to", "instructions", "assigned_by", "is_private"]) {
     if (!error || !new RegExp(col).test(error.message ?? "") || !(col in fields)) continue;
+    if (col === "is_private" && fields.is_private === true) throw new TaskSetupError();
     const { [col]: _drop, ...rest } = fields;
     void _drop;
     fields = rest;

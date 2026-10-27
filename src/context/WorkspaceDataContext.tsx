@@ -204,7 +204,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       .catch((err) => {
         console.error("Failed to save task:", err);
         setTasks((ts) => ts.filter((t) => t.id !== task.id)); // roll back
-        setTasksError(`"${task.title}" wasn't saved. Please try again.`);
+        setTasksError(/database update/.test(String(err?.message)) ? String(err.message) : `"${task.title}" wasn't saved. Please try again.`);
       });
   }, []);
 
@@ -230,7 +230,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         .catch((err) => {
           console.error("Failed to update task:", err);
           if (previous) setTasks((ts) => ts.map((t) => (t.id === task.id ? previous : t)));
-          setTasksError("Your change to a task wasn't saved. Please try again.");
+          setTasksError(/database update/.test(String(err?.message)) ? String(err.message) : "Your change to a task wasn't saved. Please try again.");
         });
     },
     [tasks]

@@ -1,6 +1,6 @@
 import { NoWorkspaceError } from "@/lib/data/org";
 import { NextResponse } from "next/server";
-import { updateTaskRow, TaskAccessError } from "@/lib/data/tasks";
+import { updateTaskRow, TaskAccessError, TaskSetupError } from "@/lib/data/tasks";
 import { getSessionUserId } from "@/lib/auth";
 import type { BoardTask } from "@/components/NewTaskModal";
 
@@ -15,6 +15,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   } catch (error) {
     if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });
     if (error instanceof TaskAccessError) return NextResponse.json({ error: error.message }, { status: 404 });
+    if (error instanceof TaskSetupError) return NextResponse.json({ error: error.message }, { status: 503 });
     console.error("PATCH /api/tasks/[id] failed:", error);
     return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
   }

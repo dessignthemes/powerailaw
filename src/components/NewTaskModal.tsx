@@ -219,7 +219,6 @@ export default function NewTaskModal({
         </div>
 
         <div className="px-7 pb-6 flex flex-wrap items-center gap-2">
-          <PrivateToggle on={isPrivate} onChange={setIsPrivate} />
           <GenericDropdown
             open={statusOpen}
             setOpen={setStatusOpen}
@@ -309,6 +308,7 @@ export default function NewTaskModal({
               })}
             </div>
           </GenericDropdown>
+          <PrivateToggle on={isPrivate} onChange={setIsPrivate} />
 
           <GenericDropdown
             open={dateOpen}

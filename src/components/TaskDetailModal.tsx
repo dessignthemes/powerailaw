@@ -353,6 +353,14 @@ export default function TaskDetailModal({
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <span className="text-[13px] font-medium text-muted w-[92px]">Assigned to</span>
             <AssigneeMultiPicker variant="pill" members={teamMembers} value={assignee ? [assignee] : offeredTo} onChange={pickPeople} />
+            <PrivateToggle
+              on={isPrivate}
+              onChange={(v) => {
+                setIsPrivate(v);
+                commit({ isPrivate: v });
+              }}
+            />
+            {isPrivate && <span className="text-[12.5px] text-muted">Only you and the assignee can see this task</span>}
           </div>
 
           {offered && (
@@ -489,13 +497,6 @@ export default function TaskDetailModal({
                 );
               })}
             </GenericDropdown>
-            <PrivateToggle
-              on={isPrivate}
-              onChange={(v) => {
-                setIsPrivate(v);
-                commit({ isPrivate: v });
-              }}
-            />
             <GenericDropdown
               open={waitingOpen}
               setOpen={setWaitingOpen}
