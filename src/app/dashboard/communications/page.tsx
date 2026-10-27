@@ -456,7 +456,7 @@ export default function CommunicationsPage() {
                             )}
                             <MatterBadge m={c.matter} />
                           </div>
-                          {(c.subject || c.body) && <div className="text-[13px] text-muted mt-0.5 line-clamp-2 [overflow-wrap:anywhere]">{[c.subject, c.body].filter(Boolean).join(": ")}</div>}
+                          {(c.subject || c.body) && <div className="text-[13px] text-muted mt-0.5 whitespace-pre-line [overflow-wrap:anywhere]">{[c.subject, c.body].filter(Boolean).join(": ")}</div>}
                           <div className="text-[12px] text-muted mt-1">
                             {when(c.occurredAt)}
                             {c.durationMin ? ` · ${c.durationMin} min` : ""}
@@ -505,7 +505,7 @@ export default function CommunicationsPage() {
                       {m.matter && <span className="text-[11.5px] font-semibold bg-[#E1E7F4] rounded-md px-1.5 py-px">{m.matter}</span>}
                       <span className="ml-auto text-[12px] text-muted">{when(m.at)}</span>
                     </div>
-                    <div className="text-[13px] text-muted truncate mt-0.5">{m.preview}</div>
+                    <div className="text-[13px] text-muted mt-0.5 whitespace-pre-line [overflow-wrap:anywhere]">{m.preview}</div>
                   </Link>
                 ))}
               </div>
@@ -526,9 +526,14 @@ export default function CommunicationsPage() {
                       <span className="font-semibold text-[14px] truncate min-w-0">{m.direction === "out" ? `To ${m.to}` : m.from}</span>
                       <MatterBadge m={m.matter} />
                       <span className="ml-auto text-[12px] text-muted flex-shrink-0">{when(m.at)}</span>
+                      {m.matter && (
+                        <Link href={`/dashboard/matters/${m.matter.id}?tab=emails`} className="text-[12px] font-medium underline underline-offset-2 text-muted hover:text-ink flex-shrink-0">
+                          Open
+                        </Link>
+                      )}
                     </div>
-                    {m.subject && <div className="text-[13px] font-medium mt-0.5 truncate">{m.subject}</div>}
-                    <div className="text-[13px] text-muted truncate">{m.snippet}</div>
+                    {m.subject && <div className="text-[13px] font-medium mt-0.5 [overflow-wrap:anywhere]">{m.subject}</div>}
+                    <div className="text-[13px] text-muted mt-0.5 whitespace-pre-line [overflow-wrap:anywhere]">{m.snippet}</div>
                   </div>
                 ))}
               </div>
@@ -547,8 +552,8 @@ export default function CommunicationsPage() {
                       {e.allDay ? new Date(`${e.start.slice(0, 10)}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : when(e.start)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium text-[14px] truncate">{e.title}</div>
-                      {e.location && <div className="text-[12.5px] text-muted truncate">{e.location}</div>}
+                      <div className="font-medium text-[14px] [overflow-wrap:anywhere]">{e.title}</div>
+                      {e.location && <div className="text-[12.5px] text-muted [overflow-wrap:anywhere]">{e.location}</div>}
                     </div>
                     {e.link && (
                       <a href={e.link} target="_blank" rel="noopener noreferrer" className="text-[12.5px] text-muted hover:text-ink underline underline-offset-2 flex-shrink-0">
