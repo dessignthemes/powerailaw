@@ -1,5 +1,6 @@
 "use client";
 
+import TeamProgress from "@/components/dashboard/TeamProgress";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ScrollHint from "@/components/ScrollHint";
 import PriorityDot from "@/components/PriorityDot";
@@ -446,6 +447,9 @@ export default function DashboardHome() {
         </div>
 
       </div>
+
+      {/* Each person: tasks completed (green) next to what's still open (grey). */}
+      <TeamProgress tasks={allTasks} members={teamMembers} />
 
       {/* Tasks / Events on the left, Recent activity on the right (stacked on narrow screens). */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] gap-5 mt-5 items-start">
