@@ -12,7 +12,6 @@ import {
   FilePen,
   Inbox,
   Calendar,
-  ListChecks,
   BarChart3,
   Copy,
   Bookmark,
@@ -52,7 +51,8 @@ export const toolLinks: NavLink[] = [
 export const workspaceLinks: NavLink[] = [
   { label: "Inbox", href: "/dashboard/inbox", icon: Inbox },
   { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
-  { label: "Task Folder", href: "/dashboard/task-folder", icon: ListChecks },
+  // Task Folder is hidden (tasks are made straight from emails in the Inbox); page kept.
+  // To restore: { label: "Task Folder", href: "/dashboard/task-folder", icon: ListChecks },
   { label: "Task Board", href: "/dashboard/task-board", icon: BarChart3 },
 ];
 
