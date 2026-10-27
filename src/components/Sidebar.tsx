@@ -95,7 +95,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`${collapsed ? "w-[68px] px-2.5 py-4" : "w-[260px] px-4 py-6"} flex-shrink-0 bg-sidebar border-r border-line h-screen sticky top-0 flex flex-col transition-[width] duration-200`}
+      className={`${collapsed ? "w-[68px] px-2.5 py-4" : "w-[260px] px-4 py-6"} flex-shrink-0 bg-white border-r border-line h-screen sticky top-0 flex flex-col transition-[width] duration-200`}
     >
       {collapsed ? (
         <div className="flex flex-col items-center gap-2 mb-4">
