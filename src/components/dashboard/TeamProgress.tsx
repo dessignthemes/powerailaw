@@ -33,7 +33,8 @@ const initials = (name: string) =>
 
 // Team progress: for each person, tasks completed in the period (green) next to
 // what's still open on their plate (grey). Assigned = completed + still open.
-export default function TeamProgress({ tasks, members }: { tasks: BoardTask[]; members: Member[] }) {
+// onPick: clicking a person shows their tasks on the Dashboard.
+export default function TeamProgress({ tasks, members, onPick, className = "bg-card-alt rounded-3xl p-6 mt-5" }: { tasks: BoardTask[]; members: Member[]; onPick?: (email: string) => void; className?: string }) {
   const [period, setPeriod] = useState<Period>("week");
 
   const rows = useMemo(() => {
@@ -62,7 +63,7 @@ export default function TeamProgress({ tasks, members }: { tasks: BoardTask[]; m
   const leader = rows[0]?.done ? rows[0] : null;
 
   return (
-    <section className="bg-card-alt rounded-3xl p-6 mt-5">
+    <section className={className}>
       <div className="flex flex-wrap items-start gap-3 mb-5">
         <div className="flex-1 min-w-[220px]">
           <div className="flex items-center gap-2 text-[13.5px] text-muted">
@@ -95,12 +96,23 @@ export default function TeamProgress({ tasks, members }: { tasks: BoardTask[]; m
           const name = r.member.fullName || r.member.email;
           return (
             <div key={r.member.id} className="grid grid-cols-[minmax(120px,200px)_minmax(0,1fr)_215px] items-center gap-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-7 h-7 rounded-full bg-white border border-line text-[11px] font-semibold text-muted flex items-center justify-center flex-shrink-0">{initials(name)}</span>
-                <span className="text-[13.5px] font-medium truncate" title={name}>
-                  {name}
-                </span>
-              </div>
+              {onPick ? (
+                <button
+                  onClick={() => onPick(r.member.email)}
+                  title={`Show ${name}'s tasks`}
+                  className="group flex items-center gap-2 min-w-0 text-left rounded-full -ml-1 pl-1 pr-2 py-0.5 hover:bg-white transition-colors"
+                >
+                  <span className="w-7 h-7 rounded-full bg-white border border-line text-[11px] font-semibold text-muted flex items-center justify-center flex-shrink-0 group-hover:border-ink group-hover:text-ink">{initials(name)}</span>
+                  <span className="text-[13.5px] font-medium truncate group-hover:underline underline-offset-2">{name}</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-7 h-7 rounded-full bg-white border border-line text-[11px] font-semibold text-muted flex items-center justify-center flex-shrink-0">{initials(name)}</span>
+                  <span className="text-[13.5px] font-medium truncate" title={name}>
+                    {name}
+                  </span>
+                </div>
+              )}
               <div className="h-6 bg-white rounded-full overflow-hidden flex" role="img" aria-label={`${name}: ${r.done} done, ${r.open} open`} title={`${r.done} done · ${r.open} open`}>
                 <div className="h-full bg-[#00C271] transition-[width] duration-500" style={{ width: `${(r.done / max) * 100}%` }} />
                 <div className="h-full bg-[#D1D7E0] transition-[width] duration-500" style={{ width: `${(r.open / max) * 100}%` }} />

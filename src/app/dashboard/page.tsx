@@ -20,7 +20,7 @@ import {
   CalendarCheck,
   Circle,
   CheckCircle2,
-  ArrowUpRight, Lock } from "lucide-react";
+  ArrowUpRight, Lock, BarChart3, X } from "lucide-react";
 
 const rangeTabs = [
   { key: "today", label: "Today", due: "Due today" },
@@ -136,6 +136,7 @@ export default function DashboardHome() {
   const offeredToMe = (t: BoardTask) => !t.assignee && !!meEmail && (t.offeredTo ?? []).some((e) => e.toLowerCase() === meEmail.toLowerCase());
   // Whose tasks: yours by default (assigned to you), everyone's, or one team member's.
   const [scope, setScope] = useState<TaskScope>("me");
+  const [progressOpen, setProgressOpen] = useState(false); // Team progress chart (View Team Progress)
   const tasks = useMemo(() => {
     if (scope === "all") return allTasks;
     const who = (scope === "me" ? meEmail ?? "" : scope).toLowerCase();
@@ -262,8 +263,31 @@ export default function DashboardHome() {
         </div>
         <div className="flex items-center gap-2">
           <TaskFilterDropdown value={scope} onChange={setScope} members={teamMembers} meEmail={meEmail} />
+          <button onClick={() => setProgressOpen(true)} className="flex items-center gap-2 bg-btn hover:bg-btn-hover transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium">
+            <BarChart3 size={14} strokeWidth={1.75} /> View Team Progress
+          </button>
         </div>
       </div>
+
+      {progressOpen && (
+        <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center px-4 py-8" onClick={() => setProgressOpen(false)}>
+          <div className="bg-page rounded-3xl w-full max-w-[1100px] max-h-full overflow-y-auto shadow-xl relative" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Team progress">
+            <button onClick={() => setProgressOpen(false)} aria-label="Close" className="absolute top-4 right-4 w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center z-10">
+              <X size={16} />
+            </button>
+            {/* Each person: tasks completed (green) next to what's still open (grey). Click a person to see their tasks. */}
+            <TeamProgress
+              tasks={allTasks}
+              members={teamMembers}
+              className="p-7 pr-14"
+              onPick={(email) => {
+                setScope(email);
+                setProgressOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-6 mb-8 text-[14px] font-medium text-muted border-b border-line">
         {rangeTabs.map((r) => (
@@ -447,9 +471,6 @@ export default function DashboardHome() {
         </div>
 
       </div>
-
-      {/* Each person: tasks completed (green) next to what's still open (grey). */}
-      <TeamProgress tasks={allTasks} members={teamMembers} />
 
       {/* Tasks / Events on the left, Recent activity on the right (stacked on narrow screens). */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] gap-5 mt-5 items-start">
