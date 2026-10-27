@@ -85,10 +85,10 @@ export function PrivateToggle({ on, onChange }: { on: boolean; onChange: (v: boo
       role="switch"
       aria-checked={on}
       onClick={() => onChange(!on)}
-      title={on ? "Private: only you and the person it's assigned to can see this task. Click to share with the firm." : "Visible to the whole firm. Click to make it private (only you and the assignee)."}
+      title={on ? "Private: only you and the assignee can see this task. Click to show it to the whole firm." : "Visible to the whole firm. Click to make it private (only you and the assignee)."}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${on ? "bg-[#1B191A] text-white" : "bg-chip hover:bg-btn text-muted"}`}
     >
-      {on ? <Lock size={13} strokeWidth={2} /> : <LockOpen size={13} strokeWidth={1.75} />} {on ? "Private" : "Firm / Private"}
+      {on ? <Lock size={13} strokeWidth={2} /> : <LockOpen size={13} strokeWidth={1.75} />} Private
     </button>
   );
 }
@@ -309,6 +309,7 @@ export default function NewTaskModal({
             </div>
           </GenericDropdown>
           <PrivateToggle on={isPrivate} onChange={setIsPrivate} />
+          {isPrivate && <span className="text-[12.5px] text-muted">Only you and the assignee can see this task</span>}
 
           <GenericDropdown
             open={dateOpen}
