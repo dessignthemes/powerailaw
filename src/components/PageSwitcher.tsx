@@ -52,7 +52,7 @@ export default function PageSwitcher() {
                       role="menuitem"
                       onClick={() => setOpen(false)}
                       className={`flex items-center justify-between gap-3 mx-1.5 px-2.5 py-[7px] rounded-lg text-[13px] font-medium transition-colors ${
-                        active ? "bg-nav" : "hover:bg-nav"
+                        active ? "bg-chip" : "hover:bg-chip"
                       }`}
                     >
                       <span className="flex items-center gap-2.5">
