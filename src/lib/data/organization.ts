@@ -67,9 +67,12 @@ export async function updateOrgSettings(input: { name?: unknown; urlSlug?: unkno
   if (!a.canEdit) throw new OrgError(403, "Only the workspace owner or an admin can change the firm details.");
 
   const name = typeof input.name === "string" ? input.name.trim().slice(0, 120) : "";
-  const slugRaw = typeof input.urlSlug === "string" ? input.urlSlug.trim().toLowerCase() : "";
-  if (slugRaw && !/^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(slugRaw)) {
-    throw new OrgError(400, "The URL slug can use lowercase letters, numbers and dashes (for example smith-law).");
+  // The firm's website (kept in the url_slug column), e.g. www.rapciewiczlaw.com.
+  const slugRaw = typeof input.urlSlug === "string" ? input.urlSlug.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "") : "";
+  const website = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+(\/[^\s]*)?$/;
+  const oldSlug = /^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/; // values saved before this became "Firm website"
+  if (slugRaw && (slugRaw.length > 120 || !(website.test(slugRaw) || oldSlug.test(slugRaw)))) {
+    throw new OrgError(400, "Enter the firm's website address, for example www.rapciewiczlaw.com.");
   }
   const timezone = typeof input.timezone === "string" && validTimezone(input.timezone) ? input.timezone : null;
   if (!timezone) throw new OrgError(400, "Choose a valid time zone.");
@@ -87,7 +90,7 @@ export async function updateOrgSettings(input: { name?: unknown; urlSlug?: unkno
   if (logo !== undefined) update.logo_url = logo;
   const { error } = await createAdminClient().from("organizations").update(update).eq("id", a.orgId);
   if (error) {
-    if (error.code === "23505") throw new OrgError(409, "That URL slug is already taken. Try another one.");
+    if (error.code === "23505") throw new OrgError(409, "Another LawPower workspace already uses that website address.");
     throw error;
   }
   return getOrgSettings();

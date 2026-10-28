@@ -585,13 +585,14 @@ export default function IntegrationsModal({
                 </div>
 
                 <div className="mb-6">
-                  <div className="text-[14.5px] font-semibold mb-2">URL Slug</div>
+                  <div className="text-[14.5px] font-semibold mb-2">Firm website</div>
                   <input
                     value={urlSlug}
-                    onChange={(e) => setUrlSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-{2,}/g, "-"))}
-                    placeholder={generalLoaded ? "for example smith-law" : "Loading…"}
+                    onChange={(e) => setUrlSlug(e.target.value.replace(/\s+/g, ""))}
+                    placeholder={generalLoaded ? "for example www.rapciewiczlaw.com" : "Loading…"}
                     disabled={!generalLoaded || !canEditGeneral}
-                    maxLength={48}
+                    maxLength={120}
+                    inputMode="url"
                     className="w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-ink placeholder:text-muted disabled:opacity-60"
                   />
                 </div>
