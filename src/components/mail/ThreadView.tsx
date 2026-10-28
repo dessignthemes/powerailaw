@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Image as ImageIcon, Loader2, MessagesSquare, Paperclip } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, MessagesSquare, Paperclip } from "lucide-react";
 import type { MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
 import { emailDocument } from "@/lib/mail/emailDocument";
 
@@ -39,7 +39,8 @@ export function AutoHeightFrame({ srcDoc, title, minHeight = 120 }: { srcDoc: st
   return (
     <iframe
       ref={ref}
-      title={title}
+      title=""
+      aria-label={title}
       sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
       srcDoc={srcDoc}
       style={{ height: h }}
@@ -56,7 +57,7 @@ function ThreadItem({ provider, s, you, onOpen }: { provider: MailProvider; s: M
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState<MailMessage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [images, setImages] = useState(false);
+  const images = true; // images are shown automatically
   useEffect(() => {
     if (!open || msg) return;
     let live = true;
@@ -105,11 +106,6 @@ function ThreadItem({ provider, s, you, onOpen }: { provider: MailProvider; s: M
                   </span>
                 )}
                 <span className="ml-auto flex items-center gap-1.5">
-                  {msg.html && !images && (
-                    <button onClick={() => setImages(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-chip hover:bg-btn text-ink">
-                      <ImageIcon size={11} /> Show images
-                    </button>
-                  )}
                   <button onClick={() => onOpen(s)} className="px-2.5 py-0.5 rounded-full bg-chip hover:bg-btn text-ink font-medium" title="Open this email with all its actions (forward, file to matter…)">
                     Open
                   </button>

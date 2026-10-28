@@ -28,6 +28,7 @@ export type OutgoingMessage = {
   html?: string; // optional rich version
   attachments?: { name: string; mime: string; bytes: Uint8Array }[];
   forward?: { messageId: string }; // forward this email (its attachments go along)
+  reply?: { messageId: string }; // reply in the same conversation (the original is quoted by the mailbox)
 };
 
 const EMAIL = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
@@ -66,6 +67,12 @@ async function graph(token: string, path: string, body: unknown) {
 
 async function sendOutlook(token: string, m: OutgoingMessage) {
   const rcpt = (list: string[] = []) => list.map((address) => ({ emailAddress: { address } }));
+  if (m.reply) {
+    // Outlook's own reply: same conversation, original quoted underneath.
+    const id = encodeURIComponent(m.reply.messageId);
+    await graph(token, `/me/messages/${id}/reply`, { comment: m.html ?? textToHtml(m.text), message: { toRecipients: rcpt(m.to), ...(m.cc?.length ? { ccRecipients: rcpt(m.cc) } : {}) } });
+    return;
+  }
   if (m.forward) {
     // Outlook forwards with the original's text and attachments; only the note
     // written above the copied "Forwarded message" block goes with it.
@@ -84,10 +91,16 @@ async function sendOutlook(token: string, m: OutgoingMessage) {
 // RFC 2822 message for Gmail, with attachments.
 const b64 = (b: Uint8Array | string) => Buffer.from(b).toString("base64").replace(/.{76}/g, "$&\r\n");
 const encWord = (s: string) => (/^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${Buffer.from(s).toString("base64")}?=`);
-function mime(m: OutgoingMessage & { from?: string }) {
+function mime(m: OutgoingMessage & { from?: string; inReplyTo?: string; references?: string }) {
   const mixed = `mixed_${crypto.randomUUID()}`;
   const alt = `alt_${crypto.randomUUID()}`;
-  const head = [`To: ${m.to.join(", ")}`, ...(m.cc?.length ? [`Cc: ${m.cc.join(", ")}`] : []), `Subject: ${encWord(m.subject)}`, "MIME-Version: 1.0"];
+  const head = [
+    `To: ${m.to.join(", ")}`,
+    ...(m.cc?.length ? [`Cc: ${m.cc.join(", ")}`] : []),
+    `Subject: ${encWord(m.subject)}`,
+    ...(m.inReplyTo ? [`In-Reply-To: ${m.inReplyTo}`, `References: ${[m.references, m.inReplyTo].filter(Boolean).join(" ")}`] : []),
+    "MIME-Version: 1.0",
+  ];
   const altPart = [`Content-Type: multipart/alternative; boundary="${alt}"`, "", `--${alt}`, 'Content-Type: text/plain; charset="UTF-8"', "Content-Transfer-Encoding: base64", "", b64(m.text), `--${alt}`, 'Content-Type: text/html; charset="UTF-8"', "Content-Transfer-Encoding: base64", "", b64(m.html ?? textToHtml(m.text)), `--${alt}--`].join("\r\n");
   if (!m.attachments?.length) return [...head, altPart].join("\r\n");
   const parts = m.attachments.map((a) =>
@@ -97,7 +110,21 @@ function mime(m: OutgoingMessage & { from?: string }) {
 }
 
 async function sendGmail(token: string, m: OutgoingMessage) {
-  let msg = m;
+  let msg: OutgoingMessage & { inReplyTo?: string; references?: string } = m;
+  let threadId: string | undefined;
+  if (m.reply) {
+    // Same Gmail thread: threadId plus the original's Message-ID headers.
+    const r = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${encodeURIComponent(m.reply.messageId)}?format=metadata&metadataHeaders=Message-ID&metadataHeaders=References`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (r.ok) {
+      const d = (await r.json()) as { threadId?: string; payload?: { headers?: { name: string; value: string }[] } };
+      const h = (n: string) => d.payload?.headers?.find((x) => x.name.toLowerCase() === n)?.value;
+      threadId = d.threadId;
+      msg = { ...m, inReplyTo: h("message-id"), references: h("references") };
+    }
+  }
   if (m.forward) {
     // Gmail has no "forward": attach the original's files ourselves.
     const files: { name: string; mime: string; bytes: Uint8Array }[] = [];
@@ -109,7 +136,7 @@ async function sendGmail(token: string, m: OutgoingMessage) {
         break;
       }
     }
-    msg = { ...m, attachments: [...(m.attachments ?? []), ...files] };
+    msg = { ...msg, attachments: [...(msg.attachments ?? []), ...files] };
   }
   const total = (msg.attachments ?? []).reduce((n, a) => n + a.bytes.length, 0);
   if (total > 24 * 1024 * 1024) throw new SendError("Gmail can't send attachments over 25 MB in one email. Share them through Secure Files instead.");
@@ -117,7 +144,7 @@ async function sendGmail(token: string, m: OutgoingMessage) {
   const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ raw }),
+    body: JSON.stringify({ raw, ...(threadId ? { threadId } : {}) }),
   });
   if (!res.ok) {
     if (res.status === 401 || res.status === 403) throw new SendError("Gmail didn't allow sending. Reconnect Gmail once and allow “Send email”.", 403, "needs_permission");

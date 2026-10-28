@@ -22,6 +22,7 @@ export default function ComposeEmail({
   providers,
   forwardOriginal,
   forwardMessage,
+  replyMessage,
   footnote,
   onClose,
   onOpened,
@@ -35,6 +36,7 @@ export default function ComposeEmail({
   providers: Provider[]; // connected mailboxes (empty: offer both)
   forwardOriginal?: { provider: Provider; url: string } | null; // open the original to forward it with attachments
   forwardMessage?: { provider: Provider; id: string } | null; // forward it from LawPower (attachments included)
+  replyMessage?: { provider: Provider; id: string } | null; // reply in the same conversation (the mailbox quotes the original)
   footnote?: string;
   onClose: () => void;
   onOpened?: () => void;
@@ -57,15 +59,17 @@ export default function ComposeEmail({
         if (!live) return;
         const list = (d.connections ?? []).filter((c) => c.canSend).map((c) => ({ provider: c.provider, email: c.email }));
         setSenders(list);
-        setFrom(list.find((c) => c.provider === forwardMessage?.provider)?.provider ?? list[0]?.provider ?? null);
+        const wanted = replyMessage?.provider ?? forwardMessage?.provider;
+        setFrom(list.find((c) => c.provider === wanted)?.provider ?? list[0]?.provider ?? null);
       })
       .catch(() => live && setSenders([]));
     return () => {
       live = false;
     };
-  }, [forwardMessage?.provider]);
+  }, [forwardMessage?.provider, replyMessage?.provider]);
   const canSendHere = !!senders?.length;
   const nativeForward = !!forwardMessage && from === forwardMessage.provider;
+  const nativeReply = !!replyMessage && from === replyMessage.provider;
 
   async function send() {
     setSending(true);
@@ -74,7 +78,7 @@ export default function ComposeEmail({
       const res = await fetch("/api/mail/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: from, to, cc, subject: finalSubject, body, forwardMessageId: nativeForward ? forwardMessage!.id : undefined }),
+        body: JSON.stringify({ provider: from, to, cc, subject: finalSubject, body, forwardMessageId: nativeForward ? forwardMessage!.id : undefined, replyMessageId: nativeReply ? replyMessage!.id : undefined }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? "The email couldn't be sent. Please try again.");

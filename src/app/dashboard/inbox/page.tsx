@@ -13,7 +13,6 @@ import {
   Loader2,
   AlertTriangle,
   ExternalLink,
-  Image as ImageIcon,
   Inbox as InboxIcon,
   X,
   Briefcase,
@@ -26,6 +25,7 @@ import {
   ChevronDown,
   ChevronRight,
   FolderInput,
+  Reply,
 } from "lucide-react";
 import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/ComposeEmail";
 import CreateTaskFromEmail, { htmlToText } from "@/components/mail/CreateTaskFromEmail";
@@ -247,7 +247,7 @@ function FileToMatter({
 export default function InboxPage() {
   const { teamMembers, boards, addTask, matters } = useWorkspaceData();
   // New email / forward (opens in the person's Gmail or Outlook) and "Turn into task".
-  const [composing, setComposing] = useState<"new" | "forward" | null>(null);
+  const [composing, setComposing] = useState<"new" | "forward" | "reply" | null>(null);
   const [taskFrom, setTaskFrom] = useState<MailSummary | null>(null);
   const [attMenu, setAttMenu] = useState<number | null>(null);
   // Conversations opened with the ▸ arrow in the list, and their emails (newest first).
@@ -350,7 +350,8 @@ export default function InboxPage() {
   const [message, setMessage] = useState<MailMessage | null>(null);
   const [msgLoading, setMsgLoading] = useState(false);
   const [msgError, setMsgError] = useState<string | null>(null);
-  const [showImages, setShowImages] = useState(false);
+  // Images in emails are shown automatically (the "Show images" step was removed at the firm's request).
+  const [showImages, setShowImages] = useState(true);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | null>(null);
@@ -503,7 +504,7 @@ export default function InboxPage() {
     setSelectedId(m.id);
     setMessage(null);
     setMsgError(null);
-    setShowImages(false);
+    setShowImages(true);
     setMsgLoading(true);
     getJson<{ message: MailMessage }>(`/api/mail/messages/${encodeURIComponent(m.id)}?provider=${provider}`)
       .then((d) => {
@@ -626,6 +627,22 @@ export default function InboxPage() {
       {composing && (() => {
         const summary = message ? messages.find((x) => x.id === message.id) : null;
         const fwd = composing === "forward" && message;
+        const rep = composing === "reply" && message;
+        if (rep) {
+          const subj = message.subject || "(no subject)";
+          return (
+            <ComposeEmail
+              title="Reply"
+              initialTo={message.fromEmail ?? ""}
+              initialSubject={/^re:/i.test(subj) ? subj : `Re: ${subj}`}
+              providers={(conns ?? []).map((c) => c.provider)}
+              replyMessage={provider ? { provider, id: message.id } : null}
+              footnote="Your reply goes into the same conversation, with the original email underneath."
+              onClose={() => setComposing(null)}
+              onOpened={() => setComposing(null)}
+            />
+          );
+        }
         const text = fwd ? (message.text?.trim() ? message.text : message.html ? htmlToText(message.html) : "") : "";
         return (
           <ComposeEmail
@@ -1001,25 +1018,6 @@ export default function InboxPage() {
                     <div>{new Date(message.date).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</div>
                   </div>
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    {message.html && !showImages && (
-                      <button
-                        onClick={() => setShowImages(true)}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
-                        title="Remote images are blocked by default because they can tell the sender you opened the email."
-                      >
-                        <ImageIcon size={12} /> Show images
-                      </button>
-                    )}
-                    {message.webLink && (
-                      <a
-                        href={message.webLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
-                      >
-                        <ExternalLink size={12} /> Open in {provider ? providerLabel[provider] : "mail"}
-                      </a>
-                    )}
                     {provider && (() => {
                       const summary = messages.find((x) => x.id === message.id);
                       const flagged = !!summary?.flagged;
@@ -1041,6 +1039,20 @@ export default function InboxPage() {
                       };
                       return (
                         <>
+                          <button
+                            onClick={() => summary && setTaskFrom(summary)}
+                            disabled={!summary}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn disabled:opacity-50"
+                          >
+                            <ListChecks size={12} /> Turn into task
+                          </button>
+                        <FileToMatter
+                          key={message.id}
+                          provider={provider}
+                          messageId={message.id}
+                          current={messages.find((x) => x.id === message.id)?.matter ?? null}
+                          onChange={(mt) => setMessages((list) => list.map((x) => (x.id === message.id ? { ...x, matter: mt } : x)))}
+                        />
                           <button
                             onClick={async () => {
                               setMessages((list) => list.map((x) => (x.id === message.id ? { ...x, flagged: !flagged } : x)));
@@ -1068,28 +1080,26 @@ export default function InboxPage() {
                           >
                             <MailIcon size={12} /> Mark as unread
                           </button>
-                          <button
-                            onClick={() => summary && setTaskFrom(summary)}
-                            disabled={!summary}
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn disabled:opacity-50"
-                          >
-                            <ListChecks size={12} /> Turn into task
-                          </button>
+                          {message.webLink && (
+                        <a
+                          href={message.webLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
+                        >
+                          <ExternalLink size={12} /> Open in {provider ? providerLabel[provider] : "mail"}
+                        </a>
+                          )}
                           <button onClick={() => setComposing("forward")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn">
                             <Forward size={12} /> Forward
+                          </button>
+                          <button onClick={() => setComposing("reply")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn">
+                            <Reply size={12} /> Reply
                           </button>
                         </>
                       );
                     })()}
-                    {provider && (
-                      <FileToMatter
-                        key={message.id}
-                        provider={provider}
-                        messageId={message.id}
-                        current={messages.find((x) => x.id === message.id)?.matter ?? null}
-                        onChange={(mt) => setMessages((list) => list.map((x) => (x.id === message.id ? { ...x, matter: mt } : x)))}
-                      />
-                    )}
+
                   </div>
                   {message.attachments.length > 0 && (
                     <div className="flex gap-2 flex-wrap items-center mt-3">
@@ -1165,12 +1175,12 @@ export default function InboxPage() {
                 </div>
                 {threaded && message.threadId && provider ? (
                   <div className="flex-1 min-h-0 overflow-y-auto">
-                    <AutoHeightFrame srcDoc={srcDoc} title="Email content" minHeight={240} />
+                    <AutoHeightFrame srcDoc={srcDoc} title="" minHeight={240} />
                     <ThreadView key={message.threadId} provider={provider} threadId={message.threadId} currentId={message.id} onOpen={(x) => open(x)} />
                   </div>
                 ) : (
                   <iframe
-                    title="Email content"
+                    aria-label="Email content"
                     sandbox="allow-popups allow-popups-to-escape-sandbox"
                     srcDoc={srcDoc}
                     className="flex-1 w-full bg-white"
