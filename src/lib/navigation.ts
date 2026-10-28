@@ -31,7 +31,6 @@ export type NavSection = { title: string | null; links: NavLink[] };
 // Community and Clients are off the menu for now (their pages still exist).
 export const mainLinks: NavLink[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
-  { label: "Reports", href: "/dashboard/reports", icon: PieChart },
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
   { label: "Matters", href: "/dashboard/matters", icon: Folder },
   { label: "Contacts", href: "/dashboard/records", icon: Bookmark },
@@ -47,6 +46,7 @@ export const toolLinks: NavLink[] = [
   { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
   { label: "Power PDF", href: "/dashboard/power-pdf", icon: FilePen },
   { label: "Secure Files", href: "/dashboard/secure-files", icon: ShieldCheck },
+  { label: "Reports", href: "/dashboard/reports", icon: PieChart },
 ];
 
 export const workspaceLinks: NavLink[] = [
