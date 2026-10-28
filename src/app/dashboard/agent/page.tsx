@@ -771,10 +771,35 @@ function MatterPicker({
     setOpen(false);
     setQ("");
   };
+  // Open downward when there isn't room above (the search box must stay visible);
+  // the list shortens to fit the space available.
+  const [place, setPlace] = useState<{ down: boolean; listMax: number }>({ down: false, listMax: 280 });
+  const toggle = (el: HTMLElement) => {
+    if (!open) {
+      const r = el.getBoundingClientRect();
+      // The chat area scrolls inside the page; measure to its edges, not the window's.
+      let box = { top: 90, bottom: window.innerHeight - 16 };
+      for (let p = el.parentElement; p; p = p.parentElement) {
+        const o = getComputedStyle(p).overflowY;
+        if (o === "auto" || o === "scroll" || o === "hidden") {
+          const pr = p.getBoundingClientRect();
+          box = { top: Math.max(box.top, pr.top + 8), bottom: Math.min(box.bottom, pr.bottom - 8) };
+          break;
+        }
+      }
+      const above = r.top - box.top;
+      const below = box.bottom - r.bottom;
+      const need = 400;
+      const down = above < need && below > above;
+      const room = down ? below : above;
+      setPlace({ down, listMax: Math.max(140, Math.min(280, room - 130)) });
+    }
+    setOpen(!open);
+  };
   return (
     <div className="relative min-w-0">
       <button
-        onClick={() => setOpen(!open)}
+        onClick={(e) => toggle(e.currentTarget)}
         disabled={disabled}
         className={`flex items-center gap-1.5 text-[13px] rounded-full px-3 py-1.5 min-w-0 transition-colors ${
           matter ? "bg-btn text-ink" : "bg-chip text-muted hover:bg-btn hover:text-ink"
@@ -787,14 +812,14 @@ function MatterPicker({
       {open && (
         <>
           <ClickAway onClose={() => setOpen(false)} />
-          <div className="absolute left-0 bottom-[calc(100%+6px)] z-50 w-[300px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5">
+          <div className={`absolute left-0 ${place.down ? "top-[calc(100%+6px)]" : "bottom-[calc(100%+6px)]"} z-50 w-[300px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5`}>
             {matters.length > 6 && (
               <div className="flex items-center gap-2 px-3 py-2 mb-1 border-b border-line">
                 <Search size={13} className="text-muted" />
                 <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a matter" className="flex-1 bg-transparent outline-none text-[13.5px]" />
               </div>
             )}
-            <div className="max-h-[280px] overflow-y-auto">
+            <div className="overflow-y-auto" style={{ maxHeight: place.listMax }}>
               {!q && (
                 <button onClick={() => pick(null)} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left ${!matter ? "bg-chip font-medium" : "hover:bg-chip/70"}`}>
                   <Layers size={14} className="text-muted" /> <span className="flex-1">No matter (general chat)</span>
