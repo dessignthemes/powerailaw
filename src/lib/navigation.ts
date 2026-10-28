@@ -21,6 +21,7 @@ import {
   FileText,
   MessagesSquare,
   type LucideIcon,
+  ListChecks,
 } from "lucide-react";
 
 // ownerOnly: shown only to the workspace owner (none right now; AI Accountant is open to everyone since Oct 19, 2026).
@@ -51,8 +52,7 @@ export const toolLinks: NavLink[] = [
 export const workspaceLinks: NavLink[] = [
   { label: "Inbox", href: "/dashboard/inbox", icon: Inbox },
   { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
-  // Task Folder is hidden (tasks are made straight from emails in the Inbox); page kept.
-  // To restore: { label: "Task Folder", href: "/dashboard/task-folder", icon: ListChecks },
+  { label: "Task Folder", href: "/dashboard/task-folder", icon: ListChecks },
   { label: "Task Board", href: "/dashboard/task-board", icon: BarChart3 },
 ];
 
