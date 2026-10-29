@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 import { createClient } from "@/lib/supabase/client";
-import { Grid3x3, ArrowUpRight, PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react";
+import { Settings, ArrowUpRight, PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react";
 import { mainLinks, toolLinks, workspaceLinks, isActiveLink } from "@/lib/navigation";
 import AccountMenu from "@/components/AccountMenu";
 import TaskBoardNav from "@/components/TaskBoardNav";
@@ -153,15 +153,15 @@ export default function Sidebar() {
 
       <div className={`border-t border-line ${collapsed ? "pt-2 mt-2" : "pt-4 mt-4"}`}>
         <button
-          onClick={() => openIntegrations("integrations")}
-          title={collapsed ? "Integrations" : undefined}
-          aria-label={collapsed ? "Integrations" : undefined}
+          onClick={() => openIntegrations("general")}
+          title={collapsed ? "Settings" : undefined}
+          aria-label={collapsed ? "Settings" : undefined}
           className={`w-full flex items-center gap-2 py-[6px] rounded-lg text-[13px] font-medium text-ink hover:bg-chip transition-colors mb-2 text-left ${collapsed ? "justify-center h-9" : "px-3"}`}
         >
-          <Grid3x3 size={collapsed ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
+          <Settings size={collapsed ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
           {!collapsed && (
             <>
-              <span className="flex-1">Integrations</span>
+              <span className="flex-1">Settings</span>
               <ArrowUpRight size={14} strokeWidth={1.75} className="flex-shrink-0" />
             </>
           )}

@@ -2,7 +2,7 @@
 
 import ClickAway from "@/components/ClickAway";
 import { useEffect, useState } from "react";
-import { Settings, Shield, Headphones, Grid3x3, LogOut, ChevronsUpDown, Users, Sunrise } from "lucide-react";
+import { Settings, Shield, Headphones, LogOut, ChevronsUpDown, Users, Sunrise } from "lucide-react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 import LogoMark from "@/components/LogoMark";
 
@@ -109,16 +109,6 @@ export default function AccountMenu({
               >
                 <Headphones size={16} strokeWidth={1.75} />
                 Support
-              </button>
-              <button
-                onClick={() => {
-                  setOpen(false);
-                  openIntegrations("integrations");
-                }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-chip transition-colors text-left"
-              >
-                <Grid3x3 size={16} strokeWidth={1.75} />
-                Integrations
               </button>
             </div>
 
