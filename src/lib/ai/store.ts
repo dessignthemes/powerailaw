@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUserOrg, AccessError, DOCUMENTS_BUCKET } from "@/lib/data/documents";
 import { extractText, detectKind, MIME_BY_KIND, MAX_FILE_BYTES, type ExtractedChunk } from "@/lib/ai/extract";
 import { toSearchQuery, sensitiveReason } from "@/lib/ai/safety";
+import { readScannedPdf } from "@/lib/ai/ocr";
 
 export const ATTACHMENTS_BUCKET = "ai-attachments";
 
@@ -287,7 +288,12 @@ export async function finalizeAttachment(ctx: AiCtx, conversationId: string, pat
     .single();
   if (error) throw error;
 
-  const result = await extractText(bytes);
+  let result = await extractText(bytes);
+  // A scanned PDF: the AI reads its pages once, so it can be used like any other file.
+  if (result.status === "needs_ocr" && result.kind === "pdf") {
+    const ocr = await readScannedPdf(bytes, { orgId: ctx.orgId, userId: ctx.userId });
+    if (ocr) result = { status: "ready", kind: "pdf", pageCount: ocr.pageCount, chunks: ocr.chunks, detail: scanDetail(ocr) };
+  }
   if (result.status === "failed") {
     await s.from("ai_files").update({ status: "failed", status_detail: result.detail }).eq("id", file.id);
   } else {
@@ -351,16 +357,33 @@ export async function deleteFile(ctx: AiCtx, id: string) {
 
 // ── Matter document indexing (Power PDF storage) ──────────────────────────
 
+const OCR_TRIED = "Scanned pages; the AI couldn't read them (too large or unclear).";
+const scanDetail = (o: { pageCount: number; pagesRead: number }) =>
+  o.pagesRead < o.pageCount ? `Scanned: the AI read the first ${o.pagesRead} of ${o.pageCount} pages` : "Scanned: pages read by the AI";
+
 // Extracts and indexes one document version the first time it's needed.
 export async function ensureVersionIndexed(ctx: AiCtx, versionId: string) {
   const s = db();
-  const { data: existing } = await s.from("ai_document_index").select("status").eq("version_id", versionId).maybeSingle();
-  if (existing) return existing.status as string;
+  const { data: existing } = await s.from("ai_document_index").select("status, status_detail").eq("version_id", versionId).maybeSingle();
+  // Scans indexed before the AI could read them get one attempt now.
+  if (existing && !(existing.status === "needs_ocr" && existing.status_detail !== OCR_TRIED)) return existing.status as string;
   const { data: v } = await s.from("document_versions").select("storage_path").eq("id", versionId).eq("org_id", ctx.orgId).maybeSingle();
-  if (!v) return null;
+  if (!v) return existing ? (existing.status as string) : null;
   const { data: blob } = await s.storage.from(DOCUMENTS_BUCKET).download(v.storage_path);
-  if (!blob) return null;
-  const result = await extractText(new Uint8Array(await blob.arrayBuffer()));
+  if (!blob) return existing ? (existing.status as string) : null;
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let result = await extractText(bytes);
+  if (result.status === "needs_ocr" && result.kind === "pdf") {
+    const ocr = await readScannedPdf(bytes, { orgId: ctx.orgId, userId: ctx.userId });
+    result = ocr
+      ? { status: "ready", kind: "pdf", pageCount: ocr.pageCount, chunks: ocr.chunks, detail: scanDetail(ocr) }
+      : { ...result, detail: OCR_TRIED };
+  }
+  if (existing) {
+    // Replace the old (scan) entry with what was read now.
+    await s.from("ai_chunks").delete().eq("version_id", versionId);
+    await s.from("ai_document_index").delete().eq("version_id", versionId);
+  }
   if (result.status !== "failed") await insertChunks(ctx.orgId, { version_id: versionId }, result.chunks);
   const status = result.status;
   const { error } = await s.from("ai_document_index").insert({
@@ -403,10 +426,12 @@ export async function buildSearchScope(ctx: AiCtx, conv: ConversationRow, matter
   if (conv.matter_id && matterDocs) {
     // Index up to 4 not-yet-indexed documents per request to bound latency.
     let budget = 4;
+    let scans = 2; // scanned documents the AI hasn't read yet (read once, then saved)
     for (const d of matterDocs) {
       let status = d.indexStatus;
-      if (!status && budget > 0) {
-        budget--;
+      if ((!status && budget > 0) || (status === "needs_ocr" && scans > 0)) {
+        if (status === "needs_ocr") scans--;
+        else budget--;
         status = await ensureVersionIndexed(ctx, d.versionId).catch(() => null);
         d.indexStatus = status;
       }

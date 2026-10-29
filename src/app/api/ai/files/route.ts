@@ -3,7 +3,7 @@ import { getAiCtx, finalizeAttachment } from "@/lib/ai/store";
 import { aiError } from "@/lib/ai/api";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300; // scanned PDFs are read by the AI on upload
 
 // Finalize: validate the uploaded bytes, extract text, index it.
 export async function POST(request: Request) {

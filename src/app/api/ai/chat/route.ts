@@ -26,7 +26,7 @@ import { citedSourceIds } from "@/lib/ai/safety";
 import { aiError } from "@/lib/ai/api";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300; // may read a scanned document first
 
 const MAX_MESSAGE_CHARS = 20_000;
 const HISTORY_MESSAGES = 20;

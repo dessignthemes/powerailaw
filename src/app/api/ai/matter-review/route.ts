@@ -6,7 +6,7 @@ import { AccessError } from "@/lib/data/documents";
 import { NoWorkspaceError } from "@/lib/data/org";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 // POST { matterId, ai?: boolean } — automatic checks, plus an AI summary
 // unless ai is false or today's AI limit is reached.
