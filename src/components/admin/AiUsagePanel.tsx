@@ -9,7 +9,8 @@ type Usage = {
   requests: number;
   allowance: number;
   byFeature: { feature: string; tokens: number }[];
-  byPerson: { name: string; tokens: number }[] | null;
+  byPerson: { id: string; name: string; tokens: number; today?: { requests: number; tokens: number } }[] | null;
+  dailyLimit?: { tokens: number; requests: number };
 };
 
 const FEATURE_INFO: Record<string, { label: string; desc: string }> = {
@@ -28,6 +29,24 @@ export default function AiUsagePanel() {
   const [month, setMonth] = useState(() => ym(new Date()));
   const [data, setData] = useState<Usage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [resetting, setResetting] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
+
+  async function resetLimit(id: string, name: string) {
+    setResetting(id);
+    try {
+      const r = await fetch("/api/admin/ai-usage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resetUserId: id }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d?.error ?? "Couldn't reset.");
+      setError(null);
+      setReload((n) => n + 1);
+      alert(`${name} can use the AI again today. Nothing was deleted; the monthly totals are unchanged.`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setResetting(null);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +61,7 @@ export default function AiUsagePanel() {
     return () => {
       cancelled = true;
     };
-  }, [month]);
+  }, [month, reload]);
 
   const shift = (n: number) => {
     const [y, m] = month.split("-").map(Number);
@@ -135,14 +154,33 @@ export default function AiUsagePanel() {
             <div className="border border-line rounded-2xl p-5 mt-5 mb-3">
               <div className="text-[14.5px] font-semibold mb-3">By person</div>
               <div className="flex flex-col gap-2">
-                {data.byPerson.map((p) => (
-                  <div key={p.name} className="flex items-center justify-between text-[13.5px]">
-                    <span className="truncate">{p.name}</span>
-                    <span className="text-muted">
-                      <span className="font-semibold text-ink">{fmt(p.tokens)}</span> · {Math.round((p.tokens / data.total) * 100)}%
-                    </span>
-                  </div>
-                ))}
+                {data.byPerson.map((p) => {
+                  const lim = data.dailyLimit;
+                  const today = p.today;
+                  const blocked = !!(lim && today && (today.tokens >= lim.tokens || today.requests >= lim.requests));
+                  return (
+                    <div key={p.id} className="flex items-center gap-3 text-[13.5px]">
+                      <span className="truncate flex-1 min-w-0">{p.name}</span>
+                      {lim && today && (
+                        <span className={`text-[12.5px] whitespace-nowrap ${blocked ? "text-[#B42318] font-medium" : "text-muted"}`}>
+                          Today {fmt(today.tokens)} of {fmt(lim.tokens)}
+                          {blocked ? " · limit reached" : ""}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => void resetLimit(p.id, p.name)}
+                        disabled={resetting === p.id}
+                        title="Let this person keep using the AI today (nothing is deleted)"
+                        className="text-[12.5px] font-medium bg-chip hover:bg-btn px-2.5 py-1 rounded-full whitespace-nowrap disabled:opacity-50"
+                      >
+                        {resetting === p.id ? "Resetting…" : "Reset today's limit"}
+                      </button>
+                      <span className="text-muted whitespace-nowrap w-[120px] text-right">
+                        <span className="font-semibold text-ink">{fmt(p.tokens)}</span> · {Math.round((p.tokens / data.total) * 100)}%
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

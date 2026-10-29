@@ -713,6 +713,10 @@ export async function finishPendingAction(id: string, patch: { status: "executed
 export async function usageToday(ctx: AiCtx) {
   const since = new Date();
   since.setUTCHours(0, 0, 0, 0);
+  // An owner/admin can reset someone's daily limit (Administration → AI usage).
+  const { data: prof, error: profErr } = await db().from("profiles").select("ai_limit_reset_at").eq("id", ctx.userId).maybeSingle();
+  const reset = !profErr && (prof as { ai_limit_reset_at?: string | null } | null)?.ai_limit_reset_at;
+  if (reset && Date.parse(reset) > since.getTime()) since.setTime(Date.parse(reset));
   const { data, error } = await db()
     .from("ai_usage")
     .select("input_tokens, output_tokens")

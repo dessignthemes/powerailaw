@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUserOrg, AccessError } from "@/lib/data/documents";
 import { NoWorkspaceError } from "@/lib/data/org";
+import { usageToday } from "@/lib/ai/store";
+import { aiConfig } from "@/lib/ai/provider";
 
 export const dynamic = "force-dynamic";
 
@@ -49,12 +51,38 @@ export async function GET(request: Request) {
       allowance,
       byFeature: FEATURES.map((f) => ({ feature: f, tokens: byFeature.get(f) ?? 0 })).filter((x) => x.tokens > 0),
       byPerson: canSeePeople
-        ? [...byPerson.entries()].map(([id, tokens]) => ({ name: names.get(id) ?? "Former member", tokens })).sort((a, b) => b.tokens - a.tokens)
+        ? await Promise.all(
+            [...byPerson.entries()]
+              .map(([id, tokens]) => ({ id, name: names.get(id) ?? "Former member", tokens }))
+              .sort((a, b) => b.tokens - a.tokens)
+              .map(async (p) => ({ ...p, today: await usageToday({ userId: p.id, orgId, email: null }) }))
+          )
         : null,
+      dailyLimit: { tokens: aiConfig().dailyTokenLimit, requests: aiConfig().dailyRequestLimit },
     });
   } catch (e) {
     if (e instanceof AccessError || e instanceof NoWorkspaceError) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error("GET /api/admin/ai-usage failed:", e);
     return NextResponse.json({ error: "AI usage couldn't be loaded." }, { status: 500 });
+  }
+}
+
+// POST { resetUserId } (owner / admins): reset that person's daily AI limit now.
+export async function POST(request: Request) {
+  try {
+    const { user, orgId } = await requireUserOrg();
+    const db = createAdminClient();
+    const { data: me } = await db.from("profiles").select("role").eq("id", user.id).maybeSingle();
+    if (me?.role !== "owner" && me?.role !== "admin") return NextResponse.json({ error: "Only the owner or an admin can reset AI limits." }, { status: 403 });
+    const b = (await request.json().catch(() => ({}))) as { resetUserId?: unknown };
+    const id = typeof b.resetUserId === "string" && /^[0-9a-f-]{36}$/i.test(b.resetUserId) ? b.resetUserId : null;
+    if (!id) return NextResponse.json({ error: "Choose a person." }, { status: 400 });
+    const { error } = await db.from("profiles").update({ ai_limit_reset_at: new Date().toISOString() }).eq("id", id).eq("org_id", orgId);
+    if (error) return NextResponse.json({ error: "Couldn't reset. Run supabase/migrations/0055_ai_limit_reset.sql in Supabase first." }, { status: 503 });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (e instanceof AccessError || e instanceof NoWorkspaceError) return NextResponse.json({ error: e.message }, { status: e.status });
+    console.error("POST /api/admin/ai-usage failed:", e);
+    return NextResponse.json({ error: "Couldn't reset the limit." }, { status: 500 });
   }
 }
