@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { firmTimezone, todayIn } from "@/lib/ai/workspaceTools";
-import { getProvider, aiConfig } from "@/lib/ai/provider";
+import { getProvider, aiConfig, dailyLimitMessage } from "@/lib/ai/provider";
 import { ProviderError, type ChatMessage } from "@/lib/ai/provider/types";
 import {
   getAiCtx,
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     const usage = await usageToday(ctx);
     if (usage.requests >= cfg.dailyRequestLimit || usage.tokens >= cfg.dailyTokenLimit) {
       return NextResponse.json(
-        { error: "You've reached today's AI usage limit. It resets at midnight UTC.", code: "usage_limit" },
+        { error: dailyLimitMessage(usage), code: "usage_limit" },
         { status: 429 }
       );
     }

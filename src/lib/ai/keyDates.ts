@@ -1,7 +1,7 @@
 import "server-only";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getProvider, aiConfig } from "@/lib/ai/provider";
+import { getProvider, aiConfig, dailyLimitMessage } from "@/lib/ai/provider";
 import type { ContentBlock } from "@/lib/ai/provider/types";
 import { getMatterContext, ensureVersionIndexed, usageToday, type AiCtx } from "@/lib/ai/store";
 import { firmTimezone, todayIn } from "@/lib/ai/workspaceTools";
@@ -149,7 +149,7 @@ async function readWithAi(
   const cfg = aiConfig();
   const u = await usageToday(ctx);
   if (u.requests >= cfg.dailyRequestLimit || u.tokens >= cfg.dailyTokenLimit) {
-    throw new KeyDatesError(429, "You've reached today's AI usage limit. It resets at midnight UTC; you can enter dates by hand meanwhile.");
+    throw new KeyDatesError(429, `${dailyLimitMessage(u)} You can enter dates by hand meanwhile.`);
   }
   const tz = await firmTimezone(ctx.orgId);
   const today = todayIn(tz).ymd;

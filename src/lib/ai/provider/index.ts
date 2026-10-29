@@ -29,8 +29,11 @@ export function aiConfig() {
     configured: !!key,
     timeoutMs: Number(process.env.AI_REQUEST_TIMEOUT_MS) || 60_000,
     maxRetries: Math.min(Number(process.env.AI_MAX_RETRIES ?? 2), 4),
-    dailyTokenLimit: Number(process.env.AI_DAILY_TOKEN_LIMIT) || 300_000,
-    dailyRequestLimit: Number(process.env.AI_DAILY_REQUEST_LIMIT) || 150,
+    // Per person per day: a safety net against runaway use, not a budget (the firm's
+    // monthly allowance is AI_MONTHLY_TOKEN_LIMIT). Reading contracts or reviewing a
+    // matter can use tens of thousands of tokens per request, so keep this generous.
+    dailyTokenLimit: Math.max(1_500_000, Number(process.env.AI_DAILY_TOKEN_LIMIT) || 0),
+    dailyRequestLimit: Math.max(400, Number(process.env.AI_DAILY_REQUEST_LIMIT) || 0),
     maxOutputTokens: Number(process.env.AI_MAX_OUTPUT_TOKENS) || 4096,
   };
 }
@@ -46,4 +49,17 @@ export function getProvider(overrides?: { fetch?: typeof fetch }): ChatProvider 
   }
   const key = process.env.ANTHROPIC_API_KEY;
   return key ? new AnthropicProvider(key, cfg.model, opts) : null;
+}
+
+// Shown when someone reaches the per-person daily safety limit.
+export function dailyLimitMessage(used: { requests: number; tokens: number }) {
+  const cfg = aiConfig();
+  const reset = new Date();
+  reset.setUTCHours(24, 0, 0, 0);
+  const at = reset.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
+  const what =
+    used.requests >= cfg.dailyRequestLimit
+      ? `${used.requests} of ${cfg.dailyRequestLimit} AI requests`
+      : `${Math.round(used.tokens / 1000).toLocaleString("en-US")}k of ${Math.round(cfg.dailyTokenLimit / 1000).toLocaleString("en-US")}k AI tokens`;
+  return `You've used today's personal AI limit (${what}). It resets at ${at} New York time. This is a daily safety limit, separate from the firm's monthly allowance.`;
 }

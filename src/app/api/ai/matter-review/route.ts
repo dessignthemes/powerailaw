@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAiCtx, usageToday } from "@/lib/ai/store";
-import { aiConfig } from "@/lib/ai/provider";
+import { aiConfig, dailyLimitMessage } from "@/lib/ai/provider";
 import { reviewMatter } from "@/lib/ai/matterReview";
 import { AccessError } from "@/lib/data/documents";
 import { NoWorkspaceError } from "@/lib/data/org";
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       const u = await usageToday(ctx);
       if (u.requests >= cfg.dailyRequestLimit || u.tokens >= cfg.dailyTokenLimit) {
         useAi = false;
-        limitNote = "You've reached today's AI usage limit, so only the automatic checks ran. It resets at midnight UTC.";
+        limitNote = `${dailyLimitMessage(u)} Only the automatic checks ran.`;
       }
     }
     const result = await reviewMatter(ctx, body.matterId, useAi);

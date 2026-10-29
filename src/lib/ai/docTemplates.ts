@@ -1,5 +1,5 @@
 import "server-only";
-import { getProvider, aiConfig } from "@/lib/ai/provider";
+import { getProvider, aiConfig, dailyLimitMessage } from "@/lib/ai/provider";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { getMatterContext, usageToday, type AiCtx } from "@/lib/ai/store";
 import { getDetails } from "@/lib/data/matterDetails";
@@ -37,7 +37,7 @@ async function ask(ctx: AiCtx, system: string, user: string, maxTokens: number):
   if (!provider) throw new AiTemplateError("The AI isn't set up yet (ANTHROPIC_API_KEY).", 503);
   const cfg = aiConfig();
   const u = await usageToday(ctx);
-  if (u.requests >= cfg.dailyRequestLimit || u.tokens >= cfg.dailyTokenLimit) throw new AiTemplateError("You've reached today's AI usage limit. It resets at midnight UTC.", 429);
+  if (u.requests >= cfg.dailyRequestLimit || u.tokens >= cfg.dailyTokenLimit) throw new AiTemplateError(dailyLimitMessage(u), 429);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 110_000);
   let text = "";
