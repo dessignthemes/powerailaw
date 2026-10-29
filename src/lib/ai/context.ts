@@ -58,7 +58,7 @@ export function buildSystemPrompt(opts: {
     const m = opts.matter;
     const docs = m.documents.length
       ? m.documents
-          .map((d) => `- ${d.title} (v${d.versionNumber}, ${d.pageCount} pages${d.indexStatus && d.indexStatus !== "ready" ? `, ${d.indexStatus === "needs_ocr" ? "scanned: needs OCR, not searchable" : "could not be read"}` : ""})`)
+          .map((d) => `- ${d.title} (v${d.versionNumber}, ${d.pageCount} pages${d.indexStatus && d.indexStatus !== "ready" ? `, ${d.indexStatus === "needs_ocr" ? "scanned: its pages are read automatically by the AI (a few per message); if it stays unread it is too large or unclear" : "could not be read"}` : ""})`)
           .join("\n")
       : "- none";
     const tasks = m.tasks.length
@@ -80,7 +80,7 @@ ${tasks}`);
     parts.push(
       "Files attached in this conversation:\n" +
         opts.files
-          .map((f) => `- ${f.name}: ${f.status === "ready" ? "readable" : f.status === "needs_ocr" ? "scanned, needs OCR, cannot be read" : f.status === "failed" ? `could not be read (${f.status_detail ?? "unknown error"})` : "still processing"}${f.status === "ready" && f.status_detail ? ` (${f.status_detail})` : ""}`)
+          .map((f) => `- ${f.name}: ${f.status === "ready" ? "readable" : f.status === "needs_ocr" ? "scanned, and the AI couldn't read its pages (too large or unclear)" : f.status === "failed" ? `could not be read (${f.status_detail ?? "unknown error"})` : "still processing"}${f.status === "ready" && f.status_detail ? ` (${f.status_detail})` : ""}`)
           .join("\n")
     );
   }

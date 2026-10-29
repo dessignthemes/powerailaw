@@ -161,7 +161,7 @@ async function readWithAi(
   for (const d of list) {
     if (d.indexStatus) continue;
     if (Date.now() - started > 25_000) break;
-    d.indexStatus = await ensureVersionIndexed(ctx, d.versionId).catch(() => null);
+    d.indexStatus = await ensureVersionIndexed(ctx, d.versionId, { ocr: false }).catch(() => null); // scans are sent as pages below
   }
 
   // Each document goes in as text, or, when it has little or no text (a scan, a

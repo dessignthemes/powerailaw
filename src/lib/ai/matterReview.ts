@@ -61,10 +61,16 @@ export async function reviewMatter(ctx: AiCtx, matterId: string, useAi: boolean)
   const valueCents = entries.filter((e) => e.billable).reduce((a, e) => a + Math.round((e.minutes / 60) * (e.rate_cents ?? 0)), 0);
 
   // Make sure documents are searchable (a few per run, like the AI Agent).
+  // Scanned PDFs are read by the AI once (then saved); stop preparing after ~2 minutes
+  // so the review itself still fits in the request.
   let budget = 4;
+  let scans = 2;
+  const started = Date.now();
   for (const d of m.documents) {
-    if (!d.indexStatus && budget > 0) {
-      budget--;
+    if (Date.now() - started > 120_000) break;
+    if ((!d.indexStatus && budget > 0) || (d.indexStatus === "needs_ocr" && scans > 0)) {
+      if (d.indexStatus === "needs_ocr") scans--;
+      else budget--;
       d.indexStatus = await ensureVersionIndexed(ctx, d.versionId).catch(() => null);
     }
   }

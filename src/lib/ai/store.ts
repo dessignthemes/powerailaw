@@ -362,18 +362,21 @@ const scanDetail = (o: { pageCount: number; pagesRead: number }) =>
   o.pagesRead < o.pageCount ? `Scanned: the AI read the first ${o.pagesRead} of ${o.pageCount} pages` : "Scanned: pages read by the AI";
 
 // Extracts and indexes one document version the first time it's needed.
-export async function ensureVersionIndexed(ctx: AiCtx, versionId: string) {
+// opts.ocr = false: leave scanned pages as they are (Fill from documents sends the
+// scan itself to the AI, and must not spend its time limit converting it first).
+export async function ensureVersionIndexed(ctx: AiCtx, versionId: string, opts: { ocr?: boolean } = {}) {
+  const ocrOn = opts.ocr !== false;
   const s = db();
   const { data: existing } = await s.from("ai_document_index").select("status, status_detail").eq("version_id", versionId).maybeSingle();
   // Scans indexed before the AI could read them get one attempt now.
-  if (existing && !(existing.status === "needs_ocr" && existing.status_detail !== OCR_TRIED)) return existing.status as string;
+  if (existing && !(ocrOn && existing.status === "needs_ocr" && existing.status_detail !== OCR_TRIED)) return existing.status as string;
   const { data: v } = await s.from("document_versions").select("storage_path").eq("id", versionId).eq("org_id", ctx.orgId).maybeSingle();
   if (!v) return existing ? (existing.status as string) : null;
   const { data: blob } = await s.storage.from(DOCUMENTS_BUCKET).download(v.storage_path);
   if (!blob) return existing ? (existing.status as string) : null;
   const bytes = new Uint8Array(await blob.arrayBuffer());
   let result = await extractText(bytes);
-  if (result.status === "needs_ocr" && result.kind === "pdf") {
+  if (ocrOn && result.status === "needs_ocr" && result.kind === "pdf") {
     const ocr = await readScannedPdf(bytes, { orgId: ctx.orgId, userId: ctx.userId });
     result = ocr
       ? { status: "ready", kind: "pdf", pageCount: ocr.pageCount, chunks: ocr.chunks, detail: scanDetail(ocr) }
@@ -427,8 +430,14 @@ export async function buildSearchScope(ctx: AiCtx, conv: ConversationRow, matter
     // Index up to 4 not-yet-indexed documents per request to bound latency.
     let budget = 4;
     let scans = 2; // scanned documents the AI hasn't read yet (read once, then saved)
+    const started = Date.now();
     for (const d of matterDocs) {
       let status = d.indexStatus;
+      if (Date.now() - started > 150_000) {
+        // Leave the rest for the next message; the answer still has to fit in the request.
+        if (status === "ready") scope.versions.push({ versionId: d.versionId, documentId: d.id, name: d.title });
+        continue;
+      }
       if ((!status && budget > 0) || (status === "needs_ocr" && scans > 0)) {
         if (status === "needs_ocr") scans--;
         else budget--;
