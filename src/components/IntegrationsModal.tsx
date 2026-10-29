@@ -3,6 +3,7 @@
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   Settings,
   Shield,
@@ -23,6 +24,12 @@ import {
   Zap,
   Info,
 } from "lucide-react";
+
+// The signature editor (fonts, colours, pictures) loads only when it's opened.
+const SignatureEditor = dynamic(() => import("@/components/mail/SignatureEditor"), {
+  ssr: false,
+  loading: () => <div className="h-[260px] rounded-xl border border-line bg-white" />,
+});
 
 const navItems = [
   { key: "general", label: "General", icon: Settings },
@@ -419,9 +426,32 @@ export default function IntegrationsModal({
   const [roundDurations, setRoundDurations] = useState(true);
   const [requireNonBillableReason, setRequireNonBillableReason] = useState(true);
 
+  // Email signature: saved per person (/api/me/signature), added under emails sent from LawPower.
   const [startWithSignature, setStartWithSignature] = useState(true);
-  const [signatureText, setSignatureText] = useState("");
+  const [signatureHtml, setSignatureHtml] = useState("");
+  const [savedSignatureHtml, setSavedSignatureHtml] = useState("");
+  const [signatureLoaded, setSignatureLoaded] = useState(false);
+  const [signatureSaving, setSignatureSaving] = useState(false);
   const [signatureSaved, setSignatureSaved] = useState(false);
+  const [signatureError, setSignatureError] = useState<string | null>(null);
+  useEffect(() => {
+    if (active !== "mail" || signatureLoaded) return;
+    let live = true;
+    fetch("/api/me/signature")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { on?: boolean; html?: string; ready?: boolean } | null) => {
+        if (!live) return;
+        setStartWithSignature(d?.on !== false);
+        setSignatureHtml(d?.html ?? "");
+        setSavedSignatureHtml(d?.html ?? "");
+        if (d && d.ready === false) setSignatureError("Signatures can't be saved until the database is updated (migration 0056).");
+        setSignatureLoaded(true);
+      })
+      .catch(() => live && setSignatureLoaded(true));
+    return () => {
+      live = false;
+    };
+  }, [active, signatureLoaded]);
 
   const [categoryPolicy, setCategoryPolicy] = useState<Record<string, MailPolicy>>(
     Object.fromEntries(mailCategories.map((c) => [c.key, "Always ask" as MailPolicy]))
@@ -448,9 +478,34 @@ export default function IntegrationsModal({
     setTimeout(() => setFlag(false), 1600);
   }
 
+  async function saveSignature(body: { on?: boolean; html?: string }) {
+    setSignatureSaving(true);
+    setSignatureError(null);
+    try {
+      const r = await fetch("/api/me/signature", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const d = (await r.json().catch(() => ({}))) as { on?: boolean; html?: string; error?: string };
+      if (!r.ok) throw new Error(d.error ?? "Couldn't save the signature. Please try again.");
+      if (body.html !== undefined) {
+        setSavedSignatureHtml(body.html);
+        setSignatureSaved(true);
+        setTimeout(() => setSignatureSaved(false), 1800);
+      }
+      return true;
+    } catch (e) {
+      setSignatureError((e as Error).message);
+      return false;
+    } finally {
+      setSignatureSaving(false);
+    }
+  }
+
   function handleSaveSignature() {
-    setSignatureSaved(true);
-    setTimeout(() => setSignatureSaved(false), 1800);
+    void saveSignature({ html: signatureHtml, on: startWithSignature });
+  }
+
+  async function handleToggleSignature(on: boolean) {
+    setStartWithSignature(on);
+    if (!(await saveSignature({ on }))) setStartWithSignature(!on);
   }
 
   function handleSavePolicy() {
@@ -867,40 +922,42 @@ export default function IntegrationsModal({
                 <div className="mb-2">
                   <div className="text-[15px] font-semibold mb-1.5">Your email signature</div>
                   <p className="text-[13.5px] text-muted mb-4 max-w-[720px]">
-                    Added to the bottom of a reply when you open it, so you can edit or delete it
-                    before sending. It survives a draft written by LawPower AI.
+                    Added under your message when you send an email, reply or forward from LawPower.
+                    You can leave it off any single email. Pictures, fonts, colours and links all
+                    come through in the recipient&apos;s mail.
                   </p>
 
                   <div className="flex items-center justify-between gap-4 mb-5">
                     <div>
-                      <div className="text-[14px] font-medium mb-0.5">Start replies with my signature</div>
+                      <div className="text-[14px] font-medium mb-0.5">Add my signature to new emails</div>
                       <p className="text-[12.5px] text-muted">
-                        Off leaves the editor empty — useful if you sign off differently per matter.
+                        Off: it&apos;s still there, but unticked, in each email. Handy if you sign off differently per matter.
                       </p>
                     </div>
-                    <SettingsToggle checked={startWithSignature} onChange={setStartWithSignature} />
+                    <SettingsToggle checked={startWithSignature} onChange={(v) => void handleToggleSignature(v)} />
                   </div>
 
-                  <div className="text-[14.5px] font-semibold mb-2">Signature</div>
-                  <textarea
-                    value={signatureText}
-                    onChange={(e) => setSignatureText(e.target.value.slice(0, 4000))}
-                    placeholder={
-                      "Saul Goodman\nPartner, Tax & Drugs Law Firm\n+1 505 503 4455 · saul@example.com\n\nThis message is confidential and may be privileged. If you received it in error, please delete it and notify the sender."
-                    }
-                    rows={7}
-                    className="w-full bg-white border border-line rounded-xl px-4 py-3.5 text-[13.5px] font-mono outline-none resize-y placeholder:text-muted-light"
-                  />
-                  <div className="text-[12.5px] text-muted-light mt-1.5">{signatureText.length} / 4000</div>
+                  {signatureLoaded ? (
+                    <SignatureEditor value={signatureHtml} onChange={setSignatureHtml} />
+                  ) : (
+                    <div className="h-[260px] rounded-xl border border-line bg-white" />
+                  )}
 
-                  <div className="flex items-center gap-3 mt-3 mb-9">
+                  {signatureError && <div className="mt-3 rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-4 py-2.5 text-[13px]">{signatureError}</div>}
+
+                  <div className="flex items-center gap-3 mt-4 mb-9">
                     <button
                       onClick={handleSaveSignature}
-                      className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
+                      disabled={signatureSaving || !signatureLoaded || signatureHtml === savedSignatureHtml}
+                      className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors disabled:opacity-50"
                     >
-                      Save signature
+                      {signatureSaving ? "Saving…" : "Save signature"}
                     </button>
-                    {signatureSaved && <span className="text-[13px] text-green-600 font-medium">Saved</span>}
+                    {signatureSaved ? (
+                      <span className="text-[13px] text-green-600 font-medium">Saved</span>
+                    ) : signatureLoaded && signatureHtml !== savedSignatureHtml ? (
+                      <span className="text-[13px] text-muted">Unsaved changes</span>
+                    ) : null}
                   </div>
                 </div>
 

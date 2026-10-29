@@ -147,3 +147,27 @@ a {
 .lp-editor img { max-width: 100%; height: auto; border-radius: 8px; }
 .lp-editor img.ProseMirror-selectednode { outline: 2px solid #AEB8C6; }
 .lp-editor p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--color-muted, #9ca3af); float: left; height: 0; pointer-events: none; }
+
+/* Email signature editor: src/components/mail/SignatureEditor.tsx. Lines sit
+   close together as in a sent email (mail apps get margin:0 on each line). */
+.lp-sig { line-height: 1.4; color: #222222; min-height: 150px; }
+.lp-sig p { margin: 0; min-height: 1.4em; }
+.lp-sig ul { list-style: disc; padding-left: 1.4em; margin: 0; }
+.lp-sig ol { list-style: decimal; padding-left: 1.4em; margin: 0; }
+.lp-sig li > p { min-height: 0; }
+.lp-sig a { color: #0563C1; text-decoration: underline; }
+.lp-sig hr { border: 0; border-top: 1px solid #C9CED6; margin: 8px 0; }
+.lp-sig hr.ProseMirror-selectednode { border-top-color: #5E6E8C; }
+.lp-sig img { max-width: 100%; vertical-align: bottom; }
+.lp-sig [data-resize-container] { vertical-align: bottom; max-width: 100%; }
+.lp-sig [data-resize-wrapper] { max-width: 100%; }
+.lp-sig [data-resize-container].ProseMirror-selectednode [data-resize-wrapper],
+.lp-sig [data-resize-container][data-resize-state="true"] [data-resize-wrapper] { outline: 2px solid #AEB8C6; outline-offset: 1px; }
+.lp-sig [data-resize-handle] { width: 10px; height: 10px; background: #fff; border: 1.5px solid #5E6E8C; border-radius: 3px; opacity: 0; z-index: 2; transition: opacity 0.12s; }
+.lp-sig [data-resize-handle="top-left"] { transform: translate(-50%, -50%); cursor: nwse-resize; }
+.lp-sig [data-resize-handle="top-right"] { transform: translate(50%, -50%); cursor: nesw-resize; }
+.lp-sig [data-resize-handle="bottom-left"] { transform: translate(-50%, 50%); cursor: nesw-resize; }
+.lp-sig [data-resize-handle="bottom-right"] { transform: translate(50%, 50%); cursor: nwse-resize; }
+.lp-sig [data-resize-container]:hover [data-resize-handle],
+.lp-sig [data-resize-container].ProseMirror-selectednode [data-resize-handle],
+.lp-sig [data-resize-container][data-resize-state="true"] [data-resize-handle] { opacity: 1; }

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { X, Send, Info, ExternalLink, Loader2, CheckCircle2 } from "lucide-react";
 import { subjectWithTag, composeLinks } from "@/lib/mail/matterTag";
+import { signatureText } from "@/lib/mail/signatureHtml";
+import SignaturePreview from "@/components/mail/SignaturePreview";
 
 type Provider = "google" | "microsoft";
 
@@ -67,6 +69,23 @@ export default function ComposeEmail({
       live = false;
     };
   }, [forwardMessage?.provider, replyMessage?.provider]);
+  // The person's signature (Settings → Mail automation), ticked by default when it's switched on.
+  const [signature, setSignature] = useState<string>("");
+  const [withSig, setWithSig] = useState(false);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/me/signature")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { on?: boolean; html?: string } | null) => {
+        if (!live || !d?.html?.trim()) return;
+        setSignature(d.html);
+        setWithSig(d.on !== false);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
   const canSendHere = !!senders?.length;
   const nativeForward = !!forwardMessage && from === forwardMessage.provider;
   const nativeReply = !!replyMessage && from === replyMessage.provider;
@@ -78,7 +97,7 @@ export default function ComposeEmail({
       const res = await fetch("/api/mail/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: from, to, cc, subject: finalSubject, body, forwardMessageId: nativeForward ? forwardMessage!.id : undefined, replyMessageId: nativeReply ? replyMessage!.id : undefined }),
+        body: JSON.stringify({ provider: from, to, cc, subject: finalSubject, body, signature: withSig && !!signature, forwardMessageId: nativeForward ? forwardMessage!.id : undefined, replyMessageId: nativeReply ? replyMessage!.id : undefined }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? "The email couldn't be sent. Please try again.");
@@ -94,7 +113,14 @@ export default function ComposeEmail({
   const [subject, setSubject] = useState(initialSubject);
   const [body, setBody] = useState(initialBody);
   const finalSubject = matterNumber ? subjectWithTag(subject, matterNumber) : subject.trim();
-  const trimmed = body.length > MAX_LINK_BODY ? `${body.slice(0, MAX_LINK_BODY)}\n\n[… shortened]` : body;
+  // Opening in Outlook / Gmail instead: the signature goes along as plain text,
+  // under the message and above any forwarded email.
+  const linkBody = withSig && signature ? (() => {
+    const i = body.search(/\n*-{6,} Forwarded message -{6,}/);
+    const note = (i < 0 ? body : body.slice(0, i)).trimEnd();
+    return `${note}\n\n${signatureText(signature)}${i < 0 ? "" : body.slice(i)}`;
+  })() : body;
+  const trimmed = linkBody.length > MAX_LINK_BODY ? `${linkBody.slice(0, MAX_LINK_BODY)}\n\n[… shortened]` : linkBody;
   const links = composeLinks(to, finalSubject, trimmed);
   const list: Provider[] = providers.length ? [...new Set(providers)] : ["google", "microsoft"];
   const label = (p: Provider) => (p === "google" ? "Gmail" : "Outlook");
@@ -148,10 +174,23 @@ export default function ComposeEmail({
           <label className="flex flex-col gap-1">
             <span className="text-[12.5px] font-semibold text-muted">Message</span>
             <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={9} className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none resize-y" />
-            {body.length > MAX_LINK_BODY && !canSendHere && (
+            {linkBody.length > MAX_LINK_BODY && !canSendHere && (
               <span className="text-[12px] text-[#8A4B14]">Long message: only the first part is carried over. Paste the rest in your mail app if needed.</span>
             )}
           </label>
+          {signature && (
+            <div className="flex flex-col gap-1.5">
+              <label className="flex items-center gap-2 text-[12.5px] font-semibold text-muted cursor-pointer w-fit">
+                <input type="checkbox" checked={withSig} onChange={(e) => setWithSig(e.target.checked)} className="w-3.5 h-3.5 accent-[#5E6E8C]" />
+                Add my signature
+              </label>
+              {withSig && (
+                <div className="bg-white border border-line rounded-xl px-3 py-2.5 max-h-[220px] overflow-y-auto">
+                  <SignaturePreview html={signature} />
+                </div>
+              )}
+            </div>
+          )}
           {nativeForward && (
             <div className="flex gap-2 text-[12.5px] bg-[#E7F6EE] text-[#155C3A] rounded-xl px-3 py-2">
               <Info size={14} className="flex-shrink-0 mt-0.5" />

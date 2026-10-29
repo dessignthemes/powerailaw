@@ -29,6 +29,8 @@ export type OutgoingMessage = {
   attachments?: { name: string; mime: string; bytes: Uint8Array }[];
   forward?: { messageId: string }; // forward this email (its attachments go along)
   reply?: { messageId: string }; // reply in the same conversation (the original is quoted by the mailbox)
+  signature?: { html: string; text: string }; // the sender's signature, added under their message
+  forwardComment?: string; // (set here) Outlook forward: the note above the original, as HTML
 };
 
 const EMAIL = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
@@ -45,6 +47,24 @@ export function parseAddresses(raw: string | string[] | undefined): string[] {
 
 const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] ?? c);
 export const textToHtml = (t: string) => `<div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5">${escapeHtml(t).replace(/\n/g, "<br>")}</div>`;
+
+// Puts the signature under the person's own message, above any copied
+// "Forwarded message" block.
+const FORWARD_MARK = /\n*-{6,} Forwarded message -{6,}/;
+export function withSignature(m: OutgoingMessage): OutgoingMessage {
+  if (!m.signature) return m;
+  const i = m.text.search(FORWARD_MARK);
+  const note = (i < 0 ? m.text : m.text.slice(0, i)).trimEnd();
+  const rest = i < 0 ? "" : m.text.slice(i);
+  const noteHtml = `${m.html ?? textToHtml(note)}${m.signature.html}`;
+  return {
+    ...m,
+    text: `${note}\n\n${m.signature.text}${rest}`,
+    html: `${noteHtml}${rest ? textToHtml(rest.replace(/^\n+/, "\n")) : ""}`,
+    forwardComment: noteHtml,
+    signature: undefined,
+  };
+}
 
 // Which of the person's mailboxes can send (prefer the one asked for).
 export async function sendingMailbox(userId: string, prefer?: MailProvider | null) {
@@ -78,7 +98,7 @@ async function sendOutlook(token: string, m: OutgoingMessage) {
     // written above the copied "Forwarded message" block goes with it.
     const id = encodeURIComponent(m.forward.messageId);
     const note = m.text.split(/-{6,} Forwarded message -{6,}/)[0].trim();
-    await graph(token, `/me/messages/${id}/forward`, { comment: textToHtml(note), toRecipients: rcpt(m.to), ...(m.cc?.length ? { message: { ccRecipients: rcpt(m.cc) } } : {}) });
+    await graph(token, `/me/messages/${id}/forward`, { comment: m.forwardComment ?? textToHtml(note), toRecipients: rcpt(m.to), ...(m.cc?.length ? { message: { ccRecipients: rcpt(m.cc) } } : {}) });
     return;
   }
   const attachments = (m.attachments ?? []).map((a) => ({ "@odata.type": "#microsoft.graph.fileAttachment", name: a.name, contentType: a.mime, contentBytes: Buffer.from(a.bytes).toString("base64") }));
@@ -154,7 +174,8 @@ async function sendGmail(token: string, m: OutgoingMessage) {
 }
 
 // Sends from the person's own mailbox and records it in the email log.
-export async function sendFromMailbox(orgId: string | null, userId: string, m: OutgoingMessage, opts: { prefer?: MailProvider | null; kind?: string } = {}) {
+export async function sendFromMailbox(orgId: string | null, userId: string, message: OutgoingMessage, opts: { prefer?: MailProvider | null; kind?: string } = {}) {
+  const m = withSignature(message);
   const box = await sendingMailbox(userId, opts.prefer);
   if (!box) throw new SendError("Reconnect Outlook (or Gmail) once and allow “Send email”, so LawPower can send from your mailbox.", 403, "needs_permission");
   if (!m.to.length) throw new SendError("Add at least one recipient.");
