@@ -27,6 +27,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import { initialsFor } from "@/lib/initials";
 import SelectBox from "@/components/SelectBox";
 import { MatterPicker, formatWhen, formatSize, type Doc, type DocVersion } from "@/components/pdf/DocumentList";
 import {
@@ -75,7 +76,13 @@ const blackBtn =
 // openAdd: open the Add documents window right away (e.g. from "Go to Documents").
 export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = false }: { matterId?: string; openAdd?: boolean }) {
   const router = useRouter();
-  const { matters, mattersLoaded, clients } = useWorkspaceData();
+  const { matters, mattersLoaded, clients, teamMembers } = useWorkspaceData();
+  // Staff column: initials of the person who saved the latest version (full name on hover).
+  const nameOf = (email: string | null | undefined) => (email ? teamMembers.find((m) => m.email.toLowerCase() === email.toLowerCase())?.fullName || email : null);
+  const [sortBy, setSortBy] = useState<{ key: "modified" | "created" | "name" | "staff"; desc: boolean }>({ key: "modified", desc: true });
+  const createdOf = (d: { createdAt: string; versions: { createdAt: string }[] }) => d.versions[d.versions.length - 1]?.createdAt ?? d.createdAt;
+  const modifiedOf = (d: { updatedAt: string; versions: { createdAt: string }[] }) => d.versions[0]?.createdAt ?? d.updatedAt;
+  const shortDay = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   // E-signature requests for this workspace, grouped by document.
   const [signing, setSigning] = useState<{ doc: Doc; version: DocVersion } | null>(null);
   // Read-only preview of one PDF version.
@@ -170,9 +177,19 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
 
   const q = query.trim().toLowerCase();
   const shown = useMemo(() => {
-    if (!q) return docs;
+    const sorted = [...docs].sort((a, b) => {
+      const k = sortBy.key;
+      const r =
+        k === "name"
+          ? a.title.localeCompare(b.title)
+          : k === "staff"
+            ? (nameOf(a.versions[0]?.createdByEmail) ?? "").localeCompare(nameOf(b.versions[0]?.createdByEmail) ?? "")
+            : (k === "created" ? createdOf(a) : modifiedOf(a)).localeCompare(k === "created" ? createdOf(b) : modifiedOf(b));
+      return sortBy.desc ? -r : r;
+    });
+    if (!q) return sorted;
     const words = q.split(/\s+/);
-    return docs.filter((d) => {
+    return sorted.filter((d) => {
       const hay = [
         d.title,
         d.matterTitle ?? "",
@@ -182,7 +199,8 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
         .toLowerCase();
       return words.every((w) => hay.includes(w));
     });
-  }, [docs, q]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docs, q, sortBy, teamMembers]);
 
   async function download(v: DocVersion) {
     try {
@@ -344,6 +362,30 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
           </div>
         ) : (
           <div className="bg-cream rounded-xl divide-y divide-line">
+            {/* Column headings (click to sort) */}
+            <div className="flex items-center gap-3 px-5 py-2 text-[12px] font-semibold text-muted">
+              <span className="w-4" />
+              <span className="w-4" />
+              {(
+                [
+                  ["name", "Name", "flex-1 min-w-[220px] text-left"],
+                  ["staff", "Staff", "w-12 text-center ml-auto"],
+                  ["created", "Created", "w-[104px] text-left"],
+                  ["modified", "Modified", "w-[104px] text-left"],
+                ] as const
+              ).map(([k, label, cls]) => (
+                <button
+                  key={k}
+                  onClick={() => setSortBy((s) => ({ key: k, desc: s.key === k ? !s.desc : k !== "name" && k !== "staff" }))}
+                  className={`${cls} hover:text-ink flex items-center gap-1 ${k === "staff" ? "justify-center" : ""}`}
+                  title={`Sort by ${label.toLowerCase()}`}
+                >
+                  {label}
+                  {sortBy.key === k && <span aria-hidden>{sortBy.desc ? "↓" : "↑"}</span>}
+                </button>
+              ))}
+              <span className="w-8" />
+            </div>
             {shown.map((d) => {
               const latest = d.versions[0];
               const type = typeOf(latest);
@@ -375,7 +417,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                       <div className="text-[12.5px] text-muted">
                         {!fixedMatterId && <>{d.matterTitle ?? "Matter"}, </>}
                         version {latest?.versionNumber ?? 1} of {d.versions.length}, saved {latest ? formatWhen(latest.createdAt) : ""}
-                        {latest?.createdByEmail ? ` by ${latest.createdByEmail}` : ""}
+                        {latest?.createdByEmail ? ` by ${nameOf(latest.createdByEmail)}` : ""}
                       </div>
                     </div>
                     {latest && type === "pdf" && (
@@ -408,6 +450,29 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                         <Download size={13} strokeWidth={2} /> Download
                       </button>
                     )}
+                    {(() => {
+                      const by = latest?.createdByEmail ?? null;
+                      const first = d.versions[d.versions.length - 1]?.createdByEmail ?? null;
+                      const who = nameOf(by);
+                      const tip = [who ? `Last saved by ${who}` : "", first && first !== by ? `added by ${nameOf(first)}` : ""].filter(Boolean).join(" · ");
+                      return (
+                        <>
+                          <span className="w-12 flex justify-center" title={tip || undefined}>
+                            {by ? (
+                              <span className="w-8 h-8 rounded-full bg-card-alt border border-line text-[11px] font-semibold text-muted flex items-center justify-center">{initialsFor(who, by)}</span>
+                            ) : (
+                              <span className="text-muted">—</span>
+                            )}
+                          </span>
+                          <span className="w-[104px] text-[12.5px] whitespace-nowrap" title={new Date(createdOf(d)).toLocaleString()}>
+                            {shortDay(createdOf(d))}
+                          </span>
+                          <span className="w-[104px] text-[12.5px] whitespace-nowrap" title={new Date(modifiedOf(d)).toLocaleString()}>
+                            {shortDay(modifiedOf(d))}
+                          </span>
+                        </>
+                      );
+                    })()}
                     <button
                       onClick={() => remove(d)}
                       disabled={working}
