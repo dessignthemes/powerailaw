@@ -46,9 +46,9 @@ export default function MatterNumberEdit({ matterId, number, onSaved }: { matter
           }}
           title={number ? "Change the matter number" : "Add a matter number"}
           aria-label={number ? "Change the matter number" : "Add a matter number"}
-          className="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-chip transition-colors"
+          className="w-7 h-7 rounded-full flex items-center justify-center bg-chip text-ink hover:bg-btn transition-colors"
         >
-          <Pencil size={12} strokeWidth={1.75} />
+          <Pencil size={13} strokeWidth={1.75} />
         </button>
       </div>
     );
