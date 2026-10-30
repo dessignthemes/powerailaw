@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, Loader2, Lock } from "lucide-react";
 import { MATTER_TYPES, CONTACT_WAYS, type LeadForm } from "@/lib/leads";
+import BookingPicker from "./BookingPicker";
 
 const EMPTY: LeadForm = {
   title: "", firstName: "", lastName: "", company: "", email: "", phone: "", street: "", city: "", state: "NJ", zip: "",
@@ -19,6 +20,7 @@ export default function IntakeForm({ firmKey, firmName, logoUrl, invite, prefill
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [booking, setBooking] = useState<string | null>(null); // online booking token, when the firm offers it
   const set = (p: Partial<LeadForm>) => setF((x) => ({ ...x, ...p }));
 
   async function submit(e: React.FormEvent) {
@@ -33,8 +35,9 @@ export default function IntakeForm({ firmKey, firmName, logoUrl, invite, prefill
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...f, invite, website: honey, startedAt }),
       });
-      const d = (await r.json().catch(() => ({}))) as { error?: string };
+      const d = (await r.json().catch(() => ({}))) as { error?: string; booking?: string | null };
       if (!r.ok) throw new Error(d.error ?? "Your form couldn't be sent. Please try again.");
+      setBooking(d.booking ?? null);
       setDone(true);
       if (typeof window !== "undefined") window.scrollTo({ top: 0 });
     } catch (err) {
@@ -59,12 +62,15 @@ export default function IntakeForm({ firmKey, firmName, logoUrl, invite, prefill
 
         {done ? (
           <div className="py-6">
-            <div className="flex items-start gap-3 rounded-2xl bg-[#EFF8F2] px-5 py-4">
+            <div className="flex items-start gap-3 rounded-2xl bg-[#EFF8F2] px-5 py-4 mb-7">
               <CheckCircle2 size={22} className="text-[#00A35F] flex-shrink-0 mt-0.5" />
               <div className="text-[15px] leading-relaxed">
-                We&apos;ve received your information. Someone from our office will contact you soon{f.preferredContact ? ` by ${f.preferredContact.toLowerCase()}` : ""}.
+                {booking
+                  ? "We've received your information. Pick a time below for your consultation."
+                  : `We've received your information. Someone from our office will contact you soon${f.preferredContact ? ` by ${f.preferredContact.toLowerCase()}` : ""}.`}
               </div>
             </div>
+            {booking && <BookingPicker firmKey={firmKey} token={booking} firmName={firmName} />}
           </div>
         ) : (
           <form onSubmit={submit} noValidate>

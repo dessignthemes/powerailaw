@@ -3,7 +3,9 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Search, Send, Globe, Copy, Check, X, ChevronDown, UserPlus, Phone, Mail, Trash2, ExternalLink, Code2 } from "lucide-react";
+import { Loader2, Search, Send, Globe, Copy, Check, X, ChevronDown, UserPlus, Phone, Mail, Trash2, ExternalLink, Code2, CalendarPlus, CalendarCheck, Zap, Link2 } from "lucide-react";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import { DEFAULT_LEAD_SETTINGS, type LeadSettings } from "@/lib/leads";
 import { STATUS_LABEL, leadName, type Lead, type LeadStatus } from "@/lib/leads";
 
 // Potential leads: prospective clients who filled in the intake form (from the
@@ -165,6 +167,258 @@ function WebsiteModal({ url, onClose }: { url: string; onClose: () => void }) {
   );
 }
 
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} className={`w-10 h-6 rounded-full relative transition-colors flex-shrink-0 ${on ? "bg-dark" : "bg-line"}`}>
+      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${on ? "left-[18px]" : "left-0.5"}`} />
+    </button>
+  );
+}
+
+function AutomationModal({ initial, onClose, onSaved }: { initial: LeadSettings; onClose: () => void; onSaved: (s: LeadSettings) => void }) {
+  const { teamMembers, meEmail } = useWorkspaceData();
+  const [s, setS] = useState<LeadSettings>(initial);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const b = s.booking;
+  const setB = (p: Partial<LeadSettings["booking"]>) => setS((x) => ({ ...x, booking: { ...x.booking, ...p } }));
+  const setF = (p: Partial<LeadSettings["followup"]>) => setS((x) => ({ ...x, followup: { ...x.followup, ...p } }));
+  const setR = (p: Partial<LeadSettings["reminder"]>) => setS((x) => ({ ...x, reminder: { ...x.reminder, ...p } }));
+  const me = teamMembers.find((m) => m.email.toLowerCase() === (meEmail ?? "").toLowerCase());
+  const staffId = b.staffId ?? me?.id ?? teamMembers[0]?.id ?? null;
+  async function save() {
+    setBusy(true);
+    setError(null);
+    try {
+      const d = await fetch("/api/leads/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...s, booking: { ...b, staffId } }) }).then(readJson);
+      onSaved(d.settings as LeadSettings);
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(false);
+    }
+  }
+  const small = "bg-white border border-line rounded-lg px-2.5 py-1.5 text-[13px] outline-none focus:border-btn-ring";
+  const box = (on: boolean) => `rounded-2xl border px-4 py-3.5 mb-3 ${on ? "border-btn bg-card-alt/50" : "border-line"}`;
+  return (
+    <Modal title="Lead automation" onClose={onClose}>
+      <div className={box(b.enabled)}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[14.5px] font-semibold">Online booking</div>
+            <div className="text-[12.5px] text-muted">After the intake form, prospects pick a consultation time from the open times in the calendar. It goes straight into that calendar with an invitation to them.</div>
+          </div>
+          <Toggle on={b.enabled} onChange={(v) => setB({ enabled: v })} label="Online booking" />
+        </div>
+        {b.enabled && (
+          <div className="grid grid-cols-2 gap-3 mt-3 text-[13px]">
+            <label className="flex flex-col gap-1">
+              <span className="text-muted">Consultations with</span>
+              <select value={staffId ?? ""} onChange={(e) => setB({ staffId: e.target.value || null })} className={small}>
+                {teamMembers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.fullName || m.email}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-muted">Length</span>
+              <select value={b.minutes} onChange={(e) => setB({ minutes: Number(e.target.value) })} className={small}>
+                {[15, 20, 30, 45, 60, 90].map((m) => (
+                  <option key={m} value={m}>
+                    {m} minutes
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="col-span-2 flex flex-col gap-1">
+              <span className="text-muted">Days</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {DAY_NAMES.map((d, i) => (
+                  <button key={d} type="button" onClick={() => setB({ days: b.days.includes(i) ? b.days.filter((x) => x !== i) : [...b.days, i].sort((x, y) => x - y) })} className={`px-3 py-1.5 rounded-full text-[12.5px] font-medium ${b.days.includes(i) ? "bg-btn-hover" : "bg-chip text-muted"}`}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="flex flex-col gap-1">
+              <span className="text-muted">From</span>
+              <input type="time" value={b.start} onChange={(e) => setB({ start: e.target.value })} className={small} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-muted">Until</span>
+              <input type="time" value={b.end} onChange={(e) => setB({ end: e.target.value })} className={small} />
+            </label>
+            <label className="col-span-2 flex flex-col gap-1">
+              <span className="text-muted">Where</span>
+              <input value={b.location} onChange={(e) => setB({ location: e.target.value })} placeholder="e.g. 445 Brick Blvd, Suite 205, Brick, NJ, or Phone call" className={small} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-muted">Earliest booking</span>
+              <select value={b.noticeHours} onChange={(e) => setB({ noticeHours: Number(e.target.value) })} className={small}>
+                {[2, 4, 12, 24, 48, 72].map((h) => (
+                  <option key={h} value={h}>
+                    {h < 24 ? `${h} hours` : `${h / 24} day${h > 24 ? "s" : ""}`} ahead
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-muted">Up to</span>
+              <select value={b.horizonDays} onChange={(e) => setB({ horizonDays: Number(e.target.value) })} className={small}>
+                {[7, 14, 21, 30].map((d) => (
+                  <option key={d} value={d}>
+                    {d} days ahead
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
+      </div>
+
+      <div className={box(s.followup.enabled)}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[14.5px] font-semibold">Follow-up emails</div>
+            <div className="text-[12.5px] text-muted">To leads who haven&apos;t booked a consultation (with their booking link when online booking is on), or haven&apos;t filled in a link you sent. Stops once they book, are marked contacted, or become a client.</div>
+          </div>
+          <Toggle on={s.followup.enabled} onChange={(v) => setF({ enabled: v })} label="Follow-up emails" />
+        </div>
+        {s.followup.enabled && (
+          <div className="mt-3 text-[13px] flex flex-col gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              Send after
+              <select value={s.followup.afterDays} onChange={(e) => setF({ afterDays: Number(e.target.value) })} className={small}>
+                {[1, 2, 3, 5, 7].map((d) => (
+                  <option key={d} value={d}>
+                    {d} day{d > 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+              of no reply, up to
+              <select value={s.followup.maxCount} onChange={(e) => setF({ maxCount: Number(e.target.value) })} className={small}>
+                {[1, 2, 3].map((d) => (
+                  <option key={d} value={d}>
+                    {d} time{d > 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <textarea value={s.followup.message} onChange={(e) => setF({ message: e.target.value })} rows={3} className={`${small} resize-y`} aria-label="Follow-up message" />
+          </div>
+        )}
+      </div>
+
+      <div className={box(s.reminder.enabled)}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[14.5px] font-semibold">Consultation reminders</div>
+            <div className="text-[12.5px] text-muted">An email to the prospective client before their consultation.</div>
+          </div>
+          <Toggle on={s.reminder.enabled} onChange={(v) => setR({ enabled: v })} label="Reminders" />
+        </div>
+        {s.reminder.enabled && (
+          <div className="mt-3 text-[13px] flex items-center gap-2">
+            Send
+            <select value={s.reminder.hoursBefore} onChange={(e) => setR({ hoursBefore: Number(e.target.value) })} className={small}>
+              {[2, 4, 24, 48].map((h) => (
+                <option key={h} value={h}>
+                  {h < 24 ? `${h} hours` : `${h / 24} day${h > 24 ? "s" : ""}`}
+                </option>
+              ))}
+            </select>
+            before
+          </div>
+        )}
+      </div>
+      <p className="text-[12px] text-muted mb-3">Emails go from {teamMembers.find((m) => m.id === staffId)?.fullName || "the consultation person"}&apos;s own mailbox, with their signature.</p>
+      {error && <div className="mb-3 rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-3.5 py-2 text-[13px]">{error}</div>}
+      <div className="flex justify-end gap-2">
+        <button onClick={onClose} className="px-4 py-2.5 rounded-full text-[13.5px] font-medium bg-chip hover:bg-btn">
+          Cancel
+        </button>
+        <button onClick={save} disabled={busy} className="px-4 py-2.5 rounded-full text-[13.5px] font-medium bg-btn hover:bg-btn-hover disabled:opacity-50 flex items-center gap-2">
+          {busy && <Loader2 size={14} className="animate-spin" />} Save
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function BookModal({ lead, settings, onClose, onBooked }: { lead: Lead; settings: LeadSettings; onClose: () => void; onBooked: (l: Lead) => void }) {
+  const { teamMembers, meEmail } = useWorkspaceData();
+  const me = teamMembers.find((m) => m.email.toLowerCase() === (meEmail ?? "").toLowerCase());
+  const [date, setDate] = useState(() => (lead.appointmentAt ? new Date(lead.appointmentAt) : new Date(Date.now() + 86400_000)).toLocaleDateString("en-CA"));
+  const [time, setTime] = useState(lead.appointmentAt ? new Date(lead.appointmentAt).toTimeString().slice(0, 5) : "10:00");
+  const [minutes, setMinutes] = useState(settings.booking.minutes);
+  const [staffId, setStaffId] = useState(lead.appointmentWith ?? settings.booking.staffId ?? me?.id ?? "");
+  const [location, setLocation] = useState(lead.appointmentLocation || settings.booking.location);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function go() {
+    setBusy(true);
+    setError(null);
+    try {
+      const d = await fetch(`/api/leads/${lead.id}/book`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ start: new Date(`${date}T${time}`).toISOString(), minutes, staffId, location }) }).then(readJson);
+      onBooked(d.lead as Lead);
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(false);
+    }
+  }
+  return (
+    <Modal title={`Book a consultation with ${leadName(lead)}`} onClose={onClose}>
+      <div className="grid grid-cols-2 gap-3 text-[13px] mb-3">
+        <label className="flex flex-col gap-1">
+          <span className="text-muted">Date</span>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={input} />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-muted">Time</span>
+          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={input} />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-muted">With</span>
+          <select value={staffId} onChange={(e) => setStaffId(e.target.value)} className={input}>
+            {teamMembers.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.fullName || m.email}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-muted">Length</span>
+          <select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} className={input}>
+            {[15, 20, 30, 45, 60, 90].map((m) => (
+              <option key={m} value={m}>
+                {m} minutes
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="col-span-2 flex flex-col gap-1">
+          <span className="text-muted">Where</span>
+          <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Office, address, phone call or video link" className={input} />
+        </label>
+      </div>
+      <p className="text-[12.5px] text-muted mb-3">It goes in {teamMembers.find((m) => m.id === staffId)?.fullName || "their"}&apos;s calendar{lead.email ? `, and ${lead.email} gets a calendar invitation` : ""}.</p>
+      {error && <div className="mb-3 rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-3.5 py-2 text-[13px]">{error}</div>}
+      <div className="flex justify-end gap-2">
+        <button onClick={onClose} className="px-4 py-2.5 rounded-full text-[13.5px] font-medium bg-chip hover:bg-btn">
+          Cancel
+        </button>
+        <button onClick={go} disabled={busy || !staffId} className="px-4 py-2.5 rounded-full text-[13.5px] font-medium bg-btn hover:bg-btn-hover disabled:opacity-50 flex items-center gap-2">
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <CalendarPlus size={14} />} {lead.appointmentAt ? "Change time" : "Book"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 function Field({ label, value }: { label: string; value: string }) {
   if (!value.trim()) return null;
   return (
@@ -175,7 +429,11 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LeadRow({ lead, open, onToggle, onChange, onDelete }: { lead: Lead; open: boolean; onToggle: () => void; onChange: (l: Lead) => void; onDelete: (id: string) => void }) {
+function LeadRow({ lead, open, onToggle, onChange, onDelete, settings }: { lead: Lead; open: boolean; onToggle: () => void; onChange: (l: Lead) => void; onDelete: (id: string) => void; settings: LeadSettings }) {
+  const { teamMembers } = useWorkspaceData();
+  const [booking, setBooking] = useState(false);
+  const [bookLink, setBookLink] = useState<string | null>(null);
+  const apptText = lead.appointmentAt ? new Date(lead.appointmentAt).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null;
   const router = useRouter();
   const [notes, setNotes] = useState(lead.notes);
   const [busy, setBusy] = useState(false);
@@ -204,6 +462,11 @@ function LeadRow({ lead, open, onToggle, onChange, onDelete }: { lead: Lead; ope
           </div>
           <div className="text-[12.5px] text-muted truncate">{[lead.email, lead.phone].filter(Boolean).join(" · ") || "No contact details"}{lead.description ? ` · ${lead.description.slice(0, 120)}` : ""}</div>
         </div>
+        {apptText && lead.status !== "converted" && (
+          <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11.5px] font-semibold whitespace-nowrap bg-[#F1F7EF] text-[#2F5E2A]">
+            <CalendarCheck size={12} /> {apptText}
+          </span>
+        )}
         <span className={`px-2.5 py-1 rounded-full text-[11.5px] font-semibold whitespace-nowrap ${STATUS_CLS[lead.status]}`}>{STATUS_LABEL[lead.status]}</span>
         <span className="text-[12.5px] text-muted w-[92px] text-right whitespace-nowrap">{when(lead.submittedAt ?? lead.createdAt)}</span>
         <ChevronDown size={16} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} />
@@ -211,6 +474,36 @@ function LeadRow({ lead, open, onToggle, onChange, onDelete }: { lead: Lead; ope
       {open && (
         <div className="px-5 pb-5">
           {lead.status === "invited" && !lead.submittedAt && <div className="text-[13px] text-muted mb-3">Link sent {when(lead.createdAt)}; not filled in yet.</div>}
+          {apptText && (
+            <div className="flex items-center gap-2 flex-wrap rounded-xl bg-[#F1F7EF] text-[#2F5E2A] px-4 py-2.5 mb-3 text-[13.5px]">
+              <CalendarCheck size={15} />
+              <span>
+                <b>Consultation {apptText}</b>
+                {lead.appointmentWith && ` with ${teamMembers.find((m) => m.id === lead.appointmentWith)?.fullName ?? "the firm"}`}
+                {lead.appointmentLocation && ` · ${lead.appointmentLocation}`}
+                {lead.reminderSentAt && " · reminder sent"}
+              </span>
+              <span className="ml-auto flex gap-3 text-[13px] font-medium">
+                <button onClick={() => setBooking(true)} className="underline underline-offset-2">
+                  Change
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!window.confirm("Cancel this consultation? It's removed from the calendar and the invitation is cancelled.")) return;
+                    try {
+                      onChange((await fetch(`/api/leads/${lead.id}/book`, { method: "DELETE" }).then(readJson)).lead as Lead);
+                    } catch (e) {
+                      setError((e as Error).message);
+                    }
+                  }}
+                  className="underline underline-offset-2"
+                >
+                  Cancel
+                </button>
+              </span>
+            </div>
+          )}
+          {lead.followupsSent > 0 && <div className="text-[12.5px] text-muted mb-3">{lead.followupsSent} follow-up email{lead.followupsSent > 1 ? "s" : ""} sent, last {when(lead.lastFollowupAt)}.</div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 bg-white border border-line rounded-xl p-4 mb-3">
             <Field label="Name" value={[lead.title, lead.firstName, lead.lastName].filter(Boolean).join(" ")} />
             <Field label="Company" value={lead.company} />
@@ -238,6 +531,29 @@ function LeadRow({ lead, open, onToggle, onChange, onDelete }: { lead: Lead; ope
                 <UserPlus size={14} /> Open client card
               </Link>
             ) : null}
+            {lead.status !== "converted" && !apptText && (
+              <button onClick={() => setBooking(true)} className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5">
+                <CalendarPlus size={14} /> Book consultation
+              </button>
+            )}
+            {lead.status !== "converted" && settings.booking.enabled && settings.booking.staffId && lead.submittedAt && (
+              bookLink ? (
+                <CopyButton text={bookLink} label="Copy booking link" />
+              ) : (
+                <button
+                  onClick={async () => {
+                    try {
+                      setBookLink((await fetch(`/api/leads/${lead.id}/book`).then(readJson)).url);
+                    } catch (e) {
+                      setError((e as Error).message);
+                    }
+                  }}
+                  className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5"
+                >
+                  <Link2 size={14} /> Booking link
+                </button>
+              )
+            )}
             {lead.status !== "contacted" && lead.status !== "converted" && (
               <button onClick={() => patch({ status: "contacted" })} disabled={busy} className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
                 <Phone size={14} /> Mark contacted
@@ -295,6 +611,17 @@ function LeadRow({ lead, open, onToggle, onChange, onDelete }: { lead: Lead; ope
           {error && <div className="mt-2 text-[13px] text-[#9F1D1D]">{error}</div>}
         </div>
       )}
+      {booking && (
+        <BookModal
+          lead={lead}
+          settings={settings}
+          onClose={() => setBooking(false)}
+          onBooked={(l) => {
+            setBooking(false);
+            onChange(l);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -308,7 +635,18 @@ function LeadsInner() {
   const [tab, setTab] = useState<Tab | null>(null);
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(focus);
-  const [modal, setModal] = useState<"invite" | "website" | null>(null);
+  const [modal, setModal] = useState<"invite" | "website" | "automation" | null>(null);
+  const [settings, setSettings] = useState<LeadSettings>(DEFAULT_LEAD_SETTINGS);
+  const [settingsReady, setSettingsReady] = useState(false);
+  useEffect(() => {
+    fetch("/api/leads/settings")
+      .then(readJson)
+      .then((d) => {
+        setSettings(d.settings as LeadSettings);
+        setSettingsReady(true);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     fetch("/api/leads")
@@ -344,6 +682,9 @@ function LeadsInner() {
       <div className="flex items-start justify-between gap-4 mb-1 flex-wrap">
         <h1 className="text-[28px] font-semibold">Potential Leads</h1>
         <div className="flex items-center gap-2">
+          <button onClick={() => setModal("automation")} disabled={!settingsReady} title={settingsReady ? undefined : "Needs migration 0059"} className="bg-chip hover:bg-btn px-4 py-2.5 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-50">
+            <Zap size={15} /> Automation
+          </button>
           <button onClick={() => setModal("website")} disabled={!link} className="bg-chip hover:bg-btn px-4 py-2.5 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-50">
             <Code2 size={15} /> Website form
           </button>
@@ -366,6 +707,19 @@ function LeadsInner() {
           <span className="ml-auto">
             <CopyButton text={link} label="Copy link" />
           </span>
+          {settingsReady && (
+            <div className="w-full text-[12.5px] text-muted flex items-center gap-1.5">
+              <Zap size={13} />
+              {[
+                settings.booking.enabled ? `Online booking on (${settings.booking.minutes}-min consultations)` : "Online booking off",
+                settings.followup.enabled ? `follow-ups after ${settings.followup.afterDays} day${settings.followup.afterDays > 1 ? "s" : ""}` : "no follow-ups",
+                settings.reminder.enabled ? `reminders ${settings.reminder.hoursBefore < 24 ? `${settings.reminder.hoursBefore} hours` : `${settings.reminder.hoursBefore / 24} day${settings.reminder.hoursBefore > 24 ? "s" : ""}`} before` : "no reminders",
+              ].join(" · ")}
+              <button onClick={() => setModal("automation")} className="underline underline-offset-2 hover:text-ink ml-1">
+                Change
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -403,7 +757,7 @@ function LeadsInner() {
           </div>
         ) : (
           shown.map((l) => (
-            <LeadRow key={l.id} lead={l} open={openId === l.id} onToggle={() => setOpenId((o) => (o === l.id ? null : l.id))} onChange={update} onDelete={(id) => setLeads((list) => (list ?? []).filter((x) => x.id !== id))} />
+            <LeadRow key={l.id} lead={l} open={openId === l.id} onToggle={() => setOpenId((o) => (o === l.id ? null : l.id))} onChange={update} onDelete={(id) => setLeads((list) => (list ?? []).filter((x) => x.id !== id))} settings={settings} />
           ))
         )}
       </div>
@@ -418,6 +772,16 @@ function LeadsInner() {
         />
       )}
       {modal === "website" && link && <WebsiteModal url={link} onClose={() => setModal(null)} />}
+      {modal === "automation" && (
+        <AutomationModal
+          initial={settings}
+          onClose={() => setModal(null)}
+          onSaved={(st) => {
+            setSettings(st);
+            setModal(null);
+          }}
+        />
+      )}
     </div>
   );
 }

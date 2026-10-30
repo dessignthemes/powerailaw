@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { firmByKey, submitIntake, LeadError } from "@/lib/data/leads";
+import { bookingUrl, getLeadSettings } from "@/lib/data/leadAutomation";
 
 export const dynamic = "force-dynamic";
 
@@ -18,8 +19,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ key
       return NextResponse.json({ error: "Please try again." }, { status: 400 });
     }
     const ip = (request.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || request.headers.get("x-real-ip") || "unknown";
-    await submitIntake(firm, body, ip);
-    return NextResponse.json({ ok: true });
+    const leadId = await submitIntake(firm, body, ip);
+    // Online booking on: the thank-you page offers consultation times right away.
+    let booking: string | null = null;
+    if (leadId) {
+      const settings = await getLeadSettings(firm.orgId).catch(() => null);
+      if (settings?.booking.enabled && settings.booking.staffId) booking = new URL(await bookingUrl(firm.orgId, leadId)).searchParams.get("t");
+    }
+    return NextResponse.json({ ok: true, booking });
   } catch (e) {
     if (e instanceof LeadError) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error("POST /api/public/intake failed:", e);

@@ -32,7 +32,7 @@ const txt = (v: unknown, max: number) => String(v ?? "").replace(/\s+/g, " ").tr
 const longTxt = (v: unknown, max: number) => String(v ?? "").replace(/\r\n/g, "\n").trim().slice(0, max);
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function toLead(r: Record<string, unknown>): Lead {
+export function toLead(r: Record<string, unknown>): Lead {
   const s = (k: string) => (r[k] as string | null) ?? "";
   return {
     id: r.id as string,
@@ -59,6 +59,13 @@ function toLead(r: Record<string, unknown>): Lead {
     submittedAt: (r.submitted_at as string) ?? null,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
+    appointmentAt: (r.appointment_at as string) ?? null,
+    appointmentEnd: (r.appointment_end as string) ?? null,
+    appointmentWith: (r.appointment_with as string) ?? null,
+    appointmentLocation: s("appointment_location"),
+    followupsSent: Number(r.followups_sent ?? 0),
+    lastFollowupAt: (r.last_followup_at as string) ?? null,
+    reminderSentAt: (r.reminder_sent_at as string) ?? null,
   };
 }
 
@@ -205,11 +212,11 @@ export async function invitePrefill(orgId: string, token: string | null): Promis
 
 export const ipHash = (ip: string, orgId: string) => createHash("sha256").update(`${orgId}:${ip}:lawpower-intake`).digest("hex").slice(0, 32);
 
-export async function submitIntake(firm: PublicFirm, body: Record<string, unknown>, ip: string): Promise<void> {
+export async function submitIntake(firm: PublicFirm, body: Record<string, unknown>, ip: string): Promise<string | null> {
   // Spam guards: a field people never see, and a form filled in faster than a person could.
-  if (txt(body.website, 200)) return; // pretend it worked
+  if (txt(body.website, 200)) return null; // pretend it worked
   const started = Number(body.startedAt);
-  if (Number.isFinite(started) && Date.now() - started < 2500) return;
+  if (Number.isFinite(started) && Date.now() - started < 2500) return null;
   const cols = formColumns(body as Record<string, unknown>);
   if (!cols.first_name && !cols.last_name && !cols.company) throw new LeadError(400, "Please enter your name.");
   if (!cols.email && !cols.phone) throw new LeadError(400, "Please enter an email address or a phone number so we can reach you.");
@@ -249,4 +256,5 @@ export async function submitIntake(firm: PublicFirm, body: Record<string, unknow
   }
   const name = [cols.first_name, cols.last_name].filter(Boolean).join(" ") || cols.company;
   await notifyNewLead({ orgId: firm.orgId, leadId, name, matterType: cols.matter_type });
+  return leadId;
 }
