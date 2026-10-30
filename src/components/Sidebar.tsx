@@ -116,9 +116,15 @@ export default function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="mb-1 flex flex-col gap-[2px]">
-          {mainLinks.map((l) => (
-            <NavItem key={l.label} {...l} compact={collapsed} active={isActiveLink(l.href, pathname)} />
-          ))}
+          {mainLinks.map((l) =>
+            l.sub && !collapsed ? (
+              <div key={l.label} className="ml-[22px] pl-2 border-l border-line flex flex-col">
+                <NavItem {...l} active={isActiveLink(l.href, pathname)} />
+              </div>
+            ) : (
+              <NavItem key={l.label} {...l} compact={collapsed} active={isActiveLink(l.href, pathname)} />
+            )
+          )}
         </div>
 
         <div className={`${collapsed ? "mt-2" : "mt-5"} mb-1 flex flex-col gap-[2px]`}>

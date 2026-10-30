@@ -67,6 +67,7 @@ function ClientIntake() {
         <ClientCardEditor
           key={created && created.id === open ? created.key : open === "new" ? `new-${newKey}` : open}
           id={open === "new" ? (created?.key === `new-${newKey}` ? created.id : null) : open}
+          importLeadId={open === "new" ? params.get("lead") : null}
           onClose={() => {
             setReload((n) => n + 1);
             setCreated(null);

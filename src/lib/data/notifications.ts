@@ -9,7 +9,7 @@ const missing = (e: { code?: string; message?: string } | null) => !!e && (e.cod
 
 export type Notification = {
   id: string;
-  kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message" | "internal_message";
+  kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message" | "internal_message" | "new_lead";
   refId: string;
   boardId: string | null;
   title: string;
@@ -35,7 +35,7 @@ async function actorName(actorId: string | null) {
 export async function notifyAssigned(opts: {
   orgId: string;
   actorId: string | null;
-  kind: Notification["kind"];
+  kind: Exclude<Notification["kind"], "new_lead">;
   refId: string;
   boardId?: string | null;
   title: string;
@@ -118,5 +118,21 @@ export async function notifyPortalMessage(opts: { orgId: string; matterId: strin
     if (error && !missing(error)) console.error("portal message alert failed:", error.message);
   } catch (e) {
     console.error("notifyPortalMessage failed:", e);
+  }
+}
+
+// A prospective client filled in the intake form: alert the firm's owner(s) and admins. Never throws.
+export async function notifyNewLead(opts: { orgId: string; leadId: string; name: string; matterType: string }) {
+  try {
+    const { data: people } = await db().from("profiles").select("id, role").eq("org_id", opts.orgId).in("role", ["owner", "admin"]);
+    const to = ((people ?? []) as { id: string }[]).map((p) => p.id);
+    if (!to.length) return;
+    const title = (opts.matterType ? `${opts.name} · ${opts.matterType}` : opts.name).slice(0, 300);
+    const { error } = await db()
+      .from("notifications")
+      .insert(to.map((uid) => ({ org_id: opts.orgId, user_id: uid, kind: "new_lead", ref_id: opts.leadId, board_id: null, title, actor_id: null, actor_name: opts.name.slice(0, 120) || "a website visitor" })));
+    if (error && !missing(error)) console.error("new lead alert failed:", error.message);
+  } catch (e) {
+    console.error("notifyNewLead failed:", e);
   }
 }

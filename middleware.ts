@@ -43,6 +43,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/public/sign/") ||
     pathname.startsWith("/api/public/share/") ||
     pathname.startsWith("/api/public/signature-image/") || // logos in email signatures
+    pathname.startsWith("/api/public/intake/") || // the firm's public intake form (rate-limited per visitor)
     pathname.startsWith("/api/portal/") || // client portal: checks its own client session cookie
     pathname === "/api/cron/file-shares" ||
     pathname === "/api/cron/contacts" ||

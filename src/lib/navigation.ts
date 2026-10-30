@@ -23,16 +23,19 @@ import {
   type LucideIcon,
   ListChecks,
   ShieldAlert,
+  UserSearch,
 } from "lucide-react";
 
 // ownerOnly: shown only to the workspace owner (none right now; AI Accountant is open to everyone since Oct 19, 2026).
-export type NavLink = { label: string; href: string; icon: LucideIcon; ownerOnly?: boolean };
+// sub: shown indented under the link above it in the sidebar (e.g. Potential Leads under Client Intake).
+export type NavLink = { label: string; href: string; icon: LucideIcon; ownerOnly?: boolean; sub?: boolean };
 export type NavSection = { title: string | null; links: NavLink[] };
 
 // Community and Clients are off the menu for now (their pages still exist).
 export const mainLinks: NavLink[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
+  { label: "Potential Leads", href: "/dashboard/leads", icon: UserSearch, sub: true },
   { label: "Matters", href: "/dashboard/matters", icon: Folder },
   { label: "Contacts", href: "/dashboard/records", icon: Bookmark },
   { label: "Documents", href: "/dashboard/documents", icon: Copy },

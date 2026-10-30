@@ -2,6 +2,9 @@
 
 import { useConflictCheck, ConflictRunButton, ConflictResultBar } from "@/components/conflicts/ConflictStrip";
 import HeaderActions from "@/components/layout/HeaderActions";
+import LeadPicker from "@/components/clientCard/LeadPicker";
+import { profileFromLead } from "@/lib/clients/fromLead";
+import { leadName, type Lead } from "@/lib/leads";
 import ClickAway from "@/components/ClickAway";
 import PortalButton from "@/components/clientCard/PortalButton";
 import MatterLinks, { LinkToMatterModal } from "@/components/matters/MatterLinks";
@@ -11,6 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, Link2, Mail, MessageSquare, Phone, Plus, X, User, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList, MoreHorizontal, Trash2,
+ UserSearch,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import SelectBox from "@/components/SelectBox";
@@ -98,7 +102,7 @@ async function shrinkPhoto(file: File) {
   return c.toDataURL("image/jpeg", 0.85);
 }
 
-export default function ClientCardEditor({ id, onClose, onSaved }: { id: string | null; onClose: () => void; onSaved: (id: string) => void }) {
+export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = null }: { id: string | null; onClose: () => void; onSaved: (id: string) => void; importLeadId?: string | null }) {
   const { matters, refreshAll, updateMatter } = useWorkspaceData();
   const [cardId, setCardId] = useState<string | null>(id);
   const [cardType, setCardType] = useState<CardType>("person");
@@ -306,6 +310,33 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
     ["portal", "Client portal"],
   ];
 
+  // Potential leads: pour a lead's answers into this card; once the card is saved, the lead becomes "Client".
+  const [leadPickerOpen, setLeadPickerOpen] = useState(false);
+  const [importedLead, setImportedLead] = useState<Lead | null>(null);
+  const leadLinked = useRef<string | null>(null);
+  const importLead = (lead: Lead) => {
+    const next = profileFromLead(cardType, profile, lead);
+    setCardType(next.cardType);
+    setProfile(next.profile);
+    setImportedLead(lead);
+    setNotice(`Filled in from ${leadName(lead)}'s intake form. Check the details; the card saves by itself.`);
+  };
+  const autoImported = useRef(false);
+  useEffect(() => {
+    if (!importLeadId || autoImported.current || !loaded) return;
+    autoImported.current = true;
+    fetch(`/api/leads/${importLeadId}`)
+      .then(readJson)
+      .then((d: { lead: Lead }) => importLead(d.lead))
+      .catch((e: Error) => setError(e.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importLeadId, loaded]);
+  useEffect(() => {
+    if (!importedLead || !cardId || leadLinked.current === importedLead.id) return;
+    leadLinked.current = importedLead.id;
+    void fetch(`/api/leads/${importedLead.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "converted", clientId: cardId }) }).catch(() => undefined);
+  }, [importedLead, cardId]);
+
   // Conflict check: the button is in the top bar, the result on the card.
   const conflict = useConflictCheck(cardId, cardType === "company" ? [profile.company.name] : profile.people.map((p) => [p.first, p.middle, p.last].filter(Boolean).join(" ")));
   const conflictReady = !dirty && !autoSaving && (cardType === "company" ? profile.company.name.trim().length > 1 : profile.people.some((p) => p.first.trim() && p.last.trim()));
@@ -337,6 +368,9 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         </div>
         {/* Client portal, Intake sheet, Engagement agreement and the conflict check sit in the top bar. */}
         <HeaderActions>
+          <button onClick={() => setLeadPickerOpen(true)} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+            <UserSearch size={14} /> Import from leads
+          </button>
           <PortalButton clientId={cardId} size="button" onOpen={() => setSection("portal")} />
           {templates && cardId && (
             <>
@@ -484,6 +518,15 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         </section>
       </div>
 
+      {leadPickerOpen && (
+        <LeadPicker
+          onClose={() => setLeadPickerOpen(false)}
+          onPick={(lead) => {
+            setLeadPickerOpen(false);
+            importLead(lead);
+          }}
+        />
+      )}
       {engagementOpen && (
         <EngagementModal
           cardType={cardType}
