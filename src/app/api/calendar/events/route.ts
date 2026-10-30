@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { syncedEvents, createSyncedEvent, teamEvents } from "@/lib/calendar/events";
+import { syncedEvents, createSyncedEvent, teamEvents, type Repeat } from "@/lib/calendar/events";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { mailErrorResponse } from "@/lib/mail/api";
 
@@ -27,8 +27,9 @@ export async function GET(request: Request) {
   }
 }
 
-// POST { provider, title, allDay, start, end, location?, notes? } — adds the
-// event to the signed-in person's own Outlook or Google calendar.
+// POST { provider, title, allDay, start, end, location?, notes?, calendarId?,
+// attendees?, reminderMinutes?, repeat?, local? } — adds the event to the
+// signed-in person's own Outlook or Google calendar; attendees are invited.
 export async function POST(request: Request) {
   try {
     const user = await getSessionUser();
@@ -53,6 +54,17 @@ export async function POST(request: Request) {
       end: allDay ? end : new Date(end).toISOString(),
       location: typeof b.location === "string" ? b.location.slice(0, 255) : null,
       notes: typeof b.notes === "string" ? b.notes.slice(0, 8000) : null,
+      calendarId: typeof b.calendarId === "string" && /^[A-Za-z0-9=_+/@.\-]{1,512}$/.test(b.calendarId) ? b.calendarId : null,
+      attendees: (Array.isArray(b.attendees) ? b.attendees : [])
+        .map((a) => ({ email: String((a as { email?: unknown })?.email ?? "").trim().toLowerCase().slice(0, 200), name: String((a as { name?: unknown })?.name ?? "").trim().slice(0, 120) || null }))
+        .filter((a) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email) && a.email !== (user.email ?? "").toLowerCase())
+        .slice(0, 50),
+      reminderMinutes: typeof b.reminderMinutes === "number" && Number.isFinite(b.reminderMinutes) ? b.reminderMinutes : null,
+      repeat: ["daily", "weekly", "monthly", "yearly"].includes(String(b.repeat)) ? (b.repeat as Repeat) : null,
+      local:
+        b.local && typeof b.local === "object" && typeof (b.local as { timeZone?: unknown }).timeZone === "string"
+          ? { start: String((b.local as { start?: unknown }).start ?? ""), end: String((b.local as { end?: unknown }).end ?? ""), timeZone: String((b.local as { timeZone: string }).timeZone).slice(0, 64) }
+          : null,
     });
     return NextResponse.json({ event }, { status: 201 });
   } catch (e) {

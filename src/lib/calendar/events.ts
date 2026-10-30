@@ -198,6 +198,8 @@ export async function colleagueEventDetail(orgId: string, ownerId: string, provi
   return detail;
 }
 
+export type Repeat = "daily" | "weekly" | "monthly" | "yearly";
+
 export type NewEvent = {
   title: string;
   allDay: boolean;
@@ -205,7 +207,48 @@ export type NewEvent = {
   end: string; // ISO datetime (timed) or YYYY-MM-DD, exclusive (all-day)
   location?: string | null;
   notes?: string | null;
+  calendarId?: string | null; // which of the person's calendars (default: their main one)
+  attendees?: { email: string; name?: string | null }[]; // invited by the calendar service
+  reminderMinutes?: number | null; // null = no reminder
+  repeat?: Repeat | null;
+  // Wall-clock times in the person's time zone, used for repeating events so
+  // "every Tuesday at 9:00" stays at 9:00 through daylight saving changes.
+  local?: { start: string; end: string; timeZone: string } | null; // "YYYY-MM-DDTHH:mm"
 };
+
+// Outlook wants Windows time zone names; these cover the firm's likely zones.
+const WINDOWS_TZ: Record<string, string> = {
+  "America/New_York": "Eastern Standard Time",
+  "America/Detroit": "Eastern Standard Time",
+  "America/Chicago": "Central Standard Time",
+  "America/Denver": "Mountain Standard Time",
+  "America/Phoenix": "US Mountain Standard Time",
+  "America/Los_Angeles": "Pacific Standard Time",
+  "America/Anchorage": "Alaskan Standard Time",
+  "Pacific/Honolulu": "Hawaiian Standard Time",
+  "America/Puerto_Rico": "SA Western Standard Time",
+  "Europe/London": "GMT Standard Time",
+  "Europe/Warsaw": "Central European Standard Time",
+  "Europe/Berlin": "W. Europe Standard Time",
+  "Europe/Paris": "Romance Standard Time",
+  UTC: "UTC",
+};
+const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
+
+// Outlook's repeat rule, from the first day ("YYYY-MM-DD").
+function outlookRecurrence(repeat: Repeat, firstDay: string) {
+  const [y, m, d] = firstDay.split("-").map(Number);
+  const day = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  const pattern =
+    repeat === "daily"
+      ? { type: "daily", interval: 1 }
+      : repeat === "weekly"
+        ? { type: "weekly", interval: 1, daysOfWeek: [WEEKDAYS[day]], firstDayOfWeek: "sunday" }
+        : repeat === "monthly"
+          ? { type: "absoluteMonthly", interval: 1, dayOfMonth: d }
+          : { type: "absoluteYearly", interval: 1, dayOfMonth: d, month: m };
+  return { pattern, range: { type: "noEnd", startDate: firstDay } };
+}
 
 async function postJson<T>(url: string, token: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -224,16 +267,26 @@ async function postJson<T>(url: string, token: string, body: unknown): Promise<T
   return res.json() as Promise<T>;
 }
 
-// Creates the event in the person's own Outlook or Google calendar.
+// Creates the event in the person's own Outlook or Google calendar (their main
+// one unless another is chosen). Attendees get an invitation from that calendar.
 export async function createSyncedEvent(userId: string, provider: MailProvider, e: NewEvent): Promise<SyncedEvent> {
   const { token } = await getAccessToken(userId, provider, "calendar");
+  const attendees = (e.attendees ?? []).filter((a) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email)).slice(0, 50);
+  const reminder = typeof e.reminderMinutes === "number" && e.reminderMinutes >= 0 ? Math.min(Math.round(e.reminderMinutes), 40320) : null;
+  const local = e.repeat && !e.allDay && e.local && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(e.local.start) && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(e.local.end) && e.local.end > e.local.start ? e.local : null;
   if (provider === "google") {
-    const created = await postJson<GEvent>("https://www.googleapis.com/calendar/v3/calendars/primary/events", token, {
+    const cal = encodeURIComponent(e.calendarId || "primary");
+    const timed = (iso: string, wall?: string) => (local && wall ? { dateTime: `${wall}:00`, timeZone: local.timeZone } : { dateTime: iso, timeZone: "UTC" });
+    const freq = { daily: "DAILY", weekly: "WEEKLY", monthly: "MONTHLY", yearly: "YEARLY" } as const;
+    const created = await postJson<GEvent>(`https://www.googleapis.com/calendar/v3/calendars/${cal}/events${attendees.length ? "?sendUpdates=all" : ""}`, token, {
       summary: e.title,
       location: e.location || undefined,
       description: e.notes || undefined,
-      start: e.allDay ? { date: e.start } : { dateTime: e.start, timeZone: "UTC" },
-      end: e.allDay ? { date: e.end } : { dateTime: e.end, timeZone: "UTC" },
+      start: e.allDay ? { date: e.start } : timed(e.start, local?.start),
+      end: e.allDay ? { date: e.end } : timed(e.end, local?.end),
+      ...(attendees.length ? { attendees: attendees.map((a) => ({ email: a.email, ...(a.name ? { displayName: a.name } : {}) })) } : {}),
+      reminders: reminder === null ? { useDefault: false, overrides: [] } : { useDefault: false, overrides: [{ method: "popup", minutes: reminder }] },
+      ...(e.repeat ? { recurrence: [`RRULE:FREQ=${freq[e.repeat]}`] } : {}),
     });
     return {
       id: `g:${created.id}`,
@@ -247,13 +300,21 @@ export async function createSyncedEvent(userId: string, provider: MailProvider, 
     };
   }
   const iso = (v: string) => v.replace(/Z$/, "").replace(/\.\d+$/, "");
-  const created = await postJson<MEvent>("https://graph.microsoft.com/v1.0/me/events", token, {
+  const winTz = local ? WINDOWS_TZ[local.timeZone] : undefined;
+  const useLocal = !!(local && winTz);
+  const firstDay = e.allDay ? e.start : useLocal ? local!.start.slice(0, 10) : e.start.slice(0, 10);
+  const url = e.calendarId ? `https://graph.microsoft.com/v1.0/me/calendars/${encodeURIComponent(e.calendarId)}/events` : "https://graph.microsoft.com/v1.0/me/events";
+  const created = await postJson<MEvent>(url, token, {
     subject: e.title,
     isAllDay: e.allDay,
-    start: { dateTime: e.allDay ? `${e.start}T00:00:00` : iso(e.start), timeZone: "UTC" },
-    end: { dateTime: e.allDay ? `${e.end}T00:00:00` : iso(e.end), timeZone: "UTC" },
+    start: e.allDay ? { dateTime: `${e.start}T00:00:00`, timeZone: "UTC" } : useLocal ? { dateTime: `${local!.start}:00`, timeZone: winTz } : { dateTime: iso(e.start), timeZone: "UTC" },
+    end: e.allDay ? { dateTime: `${e.end}T00:00:00`, timeZone: "UTC" } : useLocal ? { dateTime: `${local!.end}:00`, timeZone: winTz } : { dateTime: iso(e.end), timeZone: "UTC" },
     ...(e.location ? { location: { displayName: e.location } } : {}),
     ...(e.notes ? { body: { contentType: "text", content: e.notes } } : {}),
+    ...(attendees.length ? { attendees: attendees.map((a) => ({ type: "required", emailAddress: { address: a.email, ...(a.name ? { name: a.name } : {}) } })) } : {}),
+    isReminderOn: reminder !== null,
+    ...(reminder !== null ? { reminderMinutesBeforeStart: reminder } : {}),
+    ...(e.repeat ? { recurrence: outlookRecurrence(e.repeat, firstDay) } : {}),
   });
   return {
     id: `m:${created.id}`,
@@ -265,6 +326,69 @@ export async function createSyncedEvent(userId: string, provider: MailProvider, 
     location: created.location?.displayName || e.location || null,
     link: created.webLink ?? null,
   };
+}
+
+// The calendars a person can add events to, main one first.
+export type WritableCalendar = { provider: MailProvider; account: string | null; id: string; name: string; isDefault: boolean };
+
+export async function writableCalendars(userId: string): Promise<WritableCalendar[]> {
+  const conns = await getUserConnections(userId);
+  const out: WritableCalendar[] = [];
+  await Promise.all(
+    conns.map(async (c) => {
+      if (c.provider === "google" && !hasGoogleScope(c.scopes, "calendar")) return;
+      try {
+        const { token } = await getAccessToken(userId, c.provider, "calendar");
+        if (c.provider === "google") {
+          const d = await getJson<{ items?: { id: string; summary?: string; summaryOverride?: string; primary?: boolean; accessRole?: string }[] }>(
+            "https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=writer&maxResults=100",
+            token
+          );
+          for (const x of d.items ?? []) out.push({ provider: "google", account: c.account_email, id: x.primary ? "primary" : x.id, name: x.summaryOverride || x.summary || "Calendar", isDefault: !!x.primary });
+        } else {
+          const d = await getJson<{ value?: { id: string; name?: string; isDefaultCalendar?: boolean; canEdit?: boolean }[] }>(
+            "https://graph.microsoft.com/v1.0/me/calendars?$select=id,name,isDefaultCalendar,canEdit&$top=100",
+            token
+          );
+          for (const x of d.value ?? []) if (x.canEdit !== false) out.push({ provider: "microsoft", account: c.account_email, id: x.id, name: x.name || "Calendar", isDefault: !!x.isDefaultCalendar });
+        }
+      } catch (e) {
+        console.error("Listing calendars failed:", e instanceof MailError ? e.code : e);
+      }
+    })
+  );
+  // Outlook first (the firm's main calendar), each account's main calendar first.
+  return out.sort((a, b) => (a.provider === b.provider ? Number(b.isDefault) - Number(a.isDefault) || a.name.localeCompare(b.name) : a.provider === "microsoft" ? -1 : 1));
+}
+
+// Places used before (last 6 months and the next 3), most used first, for the Location box.
+export async function recentLocations(userId: string): Promise<string[]> {
+  const from = new Date(Date.now() - 183 * 86400_000).toISOString();
+  const to = new Date(Date.now() + 92 * 86400_000).toISOString();
+  const conns = await getUserConnections(userId);
+  const count = new Map<string, { n: number; last: string; text: string }>();
+  await Promise.all(
+    conns.map(async (c) => {
+      if (c.provider === "google" && !hasGoogleScope(c.scopes, "calendar")) return;
+      try {
+        const { token } = await getAccessToken(userId, c.provider, "calendar");
+        const list = c.provider === "google" ? await googleAll(token, from, to) : await outlookAll(token, from, to);
+        for (const ev of list) {
+          const text = (ev.location ?? "").replace(/\s+/g, " ").trim();
+          if (!text || text.length > 200 || /^https?:\/\//i.test(text) && text.length > 120) continue;
+          const key = text.toLowerCase();
+          const cur = count.get(key);
+          if (cur) {
+            cur.n++;
+            if (ev.start > cur.last) cur.last = ev.start;
+          } else count.set(key, { n: 1, last: ev.start, text });
+        }
+      } catch (e) {
+        console.error("Reading past locations failed:", e instanceof MailError ? e.code : e);
+      }
+    })
+  );
+  return [...count.values()].sort((a, b) => b.n - a.n || (a.last < b.last ? 1 : -1)).slice(0, 60).map((x) => x.text);
 }
 
 export type EventDetail = SyncedEvent & {

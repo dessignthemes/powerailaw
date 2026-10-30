@@ -315,7 +315,9 @@ export default function CalendarPage() {
       setSaveNotice({ kind: "ok", text: `“${event.title}” was added as a task in General, due ${event.date}.` });
       return;
     }
-    const target = (sources ?? []).find((x) => x.status === "ok") ?? (sources ?? [])[0];
+    const target = event.calendar
+      ? { provider: event.calendar.provider }
+      : (sources ?? []).find((x) => x.status === "ok") ?? (sources ?? [])[0];
     if (!target) {
       setSaveNotice({ kind: "error", text: "Connect Outlook or Google Calendar first. Events are saved to your own calendar." });
       return;
@@ -340,12 +342,27 @@ export default function CalendarPage() {
       const res = await fetch("/api/calendar/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: target.provider, title: event.title, allDay: !!event.allDay, start, end, notes: event.description || null }),
+        body: JSON.stringify({
+          provider: target.provider,
+          calendarId: event.calendar?.id ?? null,
+          title: event.title,
+          allDay: !!event.allDay,
+          start,
+          end,
+          notes: event.description || null,
+          location: event.location || null,
+          attendees: (event.attendees ?? []).map((a) => ({ email: a.email, name: a.name })),
+          reminderMinutes: event.reminderMinutes ?? null,
+          repeat: event.repeat ?? null,
+          // Wall-clock times so repeating events keep their time through daylight saving.
+          local: event.allDay ? null : { start: `${event.date}T${event.start || "09:00"}`, end: `${endDay}T${event.end || "10:00"}`, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+        }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? "Couldn't save the event.");
       setSynced((list) => [...list, d.event as Synced]);
-      setSaveNotice({ kind: "ok", text: `“${event.title}” was added to ${providerName[target.provider]}.`, link: (d.event as Synced).link });
+      const invited = event.attendees?.length ?? 0;
+      setSaveNotice({ kind: "ok", text: `“${event.title}” was added to ${providerName[target.provider]}${invited ? ` and ${invited} ${invited === 1 ? "invitation was" : "invitations were"} sent` : ""}.`, link: (d.event as Synced).link });
     } catch (e) {
       setSaveNotice({ kind: "error", text: `${(e as Error).message} The event wasn't saved.` });
     } finally {
