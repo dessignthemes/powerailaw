@@ -1,13 +1,9 @@
 import { NoWorkspaceError } from "@/lib/data/org";
-import { NextResponse, after } from "next/server";
-import { getSessionUser } from "@/lib/auth";
-import { getCurrentOrgId } from "@/lib/data/org";
-import { runForClient } from "@/lib/conflicts/check";
+import { NextResponse } from "next/server";
 import { listClients, createClientRow, deleteClientRows } from "@/lib/data/clients";
 import type { Client } from "@/components/NewClientModal";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 90; // the new client's conflict check runs after the reply
 
 export async function GET() {
   try {
@@ -24,9 +20,6 @@ export async function POST(request: Request) {
   try {
     const client = (await request.json()) as Client;
     const created = await createClientRow(client);
-    // A new client: check them against every matter (in the background).
-    const [user, orgId] = await Promise.all([getSessionUser(), getCurrentOrgId()]);
-    after(() => runForClient(orgId, user?.id ?? null, user?.email ?? null, created.id).catch((e) => console.error("Conflict check for new client failed:", e)));
     return NextResponse.json({ client: created }, { status: 201 });
   } catch (error) {
     if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });

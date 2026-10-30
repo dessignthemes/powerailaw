@@ -388,7 +388,7 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         </div>
       </div>
 
-      {/* Conflict check against every matter (runs by itself once the card has a full name) */}
+      {/* Conflict check against every matter (runs when someone clicks the button) */}
       <ConflictStrip
         clientId={cardId}
         names={cardType === "company" ? [profile.company.name] : profile.people.map((p) => [p.first, p.middle, p.last].filter(Boolean).join(" "))}

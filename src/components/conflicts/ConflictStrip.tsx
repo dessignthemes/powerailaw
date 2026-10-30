@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, ShieldCheck, ShieldAlert, ShieldQuestion, RefreshCw } from "lucide-react";
 import type { ConflictCheck } from "@/lib/conflicts/check";
 
 // On a client card: the client's conflict check against every matter.
-// It runs by itself once the card is saved with a full name (and again if the
-// name changes), and shows the result at a glance with a link to the details.
+// Runs only when someone clicks "Run conflict check" (it uses AI credits), then
+// shows the result at a glance with a link to the details.
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
@@ -17,7 +17,6 @@ export default function ConflictStrip({ clientId, names, ready }: { clientId: st
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [setup, setSetup] = useState(false);
-  const ran = useRef<string | null>(null);
   const key = names.map(norm).filter(Boolean).sort().join("|");
 
   useEffect(() => {
@@ -54,20 +53,10 @@ export default function ConflictStrip({ clientId, names, ready }: { clientId: st
     }
   }, [clientId]);
 
-  // Run by itself: a saved card with a full name that hasn't been checked under that name yet.
-  useEffect(() => {
-    if (!clientId || !loaded || !ready || running || setup || !key || ran.current === key) return;
-    const checked = new Set([...(check?.searched.names ?? []), ...(check?.searched.companies ?? [])].map(norm));
-    if (check && key.split("|").every((n) => checked.has(n))) {
-      ran.current = key;
-      return;
-    }
-    const t = window.setTimeout(() => {
-      ran.current = key;
-      void run();
-    }, 3000);
-    return () => window.clearTimeout(t);
-  }, [clientId, loaded, ready, running, setup, key, check, run]);
+  // Checks only run when someone clicks the button (each run uses AI credits).
+  // If the name changed since the last check, say so.
+  const checked = new Set([...(check?.searched.names ?? []), ...(check?.searched.companies ?? [])].map(norm));
+  const stale = !!check && !!key && !key.split("|").every((n) => checked.has(n));
 
   if (!clientId || setup) return null;
 
@@ -81,11 +70,16 @@ export default function ConflictStrip({ clientId, names, ready }: { clientId: st
     );
   if (!check)
     return (
-      <div className={`${base} bg-white border border-line`}>
-        <ShieldQuestion size={16} className="mt-0.5 flex-shrink-0 text-muted" />
-        <span className="flex-1 text-muted">{error ?? "Not checked for conflicts yet. It runs by itself once the card has the client's full name."}</span>
-        <button onClick={run} className="text-[13px] font-medium underline underline-offset-2 flex-shrink-0">
-          Run conflict check
+      <div className={`${base} bg-white border border-line items-center`}>
+        <ShieldQuestion size={16} className="flex-shrink-0 text-muted" />
+        <span className="flex-1 text-muted">{error ?? "Not checked for conflicts yet. Checks the client against every matter: leads, open and closed."}</span>
+        <button
+          onClick={run}
+          disabled={!ready}
+          title={ready ? undefined : "Add the client's first and last name (or company name) first"}
+          className="bg-btn hover:bg-btn-hover px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 flex-shrink-0 disabled:opacity-50"
+        >
+          <ShieldCheck size={14} /> Run conflict check
         </button>
       </div>
     );
@@ -121,14 +115,15 @@ export default function ConflictStrip({ clientId, names, ready }: { clientId: st
             · {check.mattersChecked} matters checked {when}
             {!check.aiUsed && check.hits.length > 0 ? " · without AI review" : ""}
           </span>
+          {stale && <div className="mt-1 font-medium">The name has changed since this check. Run it again to check the new name.</div>}
         </div>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0 text-[13px] font-medium">
         <Link href={`/dashboard/conflict-checks?check=${check.id}`} className="underline underline-offset-2">
           {check.hits.length ? "Review" : "Details"}
         </Link>
-        <button onClick={run} title="Run the check again" aria-label="Run the check again" className="opacity-80 hover:opacity-100">
-          <RefreshCw size={14} />
+        <button onClick={run} disabled={!ready} title="Run the check again" className="flex items-center gap-1 opacity-80 hover:opacity-100 disabled:opacity-40">
+          <RefreshCw size={13} /> Run again
         </button>
       </div>
     </div>

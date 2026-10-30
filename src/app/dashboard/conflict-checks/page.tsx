@@ -78,7 +78,7 @@ function RunModal({ onClose, onDone }: { onClose: () => void; onDone: (c: Confli
             <X size={16} />
           </button>
         </div>
-        <p className="text-[13px] text-muted mb-4">Checks a prospect against every matter: leads, open and closed. New clients are checked by themselves.</p>
+        <p className="text-[13px] text-muted mb-4">Checks a prospect against every matter: leads, open and closed.</p>
         <label className="block text-[12.5px] font-semibold text-muted mb-1">Name(s)</label>
         <textarea value={names} onChange={(e) => setNames(e.target.value)} rows={2} placeholder={"Jan Kowalski\nAnna Kowalska (one per line; add maiden names too)"} className={`${field} resize-none mb-3`} />
         <label className="block text-[12.5px] font-semibold text-muted mb-1">Company</label>
@@ -290,8 +290,8 @@ function ConflictChecksInner() {
         </button>
       </div>
       <p className="text-[14.5px] text-muted mb-6 max-w-[820px]">
-        Every new client is checked by itself against all of the firm&apos;s matters, whatever their status (leads, open and closed): clients, the other side,
-        attorneys, realtors and matter contacts. The AI reviews the matches and flags anyone who was on the other side.
+        Checks a client or prospect against all of the firm&apos;s matters, whatever their status (leads, open and closed): clients, the other side,
+        attorneys, realtors and matter contacts. The AI reviews the matches and flags anyone who was on the other side. Run it from a client card or with the button above.
       </p>
 
       <div className="flex items-center justify-between gap-4 border-b border-line mb-5 flex-wrap">
@@ -331,7 +331,7 @@ function ConflictChecksInner() {
           </div>
         ) : shown.length === 0 ? (
           <div className="text-center px-6 py-14 text-[14px] text-muted">
-            {q ? "No checks match that filter." : activeTab === "review" ? "Nothing to review. New clients that look like a possible conflict show up here." : "No conflict checks here yet."}
+            {q ? "No checks match that filter." : activeTab === "review" ? "Nothing to review. Checks that find a possible conflict show up here." : "No conflict checks here yet."}
           </div>
         ) : (
           shown.map((c) => (
