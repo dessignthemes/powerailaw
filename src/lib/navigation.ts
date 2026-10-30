@@ -22,7 +22,6 @@ import {
   MessagesSquare,
   type LucideIcon,
   ListChecks,
-  ShieldAlert,
   UserSearch,
 } from "lucide-react";
 
@@ -45,7 +44,6 @@ export const toolLinks: NavLink[] = [
   { label: "AI Agent", href: "/dashboard/agent", icon: Sparkles },
   { label: "AI Accountant", href: "/dashboard/ai-accountant", icon: Calculator },
   { label: "AI Matter", href: "/dashboard/ai-matter", icon: FolderSearch },
-  { label: "Conflict Checks", href: "/dashboard/conflict-checks", icon: ShieldAlert },
   { label: "AI Templates", href: "/dashboard/ai-templates", icon: FileText },
   { label: "Communications", href: "/dashboard/communications", icon: MessagesSquare },
   { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },
@@ -70,8 +68,13 @@ export const navSections: NavSection[] = [
 export const allNavLinks: NavLink[] = navSections.flatMap((s) => s.links);
 
 // Whether a link is the current page (sub pages count, e.g. a matter's page).
+// Pages reached from another page (not in the menu themselves): highlight that page.
+const PARENT: Record<string, string> = { "/dashboard/conflict-checks": "/dashboard/records" };
+
 export function isActiveLink(href: string, pathname: string | null) {
   if (!pathname) return false;
+  const parent = Object.entries(PARENT).find(([p]) => pathname === p || pathname.startsWith(p + "/"))?.[1];
+  if (parent) return href === parent;
   if (href === "/dashboard") return pathname === "/dashboard";
   return pathname === href || pathname.startsWith(href + "/");
 }

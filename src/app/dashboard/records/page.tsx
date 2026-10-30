@@ -9,6 +9,7 @@ import { getInitials, getAvatarColor, formatUpdatedAt } from "@/components/NewCl
 import NewMatterModal from "@/components/NewMatterModal";
 import ContactModal from "@/components/records/ContactModal";
 import ImportContactsModal, { type ImportSource } from "@/components/records/ImportContactsModal";
+import RunConflictModal from "@/components/conflicts/RunConflictModal";
 import type { Contact, ContactInput, ContactKind } from "@/lib/records/contactTypes";
 
 type Kind = "client" | "matter" | "person" | "company";
@@ -63,6 +64,7 @@ export default function RecordsPage() {
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
 
   const [adding, setAdding] = useState<Kind | null>(null);
   const [importing, setImporting] = useState<ImportSource | null>(null);
@@ -208,7 +210,11 @@ export default function RecordsPage() {
         <h1 className="text-[28px] font-semibold">
           Contacts <span className="text-muted font-normal text-[18px]">/ {loaded ? counts.all : "–"}</span>
         </h1>
-        <div className="relative">
+        <div className="relative flex items-center gap-2">
+          {/* Conflict check for a prospect (the results are on the Conflict Checks page). */}
+          <button onClick={() => setConflictOpen(true)} className="bg-chip text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors flex items-center gap-1.5">
+            + Run conflict check
+          </button>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             aria-haspopup="menu"
@@ -399,6 +405,16 @@ export default function RecordsPage() {
           />
         ))}
       {importing && <ImportContactsModal source={importing} onClose={() => setImporting(null)} onImported={() => setReloadKey((k) => k + 1)} />}
+      {conflictOpen && (
+        <RunConflictModal
+          showPastLink
+          onClose={() => setConflictOpen(false)}
+          onDone={(c) => {
+            setConflictOpen(false);
+            router.push(`/dashboard/conflict-checks?check=${c.id}`); // the result, with every match
+          }}
+        />
+      )}
       {editingContact && (
         <ContactModal
           contact={editingContact}
