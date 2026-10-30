@@ -14,6 +14,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <main className="flex-1 min-w-0 bg-page">
             <div className="px-10 pt-6 flex items-center justify-between gap-4">
               <PageSwitcher />
+              {/* A page's own buttons go here (HeaderActions). */}
+              <div id="page-header-actions" className="flex-1 min-w-0 flex items-center gap-2 flex-wrap" />
               <NotificationBell />
             </div>
             {children}

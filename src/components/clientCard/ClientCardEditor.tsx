@@ -1,6 +1,7 @@
 "use client";
 
-import ConflictStrip from "@/components/conflicts/ConflictStrip";
+import { useConflictCheck, ConflictRunButton, ConflictResultBar } from "@/components/conflicts/ConflictStrip";
+import HeaderActions from "@/components/layout/HeaderActions";
 import ClickAway from "@/components/ClickAway";
 import PortalButton from "@/components/clientCard/PortalButton";
 import MatterLinks, { LinkToMatterModal } from "@/components/matters/MatterLinks";
@@ -305,6 +306,10 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
     ["portal", "Client portal"],
   ];
 
+  // Conflict check: the button is in the top bar, the result on the card.
+  const conflict = useConflictCheck(cardId, cardType === "company" ? [profile.company.name] : profile.people.map((p) => [p.first, p.middle, p.last].filter(Boolean).join(" ")));
+  const conflictReady = !dirty && !autoSaving && (cardType === "company" ? profile.company.name.trim().length > 1 : profile.people.some((p) => p.first.trim() && p.last.trim()));
+
   if (!loaded) return <div className="bg-card-alt rounded-2xl py-16 text-center text-[14px] text-muted">Loading the client card…</div>;
 
   return (
@@ -330,17 +335,21 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
                   : ""}
           </div>
         </div>
-        <PortalButton clientId={cardId} size="button" onOpen={() => setSection("portal")} />
-        {templates && cardId && (
-          <div className="flex gap-2">
-            <button onClick={intakeSheet} disabled={!!docBusy || saving} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
-              {docBusy === "intake" ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />} Intake sheet
-            </button>
-            <button onClick={() => setEngagementOpen(true)} disabled={saving} className="bg-btn hover:bg-btn-hover px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50">
-              <FileSignature size={14} /> Engagement agreement
-            </button>
-          </div>
-        )}
+        {/* Client portal, Intake sheet, Engagement agreement and the conflict check sit in the top bar. */}
+        <HeaderActions>
+          <PortalButton clientId={cardId} size="button" onOpen={() => setSection("portal")} />
+          {templates && cardId && (
+            <>
+              <button onClick={intakeSheet} disabled={!!docBusy || saving} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
+                {docBusy === "intake" ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />} Intake sheet
+              </button>
+              <button onClick={() => setEngagementOpen(true)} disabled={saving} className="bg-btn hover:bg-btn-hover px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
+                <FileSignature size={14} /> Engagement agreement
+              </button>
+            </>
+          )}
+          <ConflictRunButton state={conflict} ready={conflictReady} />
+        </HeaderActions>
         <div className="flex gap-2">
           {[
             { icon: Mail, label: "Email", href: firstEmail ? `mailto:${firstEmail}` : null },
@@ -388,12 +397,8 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
         </div>
       </div>
 
-      {/* Conflict check against every matter (runs when someone clicks the button) */}
-      <ConflictStrip
-        clientId={cardId}
-        names={cardType === "company" ? [profile.company.name] : profile.people.map((p) => [p.first, p.middle, p.last].filter(Boolean).join(" "))}
-        ready={!dirty && !autoSaving && (cardType === "company" ? profile.company.name.trim().length > 1 : profile.people.some((p) => p.first.trim() && p.last.trim()))}
-      />
+      {/* Conflict check result (run from the button in the top bar) */}
+      <ConflictResultBar state={conflict} />
 
       <div className="grid md:grid-cols-[250px_1fr] min-h-[560px]">
         {/* Left panel */}

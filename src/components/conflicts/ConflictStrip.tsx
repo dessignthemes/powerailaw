@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, ShieldCheck, ShieldAlert, ShieldQuestion, RefreshCw } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldAlert, ShieldQuestion } from "lucide-react";
 import type { ConflictCheck } from "@/lib/conflicts/check";
 
 // On a client card: the client's conflict check against every matter.
-// Runs only when someone clicks "Run conflict check" (it uses AI credits), then
-// shows the result at a glance with a link to the details.
+// Runs only when someone clicks "Run conflict check" at the top of the page (it
+// uses AI credits); the result shows on the card with a link to the details.
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
-export default function ConflictStrip({ clientId, names, ready }: { clientId: string | null; names: string[]; ready: boolean }) {
+export type ConflictState = ReturnType<typeof useConflictCheck>;
+
+// The client's latest conflict check, and running a new one.
+export function useConflictCheck(clientId: string | null, names: string[]) {
   const [check, setCheck] = useState<ConflictCheck | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [running, setRunning] = useState(false);
@@ -58,32 +61,45 @@ export default function ConflictStrip({ clientId, names, ready }: { clientId: st
   const checked = new Set([...(check?.searched.names ?? []), ...(check?.searched.companies ?? [])].map(norm));
   const stale = !!check && !!key && !key.split("|").every((n) => checked.has(n));
 
-  if (!clientId || setup) return null;
+  return { clientId, check, loaded, running, error, setup, stale, run };
+}
 
+// The button (shown at the top of the page, next to the page name).
+export function ConflictRunButton({ state, ready }: { state: ConflictState; ready: boolean }) {
+  if (!state.clientId || state.setup) return null;
+  return (
+    <button
+      onClick={state.run}
+      disabled={!ready || state.running}
+      title={ready ? "Check this client against every matter: leads, open and closed (uses AI credits)" : "Add the client's first and last name (or company name) first"}
+      className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap"
+    >
+      {state.running ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+      {state.check ? "Run conflict check again" : "Run conflict check"}
+    </button>
+  );
+}
+
+// The result, on the client card. Nothing until a check has been run.
+export function ConflictResultBar({ state }: { state: ConflictState }) {
+  const { clientId, check, running, error, setup, stale } = state;
+  if (!clientId || setup) return null;
   const base = "mx-6 mt-4 rounded-xl px-4 py-3 flex items-start gap-3 text-[13.5px]";
-  if (running || (!check && !loaded))
+  if (running)
     return (
       <div className={`${base} bg-white border border-line text-muted`}>
         <Loader2 size={16} className="animate-spin mt-0.5 flex-shrink-0" />
-        <span>{running ? "Checking for conflicts across every matter (open, closed and leads)…" : "Loading the conflict check…"}</span>
+        <span>Checking for conflicts across every matter (open, closed and leads)…</span>
       </div>
     );
-  if (!check)
+  if (error)
     return (
-      <div className={`${base} bg-white border border-line items-center`}>
-        <ShieldQuestion size={16} className="flex-shrink-0 text-muted" />
-        <span className="flex-1 text-muted">{error ?? "Not checked for conflicts yet. Checks the client against every matter: leads, open and closed."}</span>
-        <button
-          onClick={run}
-          disabled={!ready}
-          title={ready ? undefined : "Add the client's first and last name (or company name) first"}
-          className="bg-btn hover:bg-btn-hover px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 flex-shrink-0 disabled:opacity-50"
-        >
-          <ShieldCheck size={14} /> Run conflict check
-        </button>
+      <div className={`${base} bg-[#FDECEC] border border-[#F3C2C2] text-[#9F1D1D]`}>
+        <ShieldQuestion size={16} className="mt-0.5 flex-shrink-0" />
+        <span>{error}</span>
       </div>
     );
-
+  if (!check) return null;
   const decided = check.decision;
   const tone =
     decided === "cleared" || (!decided && check.result === "clear")
@@ -122,9 +138,6 @@ export default function ConflictStrip({ clientId, names, ready }: { clientId: st
         <Link href={`/dashboard/conflict-checks?check=${check.id}`} className="underline underline-offset-2">
           {check.hits.length ? "Review" : "Details"}
         </Link>
-        <button onClick={run} disabled={!ready} title="Run the check again" className="flex items-center gap-1 opacity-80 hover:opacity-100 disabled:opacity-40">
-          <RefreshCw size={13} /> Run again
-        </button>
       </div>
     </div>
   );
