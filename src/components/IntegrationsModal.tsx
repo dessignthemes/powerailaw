@@ -147,6 +147,10 @@ const practiceAreas = [
 
 type PracticeAreaStatus = "We handle" | "Don't handle" | "Not set";
 
+// Saved choices ({ "Real Estate": "handle" }) → every area's button state.
+const fromSaved = (saved: Record<string, "handle" | "decline">): Record<string, PracticeAreaStatus> =>
+  Object.fromEntries(practiceAreas.map((a) => [a, saved[a] === "handle" ? "We handle" : saved[a] === "decline" ? "Don't handle" : "Not set"]));
+
 function PracticeAreaRow({
   label,
   status,
@@ -327,6 +331,13 @@ export default function IntegrationsModal({
   const [urlSlug, setUrlSlug] = useState("");
   const [timezone, setTimezone] = useState("America/New_York");
   const [generalSaved, setGeneralSaved] = useState(false);
+  const [practiceStatus, setPracticeStatus] = useState<Record<string, PracticeAreaStatus>>(
+    Object.fromEntries(practiceAreas.map((a) => [a, "Not set" as PracticeAreaStatus]))
+  );
+  const [scopeNotes, setScopeNotes] = useState("");
+  const [practiceSaved, setPracticeSaved] = useState(false);
+  const [practiceSaving, setPracticeSaving] = useState(false);
+  const [practiceError, setPracticeError] = useState<string | null>(null);
   const [generalLoaded, setGeneralLoaded] = useState(false);
   const [generalSaving, setGeneralSaving] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -338,7 +349,15 @@ export default function IntegrationsModal({
       .then(async (res) => {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error ?? "Couldn't load the firm details.");
-        return data.organization as { name: string; urlSlug: string; timezone: string; logoUrl: string | null; canEdit: boolean };
+        return data.organization as {
+          name: string;
+          urlSlug: string;
+          timezone: string;
+          logoUrl: string | null;
+          canEdit: boolean;
+          practiceAreas?: Record<string, "handle" | "decline">;
+          scopeNotes?: string;
+        };
       })
       .then((o) => {
         if (cancelled) return;
@@ -347,6 +366,8 @@ export default function IntegrationsModal({
         setTimezone(o.timezone);
         setLogoUrl(o.logoUrl);
         setCanEditGeneral(o.canEdit);
+        setPracticeStatus(fromSaved(o.practiceAreas ?? {}));
+        setScopeNotes(o.scopeNotes ?? "");
       })
       .catch((e: Error) => !cancelled && setGeneralError(e.message))
       .finally(() => !cancelled && setGeneralLoaded(true));
@@ -355,11 +376,6 @@ export default function IntegrationsModal({
     };
   }, []);
 
-  const [practiceStatus, setPracticeStatus] = useState<Record<string, PracticeAreaStatus>>(
-    Object.fromEntries(practiceAreas.map((a) => [a, "Not set" as PracticeAreaStatus]))
-  );
-  const [scopeNotes, setScopeNotes] = useState("");
-  const [practiceSaved, setPracticeSaved] = useState(false);
 
   const allPracticeAreasUnset = practiceAreas.every((a) => practiceStatus[a] === "Not set");
 
@@ -410,9 +426,24 @@ export default function IntegrationsModal({
     }
   }
 
-  function handleSavePracticeAreas() {
-    setPracticeSaved(true);
-    setTimeout(() => setPracticeSaved(false), 1800);
+  async function handleSavePracticeAreas() {
+    setPracticeSaving(true);
+    setPracticeError(null);
+    try {
+      const areas: Record<string, "handle" | "decline"> = {};
+      for (const [k, v] of Object.entries(practiceStatus)) if (v !== "Not set") areas[k] = v === "We handle" ? "handle" : "decline";
+      const res = await fetch("/api/organization", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ practiceAreas: areas, scopeNotes }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error ?? "Couldn't save the practice areas.");
+      setPracticeStatus(fromSaved(data.organization.practiceAreas ?? {}));
+      setScopeNotes(data.organization.scopeNotes ?? "");
+      setPracticeSaved(true);
+      setTimeout(() => setPracticeSaved(false), 1800);
+    } catch (e) {
+      setPracticeError((e as Error).message);
+    } finally {
+      setPracticeSaving(false);
+    }
   }
 
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -727,12 +758,15 @@ export default function IntegrationsModal({
 
                 <div className="flex items-center gap-3 mb-10">
                   <button
-                    onClick={handleSavePracticeAreas}
-                    className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
+                    onClick={() => void handleSavePracticeAreas()}
+                    disabled={practiceSaving || !canEditGeneral}
+                    className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors disabled:opacity-50"
                   >
-                    Save practice areas
+                    {practiceSaving ? "Saving…" : "Save practice areas"}
                   </button>
                   {practiceSaved && <span className="text-[13px] text-green-600 font-medium">Saved</span>}
+                  {!canEditGeneral && <span className="text-[13px] text-muted">Only the workspace owner or an admin can change these.</span>}
+                  {practiceError && <span className="text-[13px] text-[#9F1D1D]">{practiceError}</span>}
                 </div>
 
                 <div className="border border-red-200 bg-red-50/40 rounded-2xl p-5 flex items-center justify-between gap-6 flex-wrap">

@@ -16,6 +16,9 @@ export type OrgSettings = {
   timezone: string;
   logoUrl: string | null;
   canEdit: boolean;
+  practiceAreas: Record<string, "handle" | "decline">; // areas not listed are "Not set"
+  scopeNotes: string;
+  practiceReady: boolean; // false until migration 0060 is run
 };
 
 const MAX_LOGO_CHARS = 300_000; // a resized logo as a data URL is far smaller
@@ -38,18 +41,23 @@ async function actor() {
 
 export async function getOrgSettings(): Promise<OrgSettings> {
   const a = await actor();
-  const { data, error } = await createAdminClient()
-    .from("organizations")
-    .select("name, url_slug, timezone, logo_url")
-    .eq("id", a.orgId)
-    .single();
+  const s = createAdminClient();
+  const { data, error } = await s.from("organizations").select("name, url_slug, timezone, logo_url").eq("id", a.orgId).single();
   if (error) throw error;
+  // Practice areas (migration 0060): read separately so the rest works without it.
+  const pa = await s.from("organizations").select("practice_areas").eq("id", a.orgId).single();
+  const raw = (pa.error ? null : (pa.data as { practice_areas?: { areas?: Record<string, string>; notes?: string } | null }).practice_areas) ?? {};
+  const practiceAreas: Record<string, "handle" | "decline"> = {};
+  for (const [k, v] of Object.entries(raw.areas ?? {})) if (v === "handle" || v === "decline") practiceAreas[k] = v;
   return {
     name: realName(data.name),
     urlSlug: data.url_slug ?? "",
     timezone: data.timezone || "America/New_York",
     logoUrl: data.logo_url ?? null,
     canEdit: a.canEdit,
+    practiceAreas,
+    scopeNotes: typeof raw.notes === "string" ? raw.notes : "",
+    practiceReady: !pa.error,
   };
 }
 
@@ -91,6 +99,28 @@ export async function updateOrgSettings(input: { name?: unknown; urlSlug?: unkno
   const { error } = await createAdminClient().from("organizations").update(update).eq("id", a.orgId);
   if (error) {
     if (error.code === "23505") throw new OrgError(409, "Another LawPower workspace already uses that website address.");
+    throw error;
+  }
+  return getOrgSettings();
+}
+
+// Practice areas and scope notes (Settings → General): owner or admin.
+export async function updatePracticeAreas(input: { practiceAreas?: unknown; scopeNotes?: unknown }) {
+  const a = await actor();
+  if (!a.canEdit) throw new OrgError(403, "Only the workspace owner or an admin can change the practice areas.");
+  const areas: Record<string, "handle" | "decline"> = {};
+  if (input.practiceAreas && typeof input.practiceAreas === "object") {
+    for (const [k, v] of Object.entries(input.practiceAreas as Record<string, unknown>).slice(0, 60)) {
+      const name = k.trim().slice(0, 60);
+      if (name && (v === "handle" || v === "decline")) areas[name] = v;
+    }
+  }
+  const notes = typeof input.scopeNotes === "string" ? input.scopeNotes.trim().slice(0, 2000) : "";
+  const { error } = await createAdminClient().from("organizations").update({ practice_areas: { areas, notes } }).eq("id", a.orgId);
+  if (error) {
+    if (/practice_areas/.test(error.message ?? "") || error.code === "42703" || error.code === "PGRST204") {
+      throw new OrgError(400, "Practice areas need a database update first (migration 0060).");
+    }
     throw error;
   }
   return getOrgSettings();

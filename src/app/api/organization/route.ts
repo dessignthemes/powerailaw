@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOrgSettings, updateOrgSettings, OrgError } from "@/lib/data/organization";
+import { getOrgSettings, updateOrgSettings, updatePracticeAreas, OrgError } from "@/lib/data/organization";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +20,8 @@ export async function GET() {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
+    // { practiceAreas, scopeNotes } saves just the practice areas (their own Save button).
+    if (body && typeof body === "object" && "practiceAreas" in body) return NextResponse.json({ organization: await updatePracticeAreas(body) });
     return NextResponse.json({ organization: await updateOrgSettings(body) });
   } catch (error) {
     return fail("PATCH /api/organization", error);
