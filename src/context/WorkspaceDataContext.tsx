@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import type { CustomFilter } from "@/lib/tasks/customFilters";
+import { KEY_DATES_CHANGED_EVENT } from "@/lib/matters/keyDates";
 import type { Client, ClientStatus } from "@/components/NewClientModal";
 import type { Matter, MatterStatus } from "@/components/NewMatterModal";
 import type { BoardTask } from "@/components/NewTaskModal";
@@ -189,6 +190,15 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     setTasks((ts) => ts.map((t) => (t.boardId === id ? { ...t, boardId: null } : t)));
   }, []);
 
+  // A task change also moved its matter's key dates: reload the other tasks and the matter's Key dates.
+  const keyDatesSynced = (matterId: string | null | undefined) => {
+    fetch("/api/tasks")
+      .then(readJson)
+      .then((d) => Array.isArray(d.tasks) && setTasks(d.tasks))
+      .catch(() => {});
+    if (matterId) window.dispatchEvent(new CustomEvent(KEY_DATES_CHANGED_EVENT, { detail: { matterId } }));
+  };
+
   const addTask = useCallback((task: BoardTask) => {
     const optimistic = { ...task, createdAt: task.createdAt ?? new Date().toISOString() };
     setTasks((ts) => [...ts, optimistic]);
@@ -200,6 +210,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       .then(readJson)
       .then((data) => {
         if (data.task) setTasks((ts) => ts.map((t) => (t.id === task.id ? data.task : t)));
+        if (data.task?.keyDatesSynced) keyDatesSynced(data.task.matterId);
       })
       .catch((err) => {
         console.error("Failed to save task:", err);
@@ -226,6 +237,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         .then(readJson)
         .then((data) => {
           if (data.task) setTasks((ts) => ts.map((t) => (t.id === task.id ? data.task : t)));
+          if (data.task?.keyDatesSynced) keyDatesSynced(data.task.matterId);
         })
         .catch((err) => {
           console.error("Failed to update task:", err);

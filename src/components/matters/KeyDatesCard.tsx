@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CalendarClock, Loader2, RefreshCw, RotateCcw, FileText, ChevronDown, ChevronRight, Info, PenLine, Settings2, ArrowUp, ArrowDown, Trash2, Plus, Upload, History, X } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { DOCS_CHANGED_EVENT } from "@/components/documents/DocumentsLibrary";
+import { KEY_DATES_CHANGED_EVENT } from "@/lib/matters/keyDates";
 import {
   ruleText,
   usDate,
@@ -94,9 +95,11 @@ export function useKeyDates(matter: Matter | null) {
       if ((e as CustomEvent<{ matterId: string }>).detail?.matterId === id) load();
     };
     window.addEventListener(DOCS_CHANGED_EVENT, onDocs);
+    window.addEventListener(KEY_DATES_CHANGED_EVENT, onDocs); // a date changed in one of the matter's tasks
     return () => {
       live = false;
       window.removeEventListener(DOCS_CHANGED_EVENT, onDocs);
+      window.removeEventListener(KEY_DATES_CHANGED_EVENT, onDocs);
     };
   }, [id, handle, setError]);
 

@@ -45,6 +45,7 @@ export type BoardTask = {
   updatedBy?: string | null; // profile id of the person who last changed it
   createdAt?: string;
   updatedAt?: string;
+  keyDatesSynced?: boolean; // (from the server) the matter's key dates and its other tasks were updated too
 };
 
 export type TaskComment = {

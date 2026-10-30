@@ -261,7 +261,7 @@ export default function TemplatesModal({ onClose, initialId, inline = false }: {
                     <div className="text-[12.5px] text-muted mb-2">
                       Paste your checklist: section names on their own line (e.g. <b>1. INITIAL INTAKE</b>), steps underneath starting with{" "}
                       <b>☐</b>, <b>•</b>, <b>*</b> or <b>-</b>. Lines like &quot;Notes: ____&quot; are skipped.
-                      To give a step a due date, add the critical date and days after a bar, e.g. <b>* Title Binder Received | Closing date | -14</b>.
+                      To give a step a due date, add the key date and days after a bar, e.g. <b>* Title Binder Received | Closing date | -14</b>.
                       To move the task when a step is ticked, add <b>| move: Waiting</b> (or In progress, Done).
                     </div>
                     <textarea
@@ -330,7 +330,7 @@ export default function TemplatesModal({ onClose, initialId, inline = false }: {
                                   })
                                 }
                                 list="lp-anchors"
-                                placeholder="Critical date"
+                                placeholder="Key date"
                                 title="The date this step is counted from, e.g. Closing date (optional)"
                                 maxLength={60}
                                 className="w-[190px] bg-white/70 focus:bg-white rounded-lg px-2.5 py-1.5 text-[12.5px] outline-none"
@@ -341,7 +341,7 @@ export default function TemplatesModal({ onClose, initialId, inline = false }: {
                                 disabled={!i.anchor}
                                 onChange={(e) => setSection(s.id, { items: s.items.map((x) => (x.id === i.id ? { ...x, days: Number(e.target.value) || 0 } : x)) })}
                                 placeholder="Days"
-                                title="Days after (+) or before (−) the critical date"
+                                title="Days after (+) or before (−) the key date"
                                 className="w-[64px] bg-white/70 focus:bg-white rounded-lg px-2 py-1.5 text-[12.5px] outline-none text-right disabled:opacity-40"
                               />
                               <select

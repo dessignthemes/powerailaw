@@ -1,4 +1,7 @@
 // Key dates of a matter (shared by browser and server).
+
+// Fired in the browser when a task change also changed its matter's key dates.
+export const KEY_DATES_CHANGED_EVENT = "lp:key-dates-changed";
 // Each date is either written in a document, worked out from a rule
 // ("30 days after attorney review is completed"), or entered by hand.
 

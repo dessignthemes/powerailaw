@@ -420,9 +420,9 @@ function FromTemplateDialog({
           {anchors.length > 0 && (
             <div className="rounded-2xl bg-card-alt p-4">
               <div className="text-[13px] font-semibold flex items-center gap-1.5">
-                <LayoutList size={14} strokeWidth={1.75} /> Critical dates
+                <LayoutList size={14} strokeWidth={1.75} /> Key dates
               </div>
-              <div className="text-[12.5px] text-muted mt-0.5 mb-3">Each step&apos;s due date is counted from these. Leave blank and fill in later in the task.</div>
+              <div className="text-[12.5px] text-muted mt-0.5 mb-3">The same as the matter&apos;s key dates on the Overview. Each step&apos;s due date is counted from these; one left blank can be filled in later, here, in the task or on the Overview.</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                 {anchors.map((a) => (
                   <label key={a} className="flex items-center justify-between gap-2 text-[13px]">

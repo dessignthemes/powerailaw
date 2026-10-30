@@ -13,6 +13,7 @@ import { normalizeProfile, autoLetter, type CardType } from "@/lib/clients/card"
 import { AI_FIELDS, cleanDetails, layoutFor, type MatterDetails } from "@/lib/matters/details";
 import {
   FIELD_KEYS,
+  KEY_DATE_FIELDS,
   isField,
   isDateKey,
   isCustomKey,
@@ -349,10 +350,11 @@ export async function linkTasksByNumber(ctx: AiCtx, matterId: string) {
   return (linked ?? []).length;
 }
 
-export async function applyDatesToTasks(ctx: AiCtx, matterId: string, state: KeyDatesState) {
+// cleared = key-date names (e.g. "Closing date") just cleared on the matter: removed from the tasks too.
+export async function applyDatesToTasks(ctx: AiCtx, matterId: string, state: KeyDatesState, cleared: string[] = []) {
   await linkTasksByNumber(ctx, matterId).catch(() => 0);
   const dates = anchorDates(state.dates, await matterFields(ctx, matterId).catch(() => []));
-  if (!Object.keys(dates).length && !state.dates.mortgage?.na) return 0;
+  if (!Object.keys(dates).length && !state.dates.mortgage?.na && !cleared.length) return 0;
   const s = db();
   // The matter's own due date becomes the closing date, unless one was set.
   const closing = state.dates.closing?.date;
@@ -364,6 +366,7 @@ export async function applyDatesToTasks(ctx: AiCtx, matterId: string, state: Key
     if (!c0) continue;
     const c = state.dates.mortgage?.na ? setMortgageNa(c0, true) : c0;
     const merged = { ...(c.dates ?? {}), ...dates };
+    for (const a of cleared) if (!(a in dates)) delete merged[a];
     const next = { ...c, dates: merged };
     let due: string | null = null;
     for (const sec of next.sections) for (const i of sec.items) {
@@ -549,15 +552,20 @@ export async function saveManualDates(ctx: AiCtx, matterId: string, changes: Rec
   const m = await loadMatter(ctx, matterId);
   const previous = stateOf(m);
   const dates: KeyDatesState["dates"] = { ...previous.dates };
+  const clearedKeys: string[] = [];
   for (const [k, v] of Object.entries(changes)) {
     if (!isDateKey(k)) continue;
-    if (v === null || v === "") delete dates[k];
-    else if (v === "na" && k === "mortgage") dates[k] = { date: null, na: true, manual: true };
+    if (v === null || v === "") {
+      delete dates[k];
+      clearedKeys.push(k);
+    } else if (v === "na" && k === "mortgage") dates[k] = { date: null, na: true, manual: true };
     else if (isYmd(v)) dates[k] = { ...(dates[k] ?? {}), date: v, manual: true, days: null, from: null } as KeyDate;
     else throw new KeyDatesError(400, "Use a valid date.");
   }
   let state: KeyDatesState = { ...previous, dates: resolveDates(dates) };
-  await applyDatesToTasks(ctx, matterId, state);
+  const fields = clearedKeys.length ? await matterFields(ctx, matterId).catch(() => [] as FieldDef[]) : [];
+  const cleared = clearedKeys.map((k) => KEY_DATE_FIELDS.find((f) => f.key === k)?.anchor ?? fields.find((f) => f.key === k)?.label).filter((x): x is string => !!x);
+  await applyDatesToTasks(ctx, matterId, state, cleared);
   state = await maybeCreateLetter(ctx, m, state);
   await saveState(ctx, matterId, state);
   const { fingerprint } = await inputDocuments(ctx, matterId, state);
@@ -671,4 +679,55 @@ export async function saveMatterFields(ctx: AiCtx, matterId: string, input: unkn
     throw error;
   }
   return fieldsFor({ category: m.category, matterCode: m.matter_code }, layouts);
+}
+
+// ── Key dates ↔ a task's checklist ────────────────────────────────────────────
+// The matter's key dates and the key dates on its tasks are one and the same:
+// a date changed in a task (Task Board or the matter's Tasks tab) is saved to
+// the matter and passed on to every other task on it; a task that doesn't have
+// the matter's dates yet gets them. Returns true when anything was changed.
+export async function syncTaskKeyDates(
+  ctx: AiCtx,
+  task: { id: string; matterId?: string | null; checklist?: unknown },
+  beforeChecklist: unknown | undefined // undefined = a new task (its dates count as entered just now)
+): Promise<boolean> {
+  const matterId = task.matterId;
+  const checklist = cleanChecklist(task.checklist);
+  if (!matterId || !checklist) return false;
+  let m: MatterRow;
+  try {
+    m = await loadMatter(ctx, matterId);
+  } catch {
+    return false; // no key dates on this matter type / not set up
+  }
+  const state = stateOf(m);
+  const fields = await matterFields(ctx, matterId).catch(() => [] as FieldDef[]);
+  const keyOf = new Map<string, string>([
+    ...KEY_DATE_FIELDS.map((f) => [f.anchor, f.key] as [string, string]),
+    ...fields.filter((f) => isCustomKey(f.key)).map((f) => [f.label, f.key] as [string, string]),
+  ]);
+  const onMatter = anchorDates(state.dates, fields);
+  const now = checklist.dates ?? {};
+  // A new task counts as changing from nothing: dates typed while creating it are saved to the matter.
+  const before = beforeChecklist === undefined ? {} : cleanChecklist(beforeChecklist)?.dates ?? {};
+
+  // Changed in this task: save to the matter (which updates every task on it).
+  {
+    const changes: Record<string, string | null> = {};
+    for (const [anchor, key] of keyOf) {
+      const t = now[anchor] ?? "";
+      if (t !== (before[anchor] ?? "") && t !== (onMatter[anchor] ?? "")) changes[key] = t || null;
+    }
+    if (Object.keys(changes).length) {
+      await saveManualDates(ctx, matterId, changes);
+      return true;
+    }
+  }
+  // New task, a checklist just added, or linked to the matter: give it the matter's dates.
+  const missing = Object.entries(onMatter).some(([a, v]) => now[a] !== v);
+  if (missing || (state.dates.mortgage?.na && checklist.sections.some((sec) => sec.items.some((i) => /mortgage/i.test(`${sec.title} ${i.text} ${i.anchor ?? ""}`) && !i.na)))) {
+    await applyDatesToTasks(ctx, matterId, state);
+    return true;
+  }
+  return false;
 }

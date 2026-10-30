@@ -607,7 +607,7 @@ export default function TaskDetailModal({
               </button>
             </div>
           )}
-          {checklist && <ChecklistPanel checklist={checklist} onChange={changeChecklist} />}
+          {checklist && <ChecklistPanel checklist={checklist} onChange={changeChecklist} matter={matter ? { id: matter.id, label: matter.matterNumber ?? matter.title } : null} />}
 
           <div className="flex items-center gap-6 border-b border-line mb-5">
             {detailTabs.map((t) => (

@@ -148,6 +148,24 @@ export async function listTasks(): Promise<BoardTask[]> {
   return (data as TaskRow[]).filter((r) => canSeeTask(r, me)).map(toTask);
 }
 
+// A task on a matter: keep its key dates and the matter's in step (see syncTaskKeyDates).
+// Returns the task as saved afterwards, marked keyDatesSynced when anything changed.
+async function withKeyDates(orgId: string, task: BoardTask, beforeChecklist: unknown | undefined): Promise<BoardTask> {
+  if (!task.matterId || !task.checklist) return task;
+  try {
+    const user = await getSessionUser();
+    if (!user) return task;
+    const { syncTaskKeyDates } = await import("@/lib/ai/keyDates");
+    const changed = await syncTaskKeyDates({ userId: user.id, email: user.email, orgId }, task, beforeChecklist);
+    if (!changed) return task;
+    const { data } = await createAdminClient().from("tasks").select("*").eq("id", task.id).eq("org_id", orgId).maybeSingle();
+    return data ? { ...toTask(data as TaskRow), keyDatesSynced: true } : { ...task, keyDatesSynced: true };
+  } catch (e) {
+    console.error("Syncing key dates with the matter failed:", e);
+    return task;
+  }
+}
+
 export async function createTaskRow(task: BoardTask, userId: string | null): Promise<BoardTask> {
   const supabase = createAdminClient();
   const orgId = await getCurrentOrgId();
@@ -178,7 +196,7 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
     });
 
   if (error) throw error;
-  const created = toTask(data as TaskRow);
+  const created = await withKeyDates(orgId, toTask(data as TaskRow), undefined);
   await notifyAssigned({ orgId, actorId: userId, kind: "task_assigned", refId: created.id, boardId: created.boardId, title: created.title, to: created.assignee });
   // Offered to several people: each gets an alert to accept it.
   if (!created.assignee) {
@@ -217,7 +235,10 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   }
 
   if (error) throw error;
-  const updated = toTask(data as TaskRow);
+  // Only when the checklist was part of this change (dates edited, steps added, matter linked).
+  const saved = toTask(data as TaskRow);
+  const touched = task.checklist !== undefined || (before as { matter_id?: string | null } | null)?.matter_id !== saved.matterId;
+  const updated = touched ? await withKeyDates(orgId, saved, (before as { checklist?: unknown } | null)?.checklist ?? null) : saved;
   await notifyAssigned({
     orgId,
     actorId: userId,

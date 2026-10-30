@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import ClickAway from "@/components/ClickAway";
 import { useState } from "react";
 import { Check, ChevronDown, ChevronRight, ListChecks, Plus, Search, Trash2, X } from "lucide-react";
@@ -147,9 +148,11 @@ const dueStyle: Record<DueState, string> = {
 export default function ChecklistPanel({
   checklist,
   onChange,
+  matter,
 }: {
   checklist: TaskChecklist;
   onChange: (next: TaskChecklist | null) => void;
+  matter?: { id: string; label: string } | null; // the task's matter: its key dates are the same as these
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const { templates } = useTemplates();
@@ -234,8 +237,20 @@ export default function ChecklistPanel({
       {anchors.length > 0 && (
         <div className="bg-page rounded-xl px-3.5 py-3 mb-2">
           <div className="flex items-center gap-2 mb-2">
-            <div className="text-[13px] font-semibold">Critical dates</div>
-            <div className="text-[12px] text-muted">Enter them once and every step gets its due date.</div>
+            <div className="text-[13px] font-semibold">Key dates</div>
+            <div className="text-[12px] text-muted">
+              {matter ? (
+                <>
+                  Same as the key dates on{" "}
+                  <Link href={`/dashboard/matters/${matter.id}`} className="underline underline-offset-2 hover:text-ink">
+                    {matter.label}
+                  </Link>
+                  : a change here updates the matter and its other tasks.
+                </>
+              ) : (
+                "Enter them once and every step gets its due date."
+              )}
+            </div>
             {(al.overdue > 0 || al.soon > 0) && (
               <div className="ml-auto flex items-center gap-1.5 text-[12px] font-medium">
                 {al.overdue > 0 && <span className="bg-[#F9B2B3] rounded-md px-1.5 py-0.5">{al.overdue} overdue</span>}
