@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 // Every AI request is recorded with the feature it was for, so the firm can see
 // where its AI allowance went (Administration > AI usage).
-export type AiFeature = "chat" | "documents" | "matter_review" | "accounting" | "other";
+export type AiFeature = "chat" | "documents" | "matter_review" | "accounting" | "conflicts" | "other";
 
 export async function recordAiUsage(row: {
   orgId: string;

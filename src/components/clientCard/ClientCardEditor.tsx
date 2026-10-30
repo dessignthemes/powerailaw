@@ -1,5 +1,6 @@
 "use client";
 
+import ConflictStrip from "@/components/conflicts/ConflictStrip";
 import ClickAway from "@/components/ClickAway";
 import PortalButton from "@/components/clientCard/PortalButton";
 import MatterLinks, { LinkToMatterModal } from "@/components/matters/MatterLinks";
@@ -386,6 +387,13 @@ export default function ClientCardEditor({ id, onClose, onSaved }: { id: string 
           )}
         </div>
       </div>
+
+      {/* Conflict check against every matter (runs by itself once the card has a full name) */}
+      <ConflictStrip
+        clientId={cardId}
+        names={cardType === "company" ? [profile.company.name] : profile.people.map((p) => [p.first, p.middle, p.last].filter(Boolean).join(" "))}
+        ready={!dirty && !autoSaving && (cardType === "company" ? profile.company.name.trim().length > 1 : profile.people.some((p) => p.first.trim() && p.last.trim()))}
+      />
 
       <div className="grid md:grid-cols-[250px_1fr] min-h-[560px]">
         {/* Left panel */}

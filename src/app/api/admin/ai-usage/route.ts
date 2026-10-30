@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 // GET ?month=YYYY-MM → the firm's AI usage that month: total, by feature, by person
 // (by person: owner / admins only), and the monthly allowance.
-const FEATURES = ["documents", "chat", "matter_review", "accounting", "other"] as const;
+const FEATURES = ["documents", "chat", "matter_review", "accounting", "conflicts", "other"] as const;
 
 export async function GET(request: Request) {
   try {

@@ -22,6 +22,7 @@ import {
   MessagesSquare,
   type LucideIcon,
   ListChecks,
+  ShieldAlert,
 } from "lucide-react";
 
 // ownerOnly: shown only to the workspace owner (none right now; AI Accountant is open to everyone since Oct 19, 2026).
@@ -41,6 +42,7 @@ export const toolLinks: NavLink[] = [
   { label: "AI Agent", href: "/dashboard/agent", icon: Sparkles },
   { label: "AI Accountant", href: "/dashboard/ai-accountant", icon: Calculator },
   { label: "AI Matter", href: "/dashboard/ai-matter", icon: FolderSearch },
+  { label: "Conflict Checks", href: "/dashboard/conflict-checks", icon: ShieldAlert },
   { label: "AI Templates", href: "/dashboard/ai-templates", icon: FileText },
   { label: "Communications", href: "/dashboard/communications", icon: MessagesSquare },
   { label: "Time Tracking", href: "/dashboard/time-tracking", icon: Timer },

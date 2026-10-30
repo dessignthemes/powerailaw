@@ -18,6 +18,7 @@ const FEATURE_INFO: Record<string, { label: string; desc: string }> = {
   chat: { label: "AI Agent", desc: "Questions asked of the workspace" },
   matter_review: { label: "AI Matter", desc: "Matter reviews: summary, risks and next steps" },
   accounting: { label: "AI Accountant", desc: "Categorizing bank imports and reading receipts" },
+  conflicts: { label: "Conflict checks", desc: "Checking new clients against every matter" },
   other: { label: "Other", desc: "Other AI requests" },
 };
 
