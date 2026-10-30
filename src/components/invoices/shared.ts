@@ -8,12 +8,18 @@ export type Invoice = {
   number: string;
   issueDate: string;
   dueDate: string | null;
-  status: "unpaid" | "partial" | "paid" | "void";
+  status: "draft" | "pending" | "unpaid" | "partial" | "paid" | "void"; // draft → pending (approval) → unpaid → paid
   total: number;
   amountPaid: number;
   paidAt: string | null;
   notes: string;
   createdAt: string;
+  createdBy?: string | null;
+  submittedBy?: string | null;
+  submittedAt?: string | null;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  reviewNote?: string;
   lines?: InvoiceLine[];
   payments?: { id: string; date: string; amount: number; method: string; fromTrust: boolean }[];
 };
@@ -36,6 +42,8 @@ export const shortDate = (iso: string | null) => {
 
 // Paid / Partly paid / Overdue / Unpaid, with the colours used everywhere.
 export function statusOf(inv: Invoice): { label: string; cls: string } {
+  if (inv.status === "draft") return { label: inv.reviewNote ? "Draft · sent back" : "Draft", cls: "bg-card-alt text-ink" };
+  if (inv.status === "pending") return { label: "Waiting for approval", cls: "bg-[#EDE7FB] text-[#4C2E91]" };
   if (inv.status === "paid") return { label: "Paid", cls: "bg-[#CAF0D9] text-[#14532D]" };
   if (inv.status === "void") return { label: "Void", cls: "bg-card-alt text-muted" };
   const overdue = !!inv.dueDate && inv.dueDate < todayIso();

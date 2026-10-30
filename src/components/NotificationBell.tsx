@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, ListChecks, Folder , MessageSquare, UserPlus } from "lucide-react";
+import { Bell, ListChecks, Folder , MessageSquare, UserPlus, Receipt } from "lucide-react";
 
-type Item = { id: string; kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message" | "internal_message" | "new_lead"; refId: string; boardId: string | null; title: string; actorName: string; createdAt: string; read: boolean };
+type Item = { id: string; kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message" | "internal_message" | "new_lead" | "invoice_approval"; refId: string; boardId: string | null; title: string; actorName: string; createdAt: string; read: boolean };
 
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -14,7 +14,9 @@ const ago = (iso: string) => {
   return h < 24 ? `${h}h ago` : `${Math.round(h / 24)}d ago`;
 };
 const hrefOf = (n: Item) =>
-  n.kind === "new_lead"
+  n.kind === "invoice_approval"
+    ? `/dashboard/ai-accountant?tab=invoices&invoice=${n.refId}`
+    : n.kind === "new_lead"
     ? `/dashboard/leads?lead=${n.refId}`
     : n.kind === "internal_message"
     ? `/dashboard/communications?view=internal`
@@ -99,13 +101,15 @@ export default function NotificationBell() {
           ) : (
             <div className="max-h-[420px] overflow-y-auto">
               {items.map((n) => {
-                const Icon = n.kind === "new_lead" ? UserPlus : n.kind === "portal_message" || n.kind === "internal_message" ? MessageSquare : n.kind === "matter_assigned" ? Folder : ListChecks;
+                const Icon = n.kind === "invoice_approval" ? Receipt : n.kind === "new_lead" ? UserPlus : n.kind === "portal_message" || n.kind === "internal_message" ? MessageSquare : n.kind === "matter_assigned" ? Folder : ListChecks;
                 return (
                   <Link key={n.id} href={hrefOf(n)} onClick={() => setOpen(false)} className={`flex gap-3 px-4 py-3 hover:bg-chip/60 border-b border-line last:border-b-0 ${n.read ? "" : "bg-[#FFF6F6]"}`}>
                     <Icon size={16} strokeWidth={1.75} className="text-muted mt-0.5 flex-shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[13px] text-muted">
-                        {n.kind === "new_lead"
+                        {n.kind === "invoice_approval"
+                          ? `${n.actorName} · invoice`
+                          : n.kind === "new_lead"
                           ? `New lead from ${n.actorName}`
                           : n.kind === "internal_message"
                           ? `${n.actorName} sent you a message`

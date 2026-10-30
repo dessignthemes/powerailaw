@@ -9,7 +9,7 @@ const missing = (e: { code?: string; message?: string } | null) => !!e && (e.cod
 
 export type Notification = {
   id: string;
-  kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message" | "internal_message" | "new_lead";
+  kind: "task_assigned" | "matter_assigned" | "task_offered" | "task_accepted" | "portal_message" | "internal_message" | "new_lead" | "invoice_approval";
   refId: string;
   boardId: string | null;
   title: string;
@@ -35,7 +35,7 @@ async function actorName(actorId: string | null) {
 export async function notifyAssigned(opts: {
   orgId: string;
   actorId: string | null;
-  kind: Exclude<Notification["kind"], "new_lead">;
+  kind: Exclude<Notification["kind"], "new_lead" | "invoice_approval">;
   refId: string;
   boardId?: string | null;
   title: string;

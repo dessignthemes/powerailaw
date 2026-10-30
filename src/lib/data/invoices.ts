@@ -41,12 +41,18 @@ export type Invoice = {
   number: string;
   issueDate: string;
   dueDate: string | null;
-  status: "unpaid" | "partial" | "paid" | "void";
+  status: "draft" | "pending" | "unpaid" | "partial" | "paid" | "void"; // draft → pending (approval) → unpaid → paid
   total: number;
   amountPaid: number;
   paidAt: string | null;
   notes: string;
   createdAt: string;
+  createdBy: string | null;
+  submittedBy: string | null;
+  submittedAt: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  reviewNote: string; // why it was sent back
   lines?: InvoiceLine[];
   payments?: { id: string; date: string; amount: number; method: string; fromTrust: boolean }[];
 };
@@ -64,6 +70,12 @@ type Row = {
   paid_at: string | null;
   notes: string;
   created_at: string;
+  created_by?: string | null;
+  submitted_by?: string | null;
+  submitted_at?: string | null;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  review_note?: string | null;
 };
 const toInvoice = (r: Row): Invoice => ({
   id: r.id,
@@ -78,6 +90,12 @@ const toInvoice = (r: Row): Invoice => ({
   paidAt: r.paid_at,
   notes: r.notes ?? "",
   createdAt: r.created_at,
+  createdBy: r.created_by ?? null,
+  submittedBy: r.submitted_by ?? null,
+  submittedAt: r.submitted_at ?? null,
+  approvedBy: r.approved_by ?? null,
+  approvedAt: r.approved_at ?? null,
+  reviewNote: r.review_note ?? "",
 });
 
 async function matterOf(orgId: string, matterId: string) {
@@ -177,8 +195,11 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 export async function createInvoice(
   orgId: string,
   userId: string,
-  body: { matterId?: unknown; issueDate?: unknown; dueDate?: unknown; notes?: unknown; lines?: unknown }
+  body: { matterId?: unknown; issueDate?: unknown; dueDate?: unknown; notes?: unknown; lines?: unknown; stage?: unknown },
+  canApprove = true
 ): Promise<Invoice> {
+  // draft: kept to finish later · pending: waits for the managing attorney · issue: approved now (owner / admin only).
+  const stage = body.stage === "draft" ? "draft" : body.stage === "pending" || (body.stage === "issue" && !canApprove) ? "pending" : "unpaid";
   if (typeof body.matterId !== "string") throw new InvoiceError("Pick the matter to bill.");
   const m = await matterOf(orgId, body.matterId);
   const issueDate = typeof body.issueDate === "string" && DATE.test(body.issueDate) ? body.issueDate : new Date().toISOString().slice(0, 10);
@@ -224,13 +245,20 @@ export async function createInvoice(
         total,
         notes: typeof body.notes === "string" ? body.notes.trim().slice(0, 2000) : "",
         created_by: userId,
+        ...(stage !== "unpaid" ? { status: stage } : {}),
+        ...(stage === "pending" ? { submitted_by: userId, submitted_at: new Date().toISOString() } : {}),
+        ...(stage === "unpaid" && body.stage === "issue" ? { approved_by: userId, approved_at: new Date().toISOString() } : {}),
       })
       .select("*")
       .single();
     if (r.error?.code === "23505") continue;
+    if (r.error && (r.error.code === "23514" || r.error.code === "PGRST204" || /submitted_|approved_/.test(r.error.message ?? ""))) {
+      throw new InvoiceError("Drafts and approvals need a database update first (migration 0061).", 503);
+    }
     row = check(r) as Row;
   }
   if (!row) throw new InvoiceError("Couldn't give the invoice a number. Please try again.", 409);
+  if (stage === "pending") await alertApprovers(orgId, userId, row.id, row.number, total);
 
   const lr = await db()
     .from("invoice_lines")
@@ -267,6 +295,7 @@ const METHODS: Record<string, string> = { check: "Check", wire: "Wire", ach: "AC
 export async function recordPayment(orgId: string, userId: string, invoiceId: string, body: { date?: unknown; amount?: unknown; method?: unknown; externalRef?: string; note?: string }) {
   const inv = await getInvoice(orgId, invoiceId);
   if (inv.status === "void") throw new InvoiceError("This invoice was voided.");
+  if (inv.status === "draft" || inv.status === "pending") throw new InvoiceError("This invoice hasn't been approved yet. Approve it first, then record the payment.");
   const remaining = round2(inv.total - inv.amountPaid);
   if (remaining <= 0) throw new InvoiceError("This invoice is already paid in full.");
   const amount = round2(Number(body.amount));
@@ -351,11 +380,100 @@ export async function invoiceForPrint(orgId: string, id: string) {
   const pay = await getPaymentSettings(orgId);
   return {
     invoice: inv,
-    payUrl: owed > 0 && inv.status !== "void" && pay.lawpayOperatingUrl ? payLink(pay.lawpayOperatingUrl, { amount: owed, reference: inv.number }) : null,
+    payUrl: owed > 0 && inv.status !== "void" && inv.status !== "draft" && inv.status !== "pending" && pay.lawpayOperatingUrl ? payLink(pay.lawpayOperatingUrl, { amount: owed, reference: inv.number }) : null,
     payPage: pay.lawpayOperatingUrl || null,
     // A placeholder (the owner's email) isn't a firm name.
     firm: { name: firm && !firm.includes("@") ? firm : "", logoUrl: (org.data as { logo_url?: string | null } | null)?.logo_url ?? null },
     client: client.data as { name: string; email: string | null; phone: string | null; address: string | null } | null,
     matter: matter.data ? { title: (matter.data as { title: string }).title, number: (matter.data as { matter_number: string | null }).matter_number } : null,
   };
+}
+
+// ── Approval (the managing attorney: the workspace owner or an admin) ────────
+
+export async function roleOf(orgId: string, userId: string): Promise<{ canApprove: boolean; name: string }> {
+  const { data } = await db().from("profiles").select("role, full_name, email").eq("org_id", orgId).eq("id", userId).maybeSingle();
+  const r = data as { role?: string; full_name?: string | null; email?: string | null } | null;
+  return { canApprove: r?.role === "owner" || r?.role === "admin", name: r?.full_name || r?.email || "Someone" };
+}
+
+async function notify(orgId: string, to: string[], actorId: string, invoiceId: string, title: string) {
+  if (!to.length) return;
+  const { name } = await roleOf(orgId, actorId);
+  const { error } = await db()
+    .from("notifications")
+    .insert(to.filter((u) => u !== actorId).map((uid) => ({ org_id: orgId, user_id: uid, kind: "invoice_approval", ref_id: invoiceId, board_id: null, title: title.slice(0, 300), actor_id: actorId, actor_name: name.slice(0, 120) })));
+  if (error && !/notifications_kind_check|notifications/.test(error.message ?? "")) console.error("Invoice alert failed:", error.message);
+}
+
+async function alertApprovers(orgId: string, actorId: string, invoiceId: string, number: string, total: number) {
+  const { data } = await db().from("profiles").select("id").eq("org_id", orgId).in("role", ["owner", "admin"]);
+  await notify(orgId, ((data ?? []) as { id: string }[]).map((p) => p.id), actorId, invoiceId, `${number} · ${total.toLocaleString("en-US", { style: "currency", currency: "USD" })} is waiting for your approval`).catch(() => undefined);
+}
+
+// submit: draft → waiting for approval · approve: draft / waiting → issued (unpaid)
+// return: waiting → draft, with a note · reopen: an issued invoice with no payments → draft.
+export async function changeStage(orgId: string, userId: string, id: string, body: { action?: unknown; note?: unknown }): Promise<Invoice> {
+  const inv = await getInvoice(orgId, id);
+  const { canApprove } = await roleOf(orgId, userId);
+  const now = new Date().toISOString();
+  const note = typeof body.note === "string" ? body.note.trim().slice(0, 1000) : "";
+  let patch: Record<string, unknown>;
+  let from: Invoice["status"][];
+  switch (body.action) {
+    case "submit":
+      from = ["draft"];
+      patch = { status: "pending", submitted_by: userId, submitted_at: now, review_note: "" };
+      break;
+    case "approve":
+      if (!canApprove) throw new InvoiceError("Only the managing attorney (the workspace owner or an admin) can approve invoices.", 403);
+      from = ["draft", "pending"];
+      patch = { status: "unpaid", approved_by: userId, approved_at: now, review_note: "" };
+      break;
+    case "return":
+      if (!canApprove) throw new InvoiceError("Only the managing attorney (the workspace owner or an admin) can send invoices back.", 403);
+      from = ["pending"];
+      patch = { status: "draft", review_note: note };
+      break;
+    case "reopen":
+      if (!canApprove) throw new InvoiceError("Only the managing attorney (the workspace owner or an admin) can turn an issued invoice back into a draft.", 403);
+      if (inv.amountPaid > 0) throw new InvoiceError("This invoice already has payments, so it can't go back to being a draft.");
+      from = ["unpaid"];
+      patch = { status: "draft", approved_by: null, approved_at: null };
+      break;
+    default:
+      throw new InvoiceError("Unknown action.");
+  }
+  if (!from.includes(inv.status)) throw new InvoiceError("This invoice has moved on since you opened it. Refresh and try again.", 409);
+  const r = await db().from("invoices").update({ ...patch, updated_at: now }).eq("org_id", orgId).eq("id", id).eq("status", inv.status).select("id");
+  if (r.error) {
+    if (r.error.code === "23514" || /submitted_|approved_|review_note/.test(r.error.message ?? "")) throw new InvoiceError("Drafts and approvals need a database update first (migration 0061).", 503);
+    throw r.error;
+  }
+  if (!(r.data ?? []).length) throw new InvoiceError("This invoice has moved on since you opened it. Refresh and try again.", 409);
+  const money = inv.total.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  if (body.action === "submit") await alertApprovers(orgId, userId, id, inv.number, inv.total);
+  const sender = inv.submittedBy ?? inv.createdBy;
+  if ((body.action === "approve" || body.action === "return") && sender)
+    await notify(orgId, [sender], userId, id, body.action === "approve" ? `${inv.number} · ${money} was approved` : `${inv.number} was sent back${note ? `: ${note}` : ""}`).catch(() => undefined);
+  return getInvoice(orgId, id);
+}
+
+// Who owes what: issued invoices not fully paid, by client.
+export async function outstandingByClient(orgId: string) {
+  const r = await db().from("invoices").select("client_id, total, amount_paid, due_date, status").eq("org_id", orgId).in("status", ["unpaid", "partial"]).limit(20000);
+  const rows = check(r) as { client_id: string | null; total: number; amount_paid: number; due_date: string | null }[];
+  const today = new Date().toISOString().slice(0, 10);
+  const by = new Map<string, { clientId: string | null; owed: number; overdue: number; count: number; oldestDue: string | null }>();
+  for (const x of rows) {
+    const key = x.client_id ?? "none";
+    const b = by.get(key) ?? { clientId: x.client_id, owed: 0, overdue: 0, count: 0, oldestDue: null };
+    const owed = round2((Number(x.total) || 0) - (Number(x.amount_paid) || 0));
+    b.owed = round2(b.owed + owed);
+    b.count++;
+    if (x.due_date && x.due_date < today) b.overdue = round2(b.overdue + owed);
+    if (x.due_date && (!b.oldestDue || x.due_date < b.oldestDue)) b.oldestDue = x.due_date;
+    by.set(key, b);
+  }
+  return [...by.values()].filter((b) => b.owed > 0).sort((a, b) => b.owed - a.owed);
 }

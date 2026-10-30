@@ -83,6 +83,17 @@ function AiAccountant() {
   const [setup, setSetup] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
+  // Opened from a bell alert (?tab=invoices&invoice=…): go to that invoice.
+  const [focusInvoice, setFocusInvoice] = useState<string | null>(null);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("tab") === "invoices") setTab("invoices");
+      const inv = sp.get("invoice");
+      if (inv && /^[0-9a-f-]{36}$/i.test(inv)) setFocusInvoice(inv);
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
   // Two books: Operating (the firm's money, invoices) and Trust (clients' money, IOLTA).
   const [book, setBook] = useState<Book>("operating");
   const [trustTab, setTrustTab] = useState<TrustTab>("balances");
@@ -324,7 +335,7 @@ function AiAccountant() {
           </>
         )
       ) : tab === "invoices" ? (
-        <InvoicesPanel matters={matters} clientName={clientName} onChanged={() => setReload((x) => x + 1)} />
+        <InvoicesPanel matters={matters} clientName={clientName} onChanged={() => setReload((x) => x + 1)} focusId={focusInvoice} />
       ) : loading ? (
         <div className="bg-card-alt rounded-2xl py-16 text-center text-[14px] text-muted">Loading the books…</div>
       ) : tab === "overview" ? (

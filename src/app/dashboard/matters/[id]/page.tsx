@@ -595,7 +595,7 @@ function BillingTotals({ matterId, flat, fee, reloadKey }: { matterId: string; f
       .then((r) => (r.ok ? r.json() : { invoices: [] }))
       .then((d: { invoices?: { status: string; total: number; amountPaid: number }[] }) => {
         if (!live) return;
-        const list = (d.invoices ?? []).filter((i) => i.status !== "void");
+        const list = (d.invoices ?? []).filter((i) => i.status !== "void" && i.status !== "draft" && i.status !== "pending"); // billed = issued invoices only
         setT({ billed: list.reduce((n, i) => n + Number(i.total || 0), 0), paid: list.reduce((n, i) => n + Number(i.amountPaid || 0), 0) });
       })
       .catch(() => live && setT({ billed: 0, paid: 0 }));

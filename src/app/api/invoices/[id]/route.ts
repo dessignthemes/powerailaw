@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getInvoice, deleteInvoice, invoiceForPrint, InvoiceError } from "@/lib/data/invoices";
+import { getInvoice, deleteInvoice, invoiceForPrint, changeStage, InvoiceError } from "@/lib/data/invoices";
 import { who, fail, isId } from "@/lib/data/invoiceApi";
 
 export const dynamic = "force-dynamic";
@@ -28,5 +28,17 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ ok: true });
   } catch (e) {
     return fail("DELETE /api/invoices/[id]", e);
+  }
+}
+
+// PATCH { action: "submit" | "approve" | "return" | "reopen", note? } — the approval steps.
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { orgId, userId } = await who();
+    const { id } = await params;
+    if (!isId(id)) throw new InvoiceError("That invoice wasn't found.", 404);
+    return NextResponse.json({ invoice: await changeStage(orgId, userId, id, await request.json().catch(() => ({}))) });
+  } catch (e) {
+    return fail("PATCH /api/invoices/[id]", e);
   }
 }

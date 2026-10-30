@@ -12,11 +12,13 @@ export default function InvoiceModal({
   fixedMatterId,
   onClose,
   onCreated,
+  canApprove = true,
 }: {
   matters: Matter[];
   fixedMatterId?: string | null;
   onClose: () => void;
   onCreated: (inv: Invoice) => void;
+  canApprove?: boolean; // the managing attorney (owner / admin) can issue straight away
 }) {
   const [matterId, setMatterId] = useState<string>(fixedMatterId ?? "");
   const [q, setQ] = useState("");
@@ -62,14 +64,14 @@ export default function InvoiceModal({
 
   const setLine = (i: number, patch: Partial<InvoiceLine>) => setLines((ls) => (ls ?? []).map((l, j) => (j === i ? { ...l, ...patch } : l)));
 
-  async function create() {
+  async function create(stage: "draft" | "pending" | "issue") {
     setBusy(true);
     setError(null);
     try {
       const d = await fetch("/api/invoices", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matterId, issueDate, dueDate, notes, lines: shownLines }),
+        body: JSON.stringify({ matterId, issueDate, dueDate, notes, lines: shownLines, stage }),
       }).then(readJson);
       onCreated(d.invoice);
     } catch (e) {
@@ -203,9 +205,18 @@ export default function InvoiceModal({
                 <button onClick={onClose} disabled={busy} className="px-4 py-2 rounded-full hover:bg-chip font-medium">
                   Cancel
                 </button>
-                <button onClick={() => void create()} disabled={busy || total <= 0} className="bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full font-medium flex items-center gap-2">
-                  {busy && <Loader2 size={14} className="animate-spin" />} Create invoice
+                <button onClick={() => void create("draft")} disabled={busy || total <= 0} className="bg-chip hover:bg-btn disabled:opacity-50 px-4 py-2 rounded-full font-medium">
+                  Save as draft
                 </button>
+                {canApprove ? (
+                  <button onClick={() => void create("issue")} disabled={busy || total <= 0} title="Approve and issue it now" className="bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full font-medium flex items-center gap-2">
+                    {busy && <Loader2 size={14} className="animate-spin" />} Approve &amp; create
+                  </button>
+                ) : (
+                  <button onClick={() => void create("pending")} disabled={busy || total <= 0} title="The managing attorney approves it before it's issued" className="bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full font-medium flex items-center gap-2">
+                    {busy && <Loader2 size={14} className="animate-spin" />} Send for approval
+                  </button>
+                )}
               </div>
             </>
           )}
