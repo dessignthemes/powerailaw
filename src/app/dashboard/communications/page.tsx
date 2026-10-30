@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import ClickAway from "@/components/ClickAway";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import type { Client } from "@/components/NewClientModal";
 
 type View = "calls" | "portals" | "emails" | "texts" | "meetings" | "internal";
 type MatterRef = { id: string; number: string | null; title: string } | null;
@@ -105,10 +106,111 @@ function Modal({ title, onClose, busy, children }: { title: string; onClose: () 
   );
 }
 
+const phoneDigits = (p: string | null | undefined) => (p ?? "").replace(/\D/g, "").slice(-10);
+
+// "Who called": type a name (or phone) and pick the client; their phone and matter fill in.
+function ClientNameInput({ value, onChange, onPick, placeholder }: { value: string; onChange: (v: string) => void; onPick: (c: Client) => void; placeholder: string }) {
+  const { clients, matters } = useWorkspaceData();
+  const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(0);
+  const q = value.trim().toLowerCase();
+  const list = useMemo(() => {
+    if (q.length < 2) return [];
+    const words = q.split(/\s+/).filter(Boolean);
+    const digits = q.replace(/\D/g, "");
+    return clients
+      .filter((c) => {
+        const name = c.name.toLowerCase();
+        return words.every((w) => name.includes(w)) || (digits.length >= 4 && phoneDigits(c.phone).includes(digits));
+      })
+      .sort((a, b) => Number(b.name.toLowerCase().startsWith(q)) - Number(a.name.toLowerCase().startsWith(q)) || a.name.localeCompare(b.name))
+      .slice(0, 8);
+  }, [clients, q]);
+  const openCount = (id: string) => matters.filter((m) => m.clientId === id && m.status !== "Closed").length;
+  // Already showing a client's exact name (picked, or filled in from their phone): no list.
+  const exact = list.some((c) => c.name.toLowerCase() === q);
+  const pick = (c: Client) => {
+    onPick(c);
+    setOpen(false);
+  };
+  return (
+    <div className="relative">
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => (onChange(e.target.value), setOpen(true), setHi(0))}
+        onFocus={() => setOpen(true)}
+        onKeyDown={(e) => {
+          if (!open || !list.length || exact) return;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHi((h) => Math.min(h + 1, list.length - 1));
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHi((h) => Math.max(h - 1, 0));
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            pick(list[hi]);
+          } else if (e.key === "Escape") {
+            e.stopPropagation();
+            setOpen(false);
+          }
+        }}
+        placeholder={placeholder}
+        aria-label="Name"
+        autoComplete="off"
+        className={`${input} w-full`}
+      />
+      {open && list.length > 0 && !exact && (
+        <>
+          <ClickAway onClose={() => setOpen(false)} />
+          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-xl shadow-lg max-h-[260px] overflow-y-auto py-1" role="listbox">
+            <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Clients</div>
+            {list.map((c, i) => {
+              const n = openCount(c.id);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  role="option"
+                  aria-selected={i === hi}
+                  onMouseEnter={() => setHi(i)}
+                  onClick={() => pick(c)}
+                  className={`w-full text-left px-3 py-2 text-[13px] ${i === hi ? "bg-chip" : ""}`}
+                >
+                  <div className="font-medium truncate">{c.name}</div>
+                  <div className="text-[12px] text-muted truncate">
+                    {[c.phone, n ? `${n} open ${n === 1 ? "matter" : "matters"}` : "no open matters"].filter(Boolean).join(" · ")}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // Log a phone call; "Needs a call back" makes a task tagged to the matter.
 function CallModal({ onClose, onSaved }: { onClose: () => void; onSaved: (msg: string) => void }) {
-  const { teamMembers, meEmail, clients } = useWorkspaceData();
+  const { teamMembers, meEmail, clients, matters } = useWorkspaceData();
   const [f, setF] = useState({ direction: "in" as "in" | "out", contactName: "", contactPhone: "", matterId: "", subject: "", body: "", occurredAt: localNow(), durationMin: "" });
+  // The client picked (from the name or a phone number we know); their matters are offered below.
+  const [client, setClient] = useState<Client | null>(null);
+  const [autoMatter, setAutoMatter] = useState(false);
+  const clientMatters = client
+    ? matters
+        .filter((m) => m.clientId === client.id)
+        .sort((a, b) => Number(a.status === "Closed") - Number(b.status === "Closed") || (b.matterNumber ?? "").localeCompare(a.matterNumber ?? ""))
+    : [];
+  function choose(c: Client, keepPhone = false) {
+    setClient(c);
+    const open = matters.filter((m) => m.clientId === c.id && m.status !== "Closed");
+    const one = open.length === 1 ? open[0].id : "";
+    setAutoMatter(!!one && !f.matterId);
+    setF((x) => ({ ...x, contactName: c.name, contactPhone: keepPhone && x.contactPhone ? x.contactPhone : c.phone || x.contactPhone, matterId: x.matterId || one }));
+  }
   // assignee null = me (who's signed in may load after the window opens); "" = unassigned.
   const [cb, setCb] = useState<{ needed: boolean; assignee: string | null; dueDate: string; priority: string }>({ needed: true, assignee: null, dueDate: new Date().toLocaleDateString("en-CA"), priority: "Medium" });
   const assignee = cb.assignee ?? meEmail ?? "";
@@ -147,20 +249,58 @@ function CallModal({ onClose, onSaved }: { onClose: () => void; onSaved: (msg: s
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1">
           <span className="text-[12.5px] text-muted">{f.direction === "in" ? "Who called" : "Who you called"}</span>
-          <input autoFocus value={f.contactName} onChange={(e) => set({ contactName: e.target.value })} list="comm-clients" placeholder="Name" className={input} />
-          <datalist id="comm-clients">
-            {clients.slice(0, 500).map((c) => (
-              <option key={c.id} value={c.name} />
-            ))}
-          </datalist>
+          <ClientNameInput
+            value={f.contactName}
+            onChange={(v) => {
+              set({ contactName: v });
+              if (client && v !== client.name) setClient(null);
+            }}
+            onPick={(c) => choose(c)}
+            placeholder="Name — start typing to pick a client"
+          />
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-[12.5px] text-muted">Phone</span>
-          <input value={f.contactPhone} onChange={(e) => set({ contactPhone: e.target.value })} placeholder="(732) 555-0100" className={input} />
+          <input
+            value={f.contactPhone}
+            onChange={(e) => {
+              const v = e.target.value;
+              set({ contactPhone: v });
+              // A number we know: fill in that client.
+              const d = phoneDigits(v);
+              if (!client && d.length === 10) {
+                const hits = clients.filter((c) => phoneDigits(c.phone) === d);
+                if (hits.length === 1) choose(hits[0], true);
+              }
+            }}
+            placeholder="(732) 555-0100"
+            className={input}
+          />
         </label>
         <div className="col-span-2 flex flex-col gap-1">
           <span className="text-[12.5px] text-muted">Matter</span>
-          <MatterPicker value={f.matterId} onChange={(id) => set({ matterId: id })} />
+          <MatterPicker value={f.matterId} onChange={(id) => (set({ matterId: id }), setAutoMatter(false))} />
+          {client && clientMatters.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap mt-1">
+              <span className="text-[12px] text-muted mr-0.5">
+                {autoMatter && f.matterId ? `Filled in: ${client.name.split(/\s+/)[0]}'s only open matter. Or pick:` : `${client.name}'s matters:`}
+              </span>
+              {clientMatters.slice(0, 8).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => (set({ matterId: f.matterId === m.id ? "" : m.id }), setAutoMatter(false))}
+                  title={m.title}
+                  className={`px-2.5 py-1 rounded-full text-[12px] font-medium flex items-center gap-1 ${f.matterId === m.id ? "bg-btn-hover text-ink" : "bg-chip hover:bg-btn"}`}
+                >
+                  {f.matterId === m.id && <Check size={12} />}
+                  {m.matterNumber ?? m.title.slice(0, 28)}
+                  {m.status === "Closed" && <span className="text-muted font-normal">· closed</span>}
+                </button>
+              ))}
+            </div>
+          )}
+          {client && clientMatters.length === 0 && <span className="text-[12px] text-muted mt-1">{client.name} has no matters yet.</span>}
         </div>
         <label className="col-span-2 flex flex-col gap-1">
           <span className="text-[12.5px] text-muted">About</span>
