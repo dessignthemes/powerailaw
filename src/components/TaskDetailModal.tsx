@@ -3,6 +3,8 @@
 import RichTextEditor, { descriptionText } from "@/components/RichTextEditor";
 import AssigneeMultiPicker from "@/components/tasks/AssigneeMultiPicker";
 import { useCallback, useState, useEffect, useRef } from "react";
+import MatterChip from "@/components/tasks/MatterChip";
+import { boardForMatter } from "@/lib/matters/boards";
 import ChecklistPanel, { ChecklistPicker } from "@/components/templates/ChecklistPanel";
 import { autoStatus, type TaskChecklist } from "@/lib/checklist";
 import { WAITING_ON, type WaitingOn } from "@/lib/tasks/waitingOn";
@@ -27,7 +29,6 @@ import {
   Pause,
   Trash2,
   ExternalLink,
-  Folder,
   CalendarDays,
   Check,
   Hourglass,
@@ -81,6 +82,7 @@ export default function TaskDetailModal({
   // Which board the task is on (changeable from the bottom row).
   const [boardId, setBoardId] = useState<string | null>(task.boardId ?? null);
   const [boardOpen, setBoardOpen] = useState(false);
+  const [boardSuggestion, setBoardSuggestion] = useState<string | null>(null);
   const [movedTo, setMovedTo] = useState<string | null>(null);
   // The assigner's instructions, and accepting a task offered to several people.
   const [instructions, setInstructions] = useState(task.instructions ?? "");
@@ -510,9 +512,17 @@ export default function TaskDetailModal({
               </form>
             </GenericDropdown>
 
-            <div className="flex items-center gap-1.5 bg-card-alt px-3 py-1.5 rounded-full text-[13px] font-medium text-muted">
-              <Folder size={13} strokeWidth={1.75} /> Matter
-            </div>
+            {/* The matter this task belongs to: it shows on the matter's Tasks tab. */}
+            <MatterChip
+              value={task.matterId ?? null}
+              onChange={(id) => {
+                commit({ matterId: id });
+                // On the main board and the matter has its own board (REP, RES…): offer to move it there.
+                const m = id ? matters.find((x) => x.id === id) : null;
+                const suggested = m ? boardForMatter(boards, m) : null;
+                setBoardSuggestion(suggested && suggested !== boardId ? suggested : null);
+              }}
+            />
 
             {/* Move the task to another board (it lands in that board's first column). */}
             <GenericDropdown
@@ -545,6 +555,26 @@ export default function TaskDetailModal({
                 ))}
               </div>
             </GenericDropdown>
+
+            {boardSuggestion && (
+              <span className="flex items-center gap-2 bg-[#EEF3FB] rounded-full pl-3 pr-1 py-1 text-[12.5px]">
+                Move it to # {boards.find((b) => b.id === boardSuggestion)?.name}?
+                <button
+                  onClick={() => {
+                    setBoardId(boardSuggestion);
+                    commit({ boardId: boardSuggestion, columnId: null });
+                    setMovedTo(boards.find((b) => b.id === boardSuggestion)?.name ?? "");
+                    setBoardSuggestion(null);
+                  }}
+                  className="bg-white rounded-full px-2.5 py-0.5 font-medium hover:bg-btn"
+                >
+                  Move
+                </button>
+                <button onClick={() => setBoardSuggestion(null)} aria-label="Keep it here" className="text-muted hover:text-ink px-1">
+                  <X size={12} />
+                </button>
+              </span>
+            )}
 
             <ChecklistPicker checklist={checklist} onChange={changeChecklist} />
 

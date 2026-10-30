@@ -188,9 +188,12 @@ export default function MatterTasks({
       {newTaskOpen && (
         <NewTaskModal
           defaultStatus="todo"
+          matterId={matter.id}
+          lockMatter
+          initialBoardId={boardForMatter(boards, matter)}
           onClose={() => setNewTaskOpen(false)}
           onCreate={(t) => {
-            created({ ...t, matterId: matter.id, boardId: t.boardId ?? boardForMatter(boards, matter) });
+            created({ ...t, matterId: matter.id });
             setNewTaskOpen(false);
           }}
         />

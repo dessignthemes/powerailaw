@@ -4,6 +4,8 @@ import ClickAway from "@/components/ClickAway";
 import type { WaitingOn } from "@/lib/tasks/waitingOn";
 
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import MatterChip from "@/components/tasks/MatterChip";
+import { boardForMatter } from "@/lib/matters/boards";
 import { useState } from "react";
 import {
   X,
@@ -16,7 +18,7 @@ import {
   Flag,
   User,
   Folder,
-  CalendarDays, Lock, LockOpen } from "lucide-react";
+  CalendarDays, Lock, LockOpen, LayoutGrid } from "lucide-react";
 
 export type TaskStatus = "todo" | "inprogress" | "waiting" | "done";
 export type TaskPriority = "Low" | "Medium" | "High";
@@ -136,15 +138,29 @@ export function GenericDropdown({
   );
 }
 
+// matterId + lockMatter: made from a matter's Tasks tab (the matter is fixed).
+// initialBoardId: which board it goes on (shown as a choice); picking a matter
+// that has its own board (REP, RES…) moves it there unless a board was chosen.
 export default function NewTaskModal({
   defaultStatus,
   onClose,
   onCreate,
+  matterId: initialMatterId = null,
+  lockMatter = false,
+  initialBoardId,
 }: {
   defaultStatus: TaskStatus;
   onClose: () => void;
   onCreate: (task: BoardTask) => void;
+  matterId?: string | null;
+  lockMatter?: boolean;
+  initialBoardId?: string | null;
 }) {
+  const { boards, generalName, matters } = useWorkspaceData();
+  const [matterId, setMatterId] = useState<string | null>(initialMatterId);
+  const [boardId, setBoardId] = useState<string | null>(initialBoardId ?? null);
+  const [boardTouched, setBoardTouched] = useState(false);
+  const [boardOpen, setBoardOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
@@ -179,6 +195,8 @@ export default function NewTaskModal({
       assignedBy: assignees.length ? meEmail : null,
       dueDate,
       isPrivate,
+      matterId,
+      ...(initialBoardId !== undefined ? { boardId } : {}),
     });
   }
 
@@ -309,6 +327,42 @@ export default function NewTaskModal({
               })}
             </div>
           </GenericDropdown>
+          <MatterChip
+            value={matterId}
+            locked={lockMatter}
+            onChange={(id) => {
+              setMatterId(id);
+              const m = id ? matters.find((x) => x.id === id) : null;
+              const own = m ? boardForMatter(boards, m) : null;
+              if (own && !boardTouched) setBoardId(own);
+            }}
+          />
+          {initialBoardId !== undefined && (
+            <GenericDropdown
+              open={boardOpen}
+              setOpen={setBoardOpen}
+              trigger={
+                <>
+                  <LayoutGrid size={13} strokeWidth={1.75} /># {boardId ? boards.find((b) => b.id === boardId)?.name ?? "Board" : generalName}
+                </>
+              }
+            >
+              <div className="px-3 pt-1 pb-1.5 text-[11.5px] text-muted">Put it on</div>
+              {[{ id: null as string | null, name: generalName }, ...boards.map((b) => ({ id: b.id as string | null, name: b.name }))].map((b) => (
+                <button
+                  key={b.id ?? "general"}
+                  onClick={() => {
+                    setBoardId(b.id);
+                    setBoardTouched(true);
+                    setBoardOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[14px] font-medium text-left ${b.id === boardId ? "bg-chip" : "hover:bg-chip"}`}
+                >
+                  # {b.name}
+                </button>
+              ))}
+            </GenericDropdown>
+          )}
           <PrivateToggle on={isPrivate} onChange={setIsPrivate} />
           {isPrivate && <span className="text-[12.5px] text-muted">Only you and the assignee can see this task</span>}
 

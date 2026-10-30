@@ -307,7 +307,8 @@ function TaskBoard({
       ? workspaceTasks // all boards
       : workspaceTasks.filter((t) => (t.boardId ?? null) === realBoardId);
   // New tasks land on the board being viewed; from "All tasks" or "General" they go to General.
-  const addTask = (t: BoardTask) => addWorkspaceTask({ ...t, boardId: realBoardId });
+  // A board picked in the New task window (e.g. the matter's own board) wins over the board being viewed.
+  const addTask = (t: BoardTask) => addWorkspaceTask({ ...t, boardId: t.boardId !== undefined ? t.boardId : realBoardId });
 
   async function saveBoard() {
     if (!boardDialog) return;
@@ -1596,6 +1597,7 @@ function TaskBoard({
       {modalStatus && (
         <NewTaskModal
           defaultStatus={modalStatus}
+          initialBoardId={realBoardId}
           onClose={() => setModalStatus(null)}
           onCreate={(task) => {
             addTask({ ...task, comments: [] });
