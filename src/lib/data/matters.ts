@@ -262,3 +262,22 @@ export async function deleteMatterRows(ids: string[]): Promise<void> {
   const { error } = await supabase.from("matters").delete().eq("org_id", orgId).in("id", ids);
   if (error) throw error;
 }
+
+// Give a matter a different number (the pencil next to the number). The new
+// number must look like REP-2026-3709 and not be used by another matter.
+export async function renumberMatter(id: string, raw: unknown): Promise<Matter> {
+  const orgId = await getCurrentOrgId();
+  const n = await checkOwnNumber(orgId, raw, id);
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.from("matters").update({ matter_number: n.number, matter_code: n.code, updated_at: new Date().toISOString() }).eq("id", id).eq("org_id", orgId).select("*").maybeSingle();
+  if (error?.code === "23505") throw new MatterInputError(`${n.number} is already used by another matter. Choose a different number.`);
+  if (error) {
+    if (missingNumberCols(error)) throw new MatterInputError("Matter numbers need a database update first (migration 0025).");
+    throw error;
+  }
+  if (!data) throw new MatterInputError("That matter wasn't found.");
+  const saved = data as MatterRow;
+  // Before migration 0062 the database keeps the old number: say so instead of pretending.
+  if (saved.matter_number !== n.number) throw new MatterInputError("Changing a matter's number needs a database update first (migration 0062).");
+  return toMatter(saved, await teamEmails(orgId));
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import MatterNumberEdit from "@/components/matters/MatterNumberEdit";
 import MatterContactsCard from "@/components/matters/MatterContactsCard";
 import ClickAway from "@/components/ClickAway";
 import PortalButton from "@/components/clientCard/PortalButton";
@@ -64,7 +65,7 @@ type TabKey = (typeof tabs)[number]["key"];
 export default function MatterDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { matters, mattersLoaded, clients, tasks, updateMatter, deleteMatters } = useWorkspaceData();
+  const { matters, mattersLoaded, clients, tasks, updateMatter, deleteMatters, refreshAll } = useWorkspaceData();
   const [invoiceKey, setInvoiceKey] = useState(0);
 
   const matter = matters.find((m) => m.id === params.id) ?? null;
@@ -148,9 +149,7 @@ export default function MatterDetailPage() {
 
       <div className="flex items-start justify-between mb-6">
         <div>
-          {matter.matterNumber && (
-            <div className="inline-flex items-center bg-chip rounded-full px-2.5 py-0.5 text-[12.5px] font-semibold tracking-wide mb-1.5">{matter.matterNumber}</div>
-          )}
+          <MatterNumberEdit matterId={matter.id} number={matter.matterNumber} onSaved={refreshAll} />
           <h1 className="text-[30px] font-semibold">{matter.title}</h1>
         </div>
         <div className="flex items-center gap-2">
