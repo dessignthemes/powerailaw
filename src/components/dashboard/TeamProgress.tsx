@@ -22,6 +22,14 @@ function periodStart(p: Period) {
   return d;
 }
 
+// The four parts of each person's bar, in order.
+const SEGMENTS = [
+  { key: "onTime", label: "Completed on time", color: "#00C271", hint: "Finished on or before the due date" },
+  { key: "late", label: "Completed", color: "#5B8DEF", hint: "Finished after the due date, or it had no due date" },
+  { key: "open", label: "Still open", color: "#FFB341", hint: "Not finished, not past due" },
+  { key: "overdue", label: "Overdue", color: "#FB5D67", hint: "Not finished and past its due date" },
+] as const;
+
 const initials = (name: string) =>
   name
     .replace(/@.*/, "")
@@ -31,8 +39,9 @@ const initials = (name: string) =>
     .map((w) => w[0]?.toUpperCase())
     .join("");
 
-// Team progress: for each person, tasks completed in the period (green) next to
-// what's still open on their plate (grey). Assigned = completed + still open.
+// Team progress: for each person, tasks completed in the period (green on time,
+// blue late or undated) next to what's still on their plate (yellow open, red
+// overdue). Assigned = completed + still open + overdue.
 // onPick: clicking a person shows their tasks on the Dashboard.
 export default function TeamProgress({ tasks, members, onPick, className = "bg-card-alt rounded-3xl p-6 mt-5" }: { tasks: BoardTask[]; members: Member[]; onPick?: (email: string) => void; className?: string }) {
   const [period, setPeriod] = useState<Period>("week");
@@ -40,21 +49,27 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
   const rows = useMemo(() => {
     const start = periodStart(period).getTime();
     const today = new Date().toLocaleDateString("en-CA");
-    const byEmail = new Map(members.map((m) => [m.email.toLowerCase(), { member: m, done: 0, open: 0, overdue: 0 }]));
+    const byEmail = new Map(members.map((m) => [m.email.toLowerCase(), { member: m, onTime: 0, late: 0, open: 0, overdue: 0 }]));
     for (const t of tasks) {
       const row = t.assignee ? byEmail.get(t.assignee.toLowerCase()) : undefined;
       if (!row) continue;
       if (t.status === "done") {
+        // Completed in the period: on time when finished on or before its due date.
         const at = Date.parse(t.updatedAt ?? t.createdAt ?? "");
-        if (!Number.isNaN(at) && at >= start) row.done++;
-      } else {
-        row.open++;
-        if (t.dueDate && t.dueDate < today) row.overdue++;
-      }
+        if (Number.isNaN(at) || at < start) continue;
+        const doneDay = new Date(at).toLocaleDateString("en-CA");
+        if (t.dueDate && doneDay <= t.dueDate) row.onTime++;
+        else row.late++;
+      } else if (t.dueDate && t.dueDate < today) row.overdue++;
+      else row.open++;
     }
     return [...byEmail.values()]
-      .map((r) => ({ ...r, assigned: r.done + r.open, pct: r.done + r.open ? Math.round((r.done / (r.done + r.open)) * 100) : 0 }))
-      .sort((a, b) => b.done - a.done || b.pct - a.pct || a.open - b.open);
+      .map((r) => {
+        const done = r.onTime + r.late;
+        const assigned = done + r.open + r.overdue;
+        return { ...r, done, assigned, pct: assigned ? Math.round((done / assigned) * 100) : 0 };
+      })
+      .sort((a, b) => b.done - a.done || b.onTime - a.onTime || b.pct - a.pct || a.overdue - b.overdue);
   }, [tasks, members, period]);
 
   const max = Math.max(1, ...rows.map((r) => r.assigned));
@@ -95,7 +110,7 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
         {rows.map((r) => {
           const name = r.member.fullName || r.member.email;
           return (
-            <div key={r.member.id} className="grid grid-cols-[minmax(120px,200px)_minmax(0,1fr)_215px] items-center gap-3">
+            <div key={r.member.id} className="grid grid-cols-[minmax(110px,190px)_minmax(0,1fr)_auto] items-center gap-3">
               {onPick ? (
                 <button
                   onClick={() => onPick(r.member.email)}
@@ -113,9 +128,19 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
                   </span>
                 </div>
               )}
-              <div className="h-6 bg-white rounded-full overflow-hidden flex" role="img" aria-label={`${name}: ${r.done} done, ${r.open} open`} title={`${r.done} done · ${r.open} open`}>
-                <div className="h-full bg-[#00C271] transition-[width] duration-500" style={{ width: `${(r.done / max) * 100}%` }} />
-                <div className="h-full bg-[#D1D7E0] transition-[width] duration-500" style={{ width: `${(r.open / max) * 100}%` }} />
+              <div
+                className="h-6 bg-white rounded-full overflow-hidden flex"
+                role="img"
+                aria-label={`${name}: ${r.onTime} completed on time, ${r.late} completed, ${r.open} still open, ${r.overdue} overdue`}
+                title={`${r.onTime} completed on time · ${r.late} completed · ${r.open} still open · ${r.overdue} overdue`}
+              >
+                {SEGMENTS.map((seg) =>
+                  r[seg.key] > 0 ? (
+                    <div key={seg.key} className="h-full transition-[width] duration-500 flex items-center justify-center text-[11px] font-semibold text-[#1B191A]" style={{ width: `${(r[seg.key] / max) * 100}%`, backgroundColor: seg.color }}>
+                      {(r[seg.key] / max) * 100 >= 6 ? r[seg.key] : ""}
+                    </div>
+                  ) : null
+                )}
               </div>
               <div className="text-[13px] whitespace-nowrap text-right">
                 <b>{r.done}</b> of {r.assigned} done
@@ -128,13 +153,13 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
         {!rows.length && <div className="text-[13.5px] text-muted">No team members yet.</div>}
       </div>
 
-      <div className="flex items-center gap-4 mt-5 text-[12px] text-muted">
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-[#00C271]" /> Completed {PERIODS.find((p) => p.key === period)?.label.toLowerCase()}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-[#D1D7E0]" /> Still open
-        </span>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-5 text-[12px] text-muted">
+        {SEGMENTS.map((seg) => (
+          <span key={seg.key} className="flex items-center gap-1.5" title={seg.hint}>
+            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: seg.color }} /> {seg.label}
+          </span>
+        ))}
+        <span className="text-muted-light">Completed counts tasks finished {PERIODS.find((p) => p.key === period)?.label.toLowerCase()}.</span>
       </div>
     </section>
   );
