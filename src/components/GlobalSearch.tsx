@@ -31,7 +31,10 @@ export default function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [active, setActive] = useState(0);
-  const [conflictOpen, setConflictOpen] = useState(false);
+  // Conflict check from Search: the typed name, or a picked client / contact. Search hides behind it and comes back on Cancel.
+  const [conflictFor, setConflictFor] = useState<{ names?: string; company?: string; email?: string; phone?: string } | null>(null);
+  const [checkingId, setCheckingId] = useState<string | null>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -97,6 +100,24 @@ export default function GlobalSearch() {
   const groups = TYPES.map((t) => ({ ...t, items: shown.filter((h) => h.type === t.key) })).filter((g) => g.items.length);
   const flat = groups.flatMap((g) => g.items);
 
+  // A client: run the check on their client card details right away, then show the result.
+  async function checkClient(clientId: string, rowId: string) {
+    setCheckingId(rowId);
+    setCheckError(null);
+    try {
+      const r = await fetch("/api/conflicts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ clientId }) });
+      const d = (await r.json().catch(() => ({}))) as { check?: { id: string }; error?: string };
+      if (!r.ok || !d.check) throw new Error(d.error ?? "The conflict check couldn't be run.");
+      close();
+      router.push(`/dashboard/conflict-checks?check=${d.check.id}`);
+    } catch (e) {
+      setCheckError((e as Error).message);
+    } finally {
+      setCheckingId(null);
+    }
+  }
+  const titleCase = (t: string) => t.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
+
   const close = () => {
     setOpen(false);
     setQ("");
@@ -126,7 +147,7 @@ export default function GlobalSearch() {
         <kbd className="hidden sm:inline text-[11px] font-medium bg-white/80 rounded-md px-1.5 py-0.5 text-muted">Ctrl K</kbd>
       </button>
 
-      {open && (
+      {open && !conflictFor && (
         <div className="fixed inset-0 z-[70] bg-black/25 flex items-start justify-center px-4 pt-[8vh]" onMouseDown={(e) => e.target === e.currentTarget && close()}>
           <div role="dialog" aria-label="Search" className="bg-page rounded-2xl w-full max-w-[760px] shadow-xl flex flex-col max-h-[80vh]">
             <div className="flex items-center gap-3 px-5 pt-4 pb-3">
@@ -200,6 +221,22 @@ export default function GlobalSearch() {
                           <span className="block text-[14px] font-medium truncate">{h.title}</span>
                           {h.sub && <span className="block text-[12.5px] text-muted truncate">{h.sub}</span>}
                         </span>
+                        {h.person && (i === active || checkingId === h.id) && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            title={h.person.clientId ? "Check this client against every matter now" : "Run a conflict check on this person"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (h.person?.clientId) void checkClient(h.person.clientId, h.id);
+                              else setConflictFor({ names: h.person?.name ?? h.title, company: h.person?.company ?? "", email: h.person?.email ?? "", phone: h.person?.phone ?? "" });
+                            }}
+                            onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLElement).click()}
+                            className="flex items-center gap-1 bg-white border border-line hover:bg-btn rounded-full px-2.5 py-1 text-[12px] font-medium text-ink flex-shrink-0"
+                          >
+                            {checkingId === h.id ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />} Conflict check
+                          </span>
+                        )}
                         {h.external && <ExternalLink size={13} className="text-muted flex-shrink-0" />}
                         {i === active && <CornerDownLeft size={13} className="text-muted flex-shrink-0" />}
                       </button>
@@ -208,6 +245,7 @@ export default function GlobalSearch() {
                 </div>
               ))}
               {term.length >= 2 && wantEvents && eventsLoading && groups.length > 0 && <div className="px-3 py-1 text-[12.5px] text-muted">Searching your calendar…</div>}
+              {checkError && <div className="mx-3 mt-2 rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-3.5 py-2 text-[13px]">{checkError}</div>}
             </div>
 
             <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-line text-[12.5px] text-muted">
@@ -220,19 +258,28 @@ export default function GlobalSearch() {
                 </span>
                 Navigate · Enter to open
               </span>
-              <button onClick={() => setConflictOpen(true)} className="flex items-center gap-1.5 bg-chip hover:bg-btn text-ink px-3 py-1.5 rounded-full font-medium">
-                <ShieldCheck size={13} /> Conflict check
+              <button
+                onClick={() => setConflictFor({ names: term.length >= 2 ? titleCase(term) : "" })}
+                title={term.length >= 2 ? `Check "${term}" against every matter` : "Check a name against every matter"}
+                className="flex items-center gap-1.5 bg-chip hover:bg-btn text-ink px-3 py-1.5 rounded-full font-medium max-w-[320px]"
+              >
+                <ShieldCheck size={13} className="flex-shrink-0" />
+                <span className="truncate">{term.length >= 2 ? `Conflict check “${term}”` : "Conflict check"}</span>
               </button>
             </div>
           </div>
         </div>
       )}
-      {conflictOpen && (
+      {conflictFor && (
         <RunConflictModal
           showPastLink
-          onClose={() => setConflictOpen(false)}
+          initial={conflictFor}
+          onClose={() => {
+            setConflictFor(null); // back to the search
+            setTimeout(() => inputRef.current?.focus(), 0);
+          }}
           onDone={(c) => {
-            setConflictOpen(false);
+            setConflictFor(null);
             close();
             router.push(`/dashboard/conflict-checks?check=${c.id}`);
           }}

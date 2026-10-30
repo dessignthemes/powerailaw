@@ -6,11 +6,22 @@ import { Loader2, X } from "lucide-react";
 import type { ConflictCheck } from "@/lib/conflicts/check";
 
 // Run a conflict check for a prospect (Contacts → Run conflict check, and the Conflict Checks page).
-export default function RunConflictModal({ onClose, onDone, showPastLink = false }: { onClose: () => void; onDone: (c: ConflictCheck) => void; showPastLink?: boolean }) {
-  const [names, setNames] = useState("");
-  const [company, setCompany] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+// initial: start the form with what's known (e.g. the name typed in Search, or a contact picked there).
+export default function RunConflictModal({
+  onClose,
+  onDone,
+  showPastLink = false,
+  initial,
+}: {
+  onClose: () => void;
+  onDone: (c: ConflictCheck) => void;
+  showPastLink?: boolean;
+  initial?: { names?: string; company?: string; email?: string; phone?: string };
+}) {
+  const [names, setNames] = useState(initial?.names ?? "");
+  const [company, setCompany] = useState(initial?.company ?? "");
+  const [email, setEmail] = useState(initial?.email ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +44,7 @@ export default function RunConflictModal({ onClose, onDone, showPastLink = false
     }
   }
   return (
-    <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
+    <div className="fixed inset-0 z-[80] bg-black/30 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
       <div role="dialog" aria-label="Run conflict check" className="bg-page rounded-2xl w-full max-w-[520px] p-6 shadow-xl">
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-[18px] font-semibold">Run conflict check</h2>

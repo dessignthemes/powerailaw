@@ -11,7 +11,17 @@ import { searchTeamEvents } from "@/lib/calendar/events";
 
 export const SEARCH_TYPES = ["matters", "contacts", "documents", "events", "notes", "tasks", "communications"] as const;
 export type SearchType = (typeof SEARCH_TYPES)[number];
-export type SearchHit = { type: SearchType; id: string; title: string; sub: string; href: string; external?: boolean; at?: string | null };
+// person: a client or contact, so Search can run a conflict check on them straight away.
+export type SearchHit = {
+  type: SearchType;
+  id: string;
+  title: string;
+  sub: string;
+  href: string;
+  external?: boolean;
+  at?: string | null;
+  person?: { name: string; email?: string | null; phone?: string | null; company?: string | null; clientId?: string | null };
+};
 
 const PER_TYPE = 8;
 const db = () => createAdminClient();
@@ -66,9 +76,9 @@ export async function globalSearch(rawQ: string, types: SearchType[]): Promise<S
           db().from("contacts").select("id, name, company, role, email, phone").eq("org_id", orgId).or(`name.ilike.${like(q)},company.ilike.${like(q)},email.ilike.${like(q)},phone.ilike.${like(q)}`).limit(PER_TYPE),
         ]);
         for (const c of (cl.data ?? []) as { id: string; name: string; email: string | null; phone: string | null }[])
-          out.push({ type: "contacts", id: c.id, title: c.name, sub: ["Client", c.email, c.phone].filter(Boolean).join(" · "), href: `/dashboard/client-intake?card=${c.id}` });
+          out.push({ type: "contacts", id: c.id, title: c.name, sub: ["Client", c.email, c.phone].filter(Boolean).join(" · "), href: `/dashboard/client-intake?card=${c.id}`, person: { name: c.name, email: c.email, phone: c.phone, clientId: c.id } });
         for (const c of (co.data ?? []) as { id: string; name: string; company: string; role: string; email: string | null; phone: string | null }[])
-          out.push({ type: "contacts", id: c.id, title: c.name, sub: [c.role || "Contact", c.company, c.email, c.phone].filter(Boolean).join(" · "), href: `/dashboard/records?contact=${c.id}` });
+          out.push({ type: "contacts", id: c.id, title: c.name, sub: [c.role || "Contact", c.company, c.email, c.phone].filter(Boolean).join(" · "), href: `/dashboard/records?contact=${c.id}`, person: { name: c.name, email: c.email, phone: c.phone, company: c.company } });
       })()
     );
 
