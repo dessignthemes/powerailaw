@@ -18,6 +18,7 @@ type WorkspaceDataContextValue = {
   matters: Matter[];
   mattersLoaded: boolean;
   addMatter: (matter: Matter) => void;
+  addMatterAsync: (matter: Matter) => Promise<Matter>;
   updateMatter: (matter: Matter) => void;
   deleteMatters: (ids: string[]) => void;
   bulkSetMatterStatus: (ids: string[], status: MatterStatus) => void;
@@ -344,6 +345,16 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       .catch((err) => console.error("Failed to save matter:", err));
   }, []);
 
+  // Creates the matter and waits for the saved version (the New matter window
+  // adds contacts, tasks and documents to it right after).
+  const addMatterAsync = useCallback(async (matter: Matter): Promise<Matter> => {
+    const res = await fetch("/api/matters", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(matter) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.matter) throw new Error(data?.error ?? "The matter wasn't created. Please try again.");
+    setMatters((ms) => [...ms.filter((m) => m.id !== matter.id), data.matter]);
+    return data.matter as Matter;
+  }, []);
+
   const updateMatter = useCallback((matter: Matter) => {
     let previous: Matter | undefined;
     setMatters((ms) => {
@@ -405,6 +416,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         matters,
         mattersLoaded,
         addMatter,
+        addMatterAsync,
         updateMatter,
         deleteMatters,
         bulkSetMatterStatus,

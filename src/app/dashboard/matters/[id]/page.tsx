@@ -45,6 +45,7 @@ import AssigneeOptions from "@/components/AssigneeOptions";
 import MatterTasks from "@/components/matters/MatterTasks";
 import MatterEmails from "@/components/matters/MatterEmails";
 import MatterDetailsPanel from "@/components/matters/MatterDetailsPanel";
+import MatterInfoCard from "@/components/matters/MatterInfoCard";
 import KeyDatesCard, { useKeyDates } from "@/components/matters/KeyDatesCard";
 import { anchorDates, isCashDeal } from "@/lib/matters/keyDates";
 import { statusMeta as taskStatusMeta } from "@/components/NewTaskModal";
@@ -366,7 +367,10 @@ export default function MatterDetailPage() {
       {activeTab === "documents" ? (
         <DocumentsLibrary key={uploadNow ? "upload" : "list"} matterId={matter.id} openAdd={uploadNow} />
       ) : activeTab === "parties" ? (
-        <MatterDetailsPanel matter={matter} keyDates={keyDates} wide />
+        <>
+          <MatterInfoCard matterId={matter.id} />
+          <MatterDetailsPanel matter={matter} keyDates={keyDates} wide />
+        </>
       ) : activeTab === "emails" ? (
         <MatterEmails matter={matter} client={client} />
       ) : activeTab === "tasks" ? (

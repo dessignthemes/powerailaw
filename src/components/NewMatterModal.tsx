@@ -2,6 +2,7 @@
 
 import PortalButton from "@/components/clientCard/PortalButton";
 import { useEffect, useState } from "react";
+import MatterCreateWindow from "@/components/matters/MatterCreateWindow";
 import {
   X,
   Check,
@@ -242,9 +243,9 @@ export default function NewMatterModal({
   const StatusIcon = matterStatusMeta[status].icon;
   const selectedClient = clients.find((c) => c.id === clientId) ?? null;
 
-  function handleSubmit() {
-    if (!canSave) return;
-    onSubmit({
+  // The matter as typed so far.
+  function buildMatter(): Matter {
+    return {
       id: matter?.id ?? crypto.randomUUID(),
       title: title.trim(),
       description,
@@ -264,31 +265,16 @@ export default function NewMatterModal({
       matterSeq: matter?.matterSeq ?? null,
       createdAt: matter?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    });
+    };
   }
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 px-4"
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="bg-cream rounded-3xl w-full max-w-[864px] max-h-[90vh] overflow-y-auto shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)]"
-      >
-        <div className="flex items-center justify-between px-7 pt-6 pb-2">
-          <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
-            <span className="flex items-center gap-1.5 bg-card-alt px-2.5 py-1 rounded-full">
-              <Briefcase size={12} strokeWidth={1.75} /> Matters
-            </span>
-            <span>›</span>
-            <span className="text-ink font-semibold">{isEdit ? "Edit matter" : "New matter"}</span>
-          </div>
-          <button onClick={onClose} className="text-muted hover:text-ink">
-            <X size={18} strokeWidth={1.75} />
-          </button>
-        </div>
+  function handleSubmit() {
+    if (!canSave) return;
+    onSubmit(buildMatter());
+  }
 
+  const basics = (
+    <>
         {needsNumber ? (
           <div className="px-7 pt-3 flex flex-col gap-4">
             <div>
@@ -633,6 +619,36 @@ export default function NewMatterModal({
             numeric
           />
         </div>
+    </>
+  );
+
+  // A new matter: the full window with sections (details, contacts, billing, task lists, documents, conflict check).
+  if (!isEdit)
+    return <MatterCreateWindow basics={basics} canSave={canSave} buildMatter={buildMatter} onClose={onClose} />;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 px-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-cream rounded-3xl w-full max-w-[864px] max-h-[90vh] overflow-y-auto shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)]"
+      >
+        <div className="flex items-center justify-between px-7 pt-6 pb-2">
+          <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
+            <span className="flex items-center gap-1.5 bg-card-alt px-2.5 py-1 rounded-full">
+              <Briefcase size={12} strokeWidth={1.75} /> Matters
+            </span>
+            <span>›</span>
+            <span className="text-ink font-semibold">{isEdit ? "Edit matter" : "New matter"}</span>
+          </div>
+          <button onClick={onClose} className="text-muted hover:text-ink">
+            <X size={18} strokeWidth={1.75} />
+          </button>
+        </div>
+
+        {basics}
 
         <div className="flex items-center justify-end px-7 py-5 border-t border-line">
           <button
