@@ -136,6 +136,36 @@ export default function DashboardHome() {
   const offeredToMe = (t: BoardTask) => !t.assignee && !!meEmail && (t.offeredTo ?? []).some((e) => e.toLowerCase() === meEmail.toLowerCase());
   // Whose tasks: yours by default (assigned to you), everyone's, or one team member's.
   const [scope, setScope] = useState<TaskScope>("me");
+  // The pinned view (My tasks, everyone's, or one person's): the Dashboard opens with it. Remembered on this computer, per person.
+  const PIN_KEY = `lawpower.dashboard.pinnedView.${(meEmail ?? "").toLowerCase()}`;
+  const [pinned, setPinned] = useState<TaskScope>("me");
+  useEffect(() => {
+    if (!meEmail) return;
+    const t = setTimeout(() => {
+      try {
+        const v = localStorage.getItem(PIN_KEY);
+        if (v) {
+          setPinned(v);
+          setScope(v);
+        }
+      } catch {
+        /* private mode */
+      }
+    }, 0);
+    return () => clearTimeout(t);
+  }, [meEmail, PIN_KEY]);
+  const pin = (v: TaskScope) => {
+    setPinned(v);
+    setScope(v);
+    try {
+      if (v === "me") localStorage.removeItem(PIN_KEY);
+      else localStorage.setItem(PIN_KEY, v);
+    } catch {
+      /* private mode */
+    }
+  };
+  // "Good morning, Piotr"
+  const myFirstName = (teamMembers.find((m) => m.email.toLowerCase() === (meEmail ?? "").toLowerCase())?.fullName ?? "").trim().split(/\s+/)[0] ?? "";
   const tasks = useMemo(() => {
     if (scope === "all") return allTasks;
     const who = (scope === "me" ? meEmail ?? "" : scope).toLowerCase();
@@ -241,7 +271,10 @@ export default function DashboardHome() {
       <div className="flex items-start justify-between mb-10">
         <div>
           <h1 className="text-[32px] font-semibold mb-1">
-            <span className={greeting ? "" : "invisible"}>{greeting ?? "Good morning"}</span>
+            <span className={greeting ? "" : "invisible"}>
+              {greeting ?? "Good morning"}
+              {myFirstName ? `, ${myFirstName}` : ""}
+            </span>
           </h1>
           <div className="text-[14.5px] text-muted">
             {today} · <span className="text-ink font-medium">Showing {scopeLabel(scope, teamMembers).replace(/^My tasks$/, "your tasks").replace(/^Everyone's tasks$/, "everyone's tasks")}</span>
@@ -261,7 +294,7 @@ export default function DashboardHome() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <TaskFilterDropdown value={scope} onChange={setScope} members={teamMembers} meEmail={meEmail} />
+          <TaskFilterDropdown value={scope} onChange={setScope} members={teamMembers} meEmail={meEmail} pinned={pinned} onPin={pin} />
         </div>
       </div>
 
