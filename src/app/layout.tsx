@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import ScrollLock from "@/components/ScrollLock";
 
 // One font everywhere: Inter (headings, text and numbers).
 const inter = Inter({
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full flex flex-col bg-white text-ink font-body">
         {children}
+        <ScrollLock />
       </body>
     </html>
   );

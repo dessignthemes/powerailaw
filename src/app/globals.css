@@ -171,3 +171,11 @@ a {
 .lp-sig [data-resize-container]:hover [data-resize-handle],
 .lp-sig [data-resize-container].ProseMirror-selectednode [data-resize-handle],
 .lp-sig [data-resize-container][data-resize-state="true"] [data-resize-handle] { opacity: 1; }
+
+/* Pop-up open (src/components/ScrollLock.tsx): the page behind doesn't scroll.
+   The scrollbar's space is kept so nothing shifts sideways. */
+html { scrollbar-gutter: stable; }
+html.lp-scroll-locked { overflow: hidden; }
+html.lp-scroll-locked body { overflow: hidden; }
+/* Scrolling inside a pop-up never carries on to the page underneath. */
+.fixed.inset-0[class*="bg-black/"], .fixed.inset-0[class*="bg-black/"] * { overscroll-behavior: contain; }
