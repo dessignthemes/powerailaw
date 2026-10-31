@@ -7,13 +7,18 @@ import type { Client } from "@/components/NewClientModal";
 //   w  = full width (4 × 1)            xl = full width, twice as tall (4 × 2)
 export type WidgetSize = "s" | "m" | "l" | "w" | "xl";
 export const SIZE_LABEL: Record<WidgetSize, string> = { s: "Small", m: "Medium", l: "Large", w: "Wide", xl: "Extra large" };
+// Four 275px columns when the screen is wide enough (two fluid halves otherwise). Rows are
+// 4px units so Small can be a 275 × 275 square while the others stay taller;
+// each widget keeps 20px below it as the gap.
 export const SIZE_CLASS: Record<WidgetSize, string> = {
-  s: "col-span-1 row-span-1",
-  m: "col-span-2 row-span-1",
-  l: "col-span-2 row-span-2",
-  w: "col-span-2 lg:col-span-4 row-span-1",
-  xl: "col-span-2 lg:col-span-4 row-span-2",
+  s: "col-span-1",
+  m: "col-span-2",
+  l: "col-span-2",
+  w: "col-span-2 min-[1520px]:col-span-4",
+  xl: "col-span-2 min-[1520px]:col-span-4",
 };
+// Height in 4px rows, including the 20px gap: Small 275, the rest 324 (or 668 when tall).
+export const SIZE_ROWS: Record<WidgetSize, number> = { s: 74, m: 86, l: 172, w: 86, xl: 172 };
 
 export type LayoutItem = { id: string; size: WidgetSize };
 

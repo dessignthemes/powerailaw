@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -15,8 +15,12 @@ import { isOverdue, ymd } from "@/lib/taskDates";
 import type { DashData, WidgetDef, WidgetSize } from "./types";
 
 // ── small shared pieces ──────────────────────────────────────────────────────
+// The size the widget is drawn at, so text can shrink in Small boxes.
+export const WidgetSizeContext = createContext<WidgetSize>("m");
+const useSmall = () => useContext(WidgetSizeContext) === "s";
 const nowMs = () => Date.now(); // read at render time on purpose (widgets refresh with the page)
 const ROW = "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[14.5px] font-medium bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors";
+const ROW_S = "flex-shrink-0 flex items-center gap-2 px-2.5 py-1 rounded-lg text-[13px] font-medium bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors";
 const PILL = "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium text-ink bg-[#E8EFF7] hover:bg-[#DCE4F0] transition-colors";
 const fmtDay = (ymdStr: string) => {
   const [y, m, d] = ymdStr.split("-").map(Number);
@@ -40,15 +44,24 @@ const firstName = (d: DashData, email?: string | null) => {
 };
 
 function Big({ n, label, sub }: { n: React.ReactNode; label?: string; sub?: React.ReactNode }) {
+  const small = useSmall();
   return (
     <div className="mt-auto">
-      <div className="text-[40px] leading-none font-display font-semibold tabular-nums">{n}</div>
-      {label && <div className="text-[13px] text-muted mt-1.5">{label}</div>}
-      {sub && <div className="text-[12.5px] text-muted mt-0.5">{sub}</div>}
+      <div className={`${small ? "text-[32px]" : "text-[40px]"} leading-none font-display font-semibold tabular-nums`}>{n}</div>
+      {label && <div className={`${small ? "text-[12px]" : "text-[13px]"} text-muted mt-1.5`}>{label}</div>}
+      {sub && <div className={`${small ? "text-[11.5px]" : "text-[12.5px]"} text-muted mt-0.5`}>{sub}</div>}
     </div>
   );
 }
 function Empty({ icon: Icon, title, sub }: { icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; title: string; sub?: string }) {
+  const small = useSmall();
+  if (small)
+    return (
+      <div className="mt-auto">
+        <div className="text-[13px] font-semibold">{title}</div>
+        {sub && <div className="text-[11.5px] text-muted mt-0.5">{sub}</div>}
+      </div>
+    );
   return (
     <div className="mt-auto">
       <div className="w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center text-muted mb-2">
@@ -109,7 +122,7 @@ function DueCard({ d, small }: { d: DashData; small?: boolean }) {
   const rows = [...counts.entries()].sort((x, y) => y[1] - x[1]);
   return (
     <>
-      <div className={`${small ? "text-[19px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
+      <div className={`${small ? "text-[16px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
         {d.tasksLoaded ? d.dueTasks.length : "–"} {d.dueTasks.length === 1 ? "task" : "tasks"} {d.dueLabel.toLowerCase()}
       </div>
       {!small && (
@@ -121,7 +134,7 @@ function DueCard({ d, small }: { d: DashData; small?: boolean }) {
         <>
           <div ref={list} className={`${small ? "mt-2" : "mt-4"} flex flex-col gap-1.5 min-h-0 scroll-on-hover pr-1`}>
             {rows.map(([key, n]) => (
-              <Link key={key} href={`/dashboard/task-board?board=${key}&due=${d.range}`} className={`group/row ${ROW}`}>
+              <Link key={key} href={`/dashboard/task-board?board=${key}&due=${d.range}`} className={`group/row ${small ? ROW_S : ROW}`}>
                 <span className="font-semibold tabular-nums w-5 text-right">{n}</span>
                 <span className="truncate flex-1">{key === "general" ? d.generalName : d.boardName(key)}</span>
                 <span className="text-muted group-hover/row:text-ink">→</span>
@@ -140,7 +153,7 @@ function PriorityCard({ d, small }: { d: DashData; small?: boolean }) {
   const late = d.dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length;
   return (
     <>
-      <div className={`${small ? "text-[19px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
+      <div className={`${small ? "text-[16px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
         {d.tasksLoaded ? d.dueTasks.length : "–"} {d.dueTasks.length === 1 ? "task" : "tasks"} by priority
       </div>
       {!small && <div className="text-[13px] text-muted">{late ? `${late} high priority overdue` : "No high priority overdue"}</div>}
@@ -155,7 +168,7 @@ function PriorityCard({ d, small }: { d: DashData; small?: boolean }) {
               disabled={!count && !active}
               style={{ borderLeftColor: priorityMeta[p].bg }}
               title={count ? `Show only ${p.toLowerCase()} priority in the Tasks widget` : undefined}
-              className={`group/row flex items-center gap-2 pl-2.5 pr-3 ${small ? "py-1.5" : "py-2"} rounded-xl border-l-[8px] text-[14.5px] font-medium text-ink bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors disabled:opacity-45 ${active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""}`}
+              className={`group/row flex items-center gap-2 pl-2.5 pr-3 ${small ? "py-1 text-[13px] border-l-[6px]" : "py-2 text-[14.5px] border-l-[8px]"} rounded-xl font-medium text-ink bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors disabled:opacity-45 ${active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""}`}
             >
               <span className="font-semibold tabular-nums w-5 text-right">{d.tasksLoaded ? count : "–"}</span>
               <span className="truncate flex-1 text-left">{p}</span>
@@ -173,7 +186,7 @@ function CalendarCard({ d, small }: { d: DashData; small?: boolean }) {
   const ev = d.cal.events;
   return (
     <>
-      <div className={`${small ? "text-[19px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
+      <div className={`${small ? "text-[16px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
         {d.cal.loaded ? ev.length : "–"} {ev.length === 1 ? "event" : "events"}
       </div>
       <div className={`text-[13px] text-muted flex flex-wrap gap-x-1 ${small && d.cal.loaded && d.cal.connected ? "hidden" : ""}`}>
@@ -197,7 +210,7 @@ function CalendarCard({ d, small }: { d: DashData; small?: boolean }) {
         <>
           <div ref={list} className={`${small ? "mt-2" : "mt-4"} flex flex-col gap-1.5 min-h-0 scroll-on-hover pr-1`}>
             {ev.map((e) => (
-              <button key={e.id} onClick={() => d.openEvent(e)} className={`w-full text-left ${ROW} font-normal`}>
+              <button key={e.id} onClick={() => d.openEvent(e)} className={`w-full text-left ${small ? ROW_S : ROW} font-normal`}>
                 <span className={`mono text-[12px] text-muted flex-shrink-0 ${small ? "w-[46px]" : "w-[54px]"}`}>{d.range === "today" ? d.fmtTime(e) : d.eventStart(e).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
                 <span className="font-medium truncate">{e.title}</span>
               </button>
@@ -529,7 +542,7 @@ function ClockFace() {
   const m = now.getMinutes() * 6;
   return (
     <div className="m-auto flex flex-col items-center gap-1">
-      <svg viewBox="0 0 100 100" className="w-[120px] h-[120px]" aria-label={now.toLocaleTimeString()}>
+      <svg viewBox="0 0 100 100" className="w-[110px] h-[110px]" aria-label={now.toLocaleTimeString()}>
         {[...Array(12)].map((_, i) => (
           <line key={i} x1="50" y1="8" x2="50" y2={i % 3 ? "13" : "16"} stroke="#9AA3B2" strokeWidth={i % 3 ? 1.5 : 2.5} strokeLinecap="round" transform={`rotate(${i * 30} 50 50)`} />
         ))}

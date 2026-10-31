@@ -2,8 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Minus, X, Search, Plus, Check, LayoutGrid } from "lucide-react";
-import { WIDGETS, WIDGET } from "./library";
-import { SIZE_CLASS, SIZE_LABEL, type DashData, type LayoutItem, type WidgetDef, type WidgetSize } from "./types";
+import { WIDGETS, WIDGET, WidgetSizeContext } from "./library";
+import { SIZE_CLASS, SIZE_ROWS, SIZE_LABEL, type DashData, type LayoutItem, type WidgetDef, type WidgetSize } from "./types";
 
 // The Dashboard's widgets. Normal view: just the widgets. Edit view
 // (Customize): drag to move, pick a size under each one, − to remove,
@@ -38,12 +38,14 @@ export function SizePicker({ sizes, value, onPick, dark = false }: { sizes: Widg
 
 export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize; d: DashData }) {
   const Icon = def.icon;
+  const small = size === "s";
   return (
-    <div className={`h-full ${def.tone ?? "bg-card-alt"} rounded-2xl p-5 flex flex-col overflow-hidden relative`}>
+    <WidgetSizeContext.Provider value={size}>
+    <div className={`h-full ${def.tone ?? "bg-card-alt"} rounded-2xl ${small ? "p-4" : "p-5"} flex flex-col overflow-hidden relative`}>
       {!def.plain && (
-        <div className="flex items-center justify-between gap-2 mb-3 min-h-[26px]">
-          <div className="text-[13.5px] font-medium text-muted flex items-center gap-1.5 min-w-0">
-            <Icon size={15} strokeWidth={1.75} className="flex-shrink-0" />
+        <div className={`flex items-center justify-between gap-2 ${small ? "mb-2 min-h-[22px]" : "mb-3 min-h-[26px]"}`}>
+          <div className={`${small ? "text-[12.5px]" : "text-[13.5px]"} font-medium text-muted flex items-center gap-1.5 min-w-0`}>
+            <Icon size={small ? 14 : 15} strokeWidth={1.75} className="flex-shrink-0" />
             <span className="truncate">{def.title ? def.title(d) : def.name}</span>
           </div>
           {def.action && size !== "s" && <div className="flex-shrink-0">{def.action(d)}</div>}
@@ -51,6 +53,7 @@ export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize
       )}
       <div className="flex-1 min-h-0 flex flex-col">{def.body(d, size)}</div>
     </div>
+    </WidgetSizeContext.Provider>
   );
 }
 
@@ -71,14 +74,15 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 auto-rows-[324px] gap-5 grid-flow-row-dense">
+    <div className="grid grid-cols-2 min-[1520px]:grid-cols-[repeat(4,275px)] auto-rows-[4px] gap-x-5 gap-y-0 grid-flow-row-dense">
       {items.map((it) => {
         const def = WIDGET(it.id)!;
         const size = def.sizes.includes(it.size) ? it.size : def.size;
         return (
           <div
             key={it.id}
-            className={`${SIZE_CLASS[size]} relative min-w-0 ${editing ? "cursor-grab active:cursor-grabbing" : ""} ${dragId === it.id ? "opacity-40" : ""}`}
+            style={{ gridRow: `span ${SIZE_ROWS[size]}` }}
+            className={`${SIZE_CLASS[size]} relative min-w-0 pb-5 ${editing ? "cursor-grab active:cursor-grabbing" : ""} ${dragId === it.id ? "opacity-40" : ""}`}
             draggable={editing}
             onDragStart={(e) => {
               setDragId(it.id);
@@ -133,7 +137,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
 
 // ── Add widget: the library ──────────────────────────────────────────────────
 const CATS = ["Tasks", "Calendar", "Matters", "Clients and intake", "Firm", "AI and tools"] as const;
-const PREVIEW: Record<WidgetSize, [number, number]> = { s: [270, 324], m: [560, 324], l: [560, 668], w: [1140, 324], xl: [1140, 668] };
+const PREVIEW: Record<WidgetSize, [number, number]> = { s: [275, 275], m: [570, 324], l: [570, 668], w: [1160, 324], xl: [1160, 668] };
 
 function Preview({ def, size, d }: { def: WidgetDef; size: WidgetSize; d: DashData }) {
   const [w, h] = PREVIEW[size];
