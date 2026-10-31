@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Wand2, History, Trash2, Loader2, RotateCcw, FilePlus2 } from "lucide-react";
+import { FileText, Wand2, History, Trash2, Loader2, RotateCcw, FilePlus2, ArrowLeft, X } from "lucide-react";
 import UseForMatterModal from "@/components/docTemplates/UseForMatterModal";
 import type { DocTemplate } from "@/lib/docTemplates/format";
 import { FIELD_TYPES } from "@/lib/docTemplates/vocabulary";
@@ -12,7 +12,7 @@ type Version = { version: number; name: string; createdAt: string; createdBy: st
 
 // A template made from the firm's own Word file: fields, a preview, making a
 // document for a matter, editing in the template maker, and version history.
-export default function WordTemplateView({ template, matters, onEdit, onChanged, onDeleted }: { template: DocTemplate; matters: Matter[]; onEdit: () => void; onChanged: () => void; onDeleted: () => void }) {
+export default function WordTemplateView({ template, matters, onEdit, onChanged, onDeleted, onClose }: { template: DocTemplate; matters: Matter[]; onEdit: () => void; onChanged: () => void; onDeleted: () => void; onClose?: () => void }) {
   const { teamMembers } = useWorkspaceData();
   const [using, setUsing] = useState(false);
   const [versions, setVersions] = useState<Version[] | null>(null);
@@ -58,6 +58,16 @@ export default function WordTemplateView({ template, matters, onEdit, onChanged,
   const typeLabel = (t?: string) => FIELD_TYPES.find((x) => x.value === (t ?? "text"))?.label ?? "Text";
   return (
     <div>
+      {onClose && (
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={onClose} className="flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink">
+            <ArrowLeft size={14} /> All templates
+          </button>
+          <button onClick={onClose} aria-label="Close" title="Close" className="w-8 h-8 rounded-full hover:bg-white flex items-center justify-center text-muted hover:text-ink">
+            <X size={16} />
+          </button>
+        </div>
+      )}
       <div className="flex items-start gap-3 flex-wrap mb-1">
         <div className="flex-1 min-w-0">
           <div className="text-[12px] text-muted flex items-center gap-1.5">

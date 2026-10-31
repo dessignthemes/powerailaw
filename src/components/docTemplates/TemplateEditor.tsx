@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Sparkles, Loader2, Save, Trash2, Copy, FileText, Undo2, Plus, ChevronDown, Download } from "lucide-react";
+import { Sparkles, Loader2, Save, Trash2, Copy, FileText, Undo2, Plus, ChevronDown, Download, ArrowLeft, X } from "lucide-react";
 import ClickAway from "@/components/ClickAway";
 import type { Matter } from "@/components/NewMatterModal";
 import { TEMPLATE_CATEGORIES, COMMON_FIELDS, syncFields, toKey, labelOf, type TemplateField, type DocTemplate } from "@/lib/docTemplates/format";
@@ -19,12 +19,14 @@ export default function TemplateEditor({
   onSaved,
   onDeleted,
   onCopy,
+  onClose,
 }: {
   value: EditorValue;
   matters: Matter[];
   onSaved: (t: DocTemplate) => void;
   onDeleted: () => void;
   onCopy: () => void;
+  onClose?: () => void; // back to all templates
 }) {
   const [name, setName] = useState(value.name);
   const [category, setCategory] = useState(value.category);
@@ -124,6 +126,24 @@ export default function TemplateEditor({
 
   return (
     <div className="flex flex-col gap-4">
+      {onClose && (
+        <div className="flex items-center justify-between -mb-1">
+          <button
+            onClick={() => (!dirty || confirm("Leave without saving? Your changes to this template will be lost.")) && onClose()}
+            className="flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink"
+          >
+            <ArrowLeft size={14} /> All templates
+          </button>
+          <button
+            onClick={() => (!dirty || confirm("Leave without saving? Your changes to this template will be lost.")) && onClose()}
+            aria-label="Close"
+            title="Close"
+            className="w-8 h-8 rounded-full hover:bg-white flex items-center justify-center text-muted hover:text-ink"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
       {readOnly && (
         <div className="rounded-xl bg-[#FFF8EE] border border-[#F6D4A6] px-4 py-3 text-[13px] flex items-center gap-3">
           <span>This is a built-in sample. Copy it to your templates to change it, or use it as it is.</span>

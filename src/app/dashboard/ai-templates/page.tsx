@@ -300,12 +300,14 @@ export default function AiTemplatesPage() {
                 setWordOpen(null);
                 setReload((r) => r + 1);
               }}
+              onClose={() => setWordOpen(null)}
             />
           ) : open ? (
             <TemplateEditor
               key={editorKey}
               value={open}
               matters={matters}
+              onClose={() => setOpen(null)}
               onSaved={(t) => {
                 setReload((r) => r + 1);
                 setOpen((o) => (o ? { ...o, id: t.id, sample: false, source: t.source } : o));
