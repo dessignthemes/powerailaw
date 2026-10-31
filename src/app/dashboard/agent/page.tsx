@@ -110,6 +110,14 @@ function Agent() {
   const [convError, setConvError] = useState<string | null>(null);
 
   const [input, setInput] = useState("");
+  // From the Dashboard's "Ask the AI Agent" widget: the question is filled in, ready to send.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const q = new URLSearchParams(window.location.search).get("q");
+      if (q) setInput(q.slice(0, 4000));
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
   const [streaming, setStreaming] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);

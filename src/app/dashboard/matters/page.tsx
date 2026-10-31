@@ -3,7 +3,7 @@
 import ClickAway from "@/components/ClickAway";
 import ImportLeapModal from "@/components/matters/ImportLeapModal";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Briefcase,
@@ -99,6 +99,13 @@ export default function MattersPage() {
   const [query, setQuery] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
+  // ?new=1 (Dashboard → Shortcuts → New matter) opens the New matter window.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (new URLSearchParams(window.location.search).get("new") === "1") setModalOpen(true);
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
   const [editingMatter, setEditingMatter] = useState<Matter | null>(null);
   const [collapsed, setCollapsed] = useState<Set<MatterStatus>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());

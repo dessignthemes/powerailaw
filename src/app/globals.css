@@ -179,3 +179,6 @@ html.lp-scroll-locked { overflow: hidden; }
 html.lp-scroll-locked body { overflow: hidden; }
 /* Scrolling inside a pop-up never carries on to the page underneath. */
 .fixed.inset-0[class*="bg-black/"], .fixed.inset-0[class*="bg-black/"] * { overscroll-behavior: contain; }
+
+/* Dashboard → Customize: a small nudge when widgets become movable. */
+@keyframes lpWiggle { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-0.6deg); } 70% { transform: rotate(0.6deg); } }
