@@ -340,8 +340,11 @@ export default function DashboardHome() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setEditing(true)} title="Add, remove, move and resize widgets" className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium bg-chip hover:bg-btn">
-                <LayoutGrid size={14} /> Customize
+              <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-semibold bg-white border border-line hover:bg-chip shadow-[0_1px_2px_rgba(27,25,26,0.06)] transition-colors">
+                <Plus size={15} strokeWidth={2} /> Add widget
+              </button>
+              <button onClick={() => setEditing(true)} title="Move, resize and remove widgets" className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-semibold bg-white border border-line hover:bg-chip shadow-[0_1px_2px_rgba(27,25,26,0.06)] transition-colors">
+                <LayoutGrid size={15} strokeWidth={1.75} /> Edit
               </button>
               <TaskFilterDropdown value={scope} onChange={setScope} members={teamMembers} meEmail={meEmail} pinned={pinned} onPin={pin} />
             </>
@@ -369,7 +372,6 @@ export default function DashboardHome() {
           onClose={() => setAdding(false)}
           onAdd={(id, size) => {
             setLayout([...layout.filter((x) => x.id !== id), { id, size }]);
-            setEditing(true);
           }}
           onRemove={(id) => setLayout(layout.filter((x) => x.id !== id))}
         />
