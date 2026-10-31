@@ -192,6 +192,31 @@ export default function AiTemplatesPage() {
     </button>
   );
 
+  // A new template (blank, from AI, pasted or uploaded, or a copy) opens in a pop-up window;
+  // saved templates and samples open on the page.
+  const newDraft = !!open && !open.id && !open.sample;
+  const editor = open ? (
+            <TemplateEditor
+              key={editorKey}
+              value={open}
+              matters={matters}
+              onClose={() => setOpen(null)}
+              onSaved={(t) => {
+                setReload((r) => r + 1);
+                setOpen((o) => (o ? { ...o, id: t.id, sample: false, source: t.source } : o));
+              }}
+              onDeleted={() => {
+                setOpen(null);
+                setReload((r) => r + 1);
+              }}
+              onCopy={() => {
+                if (!open) return;
+                setOpen({ ...open, id: undefined, sample: false, source: "blank", name: `${open.name} (copy)` });
+                setEditorKey((k) => k + 1);
+              }}
+            />
+  ) : null;
+
   return (
     <div className="px-10 py-10 max-w-[1500px]">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
@@ -302,26 +327,8 @@ export default function AiTemplatesPage() {
               }}
               onClose={() => setWordOpen(null)}
             />
-          ) : open ? (
-            <TemplateEditor
-              key={editorKey}
-              value={open}
-              matters={matters}
-              onClose={() => setOpen(null)}
-              onSaved={(t) => {
-                setReload((r) => r + 1);
-                setOpen((o) => (o ? { ...o, id: t.id, sample: false, source: t.source } : o));
-              }}
-              onDeleted={() => {
-                setOpen(null);
-                setReload((r) => r + 1);
-              }}
-              onCopy={() => {
-                if (!open) return;
-                setOpen({ ...open, id: undefined, sample: false, source: "blank", name: `${open.name} (copy)` });
-                setEditorKey((k) => k + 1);
-              }}
-            />
+          ) : open && !newDraft ? (
+            editor
           ) : (
             <div className="flex flex-col items-center justify-center text-center py-10">
               <BookOpenText size={30} strokeWidth={1.5} className="text-muted mb-3" />
@@ -370,6 +377,13 @@ export default function AiTemplatesPage() {
             setReload((r) => r + 1);
           }}
         />
+      )}
+      {newDraft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4 py-6">
+          <div role="dialog" aria-label="New template" className="bg-card-alt rounded-3xl w-full max-w-[1180px] max-h-full overflow-y-auto p-6 shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)]">
+            {editor}
+          </div>
+        </div>
       )}
       {modal?.kind === "ai" && <CreateWithAiModal onClose={() => setModal(null)} onDraft={fromDraft} />}
       {modal?.kind === "text" && <FromTextModal source={modal.source} initialText={modal.text} initialName={modal.name} onClose={() => setModal(null)} onDraft={fromDraft} />}
