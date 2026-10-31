@@ -14,6 +14,7 @@ export function useDashboardLayout(meEmail: string | null) {
   // Oct 31: Tasks and Team progress became half the size (Extra large → Large); saved layouts follow once.
   const SHRUNK = "lawpower.dashboard.v2";
   const SHRUNK3 = "lawpower.dashboard.v3";
+  const SHRUNK4 = "lawpower.dashboard.v4";
   const valid = (l: unknown): LayoutItem[] | null => {
     if (!Array.isArray(l)) return null;
     let list = (l as LayoutItem[]).filter((x) => x && typeof x.id === "string" && WIDGET(x.id));
@@ -21,6 +22,8 @@ export function useDashboardLayout(meEmail: string | null) {
       if (!localStorage.getItem(SHRUNK)) list = list.map((x) => ((x.id === "tasks" || x.id === "teamProgress") && x.size === "xl" ? { ...x, size: "l" } : x));
       // Oct 31 (later): Due today, Due by priority and Calendar became Small.
       if (!localStorage.getItem(SHRUNK3)) list = list.map((x) => (["due", "priority", "calendar"].includes(x.id) && x.size === "m" ? { ...x, size: "s" } : x));
+      // Then Tasks, Recent activity, Team progress and Events became half as tall (Large → Medium).
+      if (!localStorage.getItem(SHRUNK4)) list = list.map((x) => (["tasks", "activity", "teamProgress", "events"].includes(x.id) && (x.size === "l" || x.size === "xl") ? { ...x, size: "m" } : x));
     } catch {
       /* private mode */
     }
@@ -44,9 +47,10 @@ export function useDashboardLayout(meEmail: string | null) {
         const server = valid(d?.layout);
         if (server && live) setLayoutState(server);
         try {
-          if (!localStorage.getItem(SHRUNK) || !localStorage.getItem(SHRUNK3)) {
+          if (!localStorage.getItem(SHRUNK) || !localStorage.getItem(SHRUNK3) || !localStorage.getItem(SHRUNK4)) {
             localStorage.setItem(SHRUNK, "1");
             localStorage.setItem(SHRUNK3, "1");
+            localStorage.setItem(SHRUNK4, "1");
             if (server) persistRef.current?.(server);
           }
         } catch {

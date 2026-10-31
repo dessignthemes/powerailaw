@@ -79,15 +79,15 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
 
   return (
     <section className={className}>
-      <div className="flex flex-wrap items-start gap-3 mb-5">
+      <div className="flex flex-wrap items-start gap-2 mb-3">
         <div className="flex-1 min-w-[160px]">
           <div className="flex items-center gap-2 text-[13.5px] text-muted">
             <Users size={15} strokeWidth={1.75} /> Team progress
           </div>
-          <div className="text-[22px] font-semibold mt-1 leading-tight">
+          <div className="text-[18px] font-semibold mt-0.5 leading-tight">
             {totalDone} of {totalAssigned} tasks done
           </div>
-          <div className="text-[13px] text-muted mt-0.5">
+          <div className="text-[12px] text-muted mt-0.5">
             {leader ? (
               <span className="inline-flex items-center gap-1">
                 <Trophy size={13} className="text-[#E0A100]" /> {leader.member.fullName || leader.member.email} leads with {leader.done} done
@@ -106,30 +106,30 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {rows.map((r) => {
           const name = r.member.fullName || r.member.email;
           return (
-            <div key={r.member.id} className="grid grid-cols-[minmax(90px,150px)_minmax(0,1fr)] items-center gap-3">
+            <div key={r.member.id} className="grid grid-cols-[minmax(90px,140px)_minmax(0,1fr)] items-center gap-2.5">
               {onPick ? (
                 <button
                   onClick={() => onPick(r.member.email)}
                   title={`Show ${name}'s tasks`}
                   className="group flex items-center gap-2 min-w-0 text-left rounded-full -ml-1 pl-1 pr-2 py-0.5 hover:bg-white transition-colors"
                 >
-                  <span className="w-7 h-7 rounded-full bg-white border border-line text-[11px] font-semibold text-muted flex items-center justify-center flex-shrink-0 group-hover:border-ink group-hover:text-ink">{initials(name)}</span>
-                  <span className="text-[13.5px] font-medium truncate group-hover:underline underline-offset-2">{name}</span>
+                  <span className="w-6 h-6 rounded-full bg-white border border-line text-[10px] font-semibold text-muted flex items-center justify-center flex-shrink-0 group-hover:border-ink group-hover:text-ink">{initials(name)}</span>
+                  <span className="text-[12.5px] font-medium truncate group-hover:underline underline-offset-2">{name}</span>
                 </button>
               ) : (
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-7 h-7 rounded-full bg-white border border-line text-[11px] font-semibold text-muted flex items-center justify-center flex-shrink-0">{initials(name)}</span>
-                  <span className="text-[13.5px] font-medium truncate" title={name}>
+                  <span className="w-6 h-6 rounded-full bg-white border border-line text-[10px] font-semibold text-muted flex items-center justify-center flex-shrink-0">{initials(name)}</span>
+                  <span className="text-[12.5px] font-medium truncate" title={name}>
                     {name}
                   </span>
                 </div>
               )}
               <div
-                className="h-6 bg-white rounded-full overflow-hidden flex"
+                className="h-3 bg-white rounded-full overflow-hidden flex"
                 role="img"
                 aria-label={`${name}: ${r.onTime} completed on time, ${r.late} completed, ${r.open} still open, ${r.overdue} overdue`}
                 title={`${r.onTime} completed on time · ${r.late} completed · ${r.open} still open · ${r.overdue} overdue`}
@@ -137,7 +137,6 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
                 {SEGMENTS.map((seg) =>
                   r[seg.key] > 0 ? (
                     <div key={seg.key} className="h-full transition-[width] duration-500 flex items-center justify-center text-[11px] font-semibold text-[#1B191A]" style={{ width: `${(r[seg.key] / max) * 100}%`, backgroundColor: seg.color }}>
-                      {(r[seg.key] / max) * 100 >= 6 ? r[seg.key] : ""}
                     </div>
                   ) : null
                 )}
@@ -148,10 +147,10 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
         {!rows.length && <div className="text-[13.5px] text-muted">No team members yet.</div>}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-5 text-[12px] text-muted">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-[11.5px] text-muted">
         {SEGMENTS.map((seg) => (
           <span key={seg.key} className="flex items-center gap-1.5" title={seg.hint}>
-            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: seg.color }} /> {seg.label}
+            <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: seg.color }} /> {seg.label}
           </span>
         ))}
         <span className="text-muted-light">Completed counts tasks finished {PERIODS.find((p) => p.key === period)?.label.toLowerCase()}.</span>

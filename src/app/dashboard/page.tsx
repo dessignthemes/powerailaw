@@ -179,7 +179,7 @@ export default function DashboardHome() {
       <div
         key={t.id}
         onClick={() => setSelectedTask(t)}
-        className="flex items-center justify-between gap-3 px-5 py-3.5 cursor-pointer hover:bg-chip/40 transition-colors"
+        className="flex items-center justify-between gap-3 px-5 py-2 cursor-pointer hover:bg-chip/40 transition-colors"
       >
         <div className="flex items-center gap-3 min-w-0">
           <button
@@ -191,12 +191,12 @@ export default function DashboardHome() {
             aria-label={done ? "Mark as not done" : "Mark as done"}
           >
             {done ? (
-              <CheckCircle2 size={17} strokeWidth={1.75} className="text-green-600" />
+              <CheckCircle2 size={16} strokeWidth={1.75} className="text-green-600" />
             ) : (
-              <Circle size={17} strokeWidth={1.75} />
+              <Circle size={16} strokeWidth={1.75} />
             )}
           </button>
-          <span className={`text-[14.5px] font-medium truncate ${done ? "line-through text-muted" : ""}`}>
+          <span className={`text-[13.5px] font-medium truncate ${done ? "line-through text-muted" : ""}`}>
             {t.title}
           </span>
           <span className="text-[12px] text-muted flex-shrink-0">{statusMeta[t.status].label}</span>

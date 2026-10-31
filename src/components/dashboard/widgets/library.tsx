@@ -256,9 +256,9 @@ function Events({ d }: { d: DashData }) {
           </div>
           <div className="divide-y divide-line">
             {list.map((e) => (
-              <button key={e.id} onClick={() => d.openEvent(e)} className="w-full text-left flex items-center gap-4 px-5 py-3 hover:bg-chip/60 transition-colors">
-                <span className="mono text-[12.5px] text-muted w-16 flex-shrink-0">{d.fmtTime(e)}</span>
-                <span className="text-[14.5px] font-medium truncate flex-1">{e.title}</span>
+              <button key={e.id} onClick={() => d.openEvent(e)} className="w-full text-left flex items-center gap-4 px-5 py-2 hover:bg-chip/60 transition-colors">
+                <span className="mono text-[12px] text-muted w-16 flex-shrink-0">{d.fmtTime(e)}</span>
+                <span className="text-[13.5px] font-medium truncate flex-1">{e.title}</span>
                 {e.location && <span className="text-[12.5px] text-muted truncate max-w-[200px] hidden sm:inline">{e.location}</span>}
               </button>
             ))}
@@ -277,8 +277,8 @@ function RecentActivity({ d }: { d: DashData }) {
         const created = !t.updatedAt || !t.createdAt || Math.abs(new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()) < 2000;
         const verb = created ? "Created" : t.status === "done" ? "Completed" : "Updated";
         return (
-          <div key={t.id} onClick={() => d.openTask(t)} className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer hover:bg-chip/40 transition-colors">
-            <div className="text-[14.5px] truncate">
+          <div key={t.id} onClick={() => d.openTask(t)} className="flex items-center justify-between gap-3 px-4 py-2 cursor-pointer hover:bg-chip/40 transition-colors">
+            <div className="text-[13.5px] truncate">
               <span className="text-muted">{verb} task</span>{" "}
               <span className="font-medium">
                 {t.isPrivate && <Lock size={12} strokeWidth={2.25} className="inline -mt-0.5 mr-1 text-muted" aria-label="Private" />}
@@ -606,9 +606,9 @@ export const WIDGETS: WidgetDef[] = [
   // Tasks
   { id: "due", name: "Due today", desc: "Tasks due today (or this week / month), by board.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: ListChecks, title: (d) => d.dueLabel, action: (d) => viewAll(`/dashboard/task-board?due=${d.range}`, "View all tasks"), body: (d, size) => <DueCard d={d} small={size === "s"} /> },
   { id: "priority", name: "Due by priority", desc: "High, medium and low priority tasks due. Click one to filter the Tasks widget.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: Flag, title: (d) => `${d.dueLabel} by priority`, body: (d, size) => <PriorityCard d={d} small={size === "s"} /> },
-  { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open task board"), body: (d) => <TasksList d={d} /> },
-  { id: "activity", name: "Recent activity", desc: "Tasks created, updated and completed, newest first.", category: "Tasks", sizes: ["m", "l", "xl"], size: "l", icon: Activity, body: (d) => <RecentActivity d={d} /> },
-  { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: BarChart3, plain: true, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" onPick={(email) => d.setScope(email)} /> },
+  { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open task board"), body: (d) => <TasksList d={d} /> },
+  { id: "activity", name: "Recent activity", desc: "Tasks created, updated and completed, newest first.", category: "Tasks", sizes: ["m", "l", "xl"], size: "m", icon: Activity, body: (d) => <RecentActivity d={d} /> },
+  { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: BarChart3, plain: true, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" onPick={(email) => d.setScope(email)} /> },
   { id: "myTasks", name: "My open tasks", desc: "Your open tasks, soonest first. Tick one off without leaving the Dashboard.", category: "Tasks", sizes: ["m", "l"], size: "l", icon: CheckCircle2, body: (d) => <MyOpenTasks d={d} /> },
   { id: "overdue", name: "Overdue", desc: "Open tasks past their due date across the firm.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: AlarmClock, body: (d) => { const n = d.allTasks.filter(isOverdue).length; return <Big n={n} label={n ? "past their due date" : "Nothing overdue"} />; } },
   { id: "dueCount", name: "Due today (count)", desc: "How many tasks are due today across the firm, and how many are yours.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: CalendarClock, title: () => "Due today", body: (d) => { const due = d.allTasks.filter((t) => t.status !== "done" && t.dueDate === d.todayStr); const mine = due.filter((t) => (t.assignee ?? "").toLowerCase() === (d.meEmail ?? "").toLowerCase()).length; return <Big n={due.length} label={due.length ? `${mine} of them yours` : "Nothing due today"} />; } },
@@ -656,8 +656,8 @@ export const DEFAULT_LAYOUT: { id: string; size: WidgetSize }[] = [
   { id: "priority", size: "s" },
   { id: "calendar", size: "s" },
   { id: "overdue", size: "s" },
-  { id: "tasks", size: "l" },
-  { id: "teamProgress", size: "l" },
-  { id: "activity", size: "l" },
+  { id: "tasks", size: "m" },
+  { id: "activity", size: "m" },
+  { id: "teamProgress", size: "m" },
   { id: "events", size: "m" },
 ];
