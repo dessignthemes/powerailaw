@@ -71,7 +71,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 auto-rows-[270px] gap-5 grid-flow-row-dense">
+    <div className="grid grid-cols-2 lg:grid-cols-4 auto-rows-[270px] gap-5 grid-flow-row-dense">
       {items.map((it) => {
         const def = WIDGET(it.id)!;
         const size = def.sizes.includes(it.size) ? it.size : def.size;
@@ -133,7 +133,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
 
 // ── Add widget: the library ──────────────────────────────────────────────────
 const CATS = ["Tasks", "Calendar", "Matters", "Clients and intake", "Firm", "AI and tools"] as const;
-const PREVIEW: Record<WidgetSize, [number, number]> = { s: [210, 270], m: [440, 270], l: [440, 560], w: [900, 270], xl: [900, 560] };
+const PREVIEW: Record<WidgetSize, [number, number]> = { s: [270, 270], m: [560, 270], l: [560, 560], w: [1140, 270], xl: [1140, 560] };
 
 function Preview({ def, size, d }: { def: WidgetDef; size: WidgetSize; d: DashData }) {
   const [w, h] = PREVIEW[size];

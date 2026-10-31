@@ -2,17 +2,17 @@ import type { BoardTask } from "@/components/NewTaskModal";
 import type { Matter } from "@/components/NewMatterModal";
 import type { Client } from "@/components/NewClientModal";
 
-// Dashboard widgets: sizes on a 6-column grid (4 on laptops, 2 on phones).
-//   s  = 1 column × 1 row      m  = 2 × 1      l = 2 × 2
-//   w  = 4 columns × 1 row     xl = 4 × 2
+// Dashboard widgets: sizes on a 4-column grid (2 on phones).
+//   s  = a quarter (1 column × 1 row)   m = half (2 × 1)   l = half, twice as tall (2 × 2)
+//   w  = full width (4 × 1)            xl = full width, twice as tall (4 × 2)
 export type WidgetSize = "s" | "m" | "l" | "w" | "xl";
 export const SIZE_LABEL: Record<WidgetSize, string> = { s: "Small", m: "Medium", l: "Large", w: "Wide", xl: "Extra large" };
 export const SIZE_CLASS: Record<WidgetSize, string> = {
   s: "col-span-1 row-span-1",
   m: "col-span-2 row-span-1",
   l: "col-span-2 row-span-2",
-  w: "col-span-2 md:col-span-4 row-span-1",
-  xl: "col-span-2 md:col-span-4 row-span-2",
+  w: "col-span-2 lg:col-span-4 row-span-1",
+  xl: "col-span-2 lg:col-span-4 row-span-2",
 };
 
 export type LayoutItem = { id: string; size: WidgetSize };

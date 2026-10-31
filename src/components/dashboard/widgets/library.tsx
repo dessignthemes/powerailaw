@@ -16,7 +16,7 @@ import type { DashData, WidgetDef, WidgetSize } from "./types";
 
 // ── small shared pieces ──────────────────────────────────────────────────────
 const nowMs = () => Date.now(); // read at render time on purpose (widgets refresh with the page)
-const ROW = "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[13.5px] font-medium bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors";
+const ROW = "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[14.5px] font-medium bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors";
 const PILL = "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium text-ink bg-[#E8EFF7] hover:bg-[#DCE4F0] transition-colors";
 const fmtDay = (ymdStr: string) => {
   const [y, m, d] = ymdStr.split("-").map(Number);
@@ -102,22 +102,24 @@ function useJson<T>(url: string): T | null {
 }
 
 // ── the original Dashboard cards ─────────────────────────────────────────────
-function DueCard({ d }: { d: DashData }) {
+function DueCard({ d, small }: { d: DashData; small?: boolean }) {
   const list = useRef<HTMLDivElement>(null);
   const counts = new Map<string, number>();
   for (const t of d.dueTasks) counts.set(t.boardId ?? "general", (counts.get(t.boardId ?? "general") ?? 0) + 1);
   const rows = [...counts.entries()].sort((x, y) => y[1] - x[1]);
   return (
     <>
-      <div className="text-[24px] leading-tight font-display font-semibold mb-1">
+      <div className={`${small ? "text-[19px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
         {d.tasksLoaded ? d.dueTasks.length : "–"} {d.dueTasks.length === 1 ? "task" : "tasks"} {d.dueLabel.toLowerCase()}
       </div>
-      <div className="text-[13px] text-muted">
-        {d.openCount} open in total · {d.undatedTasks.length} with no due date
-      </div>
+      {!small && (
+        <div className="text-[13px] text-muted">
+          {d.openCount} open in total · {d.undatedTasks.length} with no due date
+        </div>
+      )}
       {rows.length > 0 && (
         <>
-          <div ref={list} className="mt-4 flex flex-col gap-1.5 min-h-0 scroll-on-hover pr-1">
+          <div ref={list} className={`${small ? "mt-2" : "mt-4"} flex flex-col gap-1.5 min-h-0 scroll-on-hover pr-1`}>
             {rows.map(([key, n]) => (
               <Link key={key} href={`/dashboard/task-board?board=${key}&due=${d.range}`} className={`group/row ${ROW}`}>
                 <span className="font-semibold tabular-nums w-5 text-right">{n}</span>
@@ -133,16 +135,16 @@ function DueCard({ d }: { d: DashData }) {
   );
 }
 
-function PriorityCard({ d }: { d: DashData }) {
+function PriorityCard({ d, small }: { d: DashData; small?: boolean }) {
   const n = (p: string) => d.dueTasks.filter((t) => t.priority === p).length;
   const late = d.dueTasks.filter((t) => isOverdue(t) && t.priority === "High").length;
   return (
     <>
-      <div className="text-[24px] leading-tight font-display font-semibold mb-1">
+      <div className={`${small ? "text-[19px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
         {d.tasksLoaded ? d.dueTasks.length : "–"} {d.dueTasks.length === 1 ? "task" : "tasks"} by priority
       </div>
-      <div className="text-[13px] text-muted">{late ? `${late} high priority overdue` : "No high priority overdue"}</div>
-      <div className="mt-4 flex flex-col gap-1.5">
+      {!small && <div className="text-[13px] text-muted">{late ? `${late} high priority overdue` : "No high priority overdue"}</div>}
+      <div className={`${small ? "mt-2" : "mt-4"} flex flex-col gap-1.5`}>
         {(["High", "Medium", "Low"] as const).map((p) => {
           const count = n(p);
           const active = d.priorityFilter === p;
@@ -153,7 +155,7 @@ function PriorityCard({ d }: { d: DashData }) {
               disabled={!count && !active}
               style={{ borderLeftColor: priorityMeta[p].bg }}
               title={count ? `Show only ${p.toLowerCase()} priority in the Tasks widget` : undefined}
-              className={`group/row flex items-center gap-2 pl-2.5 pr-3 py-2 rounded-xl border-l-[8px] text-[13.5px] font-medium text-ink bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors disabled:opacity-45 ${active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""}`}
+              className={`group/row flex items-center gap-2 pl-2.5 pr-3 ${small ? "py-1.5" : "py-2"} rounded-xl border-l-[8px] text-[14.5px] font-medium text-ink bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors disabled:opacity-45 ${active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""}`}
             >
               <span className="font-semibold tabular-nums w-5 text-right">{d.tasksLoaded ? count : "–"}</span>
               <span className="truncate flex-1 text-left">{p}</span>
@@ -166,15 +168,15 @@ function PriorityCard({ d }: { d: DashData }) {
   );
 }
 
-function CalendarCard({ d }: { d: DashData }) {
+function CalendarCard({ d, small }: { d: DashData; small?: boolean }) {
   const list = useRef<HTMLDivElement>(null);
   const ev = d.cal.events;
   return (
     <>
-      <div className="text-[24px] leading-tight font-display font-semibold mb-1">
+      <div className={`${small ? "text-[19px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
         {d.cal.loaded ? ev.length : "–"} {ev.length === 1 ? "event" : "events"}
       </div>
-      <div className="text-[13px] text-muted flex flex-wrap gap-x-1">
+      <div className={`text-[13px] text-muted flex flex-wrap gap-x-1 ${small && d.cal.loaded && d.cal.connected ? "hidden" : ""}`}>
         {!d.cal.loaded ? (
           "Loading your calendar…"
         ) : !d.cal.connected ? (
@@ -193,10 +195,10 @@ function CalendarCard({ d }: { d: DashData }) {
       </div>
       {d.cal.loaded && d.cal.connected && ev.length > 0 && (
         <>
-          <div ref={list} className="mt-4 flex flex-col gap-1.5 min-h-0 scroll-on-hover pr-1">
+          <div ref={list} className={`${small ? "mt-2" : "mt-4"} flex flex-col gap-1.5 min-h-0 scroll-on-hover pr-1`}>
             {ev.map((e) => (
               <button key={e.id} onClick={() => d.openEvent(e)} className={`w-full text-left ${ROW} font-normal`}>
-                <span className="mono text-[12px] text-muted w-[54px] flex-shrink-0">{d.range === "today" ? d.fmtTime(e) : d.eventStart(e).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                <span className={`mono text-[12px] text-muted flex-shrink-0 ${small ? "w-[46px]" : "w-[54px]"}`}>{d.range === "today" ? d.fmtTime(e) : d.eventStart(e).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
                 <span className="font-medium truncate">{e.title}</span>
               </button>
             ))}
@@ -256,7 +258,7 @@ function Events({ d }: { d: DashData }) {
             {list.map((e) => (
               <button key={e.id} onClick={() => d.openEvent(e)} className="w-full text-left flex items-center gap-4 px-5 py-3 hover:bg-chip/60 transition-colors">
                 <span className="mono text-[12.5px] text-muted w-16 flex-shrink-0">{d.fmtTime(e)}</span>
-                <span className="text-[14px] font-medium truncate flex-1">{e.title}</span>
+                <span className="text-[14.5px] font-medium truncate flex-1">{e.title}</span>
                 {e.location && <span className="text-[12.5px] text-muted truncate max-w-[200px] hidden sm:inline">{e.location}</span>}
               </button>
             ))}
@@ -276,7 +278,7 @@ function RecentActivity({ d }: { d: DashData }) {
         const verb = created ? "Created" : t.status === "done" ? "Completed" : "Updated";
         return (
           <div key={t.id} onClick={() => d.openTask(t)} className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer hover:bg-chip/40 transition-colors">
-            <div className="text-[13.5px] truncate">
+            <div className="text-[14.5px] truncate">
               <span className="text-muted">{verb} task</span>{" "}
               <span className="font-medium">
                 {t.isPrivate && <Lock size={12} strokeWidth={2.25} className="inline -mt-0.5 mr-1 text-muted" aria-label="Private" />}
@@ -308,7 +310,7 @@ function MyOpenTasks({ d }: { d: DashData }) {
             <Circle size={16} strokeWidth={1.75} />
           </button>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13.5px] font-medium truncate">{t.title}</span>
+            <span className="block text-[14.5px] font-medium truncate">{t.title}</span>
             <span className={`block text-[11.5px] ${t.dueDate && t.dueDate < d.todayStr ? "text-red-600" : "text-muted"}`}>{t.dueDate ? `${t.dueDate < d.todayStr ? "Overdue · " : ""}${fmtDay(t.dueDate)}` : "No due date"} · {d.boardName(t.boardId)}</span>
           </span>
         </div>
@@ -602,8 +604,8 @@ const viewAll = (href: string, label: string) => (
 
 export const WIDGETS: WidgetDef[] = [
   // Tasks
-  { id: "due", name: "Due today", desc: "Tasks due today (or this week / month), by board.", category: "Tasks", sizes: ["m", "l"], size: "m", icon: ListChecks, title: (d) => d.dueLabel, action: (d) => viewAll(`/dashboard/task-board?due=${d.range}`, "View all tasks"), body: (d) => <DueCard d={d} /> },
-  { id: "priority", name: "Due by priority", desc: "High, medium and low priority tasks due. Click one to filter the Tasks widget.", category: "Tasks", sizes: ["m", "l"], size: "m", icon: Flag, title: (d) => `${d.dueLabel} by priority`, body: (d) => <PriorityCard d={d} /> },
+  { id: "due", name: "Due today", desc: "Tasks due today (or this week / month), by board.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: ListChecks, title: (d) => d.dueLabel, action: (d) => viewAll(`/dashboard/task-board?due=${d.range}`, "View all tasks"), body: (d, size) => <DueCard d={d} small={size === "s"} /> },
+  { id: "priority", name: "Due by priority", desc: "High, medium and low priority tasks due. Click one to filter the Tasks widget.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: Flag, title: (d) => `${d.dueLabel} by priority`, body: (d, size) => <PriorityCard d={d} small={size === "s"} /> },
   { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open task board"), body: (d) => <TasksList d={d} /> },
   { id: "activity", name: "Recent activity", desc: "Tasks created, updated and completed, newest first.", category: "Tasks", sizes: ["m", "l", "xl"], size: "l", icon: Activity, body: (d) => <RecentActivity d={d} /> },
   { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: BarChart3, plain: true, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" onPick={(email) => d.setScope(email)} /> },
@@ -615,7 +617,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: "workload", name: "Workload", desc: "Open tasks per person, and how many are late. Click a name to see their tasks.", category: "Tasks", sizes: ["m", "l"], size: "m", icon: Users, body: (d) => <Workload d={d} /> },
 
   // Calendar
-  { id: "calendar", name: "Calendar", desc: "Your Outlook or Google events today, this week or this month.", category: "Calendar", sizes: ["m", "l"], size: "m", icon: Calendar, action: () => viewAll("/dashboard/calendar", "Open calendar"), body: (d) => <CalendarCard d={d} /> },
+  { id: "calendar", name: "Calendar", desc: "Your Outlook or Google events today, this week or this month.", category: "Calendar", sizes: ["s", "m", "l"], size: "s", icon: Calendar, action: () => viewAll("/dashboard/calendar", "Open calendar"), body: (d, size) => <CalendarCard d={d} small={size === "s"} /> },
   { id: "events", name: "Events", desc: "Your events day by day, with times and places.", category: "Calendar", sizes: ["m", "l", "xl"], size: "l", icon: Calendar, action: () => viewAll("/dashboard/calendar", "Open calendar"), body: (d) => <Events d={d} /> },
   { id: "nextEvent", name: "Next meeting", desc: "Your next calendar event and how soon it starts.", category: "Calendar", sizes: ["s", "m"], size: "m", icon: Clock3, body: (d) => { const next = d.allEvents.filter((e) => !e.allDay && Date.parse(e.start) > Date.now()).sort((a, b) => a.start.localeCompare(b.start))[0]; if (!next) return <Empty icon={Clock3} title="Nothing coming up" />; const mins = Math.round((Date.parse(next.start) - Date.now()) / 60000); return <button onClick={() => d.openEvent(next)} className="mt-auto text-left"><div className="text-[13px] text-muted">{mins < 60 ? `in ${mins} min` : mins < 1440 ? `in ${Math.round(mins / 60)} h` : d.eventStart(next).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} · {d.fmtTime(next)}</div><div className="text-[18px] font-semibold leading-snug line-clamp-2">{next.title}</div>{next.location && <div className="text-[12.5px] text-muted truncate">{next.location}</div>}</button>; } },
   { id: "importantDates", name: "Important dates", desc: "Every task and matter deadline in the next 60 days, soonest first.", category: "Calendar", sizes: ["m", "l"], size: "l", icon: CalendarClock, body: (d) => <ImportantDates d={d} /> },
@@ -650,9 +652,10 @@ export const WIDGET = (id: string) => WIDGETS.find((w) => w.id === id);
 
 // The Dashboard as it looked before widgets.
 export const DEFAULT_LAYOUT: { id: string; size: WidgetSize }[] = [
-  { id: "due", size: "m" },
-  { id: "priority", size: "m" },
-  { id: "calendar", size: "m" },
+  { id: "due", size: "s" },
+  { id: "priority", size: "s" },
+  { id: "calendar", size: "s" },
+  { id: "overdue", size: "s" },
   { id: "tasks", size: "l" },
   { id: "teamProgress", size: "l" },
   { id: "activity", size: "l" },
