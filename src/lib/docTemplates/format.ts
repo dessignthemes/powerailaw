@@ -14,6 +14,11 @@ export type TemplateField = {
   label: string; // shown to the person filling it in
   hint?: string; // what goes here / where it comes from
   example?: string; // e.g. "Paul Montesano and Marilyn Montesano"
+  // Template maker (Word templates):
+  type?: "text" | "date" | "currency" | "number" | "select" | "yes_no"; // yes_no = an optional clause
+  required?: boolean;
+  default?: string;
+  options?: string[]; // for "select"
 };
 
 export type DocTemplate = {
@@ -26,6 +31,8 @@ export type DocTemplate = {
   source: "ai" | "paste" | "upload" | "blank" | "sample";
   updatedAt: string;
   sample?: boolean; // built-in example; copy it to change it
+  format?: "text" | "docx"; // docx = the firm's own Word file with {{fields}} tagged inside (formatting kept)
+  version?: number;
 };
 
 export const TEMPLATE_CATEGORIES = ["Real Estate", "Estate Planning", "Probate", "Immigration", "Litigation", "Family Law", "Business / Corporate", "Letters", "Agreements", "Other"];
@@ -46,7 +53,8 @@ export const labelOf = (key: string) => key.replace(/_/g, " ").replace(/\b\w/g, 
 // Every {{key}} used in the body, in order of first use.
 export function keysInBody(body: string): string[] {
   const out: string[] = [];
-  for (const m of body.matchAll(PLACEHOLDER)) {
+  // {{key}}, and {{#key}} … {{/key}} around an optional clause.
+  for (const m of body.matchAll(/\{\{\s*[#^]?\s*([a-zA-Z][a-zA-Z0-9_]*)\s*\}\}/g)) {
     const k = m[1];
     if (!out.includes(k)) out.push(k);
   }
@@ -79,7 +87,18 @@ export function cleanFields(raw: unknown): TemplateField[] {
     if (!FIELD_KEY.test(key) || seen.has(key)) continue;
     seen.add(key);
     const s = (v: unknown, n: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, n) : "");
-    out.push({ key, label: s(r.label, 80) || labelOf(key), ...(s(r.hint, 200) ? { hint: s(r.hint, 200) } : {}), ...(s(r.example, 160) ? { example: s(r.example, 160) } : {}) });
+    const type = ["text", "date", "currency", "number", "select", "yes_no"].includes(String(r.type)) ? (r.type as TemplateField["type"]) : undefined;
+    const options = Array.isArray(r.options) ? r.options.map((o) => s(o, 80)).filter(Boolean).slice(0, 30) : [];
+    out.push({
+      key,
+      label: s(r.label, 80) || labelOf(key),
+      ...(s(r.hint, 200) ? { hint: s(r.hint, 200) } : {}),
+      ...(s(r.example, 160) ? { example: s(r.example, 160) } : {}),
+      ...(type && type !== "text" ? { type } : {}),
+      ...(r.required === true ? { required: true } : {}),
+      ...(s(r.default, 400) ? { default: s(r.default, 400) } : {}),
+      ...(type === "select" && options.length ? { options } : {}),
+    });
   }
   return out;
 }

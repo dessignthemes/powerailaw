@@ -22,7 +22,7 @@ function check<T>(r: { data: T; error: { code?: string; message?: string } | nul
   return r.data;
 }
 
-type Row = { id: string; name: string; category: string; description: string; body: string; fields: unknown; source: DocTemplate["source"]; updated_at: string };
+type Row = { id: string; name: string; category: string; description: string; body: string; fields: unknown; source: DocTemplate["source"]; updated_at: string; format?: "text" | "docx" | null; version?: number | null };
 const toTemplate = (r: Row): DocTemplate => ({
   id: r.id,
   name: r.name,
@@ -32,6 +32,8 @@ const toTemplate = (r: Row): DocTemplate => ({
   fields: syncFields(r.body ?? "", cleanFields(r.fields)),
   source: r.source,
   updatedAt: r.updated_at,
+  format: r.format === "docx" ? "docx" : "text",
+  version: r.version ?? 1,
 });
 
 const s = (v: unknown, n: number) => (typeof v === "string" ? v.trim().slice(0, n) : "");

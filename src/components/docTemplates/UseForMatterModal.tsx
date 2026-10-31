@@ -15,7 +15,7 @@ export default function UseForMatterModal({
   matters,
   onClose,
 }: {
-  template: { name: string; body: string; fields: TemplateField[] };
+  template: { id?: string; name: string; body: string; fields: TemplateField[]; format?: "text" | "docx" };
   matters: Matter[];
   onClose: () => void;
 }) {
@@ -23,7 +23,8 @@ export default function UseForMatterModal({
   const fields = keys.map((k) => template.fields.find((f) => f.key === k) ?? { key: k, label: k });
   const [matterId, setMatterId] = useState("");
   const [q, setQ] = useState("");
-  const [values, setValues] = useState<Record<string, string>>({});
+  // Defaults from the template maker fill in first.
+  const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries(template.fields.filter((f) => f.default).map((f) => [f.key, f.default!])));
   const [aiFilled, setAiFilled] = useState<Set<string>>(new Set());
   const [notes, setNotes] = useState("");
   const [title, setTitle] = useState(template.name);
@@ -64,7 +65,7 @@ export default function UseForMatterModal({
       const d = await fetch("/api/doc-templates/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: template.body, values, title, matterId: saveToMatter ? matterId : null, templateName: template.name }),
+        body: JSON.stringify({ body: template.body, values, title, matterId: saveToMatter ? matterId : null, templateName: template.name, ...(template.format === "docx" && template.id ? { templateId: template.id } : {}) }),
       }).then(readJson);
       setDone(d);
       if (!saveToMatter) downloadBase64(d.base64, d.fileName);
@@ -76,7 +77,7 @@ export default function UseForMatterModal({
   }
 
   const options = matters.filter((m) => m.status !== "Closed").filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 40);
-  const missing = fields.filter((f) => !values[f.key]?.trim()).length;
+  const missing = fields.filter((f) => f.type !== "yes_no" && !values[f.key]?.trim()).length;
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/20 flex items-center justify-center px-4 py-6" onClick={() => !busy && onClose()}>
@@ -154,7 +155,21 @@ export default function UseForMatterModal({
                         {f.label}
                         {aiFilled.has(f.key) && <span className="text-[10.5px] bg-[#E7F6EE] text-[#155C3A] rounded px-1">from matter</span>}
                       </span>
-                      {(values[f.key] ?? "").length > 60 ? (
+                      {f.type === "yes_no" ? (
+                        <select value={/^(yes|true|1)$/i.test(values[f.key] ?? "") ? "yes" : "no"} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} className={input}>
+                          <option value="no">No: leave this clause out</option>
+                          <option value="yes">Yes: include this clause</option>
+                        </select>
+                      ) : f.type === "select" && f.options?.length ? (
+                        <select value={values[f.key] ?? ""} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} className={input}>
+                          <option value="">Choose…</option>
+                          {f.options.map((o) => (
+                            <option key={o}>{o}</option>
+                          ))}
+                        </select>
+                      ) : f.type === "date" && (!values[f.key] || /^\d{4}-\d{2}-\d{2}$/.test(values[f.key])) ? (
+                        <input type="date" value={values[f.key] ?? ""} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} className={input} />
+                      ) : (values[f.key] ?? "").length > 60 ? (
                         <textarea value={values[f.key] ?? ""} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} rows={2} placeholder={f.example ?? f.hint ?? ""} className={`${input} resize-y`} />
                       ) : (
                         <input value={values[f.key] ?? ""} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} placeholder={f.example ?? f.hint ?? ""} className={input} />

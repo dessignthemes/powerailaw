@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Sparkles, ClipboardPaste, FileText, Plus, ChevronDown, Loader2, BookOpenText, ListChecks } from "lucide-react";
+import { Search, Sparkles, ClipboardPaste, FileText, Plus, ChevronDown, Loader2, BookOpenText, ListChecks, Wand2 } from "lucide-react";
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import type { TaskTemplate } from "@/lib/checklist";
 import ClickAway from "@/components/ClickAway";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import TemplateEditor, { type EditorValue } from "@/components/docTemplates/TemplateEditor";
+import TemplateMaker, { type MakerDraft } from "@/components/docTemplates/TemplateMaker";
+import WordTemplateView from "@/components/docTemplates/WordTemplateView";
 import { CreateWithAiModal, FromTextModal, UploadButton, type Draft } from "@/components/docTemplates/CreateModals";
 import { TEMPLATE_CATEGORIES, type DocTemplate } from "@/lib/docTemplates/format";
 import { readJson, chip } from "@/components/docTemplates/shared";
@@ -29,6 +31,35 @@ export default function AiTemplatesPage() {
   const [modal, setModal] = useState<Modal>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [reload, setReload] = useState(0);
+  // Template maker (the firm's own Word file → a reusable template).
+  const [maker, setMaker] = useState<MakerDraft | null>(null);
+  const [makerBusy, setMakerBusy] = useState(false);
+  const [wordOpen, setWordOpen] = useState<string | null>(null); // id of an open Word template
+  async function startMaker(file: File | undefined) {
+    if (!file) return;
+    setMakerBusy(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      setMaker(await fetch("/api/doc-templates/maker", { method: "POST", body: form }).then(readJson));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setMakerBusy(false);
+    }
+  }
+  async function editInMaker(id: string) {
+    setMakerBusy(true);
+    setError(null);
+    try {
+      setMaker(await fetch("/api/doc-templates/maker", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "open", templateId: id }) }).then(readJson));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setMakerBusy(false);
+    }
+  }
   // Workflow checklists (Task Board templates) live here too, with the same filters.
   const [workflows, setWorkflows] = useState<TaskTemplate[] | null>(null);
   const [workflowModal, setWorkflowModal] = useState<{ id: string | null } | null>(null);
@@ -73,6 +104,12 @@ export default function AiTemplatesPage() {
 
   const show = (t: DocTemplate) => {
     setWorkflowModal(null);
+    if (t.format === "docx") {
+      setOpen(null);
+      setWordOpen(t.id);
+      return;
+    }
+    setWordOpen(null);
     setOpen({ id: t.sample ? undefined : t.id, name: t.name, category: t.category, description: t.description, body: t.body, fields: t.fields, source: t.source, sample: t.sample });
     setEditorKey((k) => k + 1);
   };
@@ -120,7 +157,8 @@ export default function AiTemplatesPage() {
           key={k}
           onClick={() => {
             setNewOpen(false);
-            if (k === "ai") setModal({ kind: "ai" });
+            if (k === "word") (document.getElementById("lp-word-file") as HTMLInputElement | null)?.click();
+            else if (k === "ai") setModal({ kind: "ai" });
             else if (k === "paste") setModal({ kind: "text", source: "paste" });
             else if (k === "workflow") {
               setOpen(null);
@@ -251,6 +289,18 @@ export default function AiTemplatesPage() {
                 setWfReload((r) => r + 1);
               }}
             />
+          ) : wordOpen && (mine ?? []).some((t) => t.id === wordOpen) ? (
+            <WordTemplateView
+              key={`${wordOpen}-${(mine ?? []).find((t) => t.id === wordOpen)?.version}`}
+              template={(mine ?? []).find((t) => t.id === wordOpen)!}
+              matters={matters}
+              onEdit={() => void editInMaker(wordOpen)}
+              onChanged={() => setReload((r) => r + 1)}
+              onDeleted={() => {
+                setWordOpen(null);
+                setReload((r) => r + 1);
+              }}
+            />
           ) : open ? (
             <TemplateEditor
               key={editorKey}
@@ -278,6 +328,7 @@ export default function AiTemplatesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 w-full max-w-[720px]">
                 {(
                   [
+                    [<Wand2 key="w" size={18} />, makerBusy ? "Opening your document…" : "From your Word file", "Upload a .docx you already use. Mark the parts that change; your formatting, letterhead and numbering are kept.", () => (document.getElementById("lp-word-file") as HTMLInputElement | null)?.click()],
                     [<Sparkles key="a" size={18} />, "Create with AI", "Describe the document; the AI drafts it with fill-in fields.", () => setModal({ kind: "ai" })],
                     [<ClipboardPaste key="p" size={18} />, "Paste text", "From a document or email; the AI finds the fill-in parts.", () => setModal({ kind: "text", source: "paste" })],
                     [<FileText key="b" size={18} />, "Start blank", "Write it yourself and insert fields.", () => fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" })],
@@ -304,6 +355,20 @@ export default function AiTemplatesPage() {
         </section>
       </div>
 
+      <input id="lp-word-file" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={(e) => (void startMaker(e.target.files?.[0]), (e.target.value = ""))} />
+      {maker && (
+        <TemplateMaker
+          draft={maker}
+          onClose={() => setMaker(null)}
+          onSaved={(id) => {
+            setMaker(null);
+            setOpen(null);
+            setWorkflowModal(null);
+            setWordOpen(id);
+            setReload((r) => r + 1);
+          }}
+        />
+      )}
       {modal?.kind === "ai" && <CreateWithAiModal onClose={() => setModal(null)} onDraft={fromDraft} />}
       {modal?.kind === "text" && <FromTextModal source={modal.source} initialText={modal.text} initialName={modal.name} onClose={() => setModal(null)} onDraft={fromDraft} />}
     </div>
