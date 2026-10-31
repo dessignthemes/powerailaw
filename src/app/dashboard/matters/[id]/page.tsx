@@ -80,6 +80,7 @@ export default function MatterDetailPage() {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const [clientOpen, setClientOpen] = useState(false);
+  const [clientQ, setClientQ] = useState("");
   const [assignedOpen, setAssignedOpen] = useState(false);
   // Key dates stay up to date on every tab (documents uploaded on the Documents tab are read).
   const keyDates = useKeyDates(matter);
@@ -236,7 +237,9 @@ export default function MatterDetailPage() {
                   >
                     {getInitials(client.name)}
                   </span>
-                  {client.name}
+                  <span className="truncate" title={client.name}>
+                    {client.name}
+                  </span>
                 </>
               ) : (
                 <>
@@ -249,27 +252,43 @@ export default function MatterDetailPage() {
             {clients.length === 0 ? (
               <div className="px-3 py-2.5 text-[13.5px] text-muted">No clients yet</div>
             ) : (
-              clients.map((c) => (
+              <>
+              {clients.length > 8 && (
+                <input
+                  autoFocus
+                  value={clientQ}
+                  onChange={(e) => setClientQ(e.target.value)}
+                  placeholder="Find a client"
+                  aria-label="Find a client"
+                  className="w-[300px] max-w-full bg-card-alt rounded-lg px-3 py-2 mb-1 text-[13.5px] outline-none placeholder:text-muted"
+                />
+              )}
+              <div className="max-h-[min(55vh,460px)] overflow-y-auto">
+              {clients.filter((c) => !clientQ.trim() || clientQ.trim().toLowerCase().split(/\s+/).every((w) => c.name.toLowerCase().includes(w))).slice(0, 200).map((c) => (
                 <button
                   key={c.id}
                   onClick={() => {
                     patch({ clientId: c.id });
                     setClientOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors text-left"
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 min-w-0">
                     <span
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold"
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0"
                       style={{ backgroundColor: getAvatarColor(c.name), color: "#fff" }}
                     >
                       {getInitials(c.name)}
                     </span>
-                    {c.name}
+                    <span className="truncate" title={c.name}>
+                      {c.name}
+                    </span>
                   </span>
-                  {c.id === matter.clientId && <Check size={14} strokeWidth={2} />}
+                  {c.id === matter.clientId && <Check size={14} strokeWidth={2} className="flex-shrink-0" />}
                 </button>
-              ))
+              ))}
+              </div>
+              </>
             )}
           </GenericDropdown>
           {client && <PortalButton clientId={client.id} defaultEmail={client.email ?? undefined} defaultName={client.name} />}

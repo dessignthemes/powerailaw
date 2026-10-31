@@ -115,7 +115,7 @@ export function GenericDropdown({
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 bg-chip hover:bg-btn transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium"
+        className="flex items-center gap-1.5 bg-chip hover:bg-btn transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap max-w-[380px] overflow-hidden"
       >
         {trigger}
         <ChevronDown size={12} strokeWidth={1.75} className="text-muted" />
@@ -128,7 +128,7 @@ export function GenericDropdown({
               direction === "up" ? "bottom-[calc(100%+6px)]" : "top-[calc(100%+6px)]"
             } ${
               align === "left" ? "left-0" : "right-0"
-            } z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 min-w-[180px]`}
+            } z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 min-w-[180px] w-max max-w-[min(92vw,440px)]`}
           >
             {children}
           </div>
