@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import ScrollLock from "@/components/ScrollLock";
 
 // One font everywhere: Inter (headings, text and numbers).
-const inter = Inter({
-  variable: "--font-body",
-  subsets: ["latin"],
-});
+const inter = { variable: "" };
 
 export const metadata: Metadata = {
   title: "LawPower AI — All-in-One AI Automation Workspace for Lawyers",

@@ -22,10 +22,6 @@ const rangeTabs = [
 
 type RangeKey = (typeof rangeTabs)[number]["key"];
 
-function formatDue(dueDate: string) {
-  const [y, m, d] = dueDate.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
 
 const PRIORITY_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
 const PRIORITIES = ["High", "Medium", "Low"] as const;
@@ -178,7 +174,6 @@ export default function DashboardHome() {
   }
 
   function renderTaskRow(t: BoardTask) {
-    const overdue = t.dueDate && t.dueDate < todayStr;
     const done = t.status === "done";
     return (
       <div
@@ -230,12 +225,6 @@ export default function DashboardHome() {
             >
               Accept
             </button>
-          )}
-          {t.dueDate && (
-            <span className={`mono text-[12px] ${overdue ? "text-red-600" : "text-muted"}`}>
-              {overdue ? "Overdue · " : ""}
-              {formatDue(t.dueDate)}
-            </span>
           )}
           <PriorityDot priority={t.priority} />
           <MemberAvatar userId={t.createdBy} />

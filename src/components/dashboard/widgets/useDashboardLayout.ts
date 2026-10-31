@@ -10,8 +10,19 @@ export function useDashboardLayout(meEmail: string | null) {
   const key = `lawpower.dashboard.layout.${(meEmail ?? "").toLowerCase()}`;
   const [layout, setLayoutState] = useState<LayoutItem[]>(DEFAULT_LAYOUT);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const valid = (l: unknown): LayoutItem[] | null =>
-    Array.isArray(l) ? (l as LayoutItem[]).filter((x) => x && typeof x.id === "string" && WIDGET(x.id)) : null;
+  const persistRef = useRef<((l: LayoutItem[] | null) => void) | null>(null);
+  // Oct 31: Tasks and Team progress became half the size (Extra large → Large); saved layouts follow once.
+  const SHRUNK = "lawpower.dashboard.v2";
+  const valid = (l: unknown): LayoutItem[] | null => {
+    if (!Array.isArray(l)) return null;
+    let list = (l as LayoutItem[]).filter((x) => x && typeof x.id === "string" && WIDGET(x.id));
+    try {
+      if (!localStorage.getItem(SHRUNK)) list = list.map((x) => ((x.id === "tasks" || x.id === "teamProgress") && x.size === "xl" ? { ...x, size: "l" } : x));
+    } catch {
+      /* private mode */
+    }
+    return list;
+  };
 
   useEffect(() => {
     if (!meEmail) return;
@@ -29,6 +40,14 @@ export function useDashboardLayout(meEmail: string | null) {
       .then((d: { layout?: unknown } | null) => {
         const server = valid(d?.layout);
         if (server && live) setLayoutState(server);
+        try {
+          if (!localStorage.getItem(SHRUNK)) {
+            localStorage.setItem(SHRUNK, "1");
+            if (server) persistRef.current?.(server);
+          }
+        } catch {
+          /* private mode */
+        }
       })
       .catch(() => undefined);
     return () => {
@@ -52,6 +71,10 @@ export function useDashboardLayout(meEmail: string | null) {
     },
     [key]
   );
+
+  useEffect(() => {
+    persistRef.current = persist;
+  }, [persist]);
 
   const setLayout = useCallback(
     (l: LayoutItem[]) => {

@@ -604,9 +604,9 @@ export const WIDGETS: WidgetDef[] = [
   // Tasks
   { id: "due", name: "Due today", desc: "Tasks due today (or this week / month), by board.", category: "Tasks", sizes: ["m", "l"], size: "m", icon: ListChecks, title: (d) => d.dueLabel, action: (d) => viewAll(`/dashboard/task-board?due=${d.range}`, "View all tasks"), body: (d) => <DueCard d={d} /> },
   { id: "priority", name: "Due by priority", desc: "High, medium and low priority tasks due. Click one to filter the Tasks widget.", category: "Tasks", sizes: ["m", "l"], size: "m", icon: Flag, title: (d) => `${d.dueLabel} by priority`, body: (d) => <PriorityCard d={d} /> },
-  { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["l", "w", "xl"], size: "xl", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open task board"), body: (d) => <TasksList d={d} /> },
+  { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open task board"), body: (d) => <TasksList d={d} /> },
   { id: "activity", name: "Recent activity", desc: "Tasks created, updated and completed, newest first.", category: "Tasks", sizes: ["m", "l", "xl"], size: "l", icon: Activity, body: (d) => <RecentActivity d={d} /> },
-  { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["l", "w", "xl"], size: "xl", icon: BarChart3, plain: true, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" onPick={(email) => d.setScope(email)} /> },
+  { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: BarChart3, plain: true, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" onPick={(email) => d.setScope(email)} /> },
   { id: "myTasks", name: "My open tasks", desc: "Your open tasks, soonest first. Tick one off without leaving the Dashboard.", category: "Tasks", sizes: ["m", "l"], size: "l", icon: CheckCircle2, body: (d) => <MyOpenTasks d={d} /> },
   { id: "overdue", name: "Overdue", desc: "Open tasks past their due date across the firm.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: AlarmClock, body: (d) => { const n = d.allTasks.filter(isOverdue).length; return <Big n={n} label={n ? "past their due date" : "Nothing overdue"} />; } },
   { id: "dueCount", name: "Due today (count)", desc: "How many tasks are due today across the firm, and how many are yours.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: CalendarClock, title: () => "Due today", body: (d) => { const due = d.allTasks.filter((t) => t.status !== "done" && t.dueDate === d.todayStr); const mine = due.filter((t) => (t.assignee ?? "").toLowerCase() === (d.meEmail ?? "").toLowerCase()).length; return <Big n={due.length} label={due.length ? `${mine} of them yours` : "Nothing due today"} />; } },
@@ -653,8 +653,8 @@ export const DEFAULT_LAYOUT: { id: string; size: WidgetSize }[] = [
   { id: "due", size: "m" },
   { id: "priority", size: "m" },
   { id: "calendar", size: "m" },
-  { id: "tasks", size: "xl" },
+  { id: "tasks", size: "l" },
+  { id: "teamProgress", size: "l" },
   { id: "activity", size: "l" },
-  { id: "teamProgress", size: "xl" },
-  { id: "events", size: "l" },
+  { id: "events", size: "m" },
 ];

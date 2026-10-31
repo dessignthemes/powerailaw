@@ -80,11 +80,11 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
   return (
     <section className={className}>
       <div className="flex flex-wrap items-start gap-3 mb-5">
-        <div className="flex-1 min-w-[220px]">
+        <div className="flex-1 min-w-[160px]">
           <div className="flex items-center gap-2 text-[13.5px] text-muted">
             <Users size={15} strokeWidth={1.75} /> Team progress
           </div>
-          <div className="text-[26px] font-semibold mt-1">
+          <div className="text-[22px] font-semibold mt-1 leading-tight">
             {totalDone} of {totalAssigned} tasks done
           </div>
           <div className="text-[13px] text-muted mt-0.5">
@@ -99,7 +99,7 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
         </div>
         <div className="flex gap-1 bg-white rounded-full p-1">
           {PERIODS.map((p) => (
-            <button key={p.key} onClick={() => setPeriod(p.key)} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${period === p.key ? "bg-btn-hover" : "hover:bg-chip text-muted"}`}>
+            <button key={p.key} onClick={() => setPeriod(p.key)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${period === p.key ? "bg-btn-hover" : "hover:bg-chip text-muted"}`}>
               {p.label}
             </button>
           ))}
@@ -110,7 +110,7 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
         {rows.map((r) => {
           const name = r.member.fullName || r.member.email;
           return (
-            <div key={r.member.id} className="grid grid-cols-[minmax(110px,190px)_minmax(0,1fr)_auto] items-center gap-3">
+            <div key={r.member.id} className="grid grid-cols-[minmax(90px,150px)_minmax(0,1fr)] items-center gap-3">
               {onPick ? (
                 <button
                   onClick={() => onPick(r.member.email)}
@@ -141,11 +141,6 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
                     </div>
                   ) : null
                 )}
-              </div>
-              <div className="text-[13px] whitespace-nowrap text-right">
-                <b>{r.done}</b> of {r.assigned} done
-                <span className="text-muted"> · {r.pct}%</span>
-                {r.overdue > 0 && <span className="text-[#B42318]"> · {r.overdue} overdue</span>}
               </div>
             </div>
           );
