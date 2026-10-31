@@ -52,7 +52,6 @@ export function useKeyDates(matter: Matter | null) {
     }
   }, []);
   const busy = useRef(false);
-  const auto = !!matter && isRealEstate(matter);
   const id = matter?.id ?? null;
 
   const refresh = useCallback(async () => {
@@ -71,16 +70,15 @@ export function useKeyDates(matter: Matter | null) {
     }
   }, [id, refreshAll, setError]);
 
-  // Saved dates; if the documents changed, a real estate matter's documents are read again.
+  // Saved dates. Documents are read only when someone clicks Read documents
+  // (it uses AI credits); new documents just show a note with the button.
   const handle = useCallback(
     (r: Result) => {
       setData(r);
       setError(r.error ?? null);
       if (r.linked) refreshAll(); // older tasks were just linked to this matter
-      const running = r.state.runningSince && Date.now() - Date.parse(r.state.runningSince) < 150_000;
-      if (r.stale && auto && !running) void refresh();
     },
-    [auto, refresh, refreshAll, setError]
+    [refreshAll, setError]
   );
 
   useEffect(() => {
@@ -252,7 +250,12 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
           </div>
         )}
         {data?.stale && !reading && !error && (
-          <div className="rounded-xl bg-[#EEF3FB] px-3.5 py-2.5 text-[13px]">The matter&apos;s documents changed since the dates were read.</div>
+          <div className="rounded-xl bg-[#EEF3FB] px-3.5 py-2.5 text-[13px] flex items-center gap-3 flex-wrap">
+            <span className="flex-1 min-w-[220px]">The matter has new or changed documents since the dates were last read.</span>
+            <button onClick={() => void refresh()} className="bg-white hover:bg-btn px-3 py-1 rounded-full text-[12.5px] font-medium">
+              Read documents
+            </button>
+          </div>
         )}
 
         {(facts?.property || facts?.purchasePrice) && (

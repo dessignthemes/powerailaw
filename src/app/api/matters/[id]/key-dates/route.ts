@@ -26,14 +26,14 @@ function fail(where: string, error: unknown) {
   return NextResponse.json({ error: "Something went wrong with the key dates. Please try again." }, { status: 500 });
 }
 
-// GET ?auto=1 → saved key dates; with auto, documents are read again if they changed.
+// GET → saved key dates (and whether the documents changed since they were read).
 export async function GET(request: Request, { params }: P) {
   try {
     const { id } = await params;
     if (!validId(id)) return NextResponse.json({ error: "Matter not found." }, { status: 404 });
-    const auto = new URL(request.url).searchParams.get("auto") === "1";
+    // Never reads documents by itself: only POST { action: "refresh" } does (a button press).
     const ctx = await getAiCtx();
-    return NextResponse.json(await withFields(ctx, id, await getKeyDates(ctx, id, auto)));
+    return NextResponse.json(await withFields(ctx, id, await getKeyDates(ctx, id, false)));
   } catch (error) {
     return fail("GET /api/matters/[id]/key-dates", error);
   }
