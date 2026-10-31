@@ -680,7 +680,12 @@ function LeadsInner() {
   return (
     <div className="px-10 py-10 max-w-[1150px]">
       <div className="flex items-start justify-between gap-4 mb-1 flex-wrap">
-        <h1 className="text-[28px] font-semibold">Potential Leads</h1>
+        <div>
+          <Link href="/dashboard/client-intake" className="text-[13px] text-muted hover:text-ink">
+            ← Client Intake
+          </Link>
+          <h1 className="text-[28px] font-semibold">Potential Leads</h1>
+        </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setModal("automation")} disabled={!settingsReady} title={settingsReady ? undefined : "Needs migration 0059"} className="bg-chip hover:bg-btn px-4 py-2.5 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-50">
             <Zap size={15} /> Automation

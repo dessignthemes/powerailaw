@@ -12,10 +12,7 @@ import ClientAvatar from "@/components/clientCard/ClientAvatar";
 import PortalView from "@/components/clientCard/PortalView";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft, Link2, Mail, MessageSquare, Phone, Plus, X, User, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList, MoreHorizontal, Trash2,
- UserSearch,
-} from "lucide-react";
+import { ArrowLeft, Link2, Mail, MessageSquare, Phone, Plus, X, User, ChevronRight, ChevronDown, Loader2, Upload, FileText, Eye, EyeOff, Camera, FileSignature, ClipboardList, MoreHorizontal, Trash2, UserSearch, Users } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import SelectBox from "@/components/SelectBox";
 import { uploadAnyDocument, versionDownloadUrl, UploadError } from "@/lib/pdf/upload";
@@ -371,6 +368,9 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
           <button onClick={() => setLeadPickerOpen(true)} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
             <UserSearch size={14} /> Import from leads
           </button>
+          <Link href="/dashboard/leads" className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+            <Users size={14} /> Potential Leads
+          </Link>
           <PortalButton clientId={cardId} size="button" onOpen={() => setSection("portal")} />
           {templates && cardId && (
             <>

@@ -22,7 +22,6 @@ import {
   MessagesSquare,
   type LucideIcon,
   ListChecks,
-  UserSearch,
 } from "lucide-react";
 
 // ownerOnly: shown only to the workspace owner (none right now; AI Accountant is open to everyone since Oct 19, 2026).
@@ -34,7 +33,7 @@ export type NavSection = { title: string | null; links: NavLink[] };
 export const mainLinks: NavLink[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
   { label: "Client Intake", href: "/dashboard/client-intake", icon: UserPlus },
-  { label: "Potential Leads", href: "/dashboard/leads", icon: UserSearch, sub: true },
+  // Potential Leads (/dashboard/leads) is opened from Client Intake's top bar; restore: { label: "Potential Leads", href: "/dashboard/leads", icon: UserSearch, sub: true },
   { label: "Matters", href: "/dashboard/matters", icon: Folder },
   { label: "Contacts", href: "/dashboard/records", icon: Bookmark },
   { label: "Documents", href: "/dashboard/documents", icon: Copy },
@@ -69,7 +68,7 @@ export const allNavLinks: NavLink[] = navSections.flatMap((s) => s.links);
 
 // Whether a link is the current page (sub pages count, e.g. a matter's page).
 // Pages reached from another page (not in the menu themselves): highlight that page.
-const PARENT: Record<string, string> = { "/dashboard/conflict-checks": "/dashboard/records" };
+const PARENT: Record<string, string> = { "/dashboard/conflict-checks": "/dashboard/records", "/dashboard/leads": "/dashboard/client-intake" };
 
 export function isActiveLink(href: string, pathname: string | null) {
   if (!pathname) return false;
