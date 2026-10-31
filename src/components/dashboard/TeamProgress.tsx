@@ -43,7 +43,7 @@ const initials = (name: string) =>
 // blue late or undated) next to what's still on their plate (yellow open, red
 // overdue). Assigned = completed + still open + overdue.
 // onPick: clicking a person shows their tasks on the Dashboard.
-export default function TeamProgress({ tasks, members, onPick, className = "bg-card-alt rounded-3xl p-6 mt-5" }: { tasks: BoardTask[]; members: Member[]; onPick?: (email: string) => void; className?: string }) {
+export default function TeamProgress({ tasks, members, onPick, className = "bg-card-alt rounded-3xl p-6 mt-5", hideLabel = false }: { tasks: BoardTask[]; members: Member[]; onPick?: (email: string) => void; className?: string; hideLabel?: boolean }) {
   const [period, setPeriod] = useState<Period>("week");
 
   const rows = useMemo(() => {
@@ -81,9 +81,11 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
     <section className={className}>
       <div className="flex flex-wrap items-start gap-2 mb-3">
         <div className="flex-1 min-w-[160px]">
-          <div className="flex items-center gap-2 text-[13.5px] text-muted">
-            <Users size={15} strokeWidth={1.75} /> Team progress
-          </div>
+          {!hideLabel && (
+            <div className="flex items-center gap-2 text-[13.5px] text-muted">
+              <Users size={15} strokeWidth={1.75} /> Team progress
+            </div>
+          )}
           <div className="text-[18px] font-semibold mt-0.5 leading-tight">
             {totalDone} of {totalAssigned} tasks done
           </div>

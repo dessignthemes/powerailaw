@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ListChecks, Flag, Calendar, Activity, BarChart3, ArrowUpRight, Lock, AlarmClock, CheckCircle2, Circle, UserX, Users, Folder, Layers, PieChart,
+  ListChecks, Flag, ChevronRight, Calendar, Activity, BarChart3, ArrowUpRight, Lock, AlarmClock, CheckCircle2, Circle, UserX, Users, Folder, Layers, PieChart,
   History, UserRound, Hourglass, CalendarClock, Timer, UserPlus, Phone, Receipt, Sparkles, Clock3, StickyNote, Zap, Search, ArrowUp, Inbox, Funnel,
 } from "lucide-react";
 import TeamProgress from "@/components/dashboard/TeamProgress";
@@ -19,9 +19,9 @@ import type { DashData, WidgetDef, WidgetSize } from "./types";
 export const WidgetSizeContext = createContext<WidgetSize>("m");
 const useSmall = () => useContext(WidgetSizeContext) === "s";
 const nowMs = () => Date.now(); // read at render time on purpose (widgets refresh with the page)
-const ROW = "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[14.5px] font-medium bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors";
-const ROW_S = "flex-shrink-0 flex items-center gap-2 px-2.5 py-1 rounded-lg text-[13px] font-medium bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors";
-const PILL = "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium text-ink bg-[#E8EFF7] hover:bg-[#DCE4F0] transition-colors";
+const ROW = "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[14.5px] font-medium bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] transition-colors";
+const ROW_S = "flex-shrink-0 flex items-center gap-2 px-2.5 py-1 rounded-lg text-[13px] font-medium bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] transition-colors";
+const PILL = "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium text-ink bg-white border border-[#DDE2EC] hover:bg-[#F4F6FA] shadow-[0_1px_2px_rgba(27,25,26,0.05)] transition-colors";
 const fmtDay = (ymdStr: string) => {
   const [y, m, d] = ymdStr.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -64,7 +64,7 @@ function Empty({ icon: Icon, title, sub }: { icon: React.ComponentType<{ size?: 
     );
   return (
     <div className="mt-auto">
-      <div className="w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center text-muted mb-2">
+      <div className="w-9 h-9 rounded-xl bg-[#EEF1F6] flex items-center justify-center text-muted mb-2">
         <Icon size={16} strokeWidth={1.75} />
       </div>
       <div className="text-[14px] font-semibold">{title}</div>
@@ -82,7 +82,7 @@ function Bars({ rows, total }: { rows: { label: string; n: number; href?: string
               <span className="font-medium truncate">{r.label}</span>
               <span className="tabular-nums text-muted">{r.n}</span>
             </div>
-            <div className="h-2 rounded-full bg-white/80 overflow-hidden">
+            <div className="h-2 rounded-full bg-[#EEF1F6] overflow-hidden">
               <div className="h-full rounded-full bg-[#5E7BA6]" style={{ width: `${total ? Math.max(4, (r.n / total) * 100) : 0}%` }} />
             </div>
           </>
@@ -168,7 +168,7 @@ function PriorityCard({ d, small }: { d: DashData; small?: boolean }) {
               disabled={!count && !active}
               style={{ borderLeftColor: priorityMeta[p].bg }}
               title={count ? `Show only ${p.toLowerCase()} priority in the Tasks widget` : undefined}
-              className={`group/row flex items-center gap-2 pl-2.5 pr-3 ${small ? "py-1 text-[13px] border-l-[6px]" : "py-2 text-[14.5px] border-l-[8px]"} rounded-xl font-medium text-ink bg-[#E1E7F5] hover:bg-[#D5DDEE] transition-colors disabled:opacity-45 ${active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""}`}
+              className={`group/row flex items-center gap-2 pl-2.5 pr-3 ${small ? "py-1 text-[13px] border-l-[6px]" : "py-2 text-[14.5px] border-l-[8px]"} rounded-xl font-medium text-ink bg-[#F4F6FA] hover:bg-[#EAEEF5] transition-colors disabled:opacity-45 ${active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""}`}
             >
               <span className="font-semibold tabular-nums w-5 text-right">{d.tasksLoaded ? count : "–"}</span>
               <span className="truncate flex-1 text-left">{p}</span>
@@ -229,7 +229,7 @@ function TasksList({ d }: { d: DashData }) {
   if (!due.length && !d.undatedTasks.length)
     return <Empty icon={ListChecks} title={`Nothing due ${d.rangeWord}`} sub="New tasks show up here." />;
   return (
-    <div className="bg-cream rounded-xl py-1 -mx-1 min-h-0 flex-1 scroll-on-hover">
+    <div className="-mx-4 -my-1 min-h-0 flex-1 scroll-on-hover">
       {due.length > 0 && (
         <>
           <div className="px-5 pt-3 pb-1 flex items-center justify-between">
@@ -240,14 +240,14 @@ function TasksList({ d }: { d: DashData }) {
               </button>
             )}
           </div>
-          <div className="divide-y divide-line">{due.map(d.renderTaskRow)}</div>
+          <div className="divide-y divide-[#EEF1F5]">{due.map(d.renderTaskRow)}</div>
         </>
       )}
       {!due.length && <div className="px-5 py-4 text-[14px] text-muted">Nothing due {d.rangeWord}.</div>}
       {d.undatedTasks.length > 0 && (
         <>
           <div className="px-5 pt-4 pb-1 mono text-[11px] uppercase tracking-wider text-muted">No due date</div>
-          <div className="divide-y divide-line">{d.undatedTasks.map(d.renderTaskRow)}</div>
+          <div className="divide-y divide-[#EEF1F5]">{d.undatedTasks.map(d.renderTaskRow)}</div>
         </>
       )}
     </div>
@@ -261,13 +261,13 @@ function Events({ d }: { d: DashData }) {
   const byDay = new Map<string, typeof d.cal.events>();
   for (const e of d.cal.events) byDay.set(d.eventStart(e).toDateString(), [...(byDay.get(d.eventStart(e).toDateString()) ?? []), e]);
   return (
-    <div className="bg-cream rounded-xl py-1 -mx-1 min-h-0 flex-1 scroll-on-hover">
+    <div className="-mx-4 -my-1 min-h-0 flex-1 scroll-on-hover">
       {[...byDay.entries()].map(([day, list]) => (
         <div key={day}>
           <div className="px-5 pt-3 pb-1 mono text-[11px] uppercase tracking-wider text-muted">
             {new Date(day).toDateString() === new Date().toDateString() ? "Today" : new Date(day).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </div>
-          <div className="divide-y divide-line">
+          <div className="divide-y divide-[#EEF1F5]">
             {list.map((e) => (
               <button key={e.id} onClick={() => d.openEvent(e)} className="w-full text-left flex items-center gap-4 px-5 py-2 hover:bg-chip/60 transition-colors">
                 <span className="mono text-[12px] text-muted w-16 flex-shrink-0">{d.fmtTime(e)}</span>
@@ -285,7 +285,7 @@ function Events({ d }: { d: DashData }) {
 function RecentActivity({ d }: { d: DashData }) {
   if (!d.recent.length) return <Empty icon={Activity} title="No activity yet" />;
   return (
-    <div className="bg-cream rounded-xl -mx-1 divide-y divide-line min-h-0 flex-1 scroll-on-hover">
+    <div className="-mx-4 -my-2 divide-y divide-[#EEF1F5] min-h-0 flex-1 scroll-on-hover">
       {d.recent.map((t) => {
         const created = !t.updatedAt || !t.createdAt || Math.abs(new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()) < 2000;
         const verb = created ? "Created" : t.status === "done" ? "Completed" : "Updated";
@@ -318,7 +318,7 @@ function MyOpenTasks({ d }: { d: DashData }) {
   return (
     <div className="flex flex-col gap-1 min-h-0 flex-1 scroll-on-hover -mx-1">
       {mine.map((t) => (
-        <div key={t.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-white/60 cursor-pointer" onClick={() => d.openTask(t)}>
+        <div key={t.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#F4F6FA] cursor-pointer" onClick={() => d.openTask(t)}>
           <button onClick={(e) => (e.stopPropagation(), d.toggleDone(t))} aria-label="Mark as done" className="text-muted hover:text-green-600 flex-shrink-0">
             <Circle size={16} strokeWidth={1.75} />
           </button>
@@ -380,7 +380,7 @@ function Workload({ d }: { d: DashData }) {
               {v.late > 0 && <span className="text-red-600"> · {v.late} late</span>}
             </span>
           </div>
-          <div className="h-2 rounded-full bg-white/80 overflow-hidden flex">
+          <div className="h-2 rounded-full bg-[#EEF1F6] overflow-hidden flex">
             <div className="h-full bg-[#5E7BA6]" style={{ width: `${((v.n - v.late) / max) * 100}%` }} />
             <div className="h-full bg-[#FB5D67]" style={{ width: `${(v.late / max) * 100}%` }} />
           </div>
@@ -521,7 +521,7 @@ function AskAi() {
   const [q, setQ] = useState("");
   const go = () => q.trim() && router.push(`/dashboard/agent?q=${encodeURIComponent(q.trim())}`);
   return (
-    <div className="mt-auto flex items-center gap-2 bg-white/80 rounded-full pl-4 pr-1.5 py-1.5 border border-line">
+    <div className="mt-auto flex items-center gap-2 bg-[#F4F6FA] rounded-full pl-4 pr-1.5 py-1.5 border border-[#E3E7EF]">
       <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="A question about a matter, a client or the law" aria-label="Ask the AI Agent" className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] placeholder:text-muted" />
       <button onClick={go} disabled={!q.trim()} aria-label="Ask" className="w-8 h-8 rounded-full bg-btn hover:bg-btn-hover flex items-center justify-center disabled:opacity-50">
         <ArrowUp size={15} />
@@ -610,8 +610,8 @@ function Shortcuts() {
 
 // ── the library ──────────────────────────────────────────────────────────────
 const viewAll = (href: string, label: string) => (
-  <Link href={href} className={PILL}>
-    {label} <ArrowUpRight size={12} strokeWidth={2} />
+  <Link href={href} className="flex items-center gap-0.5 text-[13px] font-medium text-ink hover:underline underline-offset-2">
+    {label} <ChevronRight size={15} strokeWidth={2} />
   </Link>
 );
 
@@ -621,7 +621,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: "priority", name: "Due by priority", desc: "High, medium and low priority tasks due. Click one to filter the Tasks widget.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: Flag, title: (d) => `${d.dueLabel} by priority`, body: (d, size) => <PriorityCard d={d} small={size === "s"} /> },
   { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open task board"), body: (d) => <TasksList d={d} /> },
   { id: "activity", name: "Recent activity", desc: "Tasks created, updated and completed, newest first.", category: "Tasks", sizes: ["m", "l", "xl"], size: "m", icon: Activity, body: (d) => <RecentActivity d={d} /> },
-  { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: BarChart3, plain: true, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" onPick={(email) => d.setScope(email)} /> },
+  { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: BarChart3, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" hideLabel onPick={(email) => d.setScope(email)} /> },
   { id: "myTasks", name: "My open tasks", desc: "Your open tasks, soonest first. Tick one off without leaving the Dashboard.", category: "Tasks", sizes: ["m", "l"], size: "l", icon: CheckCircle2, body: (d) => <MyOpenTasks d={d} /> },
   { id: "overdue", name: "Overdue", desc: "Open tasks past their due date across the firm.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: AlarmClock, body: (d) => { const n = d.allTasks.filter(isOverdue).length; return <Big n={n} label={n ? "past their due date" : "Nothing overdue"} />; } },
   { id: "dueCount", name: "Due today (count)", desc: "How many tasks are due today across the firm, and how many are yours.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: CalendarClock, title: () => "Due today", body: (d) => { const due = d.allTasks.filter((t) => t.status !== "done" && t.dueDate === d.todayStr); const mine = due.filter((t) => (t.assignee ?? "").toLowerCase() === (d.meEmail ?? "").toLowerCase()).length; return <Big n={due.length} label={due.length ? `${mine} of them yours` : "Nothing due today"} />; } },
@@ -655,7 +655,7 @@ export const WIDGETS: WidgetDef[] = [
 
   // AI and tools
   { id: "askAi", name: "Ask the AI Agent", desc: "Ask a question from the Dashboard; the AI Agent opens with it.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Sparkles, tone: "bg-[#E6ECF8]", body: () => <AskAi /> },
-  { id: "search", name: "Search", desc: "Search matters, contacts, documents, tasks and more.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Search, body: () => <button onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, metaKey: true }))} className="mt-auto flex items-center gap-2 bg-white/80 border border-line rounded-full px-4 py-2.5 text-[13.5px] text-muted text-left hover:bg-white"><Search size={14} /> Search everything… <kbd className="ml-auto text-[11px] bg-card-alt rounded px-1.5">Ctrl K</kbd></button> },
+  { id: "search", name: "Search", desc: "Search matters, contacts, documents, tasks and more.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Search, body: () => <button onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, metaKey: true }))} className="mt-auto flex items-center gap-2 bg-[#F4F6FA] border border-[#E3E7EF] rounded-full px-4 py-2.5 text-[13.5px] text-muted text-left hover:bg-[#EAEEF5]"><Search size={14} /> Search everything… <kbd className="ml-auto text-[11px] bg-card-alt rounded px-1.5">Ctrl K</kbd></button> },
   { id: "shortcuts", name: "Shortcuts", desc: "One click to the things you start most.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Zap, body: () => <Shortcuts /> },
   { id: "clock", name: "Clock", desc: "The time, with a face you can read at a glance.", category: "AI and tools", sizes: ["s"], size: "s", icon: Clock3, plain: true, body: () => <ClockFace /> },
   { id: "note", name: "Note", desc: "A sticky note that stays on this computer.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: StickyNote, tone: "bg-[#F4F1EA]", body: () => <Note /> },

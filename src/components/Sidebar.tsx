@@ -36,8 +36,8 @@ function NavItem({
       href={href}
       title={compact ? label : undefined}
       aria-label={compact ? label : undefined}
-      className={`flex items-center gap-2 py-[6px] rounded-lg text-[13px] font-medium transition-colors ${compact ? "justify-center px-0 h-8" : "px-3"} ${
-        active ? "bg-chip text-ink" : "text-ink hover:bg-chip"
+      className={`flex items-center gap-2 py-[6px] rounded-lg border text-[13px] font-medium transition-[background-color,border-color,box-shadow] ${compact ? "justify-center px-0 h-8" : "px-3"} ${
+        active ? "bg-white border-[#DDE2EC] shadow-[0_1px_3px_rgba(27,25,26,0.08)] text-ink" : "border-transparent text-ink hover:bg-white hover:border-[#DDE2EC] hover:shadow-[0_1px_3px_rgba(27,25,26,0.08)]"
       }`}
     >
       <Icon size={compact ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
@@ -95,12 +95,12 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`${collapsed ? "w-[68px] px-2.5 py-4" : "w-[260px] px-4 py-6"} flex-shrink-0 bg-white border-r border-line h-screen sticky top-0 flex flex-col transition-[width] duration-200`}
+      className={`${collapsed ? "w-[68px] px-2.5 py-4" : "w-[260px] px-4 py-6"} flex-shrink-0 bg-[#EEF0F7] border-r border-[#E1E5EE] h-screen sticky top-0 flex flex-col transition-[width] duration-200`}
     >
       {collapsed ? (
         <div className="flex flex-col items-center gap-2 mb-4">
           <LogoMark size={28} />
-          <button onClick={toggleCollapsed} title="Expand menu" aria-label="Expand menu" className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:bg-chip hover:text-ink transition-colors">
+          <button onClick={toggleCollapsed} title="Expand menu" aria-label="Expand menu" className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:bg-white hover:text-ink transition-colors">
             <PanelLeftOpen size={17} strokeWidth={1.75} />
           </button>
         </div>
@@ -108,7 +108,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-2.5 px-2 mb-8">
           <LogoMark size={28} />
           <span className="font-display font-semibold text-[16px] flex-1">LawPower AI</span>
-          <button onClick={toggleCollapsed} title="Collapse menu" aria-label="Collapse menu" className="w-8 h-8 -mr-1 rounded-lg flex items-center justify-center text-muted hover:bg-chip hover:text-ink transition-colors">
+          <button onClick={toggleCollapsed} title="Collapse menu" aria-label="Collapse menu" className="w-8 h-8 -mr-1 rounded-lg flex items-center justify-center text-muted hover:bg-white hover:text-ink transition-colors">
             <PanelLeftClose size={16} strokeWidth={1.75} />
           </button>
         </div>
@@ -129,9 +129,9 @@ export default function Sidebar() {
 
         <div className={`${collapsed ? "mt-2" : "mt-5"} mb-1 flex flex-col gap-[2px]`}>
           {collapsed ? (
-            <div className="mx-2 mb-1.5 border-t border-line" />
+            <div className="mx-2 mb-2 border-t border-[#DDE2EC]" />
           ) : (
-            <div className="px-3 text-[10.5px] font-semibold uppercase tracking-wide text-muted mb-0.5">Tools</div>
+            <div className="px-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted mb-1">Tools</div>
           )}
           {toolLinks.filter((l) => !l.ownerOnly || myRole === "owner").map((l) => (
             <NavItem key={l.label} {...l} compact={collapsed} active={isActiveLink(l.href, pathname)} />
@@ -140,9 +140,9 @@ export default function Sidebar() {
 
         <div className={`${collapsed ? "mt-2" : "mt-5"} mb-1 flex flex-col gap-[2px]`}>
           {collapsed ? (
-            <div className="mx-2 mb-1.5 border-t border-line" />
+            <div className="mx-2 mb-2 border-t border-[#DDE2EC]" />
           ) : (
-            <div className="px-3 text-[10.5px] font-semibold uppercase tracking-wide text-muted mb-0.5">Workspace</div>
+            <div className="px-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted mb-1">Workspace</div>
           )}
           {workspaceLinks.map((l) =>
             l.href === "/dashboard/task-board" && !collapsed ? (
@@ -157,12 +157,12 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      <div className={`border-t border-line ${collapsed ? "pt-2 mt-2" : "pt-4 mt-4"}`}>
+      <div className={`border-t border-[#DDE2EC] ${collapsed ? "pt-2 mt-2" : "pt-4 mt-4"}`}>
         <button
           onClick={() => openIntegrations("general")}
           title={collapsed ? "Settings" : undefined}
           aria-label={collapsed ? "Settings" : undefined}
-          className={`w-full flex items-center gap-2 py-[6px] rounded-lg text-[13px] font-medium text-ink hover:bg-chip transition-colors mb-2 text-left ${collapsed ? "justify-center h-9" : "px-3"}`}
+          className={`w-full flex items-center gap-2 py-[6px] rounded-lg border border-transparent text-[13px] font-medium text-ink hover:bg-white hover:border-[#DDE2EC] hover:shadow-[0_1px_3px_rgba(27,25,26,0.08)] transition-[background-color,border-color,box-shadow] mb-2 text-left ${collapsed ? "justify-center h-9" : "px-3"}`}
         >
           <Settings size={collapsed ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
           {!collapsed && (

@@ -36,23 +36,25 @@ export function SizePicker({ sizes, value, onPick, dark = false }: { sizes: Widg
   );
 }
 
+// The widget look: a soft tinted frame with a small mono, letter-spaced title
+// (and an optional link on the right), around a white panel with the content.
 export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize; d: DashData }) {
   const Icon = def.icon;
   const small = size === "s";
   return (
     <WidgetSizeContext.Provider value={size}>
-    <div className={`h-full ${def.tone ?? "bg-card-alt"} rounded-2xl ${small ? "p-4" : "p-5"} flex flex-col overflow-hidden relative`}>
-      {!def.plain && (
-        <div className={`flex items-center justify-between gap-2 ${small ? "mb-2 min-h-[22px]" : "mb-3 min-h-[26px]"}`}>
-          <div className={`${small ? "text-[12.5px]" : "text-[13.5px]"} font-medium text-muted flex items-center gap-1.5 min-w-0`}>
-            <Icon size={small ? 14 : 15} strokeWidth={1.75} className="flex-shrink-0" />
-            <span className="truncate">{def.title ? def.title(d) : def.name}</span>
+      <div className={`h-full ${def.tone ?? "bg-[#ECEFF6]"} rounded-[22px] border border-[#E1E5EE] p-1.5 flex flex-col overflow-hidden relative shadow-[0_1px_2px_rgba(27,25,26,0.04)]`}>
+        {!def.plain && (
+          <div className={`flex items-center justify-between gap-2 ${small ? "px-2.5 pt-2 pb-2" : "px-3 pt-2.5 pb-2.5"}`}>
+            <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2 min-w-0">
+              <Icon size={small ? 14 : 15} strokeWidth={1.75} className="flex-shrink-0" />
+              <span className="truncate">{def.title ? def.title(d) : def.name}</span>
+            </div>
+            {def.action && size !== "s" && <div className="flex-shrink-0">{def.action(d)}</div>}
           </div>
-          {def.action && size !== "s" && <div className="flex-shrink-0">{def.action(d)}</div>}
-        </div>
-      )}
-      <div className="flex-1 min-h-0 flex flex-col">{def.body(d, size)}</div>
-    </div>
+        )}
+        <div className={`flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] ${small ? "p-3.5" : "p-4"}`}>{def.body(d, size)}</div>
+      </div>
     </WidgetSizeContext.Provider>
   );
 }
@@ -103,7 +105,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
             }}
             onDrop={(e) => e.preventDefault()}
           >
-            <div className={`h-full ${editing ? "pointer-events-none select-none rounded-2xl ring-1 ring-line shadow-[0_8px_24px_-12px_rgba(27,25,26,0.25)] animate-[lpWiggle_0.35s_ease-in-out]" : ""}`}>
+            <div className={`h-full ${editing ? "pointer-events-none select-none rounded-[22px] ring-1 ring-line shadow-[0_8px_24px_-12px_rgba(27,25,26,0.25)] animate-[lpWiggle_0.35s_ease-in-out]" : ""}`}>
               <WidgetShell def={def} size={size} d={d} />
             </div>
             {editing && (
@@ -146,7 +148,7 @@ function Preview({ def, size, d }: { def: WidgetDef; size: WidgetSize; d: DashDa
   return (
     <div className="h-[200px] bg-[#EEF1F6] flex items-center justify-center overflow-hidden" aria-hidden>
       <div style={{ width: w * k, height: h * k }} className="relative">
-        <div style={{ width: w, height: h, transform: `scale(${k})`, transformOrigin: "top left" }} className="absolute left-0 top-0 pointer-events-none shadow-[0_10px_30px_-12px_rgba(27,25,26,0.3)] rounded-2xl">
+        <div style={{ width: w, height: h, transform: `scale(${k})`, transformOrigin: "top left" }} className="absolute left-0 top-0 pointer-events-none shadow-[0_10px_30px_-12px_rgba(27,25,26,0.3)] rounded-[22px]">
           <WidgetShell def={def} size={size} d={d} />
         </div>
       </div>
