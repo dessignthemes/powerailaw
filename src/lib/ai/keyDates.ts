@@ -39,6 +39,52 @@ import {
 // once attorney review has concluded the Contingency Dates Letter is created.
 
 const db = () => createAdminClient();
+// The AI's JSON answer, even when it was cut off part-way (the unfinished part is dropped).
+export function parseLoose(text: string): Record<string, unknown> | null {
+  const t0 = text.replace(/```json|```/g, "");
+  const start = t0.indexOf("{");
+  if (start < 0) return null;
+  const t = t0.slice(start);
+  try {
+    return JSON.parse(t.slice(0, t.lastIndexOf("}") + 1)) as Record<string, unknown>;
+  } catch {
+    /* repair below */
+  }
+  const stack: string[] = [];
+  let inStr = false;
+  let esc = false;
+  let safe = -1;
+  let safeStack: string[] = [];
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === "{" || c === "[") stack.push(c);
+    else if (c === "}" || c === "]") {
+      stack.pop();
+      safe = i + 1;
+      safeStack = [...stack];
+      if (!stack.length) break;
+    } else if (c === ",") {
+      safe = i;
+      safeStack = [...stack];
+    }
+  }
+  if (safe < 0) return null;
+  const close = safeStack.reverse().map((c) => (c === "{" ? "}" : "]")).join("");
+  try {
+    const v = JSON.parse(t.slice(0, safe) + close);
+    return v && typeof v === "object" ? (v as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
 const str = (v: unknown, max = 400) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
 export class KeyDatesError extends Error {
@@ -155,9 +201,22 @@ async function readWithAi(
   const tz = await firmTimezone(ctx.orgId);
   const today = todayIn(tz).ymd;
 
-  // The 15 most recent documents, handed over oldest first.
-  // Getting their text ready stops after ~25s so the reading itself still fits in the request.
-  const list = docs.slice(0, 15).reverse();
+  // Every document that can matter, most important first (contract, attorney
+  // review letters, riders/addenda, then commitment, binder, escrow…), up to 40;
+  // handed over oldest first. Getting their text ready stops after ~25s so the
+  // reading itself still fits in the request.
+  const rank = (title: string) =>
+    /contract|agreement of sale|purchase agreement|attorney review|review letter|rider|addend|amend|aneks|counter.?offer|disapprov|accept/i.test(title)
+      ? 0
+      : /commitment|pre-?approv|mortgage|loan|binder|title|escrow|deposit|inspect|apprais|survey|closing|settlement|certificate|co\b|c\.o\.|smoke|fire|oil tank|well|septic|hoa|condo|resale/i.test(title)
+        ? 1
+        : 2;
+  const chosen = docs
+    .map((d, i) => ({ d, i, r: rank(d.title) }))
+    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .slice(0, 40);
+  const list = chosen.sort((a, b) => b.i - a.i).map((x) => x.d); // oldest first
+  const left = docs.length - list.length;
   const started = Date.now();
   for (const d of list) {
     if (d.indexStatus) continue;
@@ -174,7 +233,7 @@ async function readWithAi(
   for (const [i, d] of list.entries()) {
     const id = `D${i + 1}`;
     const name = d.title.replace(/"/g, "'");
-    const text = d.indexStatus === "ready" || d.indexStatus === "needs_ocr" ? await versionText(d.versionId, Math.min(70_000, budget)) : "";
+    const text = d.indexStatus === "ready" || d.indexStatus === "needs_ocr" ? await versionText(d.versionId, Math.min(rank(d.title) === 0 ? 70_000 : 25_000, budget)) : "";
     const pages = Math.max(1, d.pageCount || 1);
     const scanned = text.trim().length / pages < 300;
     if (!scanned) {
@@ -202,36 +261,45 @@ async function readWithAi(
     if (budget <= 5_000) break;
   }
   if (!meta.some((m) => m.readable)) throw new KeyDatesError(400, "None of this matter's documents could be read.");
+  const skipped = list.length - meta.length + left; // too many / too big to send in one reading
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 230_000);
-  let text = "";
-  let usage = { inputTokens: 0, outputTokens: 0 };
-  try {
-    for await (const ev of provider.stream({
-      system: SYSTEM(today, side, custom),
-      messages: [{ role: "user", content }],
-      tools: [],
-      maxTokens: 5000,
-      signal: controller.signal,
-    })) {
-      if (ev.type === "text") text += ev.delta;
-      if (ev.type === "done") usage = ev.usage;
+  // One reading; if the answer comes back cut off or garbled, it is repaired, and
+  // failing that read once more asking for a shorter answer.
+  async function ask(extra: string, maxTokens: number, ms: number): Promise<string> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    let text = "";
+    let usage = { inputTokens: 0, outputTokens: 0 };
+    try {
+      for await (const ev of provider!.stream({
+        system: SYSTEM(today, side, custom) + extra,
+        messages: [{ role: "user", content }],
+        tools: [],
+        maxTokens,
+        signal: controller.signal,
+      })) {
+        if (ev.type === "text") text += ev.delta;
+        if (ev.type === "done") usage = ev.usage;
+      }
+    } catch (e) {
+      console.error("Key dates reading failed:", e);
+      if (!text.trim()) throw new KeyDatesError(503, "The documents couldn't be read right now. Please try again in a moment.");
+    } finally {
+      clearTimeout(timer);
+      await recordAiUsage({ orgId: ctx.orgId, userId: ctx.userId, feature: "documents", model: provider!.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
     }
-  } catch (e) {
-    console.error("Key dates reading failed:", e);
-    throw new KeyDatesError(503, "The documents couldn't be read right now. Please try again in a moment.");
-  } finally {
-    clearTimeout(timer);
+    return text;
   }
-  await recordAiUsage({ orgId: ctx.orgId, userId: ctx.userId, feature: "documents", model: provider.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
-
-  let raw: Record<string, unknown>;
-  try {
-    const json = text.replace(/```json|```/g, "").trim();
-    raw = JSON.parse(json.slice(json.indexOf("{"), json.lastIndexOf("}") + 1));
-  } catch {
-    throw new KeyDatesError(503, "The AI's answer couldn't be read. Please try again.");
+  const BRIEF = "\nKeep the answer compact: in \"documents\" list only the documents that set or change a date or figure (at most 12), each summary under 15 words; each quote under 15 words.";
+  let raw = parseLoose(await ask(BRIEF, 12000, 180_000));
+  if (!raw) {
+    console.error("Key dates: answer couldn't be parsed; asking again for a shorter one");
+    raw = parseLoose(await ask(`${BRIEF}\nYour previous answer was too long. Leave out "documents" and every "quote"; give only "dates", "facts", "details" and "notes".`, 8000, 75_000));
+  }
+  if (!raw) throw new KeyDatesError(503, "The AI's answer couldn't be read, even on a second try. Please try again; if it keeps happening, remove documents that aren't about this deal.");
+  if (skipped > 0) {
+    const notes = Array.isArray(raw.notes) ? (raw.notes as unknown[]) : [];
+    raw.notes = [`${skipped} document${skipped > 1 ? "s were" : " was"} left out (too many or too large to read in one go); the contract, attorney review letters and riders always come first.`, ...notes];
   }
   void matterId;
   return { raw, meta };
