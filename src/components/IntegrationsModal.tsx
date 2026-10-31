@@ -4,6 +4,7 @@ import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import MoreIntegrations from "@/components/settings/MoreIntegrations";
 import {
   Settings,
   Shield,
@@ -66,8 +67,8 @@ const connectors: {
   },
   {
     key: "ai",
-    name: "AI assistants",
-    desc: "Connect Claude, ChatGPT, or any MCP client to your workspace.",
+    name: "Claude.ai & AI assistants",
+    desc: "Connect Claude.ai, ChatGPT, or any MCP client to your workspace.",
     icon: <Plug size={16} strokeWidth={1.75} />,
     drillDown: true,
   },
@@ -1484,6 +1485,7 @@ export default function IntegrationsModal({
                     )
                   )}
                 </div>
+                <MoreIntegrations onOpen={(k) => setDrilled(k)} />
               </>
             )}
           </div>
