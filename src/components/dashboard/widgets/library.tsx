@@ -663,14 +663,21 @@ export const WIDGETS: WidgetDef[] = [
 
 export const WIDGET = (id: string) => WIDGETS.find((w) => w.id === id);
 
-// The Dashboard as it looked before widgets.
+// The standard Dashboard for everyone (Nov 1). Five across on a wide screen:
+//   Due today · Due by priority · Due today (count) · Calendar · Note
+//   Tasks (2) · Recent activity (2) · Clock
+//   Team progress (2) · Events (2)
 export const DEFAULT_LAYOUT: { id: string; size: WidgetSize }[] = [
   { id: "due", size: "s" },
   { id: "priority", size: "s" },
+  { id: "dueCount", size: "s" },
   { id: "calendar", size: "s" },
-  { id: "overdue", size: "s" },
+  { id: "note", size: "s" },
   { id: "tasks", size: "m" },
   { id: "activity", size: "m" },
+  { id: "clock", size: "s" },
   { id: "teamProgress", size: "m" },
   { id: "events", size: "m" },
 ];
+// Bump this to give everyone the standard layout again (their later changes are kept).
+export const LAYOUT_VERSION = "v5";
