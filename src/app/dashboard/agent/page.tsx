@@ -530,9 +530,11 @@ function Agent() {
                 <div className="w-7 h-7 rounded-full bg-dark text-white flex items-center justify-center text-[12px] font-bold font-display flex-shrink-0">
                   L
                 </div>
-                <div className="bg-white border border-line rounded-xl rounded-tl-md px-3.5 py-1.5 text-[13px] leading-snug text-muted">
-                  <span className="font-semibold text-ink">Hi, I&apos;m LawPower, your AI legal assistant.</span> Tell me what you&apos;re working on
-                  and I&apos;ll help you get started: summarizing documents, organizing matters, or drafting for your review.
+                <div className="bg-[#ECEFF6] border border-[#E1E5EE] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[18px] p-1">
+                  <div className="bg-white border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-[14px] px-3.5 py-2 text-[13px] leading-snug text-muted">
+                    <span className="font-semibold text-ink">Hi, I&apos;m LawPower, your AI legal assistant.</span> Tell me what you&apos;re working on
+                    and I&apos;ll help you get started: summarizing documents, organizing matters, or drafting for your review.
+                  </div>
                 </div>
               </div>
               <div className="w-full max-w-[600px]">
@@ -540,19 +542,25 @@ function Agent() {
                   {...{ input, setInput, send, stop, streaming, uploading, textRef, fileInput, attach, files, removeFile, pendingFileIds, matter, matters, chooseMatter }}
                   disabled={composerDisabled}
                 />
-                <div className="flex flex-col items-start gap-2 mt-4 px-1">
-                  {SUGGESTIONS.map((s) => (
-                    <button
-                      key={s.text}
-                      onClick={() => runSuggestion(s)}
-                      disabled={composerDisabled}
-                      className="flex items-center gap-2 text-[13.5px] text-muted hover:text-ink disabled:opacity-50 disabled:hover:text-muted"
-                    >
-                      <CornerDownRight size={13} strokeWidth={1.75} />
-                      {s.text}
-                      {s.needsMatter && !matterId && <span className="text-[11.5px] text-muted/70">(choose a matter)</span>}
-                    </button>
-                  ))}
+                {/* Suggestions, in the widget style */}
+                <div className="bg-[#ECEFF6] border border-[#E1E5EE] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[22px] p-1.5 mt-5">
+                  <div className="px-3 pt-1.5 pb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2">
+                    <Sparkles size={14} strokeWidth={1.75} /> Try asking
+                  </div>
+                  <div className="bg-white border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-2xl divide-y divide-[#EEF1F5]">
+                    {SUGGESTIONS.map((s) => (
+                      <button
+                        key={s.text}
+                        onClick={() => runSuggestion(s)}
+                        disabled={composerDisabled}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13.5px] text-ink text-left hover:bg-[#F4F6FA] first:rounded-t-2xl last:rounded-b-2xl disabled:opacity-50"
+                      >
+                        <CornerDownRight size={13} strokeWidth={1.75} className="text-muted flex-shrink-0" />
+                        <span className="flex-1">{s.text}</span>
+                        {s.needsMatter && !matterId && <span className="text-[11.5px] text-muted">choose a matter first</span>}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -574,7 +582,7 @@ function Agent() {
                           })}
                         </div>
                       )}
-                      <div className="bg-card-alt rounded-2xl rounded-br-md px-4 py-2.5 text-[14.5px] whitespace-pre-wrap break-words">{m.content}</div>
+                      <div className="bg-[#ECEFF6] border border-[#E1E5EE] rounded-2xl rounded-br-md px-4 py-2.5 text-[14.5px] whitespace-pre-wrap break-words">{m.content}</div>
                     </div>
                   </div>
                 ) : (
@@ -667,7 +675,8 @@ type ComposerProps = {
 function Composer({ textRef, fileInput, ...p }: ComposerProps) {
   const shown = p.files.filter((f) => p.pendingFileIds.includes(f.id) || f.status === "uploading" || f.status === "processing" || (f.status === "failed" && f.id.startsWith("tmp-")));
   return (
-    <div className={`border border-line rounded-2xl px-4 pt-3 pb-3 bg-cream ${p.disabled ? "opacity-60" : ""}`}>
+    <div className={`bg-[#ECEFF6] border border-[#E1E5EE] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[22px] p-1.5 ${p.disabled ? "opacity-60" : ""}`}>
+    <div className="bg-white border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-2xl px-4 pt-3 pb-3">
       {shown.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {shown.map((f) => (
@@ -756,6 +765,7 @@ function Composer({ textRef, fileInput, ...p }: ComposerProps) {
           </button>
         )}
       </div>
+    </div>
     </div>
   );
 }
