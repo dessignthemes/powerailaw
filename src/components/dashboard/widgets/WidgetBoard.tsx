@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Minus, X, Search, Plus, Check, LayoutGrid } from "lucide-react";
 import { WIDGETS, WIDGET, WidgetSizeContext } from "./library";
-import { SIZE_CLASS, SIZE_ROWS, SIZE_LABEL, type DashData, type LayoutItem, type WidgetDef, type WidgetSize } from "./types";
+import { SIZE_SPAN, GRID_GAP, MIN_COL, MAX_COLS, SIZE_LABEL, type DashData, type LayoutItem, type WidgetDef, type WidgetSize } from "./types";
 
 // The Dashboard's widgets. Normal view: just the widgets. Edit view
 // (Customize): drag to move, pick a size under each one, − to remove,
@@ -62,6 +62,23 @@ export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize
 export default function WidgetBoard({ layout, onChange, editing, d }: { layout: LayoutItem[]; onChange: (l: LayoutItem[]) => void; editing: boolean; d: DashData }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const lastOver = useRef<string | null>(null);
+  // Fit as many square columns as the page allows (2 to 5), filling the width.
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [grid, setGrid] = useState({ cols: 4, size: 260 });
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const fit = () => {
+      const w = el.clientWidth;
+      const cols = Math.max(1, Math.min(MAX_COLS, Math.floor((w + GRID_GAP) / (MIN_COL + GRID_GAP))));
+      const size = Math.floor((w - GRID_GAP * (cols - 1)) / cols);
+      setGrid((g) => (g.cols === cols && g.size === size ? g : { cols, size }));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const items = layout.filter((x) => WIDGET(x.id));
 
   function moveTo(id: string, overId: string) {
@@ -76,15 +93,15 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
   }
 
   return (
-    <div className="grid grid-cols-2 min-[1520px]:grid-cols-[repeat(4,275px)] auto-rows-[4px] gap-x-5 gap-y-0 grid-flow-row-dense">
+    <div ref={gridRef} className="grid grid-flow-row-dense" style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`, gridAutoRows: `${grid.size}px`, gap: GRID_GAP }}>
       {items.map((it) => {
         const def = WIDGET(it.id)!;
         const size = def.sizes.includes(it.size) ? it.size : def.size;
         return (
           <div
             key={it.id}
-            style={{ gridRow: `span ${SIZE_ROWS[size]}` }}
-            className={`${SIZE_CLASS[size]} relative min-w-0 pb-5 ${editing ? "cursor-grab active:cursor-grabbing" : ""} ${dragId === it.id ? "opacity-40" : ""}`}
+            style={{ gridColumn: `span ${Math.min(SIZE_SPAN[size][0], grid.cols)}`, gridRow: `span ${SIZE_SPAN[size][1]}` }}
+            className={`relative min-w-0 ${editing ? "cursor-grab active:cursor-grabbing" : ""} ${dragId === it.id ? "opacity-40" : ""}`}
             draggable={editing}
             onDragStart={(e) => {
               setDragId(it.id);

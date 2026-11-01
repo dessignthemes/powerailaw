@@ -7,19 +7,13 @@ import type { Client } from "@/components/NewClientModal";
 //   w  = full width (4 × 1)            xl = full width, twice as tall (4 × 2)
 export type WidgetSize = "s" | "m" | "l" | "w" | "xl";
 export const SIZE_LABEL: Record<WidgetSize, string> = { s: "Small", m: "Medium", l: "Large", w: "Wide", xl: "Extra large" };
-// Four 275px columns when the screen is wide enough (two fluid halves otherwise). Rows are
-// 4px units so Small can be a 275 × 275 square while the others stay taller;
-// each widget keeps 20px below it as the gap.
-export const SIZE_CLASS: Record<WidgetSize, string> = {
-  s: "col-span-1",
-  m: "col-span-2",
-  l: "col-span-2",
-  w: "col-span-2 min-[1520px]:col-span-4",
-  xl: "col-span-2 min-[1520px]:col-span-4",
-};
-// Height in 4px rows, including the 20px gap: one row = 275px tall (Small, Medium, Wide),
-// two rows = 571px (Large, Extra large), so every box lines up with the Small squares.
-export const SIZE_ROWS: Record<WidgetSize, number> = { s: 74, m: 74, l: 148, w: 74, xl: 148 };
+// The grid fits up to 5 square columns across the page (1 on a phone), each
+// column as tall as it is wide, so Small is always a square and every box lines
+// up: span = [columns, rows].
+export const SIZE_SPAN: Record<WidgetSize, [number, number]> = { s: [1, 1], m: [2, 1], l: [2, 2], w: [4, 1], xl: [4, 2] };
+export const GRID_GAP = 20;
+export const MIN_COL = 230; // narrower than this and the grid drops a column
+export const MAX_COLS = 5;
 
 export type LayoutItem = { id: string; size: WidgetSize };
 
