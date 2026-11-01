@@ -182,3 +182,13 @@ html.lp-scroll-locked body { overflow: hidden; }
 
 /* Dashboard → Customize: a small nudge when widgets become movable. */
 @keyframes lpWiggle { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-0.6deg); } 70% { transform: rotate(0.6deg); } }
+
+/* Pop-up windows in the widget style: white inside, a soft grey-blue frame
+   around it (like the Dashboard widgets). Applies to every centred pop-up. */
+.fixed.inset-0[class*="bg-black/"][class*="justify-center"]:not([class*="bg-black/80"]) > *:not(.fixed):not(script) {
+  background-color: #fff !important;
+  box-shadow:
+    0 0 0 7px #ECEFF6,
+    0 0 0 8px #E1E5EE,
+    0 30px 80px -24px rgba(18, 17, 16, 0.32) !important;
+}
