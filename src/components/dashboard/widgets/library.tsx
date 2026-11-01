@@ -544,7 +544,7 @@ function ClockFace() {
   const hr = (now.getHours() % 12) + min / 60;
   return (
     <div className="m-auto flex flex-col items-center gap-1.5">
-      <svg viewBox="0 0 200 200" className="w-[133px] h-[133px] drop-shadow-[0_2px_4px_rgba(27,25,26,0.08)]" aria-label={now.toLocaleTimeString()}>
+      <svg viewBox="0 0 200 200" className="w-[121px] h-[121px] drop-shadow-[0_2px_4px_rgba(27,25,26,0.08)]" aria-label={now.toLocaleTimeString()}>
         <circle cx="100" cy="100" r="96" fill="#F4F5F8" stroke="#E1E4EA" strokeWidth="2" />
         {[...Array(60)].map((_, i) => (
           <line key={i} x1="100" y1="8" x2="100" y2={i % 5 ? "13" : "18"} stroke={i % 5 ? "#B7BCC6" : "#1B191A"} strokeWidth={i % 5 ? 1.2 : 3.2} strokeLinecap="round" transform={`rotate(${i * 6} 100 100)`} />
