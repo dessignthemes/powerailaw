@@ -530,27 +530,43 @@ function AskAi() {
   );
 }
 
+// An analog clock face (numbers, minute marks, a yellow second hand that ticks) with the time below.
 function ClockFace() {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     const t0 = setTimeout(() => setNow(new Date()), 0);
-    const t = setInterval(() => setNow(new Date()), 15_000);
+    const t = setInterval(() => setNow(new Date()), 1000);
     return () => (clearTimeout(t0), clearInterval(t));
   }, []);
   if (!now) return null;
-  const h = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
-  const m = now.getMinutes() * 6;
+  const sec = now.getSeconds();
+  const min = now.getMinutes() + sec / 60;
+  const hr = (now.getHours() % 12) + min / 60;
   return (
-    <div className="m-auto flex flex-col items-center gap-1">
-      <svg viewBox="0 0 100 100" className="w-[110px] h-[110px]" aria-label={now.toLocaleTimeString()}>
-        {[...Array(12)].map((_, i) => (
-          <line key={i} x1="50" y1="8" x2="50" y2={i % 3 ? "13" : "16"} stroke="#9AA3B2" strokeWidth={i % 3 ? 1.5 : 2.5} strokeLinecap="round" transform={`rotate(${i * 30} 50 50)`} />
+    <div className="m-auto flex flex-col items-center gap-1.5">
+      <svg viewBox="0 0 200 200" className="w-[133px] h-[133px] drop-shadow-[0_2px_4px_rgba(27,25,26,0.08)]" aria-label={now.toLocaleTimeString()}>
+        <circle cx="100" cy="100" r="96" fill="#F4F5F8" stroke="#E1E4EA" strokeWidth="2" />
+        {[...Array(60)].map((_, i) => (
+          <line key={i} x1="100" y1="8" x2="100" y2={i % 5 ? "13" : "18"} stroke={i % 5 ? "#B7BCC6" : "#1B191A"} strokeWidth={i % 5 ? 1.2 : 3.2} strokeLinecap="round" transform={`rotate(${i * 6} 100 100)`} />
         ))}
-        <line x1="50" y1="50" x2="50" y2="28" stroke="#1B191A" strokeWidth="4" strokeLinecap="round" transform={`rotate(${h} 50 50)`} />
-        <line x1="50" y1="50" x2="50" y2="18" stroke="#1B191A" strokeWidth="2.5" strokeLinecap="round" transform={`rotate(${m} 50 50)`} />
-        <circle cx="50" cy="50" r="3" fill="#1B191A" />
+        {[...Array(12)].map((_, i) => {
+          const n = i + 1;
+          const a = (n * 30 * Math.PI) / 180;
+          return (
+            <text key={n} x={100 + 68 * Math.sin(a)} y={100 - 68 * Math.cos(a)} textAnchor="middle" dominantBaseline="central" fontSize="19" fill="#2A2830" fontFamily="inherit">
+              {n}
+            </text>
+          );
+        })}
+        <line x1="100" y1="100" x2="100" y2="52" stroke="#2F2D33" strokeWidth="7" strokeLinecap="round" transform={`rotate(${hr * 30} 100 100)`} />
+        <line x1="100" y1="100" x2="100" y2="26" stroke="#2F2D33" strokeWidth="5" strokeLinecap="round" transform={`rotate(${min * 6} 100 100)`} />
+        <g style={{ transform: `rotate(${sec * 6}deg)`, transformOrigin: "100px 100px", transition: sec === 0 ? "none" : "transform 0.25s cubic-bezier(0.4, 2.2, 0.6, 1)" }}>
+          <line x1="100" y1="118" x2="100" y2="22" stroke="#E3A126" strokeWidth="2" strokeLinecap="round" />
+        </g>
+        <circle cx="100" cy="100" r="6" fill="#2F2D33" />
+        <circle cx="100" cy="100" r="2.4" fill="#fff" />
       </svg>
-      <span className="text-[12.5px] text-muted">{now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
+      <span className="text-[12.5px] text-muted tabular-nums">{now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
     </div>
   );
 }
