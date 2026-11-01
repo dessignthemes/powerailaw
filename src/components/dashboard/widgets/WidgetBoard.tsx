@@ -139,7 +139,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
 
 // ── Add widget: the library ──────────────────────────────────────────────────
 const CATS = ["Tasks", "Calendar", "Matters", "Clients and intake", "Firm", "AI and tools"] as const;
-const PREVIEW: Record<WidgetSize, [number, number]> = { s: [275, 275], m: [570, 324], l: [570, 668], w: [1160, 324], xl: [1160, 668] };
+const PREVIEW: Record<WidgetSize, [number, number]> = { s: [275, 275], m: [570, 275], l: [570, 571], w: [1160, 275], xl: [1160, 571] };
 
 function Preview({ def, size, d }: { def: WidgetDef; size: WidgetSize; d: DashData }) {
   const [w, h] = PREVIEW[size];

@@ -17,8 +17,9 @@ export const SIZE_CLASS: Record<WidgetSize, string> = {
   w: "col-span-2 min-[1520px]:col-span-4",
   xl: "col-span-2 min-[1520px]:col-span-4",
 };
-// Height in 4px rows, including the 20px gap: Small 275, the rest 324 (or 668 when tall).
-export const SIZE_ROWS: Record<WidgetSize, number> = { s: 74, m: 86, l: 172, w: 86, xl: 172 };
+// Height in 4px rows, including the 20px gap: one row = 275px tall (Small, Medium, Wide),
+// two rows = 571px (Large, Extra large), so every box lines up with the Small squares.
+export const SIZE_ROWS: Record<WidgetSize, number> = { s: 74, m: 74, l: 148, w: 74, xl: 148 };
 
 export type LayoutItem = { id: string; size: WidgetSize };
 
