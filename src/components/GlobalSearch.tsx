@@ -137,14 +137,17 @@ export default function GlobalSearch() {
 
   return (
     <>
+      {/* Same look as the widgets: a soft tinted frame around a white field. */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors pl-3.5 pr-2 py-2 rounded-full text-[13.5px] text-muted min-w-0 w-[300px] max-w-full"
+        className="group block bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 min-w-0 w-[380px] max-w-full shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_6px_16px_-6px_rgba(27,25,26,0.14)] transition-shadow"
         aria-label="Search"
       >
-        <Search size={14} strokeWidth={1.75} className="flex-shrink-0" />
-        <span className="flex-1 text-left truncate">Search matters, contacts, documents…</span>
-        <kbd className="hidden sm:inline text-[11px] font-medium bg-white/80 rounded-md px-1.5 py-0.5 text-muted">Ctrl K</kbd>
+        <span className="flex items-center gap-2 bg-white border border-[#E3E7EF] rounded-full pl-3.5 pr-1.5 py-1.5 text-[13.5px] text-muted shadow-[0_1px_2px_rgba(27,25,26,0.05)]">
+          <Search size={15} strokeWidth={1.75} className="flex-shrink-0" />
+          <span className="flex-1 text-left truncate">Search matters, contacts, documents…</span>
+          <kbd className="hidden sm:inline text-[11px] font-medium bg-[#F4F6FA] border border-[#E3E7EF] rounded-md px-1.5 py-0.5 text-muted">Ctrl K</kbd>
+        </span>
       </button>
 
       {open && !conflictFor && (

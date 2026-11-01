@@ -1,5 +1,4 @@
 import Sidebar from "@/components/Sidebar";
-import PageSwitcher from "@/components/PageSwitcher";
 import { IntegrationsModalProvider } from "@/context/IntegrationsModalContext";
 import { WorkspaceDataProvider } from "@/context/WorkspaceDataContext";
 import UpdateBanner from "@/components/UpdateBanner";
@@ -14,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Sidebar />
           <main className="flex-1 min-w-0 bg-page">
             <div className="px-10 pt-6 flex items-center justify-between gap-4">
-              <PageSwitcher />
+              {/* Page switcher hidden for now; restore: <PageSwitcher /> */}
               <GlobalSearch />
               {/* A page's own buttons go here (HeaderActions). */}
               <div id="page-header-actions" className="flex-1 min-w-0 flex items-center gap-2 flex-wrap" />
