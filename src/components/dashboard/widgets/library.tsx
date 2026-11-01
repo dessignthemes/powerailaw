@@ -530,43 +530,67 @@ function AskAi() {
   );
 }
 
-// An analog clock face (numbers, minute marks, a yellow second hand that ticks) with the time below.
+// An analog clock: white face, bold minute marks, numbers, black hands and a
+// thin gold second hand that sweeps smoothly; the time in digits below.
 function ClockFace() {
-  const [now, setNow] = useState<Date | null>(null);
+  const [label, setLabel] = useState<string | null>(null);
+  const hourRef = useRef<SVGGElement>(null);
+  const minRef = useRef<SVGGElement>(null);
+  const secRef = useRef<SVGGElement>(null);
   useEffect(() => {
-    const t0 = setTimeout(() => setNow(new Date()), 0);
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => (clearTimeout(t0), clearInterval(t));
+    let raf = 0;
+    let lastMinute = -1;
+    const tick = () => {
+      const d = new Date();
+      const sec = d.getSeconds() + d.getMilliseconds() / 1000;
+      const min = d.getMinutes() + sec / 60;
+      const hr = (d.getHours() % 12) + min / 60;
+      // Move the hands directly (no re-render 60 times a second).
+      if (secRef.current) secRef.current.setAttribute("transform", `rotate(${sec * 6} 100 100)`);
+      if (minRef.current) minRef.current.setAttribute("transform", `rotate(${min * 6} 100 100)`);
+      if (hourRef.current) hourRef.current.setAttribute("transform", `rotate(${hr * 30} 100 100)`);
+      if (d.getMinutes() !== lastMinute) {
+        lastMinute = d.getMinutes();
+        setLabel(d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, []);
-  if (!now) return null;
-  const sec = now.getSeconds();
-  const min = now.getMinutes() + sec / 60;
-  const hr = (now.getHours() % 12) + min / 60;
   return (
     <div className="m-auto flex flex-col items-center gap-1.5">
-      <svg viewBox="0 0 200 200" className="w-[121px] h-[121px] drop-shadow-[0_2px_4px_rgba(27,25,26,0.08)]" aria-label={now.toLocaleTimeString()}>
-        <circle cx="100" cy="100" r="96" fill="#F4F5F8" stroke="#E1E4EA" strokeWidth="2" />
+      <svg viewBox="0 0 200 200" className="w-[121px] h-[121px]" aria-label={label ?? "Clock"}>
+        <defs>
+          <filter id="lpHandShadow" filterUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
+            <feDropShadow dx="1" dy="1.5" stdDeviation="1.2" floodColor="#000" floodOpacity="0.25" />
+          </filter>
+        </defs>
+        <circle cx="100" cy="100" r="98" fill="#fff" />
         {[...Array(60)].map((_, i) => (
-          <line key={i} x1="100" y1="8" x2="100" y2={i % 5 ? "13" : "18"} stroke={i % 5 ? "#B7BCC6" : "#1B191A"} strokeWidth={i % 5 ? 1.2 : 3.2} strokeLinecap="round" transform={`rotate(${i * 6} 100 100)`} />
+          <line key={i} x1="100" y1="5" x2="100" y2={i % 5 ? "12" : "17"} stroke="#141414" strokeWidth={i % 5 ? 2.2 : 5} strokeLinecap="round" transform={`rotate(${i * 6} 100 100)`} />
         ))}
         {[...Array(12)].map((_, i) => {
           const n = i + 1;
-          const a = (n * 30 * Math.PI) / 180;
+          const ang = (n * 30 * Math.PI) / 180;
           return (
-            <text key={n} x={100 + 68 * Math.sin(a)} y={100 - 68 * Math.cos(a)} textAnchor="middle" dominantBaseline="central" fontSize="19" fill="#2A2830" fontFamily="inherit">
+            <text key={n} x={100 + 70 * Math.sin(ang)} y={100 - 70 * Math.cos(ang)} textAnchor="middle" dominantBaseline="central" fontSize="18" fill="#1B1B1B" fontFamily="Helvetica, Arial, sans-serif">
               {n}
             </text>
           );
         })}
-        <line x1="100" y1="100" x2="100" y2="52" stroke="#2F2D33" strokeWidth="7" strokeLinecap="round" transform={`rotate(${hr * 30} 100 100)`} />
-        <line x1="100" y1="100" x2="100" y2="26" stroke="#2F2D33" strokeWidth="5" strokeLinecap="round" transform={`rotate(${min * 6} 100 100)`} />
-        <g style={{ transform: `rotate(${sec * 6}deg)`, transformOrigin: "100px 100px", transition: sec === 0 ? "none" : "transform 0.25s cubic-bezier(0.4, 2.2, 0.6, 1)" }}>
-          <line x1="100" y1="118" x2="100" y2="22" stroke="#E3A126" strokeWidth="2" strokeLinecap="round" />
+        <g ref={hourRef} filter="url(#lpHandShadow)">
+          <line x1="100" y1="104" x2="100" y2="50" stroke="#141414" strokeWidth="9" strokeLinecap="round" />
         </g>
-        <circle cx="100" cy="100" r="6" fill="#2F2D33" />
-        <circle cx="100" cy="100" r="2.4" fill="#fff" />
+        <g ref={minRef} filter="url(#lpHandShadow)">
+          <line x1="100" y1="106" x2="100" y2="18" stroke="#141414" strokeWidth="5" strokeLinecap="round" />
+        </g>
+        <g ref={secRef} filter="url(#lpHandShadow)">
+          <line x1="100" y1="114" x2="100" y2="20" stroke="#E2A43A" strokeWidth="1.6" strokeLinecap="round" />
+          <circle cx="100" cy="100" r="7.5" fill="#E2A43A" />
+        </g>
       </svg>
-      <span className="text-[12.5px] text-muted tabular-nums">{now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
+      <span className="text-[12.5px] text-muted tabular-nums">{label}</span>
     </div>
   );
 }
