@@ -560,7 +560,7 @@ function ClockFace() {
   }, []);
   return (
     <div className="m-auto flex flex-col items-center gap-1.5">
-      <svg viewBox="0 0 200 200" className="w-[121px] h-[121px]" aria-label={label ?? "Clock"}>
+      <svg viewBox="0 0 200 200" className="w-[132px] h-[132px]" aria-label={label ?? "Clock"}>
         <defs>
           <filter id="lpHandShadow" filterUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
             <feDropShadow dx="1" dy="1.5" stdDeviation="1.2" floodColor="#000" floodOpacity="0.25" />
@@ -590,9 +590,20 @@ function ClockFace() {
           <circle cx="100" cy="100" r="7.5" fill="#E2A43A" />
         </g>
       </svg>
-      <span className="text-[12.5px] text-muted tabular-nums">{label}</span>
     </div>
   );
+}
+
+// The current time for the Clock widget's title ("9:03 AM").
+function LiveTime() {
+  const [t, setT] = useState<string | null>(null);
+  useEffect(() => {
+    const show = () => setT(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }));
+    const t0 = setTimeout(show, 0);
+    const iv = setInterval(show, 5000);
+    return () => (clearTimeout(t0), clearInterval(iv));
+  }, []);
+  return <span className="tabular-nums">{t ?? "Clock"}</span>;
 }
 
 function Note() {
@@ -697,7 +708,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: "askAi", name: "Ask the AI Agent", desc: "Ask a question from the Dashboard; the AI Agent opens with it.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Sparkles, tone: "bg-[#E6ECF8]", body: () => <AskAi /> },
   { id: "search", name: "Search", desc: "Search matters, contacts, documents, tasks and more.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Search, body: () => <button onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, metaKey: true }))} className="mt-auto flex items-center gap-2 bg-[#F4F6FA] border border-[#E3E7EF] rounded-full px-4 py-2.5 text-[13.5px] text-muted text-left hover:bg-[#EAEEF5]"><Search size={14} /> Search everything… <kbd className="ml-auto text-[11px] bg-card-alt rounded px-1.5">Ctrl K</kbd></button> },
   { id: "shortcuts", name: "Shortcuts", desc: "One click to the things you start most.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Zap, body: () => <Shortcuts /> },
-  { id: "clock", name: "Clock", desc: "The time, with a face you can read at a glance.", category: "AI and tools", sizes: ["s"], size: "s", icon: Clock3, plain: true, body: () => <ClockFace /> },
+  { id: "clock", name: "Clock", desc: "The time, with a face you can read at a glance.", category: "AI and tools", sizes: ["s"], size: "s", icon: Clock3, title: () => <LiveTime />, body: () => <ClockFace /> },
   { id: "note", name: "Note", desc: "A sticky note that stays on this computer.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: StickyNote, tone: "bg-[#F4F1EA]", body: () => <Note /> },
 ];
 

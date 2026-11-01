@@ -61,7 +61,7 @@ export type WidgetDef = {
   sizes: WidgetSize[];
   size: WidgetSize; // the size it's added at
   icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
-  title?: (d: DashData) => string; // header text (defaults to name)
+  title?: (d: DashData) => React.ReactNode; // header text (defaults to name)
   action?: (d: DashData) => React.ReactNode; // a link on the right of the header
   plain?: boolean; // no header (the widget draws its own)
   tone?: string; // background class (defaults to bg-card-alt)
