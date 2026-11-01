@@ -526,7 +526,7 @@ function Agent() {
             <div className="max-w-[560px] mx-auto mt-16 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{convError}</div>
           ) : empty ? (
             <div className="h-full flex flex-col items-center justify-center px-6">
-              <div className="w-full max-w-[600px] flex items-start gap-2.5 mb-5">
+              <div className="w-full max-w-[780px] flex items-start gap-2.5 mb-5">
                 <div className="w-7 h-7 rounded-full bg-dark text-white flex items-center justify-center text-[12px] font-bold font-display flex-shrink-0">
                   L
                 </div>
@@ -537,30 +537,24 @@ function Agent() {
                   </div>
                 </div>
               </div>
-              <div className="w-full max-w-[600px]">
+              <div className="w-full max-w-[780px]">
                 <Composer
                   {...{ input, setInput, send, stop, streaming, uploading, textRef, fileInput, attach, files, removeFile, pendingFileIds, matter, matters, chooseMatter }}
                   disabled={composerDisabled}
                 />
-                {/* Suggestions, in the widget style */}
-                <div className="bg-[#ECEFF6] border border-[#E1E5EE] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[22px] p-1.5 mt-5">
-                  <div className="px-3 pt-1.5 pb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2">
-                    <Sparkles size={14} strokeWidth={1.75} /> Try asking
-                  </div>
-                  <div className="bg-white border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-2xl divide-y divide-[#EEF1F5]">
-                    {SUGGESTIONS.map((s) => (
-                      <button
-                        key={s.text}
-                        onClick={() => runSuggestion(s)}
-                        disabled={composerDisabled}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13.5px] text-ink text-left hover:bg-[#F4F6FA] first:rounded-t-2xl last:rounded-b-2xl disabled:opacity-50"
-                      >
-                        <CornerDownRight size={13} strokeWidth={1.75} className="text-muted flex-shrink-0" />
-                        <span className="flex-1">{s.text}</span>
-                        {s.needsMatter && !matterId && <span className="text-[11.5px] text-muted">choose a matter first</span>}
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex flex-col items-start gap-2 mt-4 px-1">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s.text}
+                      onClick={() => runSuggestion(s)}
+                      disabled={composerDisabled}
+                      className="flex items-center gap-2 text-[13.5px] text-muted hover:text-ink disabled:opacity-50 disabled:hover:text-muted"
+                    >
+                      <CornerDownRight size={13} strokeWidth={1.75} />
+                      {s.text}
+                      {s.needsMatter && !matterId && <span className="text-[11.5px] text-muted/70">(choose a matter)</span>}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -676,7 +670,7 @@ function Composer({ textRef, fileInput, ...p }: ComposerProps) {
   const shown = p.files.filter((f) => p.pendingFileIds.includes(f.id) || f.status === "uploading" || f.status === "processing" || (f.status === "failed" && f.id.startsWith("tmp-")));
   return (
     <div className={`bg-[#ECEFF6] border border-[#E1E5EE] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[22px] p-1.5 ${p.disabled ? "opacity-60" : ""}`}>
-    <div className="bg-white border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-2xl px-4 pt-3 pb-3">
+    <div className="bg-white border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-2xl px-5 pt-4 pb-3.5">
       {shown.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {shown.map((f) => (
@@ -723,7 +717,7 @@ function Composer({ textRef, fileInput, ...p }: ComposerProps) {
         onChange={(e) => {
           p.setInput(e.target.value);
           e.target.style.height = "auto";
-          e.target.style.height = `${Math.min(220, e.target.scrollHeight)}px`;
+          e.target.style.height = `${Math.min(260, e.target.scrollHeight)}px`;
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -733,7 +727,7 @@ function Composer({ textRef, fileInput, ...p }: ComposerProps) {
         }}
         rows={1}
         placeholder={p.matter ? `Ask about ${p.matter.title}…` : "Ask anything"}
-        className="w-full bg-transparent outline-none text-[15px] leading-relaxed placeholder:text-muted resize-none mb-2.5 min-h-[42px] max-h-[220px]"
+        className="w-full bg-transparent outline-none text-[15.5px] leading-relaxed placeholder:text-muted resize-none mb-3 min-h-[76px] max-h-[260px]"
       />
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
