@@ -113,6 +113,8 @@ export default function TemplatesModal({ onClose, initialId, inline = false }: {
     try {
       await remove(draft.id);
       setDraft(null);
+      // On the AI Templates page: go back to the list (it reloads, so the template disappears from it).
+      if (inline) onClose();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -189,9 +191,21 @@ export default function TemplatesModal({ onClose, initialId, inline = false }: {
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="flex items-center justify-between px-6 pt-5 pb-3">
             <div className="text-[13px] text-muted">{draft ? (draft.example ? "Sample workflow checklist" : draft.id ? "Edit workflow checklist" : "New workflow checklist") : "Workflow checklists"}</div>
-            <button onClick={onClose} aria-label="Close" title={inline ? "Back" : "Close"} className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">
-              <X size={16} strokeWidth={1.75} />
-            </button>
+            <div className="flex items-center gap-1.5">
+              {draft?.id && !draft.example && (
+                <button
+                  onClick={onDelete}
+                  disabled={busy}
+                  title="Delete this template"
+                  className="h-8 px-3 rounded-full text-[13px] text-muted hover:text-[#B42318] hover:bg-[#FDECEC] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={13} strokeWidth={1.75} /> Delete
+                </button>
+              )}
+              <button onClick={onClose} aria-label="Close" title={inline ? "Back" : "Close"} className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">
+                <X size={16} strokeWidth={1.75} />
+              </button>
+            </div>
           </div>
 
           {loadError && (
