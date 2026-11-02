@@ -84,7 +84,7 @@ export default function NotificationBell() {
       <button
         onClick={toggle}
         aria-label={unread ? `${unread} new ${unread === 1 ? "alert" : "alerts"}` : "Alerts"}
-        className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-colors ${unread ? "bg-[#FDE8E8] text-[#B42318] hover:bg-[#FBD5D5]" : "bg-chip hover:bg-btn text-ink"}`}
+        className={`relative w-[38px] h-[30px] rounded-full flex items-center justify-center transition-colors ${unread ? "bg-[#FDE8E8] text-[#B42318] hover:bg-[#FBD5D5]" : "bg-chip hover:bg-btn text-ink"}`}
       >
         <Bell size={17} strokeWidth={1.9} className={unread ? "animate-[wiggle_1s_ease-in-out_2]" : ""} />
         {unread > 0 && (

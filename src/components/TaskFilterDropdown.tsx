@@ -77,14 +77,14 @@ export default function TaskFilterDropdown({
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors pl-3.5 pr-3 h-9 rounded-full text-[13.5px] font-medium"
+        className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors pl-5 pr-4 h-[30px] rounded-full text-[13.5px] font-medium"
       >
         <Users size={14} strokeWidth={1.75} />
         View Team Tasks
         <ChevronDown size={13} strokeWidth={1.75} />
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+16px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[260px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]">
+        <div className="absolute right-0 top-[calc(100%+18px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[260px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]">
           {item("me", "My tasks")}
           {item("all", "View all tasks")}
           {others.length > 0 && <div className="px-3 pt-2.5 pb-1 text-[11.5px] font-semibold text-muted border-t border-line mt-1">Team members</div>}
