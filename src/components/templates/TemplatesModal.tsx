@@ -197,7 +197,7 @@ export default function TemplatesModal({ onClose, initialId, inline = false }: {
                   onClick={onDelete}
                   disabled={busy}
                   title="Delete this template"
-                  className="h-8 px-3 rounded-full text-[13px] text-muted hover:text-[#B42318] hover:bg-[#FDECEC] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  className="h-8 px-3 rounded-full text-[13px] text-[#B42318] bg-[#FDECEC] border border-[#F6C9C9] hover:bg-[#FADADA] flex items-center gap-1.5 transition-colors disabled:opacity-50"
                 >
                   <Trash2 size={13} strokeWidth={1.75} /> Delete
                 </button>

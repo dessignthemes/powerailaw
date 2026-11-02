@@ -273,11 +273,11 @@ export default function AiTemplatesPage() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search templates" aria-label="Search templates" className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px]" />
           </div>
           <div className="flex flex-wrap gap-1.5 mb-4">
-            <button onClick={() => setCat("")} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${!cat ? "bg-btn-hover" : "bg-[#F4F6FA] border border-[#E3E7EF] hover:bg-[#EAEEF5]"}`}>
+            <button onClick={() => setCat("")} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${!cat ? "bg-btn-hover border border-[#C3CBDA]" : "bg-white border border-[#D9DFEA] hover:bg-[#F4F6FA] hover:border-[#C3CBDA]"}`}>
               All
             </button>
             {allCategories.map((c) => (
-              <button key={c} onClick={() => setCat(c === cat ? "" : c)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${cat === c ? "bg-btn-hover" : "bg-white hover:bg-btn"}`}>
+              <button key={c} onClick={() => setCat(c === cat ? "" : c)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${cat === c ? "bg-btn-hover border border-[#C3CBDA]" : "bg-white border border-[#D9DFEA] hover:bg-[#F4F6FA] hover:border-[#C3CBDA]"}`}>
                 {c}
               </button>
             ))}
