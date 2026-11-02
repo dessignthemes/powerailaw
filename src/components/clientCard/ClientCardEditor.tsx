@@ -338,12 +338,13 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
   const conflict = useConflictCheck(cardId, cardType === "company" ? [profile.company.name] : profile.people.map((p) => [p.first, p.middle, p.last].filter(Boolean).join(" ")));
   const conflictReady = !dirty && !autoSaving && (cardType === "company" ? profile.company.name.trim().length > 1 : profile.people.some((p) => p.first.trim() && p.last.trim()));
 
-  if (!loaded) return <div className="bg-card-alt rounded-2xl py-16 text-center text-[14px] text-muted">Loading the client card…</div>;
+  if (!loaded) return <div className="bg-white rounded-[22px] m-2 py-16 text-center text-[14px] text-muted shadow-[0_0_0_7px_#ECEFF6,0_0_0_8px_#E1E5EE]">Loading the client card…</div>;
 
   return (
-    <div className="bg-card-alt rounded-2xl overflow-hidden border border-line">
+    // Widget / pop-up style: white inside, a soft grey-blue frame around it.
+    <div className="bg-white rounded-[22px] overflow-hidden m-2 shadow-[0_0_0_7px_#ECEFF6,0_0_0_8px_#E1E5EE,0_14px_40px_-20px_rgba(18,17,16,0.25)]">
       {/* Header */}
-      <div className="flex items-center gap-4 px-6 py-5 border-b border-line bg-cream/60 flex-wrap">
+      <div className="flex items-center gap-4 px-6 py-5 border-b border-[#EEF1F5] bg-white flex-wrap">
         <button onClick={cancel} className="w-9 h-9 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink" aria-label="Back to clients">
           <ArrowLeft size={18} />
         </button>
@@ -436,7 +437,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
 
       <div className="grid md:grid-cols-[250px_1fr] min-h-[560px]">
         {/* Left panel */}
-        <aside className="border-r border-line p-4 flex flex-col gap-5">
+        <aside className="border-r border-[#EEF1F5] bg-white p-4 flex flex-col gap-5">
           <div>
             <div className="text-[13px] font-semibold mb-1.5">Card type</div>
             <SelectBox label="Card type" value={cardType} onChange={(v) => { setCardType(v as CardType); setSection("person"); }}>
@@ -459,7 +460,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
               </div>
               <div className="grid gap-1">
                 {profile.people.map((p, i) => (
-                  <div key={p.id} className={`flex items-center rounded-lg ${section === "person" && p.id === person.id ? "bg-white" : "hover:bg-line/40"}`}>
+                  <div key={p.id} className={`flex items-center rounded-lg ${section === "person" && p.id === person.id ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"}`}>
                     <button onClick={() => { setPersonId(p.id); setSection("person"); }} className="flex-1 text-left px-3 py-2 text-[13.5px] font-medium truncate">
                       {personFullTitle(p) || `Person ${i + 1}`}
                     </button>
@@ -476,7 +477,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
               </div>
             </div>
           ) : (
-            <button onClick={() => setSection("person")} className={`text-left rounded-lg px-3 py-2 text-[13.5px] font-medium ${section === "person" ? "bg-white" : "hover:bg-line/40"}`}>
+            <button onClick={() => setSection("person")} className={`text-left rounded-lg px-3 py-2 text-[13.5px] font-medium ${section === "person" ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"}`}>
               {profile.company.name || "Company details"}
             </button>
           )}
@@ -484,7 +485,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
             <div className="text-[13px] font-semibold mb-1.5">Card details</div>
             <div className="grid gap-0.5">
               {nav.map(([k, l]) => (
-                <button key={k} onClick={() => setSection(k)} className={`flex items-center justify-between rounded-lg px-3 py-2 text-[13.5px] ${section === k ? "bg-white font-medium" : "hover:bg-line/40"}`}>
+                <button key={k} onClick={() => setSection(k)} className={`flex items-center justify-between rounded-lg px-3 py-2 text-[13.5px] ${section === k ? "bg-[#EEF1F6] font-medium" : "hover:bg-[#F4F6FA]"}`}>
                   {l} <ChevronRight size={14} className="text-muted" />
                 </button>
               ))}
