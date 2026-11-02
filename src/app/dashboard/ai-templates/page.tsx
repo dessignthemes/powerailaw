@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Search, Sparkles, ClipboardPaste, FileText, Plus, ChevronDown, Loader2, BookOpenText, ListChecks, Wand2 } from "lucide-react";
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import type { TaskTemplate } from "@/lib/checklist";
@@ -134,6 +134,24 @@ export default function AiTemplatesPage() {
     () => (workflows ?? []).filter((t) => (!cat || wfCategory(t) === cat) && (!q.trim() || t.name.toLowerCase().includes(q.trim().toLowerCase()))),
     [workflows, q, cat]  
   );
+  // Workflow checklists: show 8, scroll the rest (height measured so exactly 8 rows fit).
+  const WF_VISIBLE = 8;
+  const wfBox = useRef<HTMLDivElement>(null);
+  const [wfMaxH, setWfMaxH] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const box = wfBox.current;
+    if (!box) return;
+    const measure = () => {
+      const rows = box.children;
+      if (rows.length <= WF_VISIBLE) return setWfMaxH(undefined);
+      const last = rows[WF_VISIBLE - 1] as HTMLElement;
+      setWfMaxH(last.offsetTop - (rows[0] as HTMLElement).offsetTop + last.offsetHeight);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    return () => ro.disconnect();
+  }, [wfList]);
   const allCategories = useMemo(() => {
     const set = new Set<string>();
     for (const t of [...(mine ?? []), ...samples]) if (t.category) set.add(t.category);
@@ -288,7 +306,11 @@ export default function AiTemplatesPage() {
           ) : wfList.length === 0 ? (
             <div className="text-[12.5px] text-muted py-2">No workflows match.</div>
           ) : (
-            <div className="flex flex-col gap-1.5">
+            <div
+              ref={wfBox}
+              style={wfMaxH ? { maxHeight: wfMaxH } : undefined}
+              className={`flex flex-col gap-1.5 ${wfMaxH ? "overflow-y-auto pr-1 -mr-1 [scrollbar-width:thin]" : ""}`}
+            >
               {wfList.map((t) => (
                 <button key={t.id} onClick={() => (setOpen(null), setWorkflowModal({ id: t.id }))} className={`w-full text-left px-3.5 py-2.5 rounded-xl transition-colors ${workflowModal?.id === t.id ? "bg-[#E6EBF4] border-[#D5DCE8]" : "bg-[#F4F6FA] border-[#E6EAF1] hover:bg-[#EAEEF5]"}`}>
                   <div className="text-[13.5px] font-medium truncate flex items-center gap-1.5">
