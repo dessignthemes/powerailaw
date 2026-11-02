@@ -527,11 +527,11 @@ function Agent() {
           ) : empty ? (
             <div className="h-full flex flex-col items-center justify-center px-6">
               <div className="w-full max-w-[780px] flex items-start gap-2.5 mb-5">
-                <div className="w-7 h-7 rounded-full bg-dark text-white flex items-center justify-center text-[12px] font-bold font-display flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-bold font-display flex-shrink-0">
                   L
                 </div>
-                <div className="bg-[#ECEFF6] border border-[#E1E5EE] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[18px] p-1">
-                  <div className="bg-white border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-[14px] px-3.5 py-2 text-[13px] leading-snug text-muted">
+                <div className="max-w-[390px] bg-[#ECEFF6] border border-[#E1E5EE] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[16px] p-[3px]">
+                  <div className="bg-white border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-[13px] px-3 py-1.5 text-[12px] leading-snug text-muted">
                     <span className="font-semibold text-ink">Hi, I&apos;m LawPower, your AI legal assistant.</span> Tell me what you&apos;re working on
                     and I&apos;ll help you get started: summarizing documents, organizing matters, or drafting for your review.
                   </div>
