@@ -138,6 +138,7 @@ export default function AiTemplatesPage() {
   const WF_VISIBLE = 8;
   const wfBox = useRef<HTMLDivElement>(null);
   const [wfMaxH, setWfMaxH] = useState<number | undefined>(undefined);
+  const [wfAtEnd, setWfAtEnd] = useState(false);
   useLayoutEffect(() => {
     const box = wfBox.current;
     if (!box) return;
@@ -306,8 +307,13 @@ export default function AiTemplatesPage() {
           ) : wfList.length === 0 ? (
             <div className="text-[12.5px] text-muted py-2">No workflows match.</div>
           ) : (
+            <>
             <div
               ref={wfBox}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                setWfAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 4);
+              }}
               style={wfMaxH ? { maxHeight: wfMaxH } : undefined}
               className={`flex flex-col gap-1.5 ${wfMaxH ? "overflow-y-auto pr-1 -mr-1 [scrollbar-width:thin]" : ""}`}
             >
@@ -323,6 +329,15 @@ export default function AiTemplatesPage() {
                 </button>
               ))}
             </div>
+            {wfMaxH && !wfAtEnd && (
+              <button
+                onClick={() => wfBox.current?.scrollBy({ top: wfMaxH * 0.8, behavior: "smooth" })}
+                className="mt-2 w-full flex items-center justify-center gap-1 text-[12px] text-muted hover:text-ink py-1 transition-colors"
+              >
+                <ChevronDown size={13} /> Scroll for more <ChevronDown size={13} />
+              </button>
+            )}
+            </>
           )}
           </div>
         </aside>
