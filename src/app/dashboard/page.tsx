@@ -5,6 +5,7 @@ import PriorityDot from "@/components/PriorityDot";
 import WidgetBoard, { AddWidgetModal } from "@/components/dashboard/widgets/WidgetBoard";
 import { useDashboardLayout } from "@/components/dashboard/widgets/useDashboardLayout";
 import type { DashData, DashEvent } from "@/components/dashboard/widgets/types";
+import HeaderActions from "@/components/layout/HeaderActions";
 import TaskFilterDropdown, { scopeLabel, type TaskScope } from "@/components/TaskFilterDropdown";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { BoardTask, statusMeta } from "@/components/NewTaskModal";
@@ -335,11 +336,16 @@ export default function DashboardHome() {
               <button onClick={() => setEditing(true)} title="Move, resize and remove widgets" className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-semibold bg-white border border-line hover:bg-chip shadow-[0_1px_2px_rgba(27,25,26,0.06)] transition-colors">
                 <LayoutGrid size={15} strokeWidth={1.75} /> Edit
               </button>
-              <TaskFilterDropdown value={scope} onChange={setScope} members={teamMembers} meEmail={meEmail} pinned={pinned} onPin={pin} />
+
             </>
           )}
         </div>
       </div>
+
+      {/* View Team Tasks sits in the top bar, next to the alerts bell. */}
+      <HeaderActions side="right">
+        <TaskFilterDropdown value={scope} onChange={setScope} members={teamMembers} meEmail={meEmail} pinned={pinned} onPin={pin} />
+      </HeaderActions>
 
       <WidgetBoard layout={layout} onChange={setLayout} editing={editing} d={d} />
 
