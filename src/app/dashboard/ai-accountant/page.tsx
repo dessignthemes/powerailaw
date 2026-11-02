@@ -323,7 +323,7 @@ function AiAccountant() {
 
       {book === "trust" ? (
         loading ? (
-          <div className="bg-card-alt rounded-2xl py-16 text-center text-[14px] text-muted">Loading the books…</div>
+          <Frame pad="py-16 text-center text-[14px] text-muted">Loading the books…</Frame>
         ) : trustTab === "balances" ? (
           <TrustBalances matters={matters} clientName={clientName} reloadKey={reload} />
         ) : (
@@ -337,7 +337,7 @@ function AiAccountant() {
       ) : tab === "invoices" ? (
         <InvoicesPanel matters={matters} clientName={clientName} onChanged={() => setReload((x) => x + 1)} focusId={focusInvoice} />
       ) : loading ? (
-        <div className="bg-card-alt rounded-2xl py-16 text-center text-[14px] text-muted">Loading the books…</div>
+        <Frame pad="py-16 text-center text-[14px] text-muted">Loading the books…</Frame>
       ) : tab === "overview" ? (
         <Overview
           s={s} r={r} timeValue={timeValue} count={txns.length} reviewCount={review.length} periodLabel={range.label}
@@ -411,14 +411,35 @@ function AiAccountant() {
   );
 }
 
+// ── Widget frame (same style as the dashboard widgets) ──
+const ROW = "bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl";
+function Frame({ title, icon: Icon, right, children, className = "", pad = "p-5" }: {
+  title?: string; icon?: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; right?: React.ReactNode;
+  children: React.ReactNode; className?: string; pad?: string;
+}) {
+  return (
+    <div className={`bg-[#ECEFF6] rounded-[22px] border border-[#E1E5EE] p-1.5 flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200 ${className}`}>
+      {title && (
+        <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5">
+          <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2 min-w-0">
+            {Icon && <Icon size={15} strokeWidth={1.75} className="flex-shrink-0" />}
+            <span className="truncate">{title}</span>
+          </div>
+          {right && <div className="flex-shrink-0">{right}</div>}
+        </div>
+      )}
+      <div className={`flex-1 min-w-0 bg-white rounded-2xl border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)] ${pad}`}>{children}</div>
+    </div>
+  );
+}
+
 // ── Overview ──
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-card-alt rounded-2xl p-5">
-      <div className="text-[13px] text-muted">{label}</div>
-      <div className="text-[26px] font-semibold mt-1 tabular-nums">{value}</div>
+    <Frame title={label} pad="p-4">
+      <div className="text-[26px] font-semibold tabular-nums">{value}</div>
       {sub && <div className="text-[12.5px] text-muted mt-0.5">{sub}</div>}
-    </div>
+    </Frame>
   );
 }
 
@@ -428,8 +449,8 @@ function Overview(p: {
 }) {
   if (p.count === 0) {
     return (
-      <div className="bg-card-alt rounded-2xl p-8">
-        <div className="flex items-center gap-2 text-[17px] font-semibold mb-1"><Calculator size={18} strokeWidth={1.75} /> Let&apos;s get your books ready for {p.periodLabel}</div>
+      <Frame title={`Get started · ${p.periodLabel}`} icon={Calculator} pad="p-6">
+        <div className="text-[17px] font-semibold mb-1">Let&apos;s get your books ready for {p.periodLabel}</div>
         <p className="text-[14px] text-muted mb-6">Three steps, and most of the work is done for you.</p>
         <div className="grid md:grid-cols-3 gap-4">
           {[
@@ -437,15 +458,15 @@ function Overview(p: {
             { n: 2, t: "Add receipts", d: "Drop in PDF receipts and invoices. The AI reads the vendor, date and amount. Keep receipts for expenses of $75 or more.", b: "Add a receipt", go: p.onReceipt },
             { n: 3, t: "Review and send", d: "Approve the suggestions, then download the accountant package: an Excel workbook and all receipts.", b: null, go: null },
           ].map((x) => (
-            <div key={x.n} className="bg-white rounded-xl border border-line p-5 flex flex-col">
-              <div className="w-7 h-7 rounded-full bg-card-alt border border-line flex items-center justify-center text-[13px] font-semibold mb-3">{x.n}</div>
+            <div key={x.n} className={`${ROW} p-5 flex flex-col`}>
+              <div className="w-7 h-7 rounded-full bg-white border border-[#E1E5EE] flex items-center justify-center text-[13px] font-semibold mb-3">{x.n}</div>
               <div className="text-[14.5px] font-semibold">{x.t}</div>
               <div className="text-[13px] text-muted mt-1 flex-1">{x.d}</div>
               {x.b && x.go && <button onClick={x.go} className={`${blackBtn} mt-4 self-start`}>{x.b}</button>}
             </div>
           ))}
         </div>
-      </div>
+      </Frame>
     );
   }
   const { s, r } = p;
@@ -458,12 +479,9 @@ function Overview(p: {
         <Stat label="Billable time recorded" value={money(p.timeValue)} sub="From Time Tracking, at your rates" />
       </div>
       <div className="grid lg:grid-cols-[1.2fr_1fr] gap-5">
-        <div className="bg-card-alt rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-[15px] font-semibold">Accountant-ready</div>
-            <div className="text-[26px] font-semibold tabular-nums">{r.score}%</div>
-          </div>
-          <div className="h-2.5 rounded-full bg-white overflow-hidden mb-5">
+        <Frame title="Accountant-ready" icon={CircleCheck} pad="p-5">
+          <div className="text-[26px] font-semibold tabular-nums mb-3">{r.score}%</div>
+          <div className="h-2.5 rounded-full bg-[#EEF1F6] overflow-hidden mb-5">
             <div className="h-full rounded-full bg-[#00D178] transition-all" style={{ width: `${r.score}%` }} />
           </div>
           <div className="grid gap-3">
@@ -485,13 +503,12 @@ function Overview(p: {
               <Sparkles size={14} strokeWidth={2} /> Review {p.reviewCount} AI suggestion{p.reviewCount === 1 ? "" : "s"}
             </button>
           )}
-        </div>
-        <div className="bg-card-alt rounded-2xl p-6">
-          <div className="text-[15px] font-semibold mb-3">Questions for your accountant</div>
+        </Frame>
+        <Frame title="Questions for your accountant" icon={Sparkles} pad="p-5">
           {r.questions.length ? (
             <ul className="grid gap-2.5">
               {r.questions.map((q, i) => (
-                <li key={i} className="text-[13.5px] bg-white border border-line rounded-xl px-3.5 py-2.5">{q}</li>
+                <li key={i} className={`text-[13.5px] ${ROW} px-3.5 py-2.5`}>{q}</li>
               ))}
             </ul>
           ) : (
@@ -500,12 +517,11 @@ function Overview(p: {
           <div className="text-[12.5px] text-muted mt-4">
             Trust (IOLTA): {money(s.trustIn)} in, {money(s.trustOut)} out. Listed separately and not counted as income.
           </div>
-        </div>
+        </Frame>
       </div>
-      <div className="bg-card-alt rounded-2xl p-6">
-        <div className="text-[15px] font-semibold mb-3">Top expense categories</div>
+      <Frame title="Top expense categories" icon={Receipt} pad="p-5">
         <CategoryBars rows={s.byCategory.filter((c) => c.pl === "expense").slice(0, 8)} />
-      </div>
+      </Frame>
     </div>
   );
 }
@@ -518,7 +534,7 @@ function CategoryBars({ rows }: { rows: { key: string; label: string; total: num
       {rows.map((c) => (
         <div key={c.key} className="grid grid-cols-[200px_1fr_110px] items-center gap-3 text-[13.5px]">
           <span className="truncate">{c.label}</span>
-          <div className="h-2 rounded-full bg-white overflow-hidden"><div className="h-full rounded-full bg-muted-light" style={{ width: `${(c.total / max) * 100}%` }} /></div>
+          <div className="h-2 rounded-full bg-[#EEF1F6] overflow-hidden"><div className="h-full rounded-full bg-muted-light" style={{ width: `${(c.total / max) * 100}%` }} /></div>
           <span className="text-right tabular-nums">{money(c.total)}</span>
         </div>
       ))}
@@ -541,11 +557,11 @@ function ReviewList(p: {
   const confident = p.items.filter((t) => t.category !== "uncategorized" && (t.aiConfidence ?? 0) >= 0.85).length;
   if (!p.items.length) {
     return (
-      <div className="bg-card-alt rounded-2xl py-14 text-center">
+      <Frame title="Review" icon={Sparkles} pad="py-14 px-6 text-center">
         <CircleCheck size={24} strokeWidth={1.5} className="mx-auto mb-2 text-green-700" />
         <div className="text-[15px] font-medium">All caught up</div>
         <div className="text-[13px] text-muted mt-1">Everything in this period has been reviewed.</div>
-      </div>
+      </Frame>
     );
   }
   return (
@@ -558,8 +574,8 @@ function ReviewList(p: {
           </button>
         )}
       </div>
-      <div className="bg-card-alt rounded-2xl p-2">
-        <div className="bg-cream rounded-xl divide-y divide-line">
+      <Frame title={`AI suggestions · ${p.items.length}`} icon={Sparkles} pad="p-0 overflow-hidden">
+        <div className="divide-y divide-[#E6EAF1]">
           {p.items.map((t) => (
             <div key={t.id} className="flex items-center gap-3 px-4 py-3 flex-wrap">
               <div className="w-[88px] text-[12.5px] text-muted tabular-nums">{t.date}</div>
@@ -589,7 +605,7 @@ function ReviewList(p: {
             </div>
           ))}
         </div>
-      </div>
+      </Frame>
     </div>
   );
 }
@@ -618,20 +634,20 @@ function TxnTable(p: { txns: Txn[]; clientName: (id: string | null) => string; m
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {[["all", "All"], ["income", "Income"], ["expense", "Expenses"], ["no_receipt", "Missing receipt"], ["trust", "Trust"], ["excluded", "Excluded"]].map(([k, l]) => (
-            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium ${filter === k ? "bg-btn" : "bg-chip hover:bg-btn"}`}>{l}</button>
+            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${filter === k ? "bg-btn-hover border border-[#C3CBDA]" : "bg-white border border-[#D9DFEA] hover:bg-[#F4F6FA] hover:border-[#C3CBDA]"}`}>{l}</button>
           ))}
         </div>
       </div>
-      <div className="bg-card-alt rounded-2xl p-2 overflow-x-auto">
-        <div className="bg-cream rounded-xl min-w-[860px]">
-          <div className="grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 text-[12px] font-medium text-muted border-b border-line">
+      <Frame title={`Transactions · ${shown.length}`} icon={Receipt} pad="p-0 overflow-x-auto">
+        <div className="min-w-[860px]">
+          <div className="grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 text-[12px] font-medium text-muted border-b border-[#E6EAF1] bg-[#F4F6FA]">
             <span>Date</span><span>Payee / description</span><span>Category</span><span>Account</span><span className="text-right">Amount</span><span />
           </div>
           {shown.length === 0 ? (
             <div className="px-4 py-10 text-center text-[13.5px] text-muted">No transactions match.</div>
           ) : (
             shown.map((t) => (
-              <div key={t.id} className={`grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 items-center border-b border-line last:border-0 ${t.status === "excluded" ? "opacity-50" : ""}`}>
+              <div key={t.id} className={`grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 items-center border-b border-[#E6EAF1] last:border-0 hover:bg-[#F8F9FC] ${t.status === "excluded" ? "opacity-50" : ""}`}>
                 <span className="text-[12.5px] text-muted tabular-nums">{t.date}</span>
                 <button onClick={() => p.onOpen(t)} className="text-left min-w-0">
                   <div className="text-[13.5px] font-medium truncate">{t.counterparty || t.description || "No description"}</div>
@@ -651,18 +667,18 @@ function TxnTable(p: { txns: Txn[]; clientName: (id: string | null) => string; m
             ))
           )}
         </div>
-      </div>
+      </Frame>
     </div>
   );
 }
 
 // ── Reports ──
 function Box({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div className="bg-card-alt rounded-2xl p-6"><div className="text-[15px] font-semibold mb-3">{title}</div>{children}</div>;
+  return <Frame title={title} icon={Calculator} pad="p-5">{children}</Frame>;
 }
 function Row({ a, b, c, bold }: { a: string; b?: string; c: string; bold?: boolean }) {
   return (
-    <div className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_260px_120px] gap-3 py-2 border-b border-line last:border-0 text-[13.5px] ${bold ? "font-semibold" : ""}`}>
+    <div className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_260px_120px] gap-3 py-2 border-b border-[#E6EAF1] last:border-0 text-[13.5px] ${bold ? "font-semibold" : ""}`}>
       <span>{a}</span><span className="hidden sm:block text-[12.5px] text-muted">{b}</span><span className="text-right tabular-nums">{c}</span>
     </div>
   );

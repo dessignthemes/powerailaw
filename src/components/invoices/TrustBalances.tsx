@@ -47,14 +47,14 @@ export default function TrustBalances({ matters, clientName, reloadKey = 0 }: { 
         </div>
       )}
       {rows.length === 0 ? (
-        <div className="bg-card-alt rounded-xl py-8 text-center text-[13.5px] text-muted">
+        <div className="bg-white border border-[#E3E7EF] rounded-2xl m-[7px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_3px_8px_-1px_rgba(27,25,26,0.08)] py-8 text-center text-[13.5px] text-muted">
           No trust activity yet. Trust deposits and payments imported or added with the account set to <b>Trust (IOLTA)</b> and linked to a matter show here.
         </div>
       ) : (
-        <div className="border border-line rounded-xl overflow-x-auto">
+        <div className="bg-white border border-[#E3E7EF] rounded-2xl m-[7px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_3px_8px_-1px_rgba(27,25,26,0.08)] overflow-x-auto">
           <table className="w-full text-[13px] min-w-[560px]">
             <thead>
-              <tr className="text-left text-[12px] text-muted bg-card-alt">
+              <tr className="text-left text-[12px] text-muted bg-[#F4F6FA]">
                 <th className="font-medium px-3 py-2">Matter · client</th>
                 <th className="font-medium px-2 py-2 text-right">Deposited</th>
                 <th className="font-medium px-2 py-2 text-right">Paid out / to operating</th>
@@ -66,7 +66,7 @@ export default function TrustBalances({ matters, clientName, reloadKey = 0 }: { 
               {rows.map((r, i) => {
                 const m = matters.find((x) => x.id === r.matterId);
                 return (
-                  <tr key={r.matterId ?? `c${i}`} className="border-t border-line">
+                  <tr key={r.matterId ?? `c${i}`} className="border-t border-[#E6EAF1]">
                     <td className="px-3 py-2">
                       {m ? (
                         <Link href={`/dashboard/matters/${m.id}`} className="font-medium hover:underline underline-offset-2" title={m.title}>
