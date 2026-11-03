@@ -2,7 +2,7 @@
 
 import LawPayImportModal from "@/components/accounting/LawPayImportModal";
 import ClickAway from "@/components/ClickAway";
-import { pageBtn, pageBtnOpen } from "@/lib/ui";
+import { pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Calculator,
@@ -221,12 +221,12 @@ function AiAccountant() {
           <button
             onClick={() => setModal({ kind: "lawpay" })}
             title="Import your LawPay payments: invoices are matched and marked paid"
-            className={pageBtn}
+            className={pageBtnB}
           >
             <CreditCard size={14} /> LawPay
           </button>
           <div className="relative">
-            <button onClick={() => setAddOpen(!addOpen)} className={addOpen ? pageBtnOpen : pageBtn} aria-haspopup="menu" aria-expanded={addOpen}>
+            <button onClick={() => setAddOpen(!addOpen)} className={addOpen ? pageBtnOpenB : pageBtnB} aria-haspopup="menu" aria-expanded={addOpen}>
               <Plus size={14} /> Add <ChevronDown size={13} />
             </button>
             {addOpen && (
@@ -251,7 +251,7 @@ function AiAccountant() {
               </>
             )}
           </div>
-          <button onClick={exportPackage} disabled={!!exporting || loading || setup || txns.length === 0} className={`${pageBtn} disabled:opacity-50 disabled:hover:bg-chip`}>
+          <button onClick={exportPackage} disabled={!!exporting || loading || setup || txns.length === 0} className={`${pageBtnB} disabled:opacity-50 disabled:hover:bg-chip`}>
             {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             {exporting ?? "Accountant package"}
           </button>

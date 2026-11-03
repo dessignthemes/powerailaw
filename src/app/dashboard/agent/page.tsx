@@ -1,5 +1,6 @@
 "use client";
 
+import { pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import ClickAway from "@/components/ClickAway";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -463,31 +464,27 @@ function Agent() {
               <span className="truncate max-w-[220px]">{matter.title}</span>
             </span>
           )}
-          <div className="ml-auto flex items-center gap-1 text-muted">
+          <div className="ml-auto flex items-center gap-1">
             <button
               onClick={() => newChat()}
               title="Start a new conversation"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip text-ink hover:bg-btn transition-colors"
+              className={pageBtnB}
             >
-              <SquarePen size={14} strokeWidth={1.75} /> New Chat
+              <SquarePen size={14} /> New Chat
             </button>
             <button
               onClick={() => setHistoryOpen(!historyOpen)}
               aria-pressed={historyOpen}
               title="Past conversations"
-              className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                historyOpen ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
-              }`}
+              className={`ml-1 ${historyOpen ? pageBtnOpenB : pageBtnB}`}
             >
-              <History size={14} strokeWidth={1.75} /> History
+              <History size={14} /> History
             </button>
             <button
               onClick={() => setMemoryOpen(!memoryOpen)}
-              className={`ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                memoryOpen ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
-              }`}
+              className={`ml-1 ${memoryOpen ? pageBtnOpenB : pageBtnB}`}
             >
-              <Brain size={14} strokeWidth={1.75} /> Memory
+              <Brain size={14} /> Memory
             </button>
           </div>
         </div>
