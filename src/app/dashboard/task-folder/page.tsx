@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2, FolderInput, Mail, Check, X, RefreshCw, Undo2, Paperclip, ChevronDown, Inbox, UserCheck, CheckCircle2, RotateCcw, AlertCircle } from "lucide-react";
 import PriorityDot from "@/components/PriorityDot";
+import { pageBtnB, pageBtnOpenB, smallBtnB, menuPanel, framedPanel } from "@/lib/ui";
 import { statusMeta, type BoardTask } from "@/components/NewTaskModal";
 import { numberOf } from "@/components/NewMatterModal";
 import { displayName } from "@/lib/initials";
@@ -218,7 +219,7 @@ export default function TaskFolderPage() {
       </p>
 
       {/* Tabs */}
-      <div className="flex items-center gap-6 border-b border-line mb-6" role="tablist" aria-label="Task Folder">
+      <div className="flex items-center gap-2 flex-wrap mb-6" role="tablist" aria-label="Task Folder">
         {(
           [
             { key: "todo", label: "To Be Assigned", icon: Inbox, count: settings ? waitingCount : null },
@@ -234,12 +235,12 @@ export default function TaskFolderPage() {
               role="tab"
               aria-selected={on}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 pb-3 -mb-px border-b-2 text-[14.5px] font-medium transition-colors ${on ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"}`}
+              className={on ? pageBtnOpenB : pageBtnB}
             >
-              <Icon size={15} strokeWidth={1.75} />
+              <Icon size={14} />
               {t.label}
               {t.count !== null && t.count > 0 && (
-                <span className={`min-w-[22px] h-[20px] px-1.5 rounded-full text-[12px] font-semibold flex items-center justify-center ${on ? "bg-btn text-ink" : "bg-chip text-muted"}`}>{t.count}</span>
+                <span className={`min-w-[22px] h-[20px] px-1.5 rounded-full text-[12px] font-semibold flex items-center justify-center ${on ? "bg-white text-ink" : "bg-white/70 text-muted"}`}>{t.count}</span>
               )}
             </button>
           );
@@ -262,25 +263,25 @@ export default function TaskFolderPage() {
           onGoToFolder={() => setTab("todo")}
         />
       ) : conns === null ? (
-        <div className="flex items-center gap-2 text-[14px] text-muted py-8">
+        <div className={`${framedPanel} flex items-center gap-2 text-[14px] text-muted px-6 py-8`}>
           <Loader2 size={15} className="animate-spin" /> Loading…
         </div>
       ) : connected.length === 0 ? (
-        <div className="border border-line rounded-2xl px-6 py-5 bg-card-alt flex items-center justify-between gap-4 flex-wrap">
+        <div className={`${framedPanel} px-6 py-5 flex items-center justify-between gap-4 flex-wrap`}>
           <div>
             <div className="text-[14.5px] font-semibold mb-0.5">Connect your mailbox first</div>
             <div className="text-[13.5px] text-muted">Task Folder reads a folder from the mailbox you connect in the Inbox.</div>
           </div>
-          <Link href="/dashboard/inbox" className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover">
+          <Link href="/dashboard/inbox" className={pageBtnB}>
             Go to Inbox
           </Link>
         </div>
       ) : (
         <>
           {/* Watched folder */}
-          <div className="border border-line rounded-2xl px-6 py-5 bg-card-alt flex items-center justify-between gap-4 flex-wrap mb-6 relative">
+          <div className={`${framedPanel} px-6 py-5 flex items-center justify-between gap-4 flex-wrap mb-7 relative`}>
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-full bg-white border border-line flex items-center justify-center flex-shrink-0">
+              <span className="w-10 h-10 rounded-full bg-[#F4F6FA] border border-[#E1E5EE] flex items-center justify-center flex-shrink-0">
                 <FolderInput size={17} strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
@@ -303,20 +304,20 @@ export default function TaskFolderPage() {
                   }}
                   title="Refresh"
                   aria-label="Refresh"
-                  className="w-9 h-9 rounded-full bg-chip flex items-center justify-center hover:bg-btn"
+                  className="w-[38px] h-[38px] rounded-full bg-chip border border-btn flex items-center justify-center hover:bg-btn transition-colors"
                 >
                   <RefreshCw size={14} strokeWidth={1.75} className={listLoading ? "animate-spin" : ""} />
                 </button>
               )}
               {connected.length > 1 ? (
                 connected.map((c) => (
-                  <button key={c.provider} onClick={() => openPicker(c.provider)} className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover">
+                  <button key={c.provider} onClick={() => openPicker(c.provider)} className={picking && pickProvider === c.provider ? pageBtnOpenB : pageBtnB}>
                     {settings ? "Change" : "Choose"} {providerName[c.provider]} folder
                   </button>
                 ))
               ) : (
-                <button onClick={() => openPicker(connected[0].provider)} className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover flex items-center gap-1.5">
-                  {settings ? "Change folder" : "Choose folder"} <ChevronDown size={14} />
+                <button onClick={() => openPicker(connected[0].provider)} className={picking ? pageBtnOpenB : pageBtnB}>
+                  {settings ? "Change folder" : "Choose folder"} <ChevronDown size={13} />
                 </button>
               )}
             </div>
@@ -324,8 +325,8 @@ export default function TaskFolderPage() {
             {picking && (
               <>
                 <ClickAway onClose={() => setPicking(false)} />
-                <div className="absolute right-6 top-[calc(100%-8px)] z-50 w-[320px] max-h-[60vh] overflow-y-auto bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5">
-                  <div className="px-3 pt-2 pb-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
+                <div className={`absolute right-6 top-[calc(100%+4px)] z-50 w-[320px] max-h-[60vh] overflow-y-auto ${menuPanel}`}>
+                  <div className="px-3 pt-2 pb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted">
                     {pickProvider ? providerName[pickProvider] : ""} folders
                   </div>
                   {foldersError ? (
@@ -347,7 +348,7 @@ export default function TaskFolderPage() {
                         <button
                           key={f.id}
                           onClick={() => chooseFolder(f)}
-                          className="w-full flex items-center gap-2 py-2 pr-3 rounded-xl text-[13.5px] hover:bg-chip text-left"
+                          className="w-full flex items-center gap-2 py-2 pr-3 rounded-xl text-[13.5px] hover:bg-[#F4F6FA] text-left"
                           style={{ paddingLeft: 12 + depth * 16 }}
                         >
                           <span className="flex-1 truncate">{f.name}</span>
@@ -399,14 +400,14 @@ export default function TaskFolderPage() {
 
               {listError && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{listError}</div>}
 
-              <div className="border border-line rounded-2xl bg-white divide-y divide-line overflow-hidden">
+              <div className={`${framedPanel} divide-y divide-[#E6EAF1] overflow-hidden`}>
                 {listLoading && messages.length === 0 ? (
                   <div className="flex items-center gap-2 text-[14px] text-muted px-5 py-8">
                     <Loader2 size={15} className="animate-spin" /> Loading emails…
                   </div>
                 ) : visible.length === 0 ? (
                   <div className="text-center px-6 py-14">
-                    <span className="w-12 h-12 rounded-full bg-card-alt mx-auto mb-3 flex items-center justify-center">
+                    <span className="w-12 h-12 rounded-full bg-[#F4F6FA] border border-[#E6EAF1] mx-auto mb-3 flex items-center justify-center">
                       <Mail size={18} strokeWidth={1.5} className="text-muted" />
                     </span>
                     <div className="text-[16px] font-semibold mb-1">Nothing waiting</div>
@@ -418,7 +419,7 @@ export default function TaskFolderPage() {
                   visible.map((m) => {
                     const it = itemFor(m);
                     return (
-                      <div key={m.id} className={`px-5 py-4 flex items-start gap-4 ${it ? "bg-cream/60" : ""}`}>
+                      <div key={m.id} className={`px-5 py-4 flex items-start gap-4 transition-colors ${it ? "bg-[#F8F9FC]" : "hover:bg-[#F8F9FC]"}`}>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className={`text-[14px] truncate ${m.unread && !it ? "font-semibold" : "font-medium"}`}>{m.from || m.fromEmail}</span>
@@ -439,16 +440,16 @@ export default function TaskFolderPage() {
                                   View
                                 </Link>
                               )}
-                              <button onClick={() => putBack(m)} title="Show in Task Folder again" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink">
+                              <button onClick={() => putBack(m)} title="Show in Task Folder again" className="w-8 h-8 rounded-full bg-white border border-[#E1E5EE] hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors">
                                 <Undo2 size={14} />
                               </button>
                             </>
                           ) : (
                             <>
-                              <button onClick={() => mark(m, "dismissed")} className="px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip text-ink hover:bg-btn transition-colors">
+                              <button onClick={() => mark(m, "dismissed")} className={smallBtnB}>
                                 Dismiss
                               </button>
-                              <button onClick={() => setCreating(m)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-btn-hover">
+                              <button onClick={() => setCreating(m)} className="bg-btn hover:bg-btn-hover border border-btn text-ink px-3 py-1.5 rounded-full text-[12.5px] font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors">
                                 Create task
                               </button>
                             </>
@@ -461,7 +462,7 @@ export default function TaskFolderPage() {
               </div>
               {next && (
                 <div className="text-center mt-4">
-                  <button onClick={loadMore} disabled={listLoading} className="px-4 py-2 rounded-full bg-chip text-[13px] font-medium hover:bg-btn disabled:opacity-50">
+                  <button onClick={loadMore} disabled={listLoading} className={`${pageBtnB} mx-auto disabled:opacity-50`}>
                     {listLoading ? "Loading…" : "Load more"}
                   </button>
                 </div>
@@ -516,14 +517,14 @@ function TaskTable({
 }) {
   if (!loaded)
     return (
-      <div className="flex items-center gap-2 text-[14px] text-muted py-8">
+      <div className={`${framedPanel} flex items-center gap-2 text-[14px] text-muted px-6 py-8`}>
         <Loader2 size={15} className="animate-spin" /> Loading tasks…
       </div>
     );
   if (!tasks.length)
     return (
-      <div className="border border-line rounded-2xl bg-white text-center px-6 py-14">
-        <span className="w-12 h-12 rounded-full bg-card-alt mx-auto mb-3 flex items-center justify-center">
+      <div className={`${framedPanel} text-center px-6 py-14`}>
+        <span className="w-12 h-12 rounded-full bg-[#F4F6FA] border border-[#E6EAF1] mx-auto mb-3 flex items-center justify-center">
           {kind === "assigned" ? <UserCheck size={18} strokeWidth={1.5} className="text-muted" /> : <CheckCircle2 size={18} strokeWidth={1.5} className="text-muted" />}
         </span>
         <div className="text-[16px] font-semibold mb-1">{kind === "assigned" ? "No open tasks from the Task Folder" : "Nothing completed yet"}</div>
@@ -542,11 +543,11 @@ function TaskTable({
         </div>
       </div>
     );
-  const th = "text-left text-[12px] font-semibold text-muted px-3 py-2.5 whitespace-nowrap";
+  const th = "text-left font-mono text-[10.5px] font-normal uppercase tracking-[0.1em] text-muted px-3 py-2.5 whitespace-nowrap";
   return (
-    <div className="border border-line rounded-2xl bg-white overflow-x-auto">
+    <div className={`${framedPanel} overflow-x-auto`}>
       <table className="w-full min-w-[860px] text-[13.5px]">
-        <thead className="border-b border-line bg-cream">
+        <thead className="border-b border-[#E6EAF1] bg-[#F4F6FA]">
           <tr>
             <th className={`${th} pl-5 w-[150px]`}>Action</th>
             <th className={`${th} w-[120px]`}>{kind === "assigned" ? "Due date" : "Completed"}</th>
@@ -556,7 +557,7 @@ function TaskTable({
             <th className={`${th} w-[130px] pr-5`}>{kind === "assigned" ? "Status" : "Board"}</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-line">
+        <tbody className="divide-y divide-[#E6EAF1]">
           {tasks.map((t) => {
             const overdue = kind === "assigned" && !!t.dueDate && t.dueDate < today;
             const who = person(t.assignee);
@@ -569,11 +570,11 @@ function TaskTable({
               <tr key={t.id} className="align-top hover:bg-[#F7F9FC]">
                 <td className="pl-5 pr-3 py-3">
                   {kind === "assigned" ? (
-                    <button onClick={() => onComplete(t)} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium whitespace-nowrap transition-colors">
+                    <button onClick={() => onComplete(t)} className={smallBtnB}>
                       <Check size={13} /> Mark complete
                     </button>
                   ) : (
-                    <button onClick={() => onReopen(t)} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium whitespace-nowrap transition-colors">
+                    <button onClick={() => onReopen(t)} className={smallBtnB}>
                       <RotateCcw size={13} /> Reopen
                     </button>
                   )}
