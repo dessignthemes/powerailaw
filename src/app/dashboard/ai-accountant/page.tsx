@@ -209,8 +209,8 @@ function AiAccountant() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="w-[170px]">
-            <SelectBox label="Period" value={period} onChange={(v) => setPeriod(v as PeriodKey)}>
+          <div className="w-[140px]">
+            <SelectBox variant="button" label="Period" value={period} onChange={(v) => setPeriod(v as PeriodKey)}>
               {PERIODS.map((p) => (
                 <option key={p.key} value={p.key}>
                   {p.label}

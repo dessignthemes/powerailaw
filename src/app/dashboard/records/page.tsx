@@ -287,11 +287,9 @@ export default function RecordsPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                tab === t.key ? "bg-btn-hover border border-[#C3CBDA] text-ink" : "bg-white border border-[#D9DFEA] text-ink hover:bg-[#F4F6FA] hover:border-[#C3CBDA]"
-              }`}
+              className={tab === t.key ? pageBtnOpenB : pageBtnB}
             >
-              {t.label} <span className={tab === t.key ? "text-ink/60" : "text-muted"}>{loaded ? counts[t.key] : ""}</span>
+              {t.label} <span className={tab === t.key ? "text-ink/60" : "text-muted font-normal"}>{loaded ? counts[t.key] : ""}</span>
             </button>
           ))}
         </div>
