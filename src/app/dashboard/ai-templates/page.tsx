@@ -249,9 +249,9 @@ export default function AiTemplatesPage() {
         <div className="relative">
           <button
             onClick={() => setNewOpen((o) => !o)}
-            className={`border border-[#E1E5EE] text-ink px-5 py-2.5 rounded-full text-[13.5px] font-semibold flex items-center gap-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.10)] hover:shadow-[0_4px_10px_-2px_rgba(27,25,26,0.14)] transition-[background-color,box-shadow] ${newOpen ? "bg-[#E6EAF2]" : "bg-[#EEF0F6] hover:bg-[#E6EAF2]"}`}
+            className={`border border-[#E1E5EE] text-ink px-[17px] py-[8.5px] rounded-full text-[11.5px] font-semibold flex items-center gap-[5px] shadow-[0_1px_1.5px_rgba(27,25,26,0.16)] hover:shadow-[0_1.5px_2.5px_rgba(27,25,26,0.20)] transition-[background-color,box-shadow] ${newOpen ? "bg-[#E6EAF2]" : "bg-[#EEF0F6] hover:bg-[#E6EAF2]"}`}
           >
-            <Plus size={14} strokeWidth={2} /> New template <ChevronDown size={13} strokeWidth={2} />
+            <Plus size={12} strokeWidth={2} /> New template <ChevronDown size={11} strokeWidth={2} />
           </button>
           {newOpen && (
             <>
