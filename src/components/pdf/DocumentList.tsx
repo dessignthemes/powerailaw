@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FileText, Upload, ChevronDown, ChevronRight, Download, PenLine, Loader2, X, Folder, Check, Search, Layers, Trash2, Eye } from "lucide-react";
 import PdfPreview from "@/components/pdf/PdfPreview";
+import { pageBtnB, smallBtnB, frameOuter, frameInner, frameTitle } from "@/lib/ui";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { uploadNewDocument, versionDownloadUrl, UploadError } from "@/lib/pdf/upload";
 import type { FileType } from "@/lib/documents/fileTypes";
@@ -190,9 +191,9 @@ export default function DocumentList({
         <button
           onClick={() => (matterId ? fileInput.current?.click() : setError("Choose the matter this PDF belongs to first."))}
           disabled={uploading}
-          className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-60"
+          className={`${pageBtnB} disabled:opacity-60`}
         >
-          {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} strokeWidth={2} />}
+          {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
           {uploading ? "Checking and uploading…" : "Upload PDF"}
         </button>
         <span className="text-[12.5px] text-muted">PDF only, up to 100 MB</span>
@@ -216,24 +217,35 @@ export default function DocumentList({
         </div>
       )}
 
-      <div className="bg-card-alt rounded-2xl p-2">
+      <div className={frameOuter}>
+        <div className={`${frameTitle} px-3 pt-2.5 pb-2.5`}>
+          <FileText size={15} strokeWidth={1.75} />
+          PDFs{loading ? "" : ` · ${pdfDocs.length}`}
+        </div>
         {loading ? (
-          <div className="bg-cream rounded-xl py-14 text-center text-[14px] text-muted">Loading documents…</div>
+          <div className={`${frameInner} py-14 text-center text-[14px] text-muted`}>Loading documents…</div>
         ) : pdfDocs.length === 0 ? (
-          <div className="bg-cream rounded-xl py-14 text-center">
+          <div className={`${frameInner} py-14 text-center flex flex-col items-center`}>
             <FileText size={22} strokeWidth={1.5} className="text-muted mx-auto mb-3" />
             <div className="text-[14.5px] font-medium">No PDFs here yet</div>
             <div className="text-[13px] text-muted mt-1">Upload a PDF to preview, fill, annotate and sign it.</div>
+            <button
+              onClick={() => (matterId ? fileInput.current?.click() : setError("Choose the matter this PDF belongs to first."))}
+              disabled={uploading}
+              className={`${pageBtnB} mt-4 disabled:opacity-60`}
+            >
+              <Upload size={14} /> Upload PDF
+            </button>
           </div>
         ) : (
-          <div className="bg-cream rounded-xl divide-y divide-line">
+          <div className={`${frameInner} p-2 flex flex-col gap-1.5`}>
             {pdfDocs.map((d) => {
               const versions = pdfVersions(d);
               const latest = versions[0];
               const open = expanded === d.id;
               return (
-                <div key={d.id}>
-                  <div className="flex items-center gap-3 px-5 py-4 flex-wrap">
+                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#EEF1F6] border-[#DDE3EE]" : "bg-[#F4F6FA] border-[#E6EAF1] hover:bg-[#EEF1F6]"}`}>
+                  <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
                     <button
                       onClick={() => setExpanded(open ? null : d.id)}
                       className="text-muted hover:text-ink"
@@ -245,7 +257,7 @@ export default function DocumentList({
                     <div className="flex-1 min-w-[200px]">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-[14.5px] font-medium truncate">{d.title}</span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-line/60 text-[11.5px] font-medium text-ink flex-shrink-0">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white border border-[#E1E5EE] text-[11.5px] font-medium text-ink flex-shrink-0">
                           PDF
                         </span>
                       </div>
@@ -259,25 +271,25 @@ export default function DocumentList({
                     {latest && (
                       <button
                         onClick={() => setPreview({ doc: d, versionId: latest.id, versionNumber: latest.versionNumber })}
-                        className="bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+                        className={smallBtnB}
                       >
-                        <Eye size={13} strokeWidth={2} /> Preview
+                        <Eye size={13} /> Preview
                       </button>
                     )}
                     {latest && (
                       <Link
                         href={`/dashboard/power-pdf/${d.id}?version=${latest.id}`}
-                        className="bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+                        className={smallBtnB}
                       >
-                        <PenLine size={13} strokeWidth={2} /> Open in Power PDF
+                        <PenLine size={13} /> Open in Power PDF
                       </Link>
                     )}
                     {latest && (
                       <button
                         onClick={() => download(latest.id)}
-                        className="bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+                        className={smallBtnB}
                       >
-                        <Download size={13} strokeWidth={2} /> Download
+                        <Download size={13} /> Download
                       </button>
                     )}
                     <button
@@ -285,14 +297,15 @@ export default function DocumentList({
                       disabled={deleting === d.id}
                       title="Delete PDF"
                       aria-label={`Delete ${d.title}`}
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-red-600 hover:bg-white transition-colors disabled:opacity-50"
                     >
                       {deleting === d.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={15} strokeWidth={1.75} />}
                     </button>
                   </div>
                   {open && (
-                    <div className="px-5 pb-4 pl-[68px]">
-                      <div className="border border-line rounded-xl divide-y divide-line bg-white/50">
+                    <div className="px-4 pb-4 pl-[64px]">
+                      <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-1.5">Versions</div>
+                      <div className="border border-[#E3E7EF] rounded-xl divide-y divide-[#E6EAF1] bg-white">
                         {versions.map((v) => (
                           <div key={v.id} className="flex items-center gap-3 px-4 py-2.5 flex-wrap text-[13px]">
                             <span className="font-medium w-[34px]">v{v.versionNumber}</span>
