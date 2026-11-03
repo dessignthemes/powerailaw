@@ -1,5 +1,6 @@
 "use client";
 
+import { pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import { useState } from "react";
 import { X, Copy, Check, Mail, KeyRound, Loader2, Send, Inbox } from "lucide-react";
 import DropZone from "./DropZone";
@@ -99,7 +100,7 @@ export default function CreateShareModal({ kind, onClose, onCreated }: { kind: S
             </div>
             <div className="flex items-center gap-2 mb-3">
               <input readOnly value={result.link} className={`${input} font-mono text-[12.5px]`} onFocus={(e) => e.target.select()} />
-              <button onClick={() => copy("link", result.link)} className="flex-shrink-0 flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-3.5 py-2.5 rounded-full text-[13px] font-medium transition-colors">
+              <button onClick={() => copy("link", result.link)} className={`flex-shrink-0 ${pageBtnB}`}>
                 {copied === "link" ? <Check size={14} /> : <Copy size={14} />} {copied === "link" ? "Copied" : "Copy"}
               </button>
             </div>
@@ -111,10 +112,10 @@ export default function CreateShareModal({ kind, onClose, onCreated }: { kind: S
               </div>
             )}
             <div className="flex items-center gap-2 mt-5">
-              <a href={mailtoFor(kind, email, title || (send ? "Files for you" : "Please upload your documents"), result.link, result.expiresAt, usePw)} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors">
+              <a href={mailtoFor(kind, email, title || (send ? "Files for you" : "Please upload your documents"), result.link, result.expiresAt, usePw)} className={pageBtnB}>
                 <Mail size={14} strokeWidth={1.75} /> Email the link
               </a>
-              <button onClick={onClose} className="ml-auto bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors">Done</button>
+              <button onClick={onClose} className={`ml-auto ${pageBtnOpenB} hover:bg-btn-hover`}>Done</button>
             </div>
           </div>
         ) : (
@@ -142,7 +143,7 @@ export default function CreateShareModal({ kind, onClose, onCreated }: { kind: S
               {usePw && (
                 <div className="mt-2 flex items-center gap-2">
                   <input value={password} onChange={(e) => setPassword(e.target.value)} className={`${input} font-mono`} />
-                  <button type="button" onClick={() => setPassword(randomPassword())} className="flex-shrink-0 bg-chip hover:bg-btn px-3 py-2 rounded-full text-[12.5px] font-medium transition-colors">New</button>
+                  <button type="button" onClick={() => setPassword(randomPassword())} className="flex-shrink-0 bg-chip hover:bg-btn border border-btn px-3 py-2 rounded-full text-[12.5px] font-medium transition-colors">New</button>
                 </div>
               )}
               <div className="text-[12px] text-muted mt-1.5">Recommended for sensitive documents. Give the password separately, by text or phone.</div>
@@ -150,8 +151,8 @@ export default function CreateShareModal({ kind, onClose, onCreated }: { kind: S
             {send && <DropZone items={up.items} onAdd={up.add} onRemove={busy ? undefined : up.remove} disabled={busy} />}
             {error && <div className="text-[13px] text-[#B42318]">{error}</div>}
             <div className="flex items-center justify-end gap-2 mt-1">
-              <button onClick={onClose} disabled={busy} className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors">Cancel</button>
-              <button onClick={submit} disabled={busy} className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-60 flex items-center gap-1.5">
+              <button onClick={onClose} disabled={busy} className={pageBtnB}>Cancel</button>
+              <button onClick={submit} disabled={busy} className={`${pageBtnOpenB} hover:bg-btn-hover disabled:opacity-60`}>
                 {busy && <Loader2 size={14} className="animate-spin" />}
                 {busy ? (send ? "Uploading…" : "Creating…") : send ? "Upload & create link" : "Create upload link"}
               </button>

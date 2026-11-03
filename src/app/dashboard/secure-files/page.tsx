@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import CreateShareModal, { linkFor, mailtoFor } from "@/components/shares/CreateShareModal";
 import DropZone from "@/components/shares/DropZone";
+import Frame from "@/components/ui/Frame";
+import { pageBtnB, smallBtnB } from "@/lib/ui";
 import { useUploads, api } from "@/components/shares/useUploads";
 import { fmtBytes, SHARE_DAYS, type Share, type ShareEvent, type ShareKind } from "@/lib/shares/types";
 
@@ -64,11 +66,11 @@ export default function SecureFilesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setCreating("request")} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors">
-            <Inbox size={14} strokeWidth={1.75} /> Request files
+          <button onClick={() => setCreating("request")} className={pageBtnB}>
+            <Inbox size={14} /> Request files
           </button>
-          <button onClick={() => setCreating("send")} className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors">
-            <Send size={14} strokeWidth={1.75} /> Send files
+          <button onClick={() => setCreating("send")} className={pageBtnB}>
+            <Send size={14} /> Send files
           </button>
         </div>
       </div>
@@ -83,29 +85,46 @@ export default function SecureFilesPage() {
       {error && <div className="mb-4 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13.5px]">{error}</div>}
 
       {shares === null ? (
-        <div className="text-[13.5px] text-muted flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Loading…</div>
+        <Frame title="Active links" icon={Link2} pad="px-6 py-10">
+          <div className="text-[13.5px] text-muted flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Loading…</div>
+        </Frame>
       ) : active.length === 0 && !error ? (
-        <div className="bg-card-alt rounded-2xl px-6 py-12 text-center">
+        <Frame title="Active links · 0" icon={Link2} pad="px-6 py-12 text-center">
           <div className="text-[15px] font-medium">No active links</div>
           <div className="text-[13.5px] text-muted mt-1">Use <b>Send files</b> to share documents, or <b>Request files</b> to collect them from a client.</div>
-        </div>
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <button onClick={() => setCreating("request")} className={pageBtnB}><Inbox size={14} /> Request files</button>
+            <button onClick={() => setCreating("send")} className={pageBtnB}><Send size={14} /> Send files</button>
+          </div>
+        </Frame>
       ) : (
-        <div className="flex flex-col gap-2">
-          {active.map((s) => (
-            <ShareRow key={s.id} share={s} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} onChanged={load} />
-          ))}
-        </div>
+        <Frame title={`Active links · ${active.length}`} icon={Link2} pad="p-2">
+          <div className="flex flex-col gap-1.5">
+            {active.map((s) => (
+              <ShareRow key={s.id} share={s} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} onChanged={load} />
+            ))}
+          </div>
+        </Frame>
       )}
 
       {ended.length > 0 && (
-        <div className="mt-8">
-          <button onClick={() => setShowEnded((v) => !v)} className="text-[13px] text-muted hover:text-ink flex items-center gap-1">
-            {showEnded ? <ChevronDown size={14} /> : <ChevronRight size={14} />} Ended links ({ended.length})
-          </button>
-          {showEnded && (
-            <div className="mt-2 flex flex-col gap-1.5">
+        <div className="mt-6">
+          <Frame
+            title={`Ended links · ${ended.length}`}
+            icon={Clock}
+            right={
+              <button onClick={() => setShowEnded((v) => !v)} className="text-[12px] text-muted hover:text-ink flex items-center gap-1">
+                {showEnded ? "Hide" : "Show"} {showEnded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+            }
+            pad={showEnded ? "p-2" : "px-4 py-3"}
+          >
+          {!showEnded ? (
+            <button onClick={() => setShowEnded(true)} className="text-[13px] text-muted hover:text-ink">Show {ended.length} ended link{ended.length === 1 ? "" : "s"} (files already deleted)</button>
+          ) : (
+            <div className="flex flex-col gap-1.5">
               {ended.map((s) => (
-                <div key={s.id} className="flex items-center gap-3 bg-card-alt rounded-xl px-4 py-2.5 text-[13px]">
+                <div key={s.id} className="flex items-center gap-3 bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-4 py-2.5 text-[13px]">
                   {s.kind === "send" ? <Send size={13} className="text-muted" /> : <Inbox size={13} className="text-muted" />}
                   <span className="flex-1 truncate">{s.title}</span>
                   <span className="text-muted">{s.status === "cancelled" ? "Cancelled" : "Expired"} · files deleted</span>
@@ -114,6 +133,7 @@ export default function SecureFilesPage() {
               ))}
             </div>
           )}
+          </Frame>
         </div>
       )}
 
@@ -186,9 +206,9 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
   const downloads = s.files.reduce((n, f) => n + f.downloadCount, 0);
 
   return (
-    <div className="bg-card-alt rounded-2xl">
-      <button onClick={onToggle} className="w-full flex items-center gap-3.5 px-4 py-3.5 text-left">
-        <span className="w-9 h-9 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+    <div className={`rounded-xl border transition-colors ${open ? "bg-[#EEF1F6] border-[#DDE3EE]" : "bg-[#F4F6FA] border-[#E6EAF1] hover:bg-[#EEF1F6]"}`}>
+      <button onClick={onToggle} className="w-full flex items-center gap-3.5 px-4 py-3 text-left">
+        <span className="w-9 h-9 rounded-xl bg-white border border-[#E1E5EE] flex items-center justify-center flex-shrink-0">
           {send ? <Send size={15} strokeWidth={1.75} /> : <Inbox size={15} strokeWidth={1.75} />}
         </span>
         <span className="min-w-0 flex-1">
@@ -210,10 +230,10 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
 
       {open && (
         <div className="px-4 pb-4">
-          {s.message && <div className="text-[13px] text-muted bg-page rounded-xl px-3.5 py-2.5 mb-3 whitespace-pre-wrap">{s.message}</div>}
+          {s.message && <div className="text-[13px] text-muted bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-2.5 mb-3 whitespace-pre-wrap">{s.message}</div>}
 
-          <div className="bg-page rounded-xl p-3 mb-3">
-            <div className="text-[12px] font-semibold uppercase tracking-wide text-muted mb-2">{send ? "Files shared" : "Files received"}</div>
+          <div className="bg-white border border-[#E3E7EF] rounded-xl p-3 mb-3">
+            <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-2">{send ? "Files shared" : "Files received"}</div>
             {s.files.length === 0 && <div className="text-[13px] text-muted">{send ? "No files yet." : "Nothing uploaded yet."}</div>}
             <div className="flex flex-col gap-1">
               {s.files.map((f) => (
@@ -222,7 +242,7 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
                   <span className="text-muted text-[12px]">{fmtBytes(f.size)}</span>
                   {send && <span className="text-muted text-[12px] w-[90px] text-right">{f.downloadCount ? `${f.downloadCount} download${f.downloadCount > 1 ? "s" : ""}` : "not downloaded"}</span>}
                   {!send && <span className="text-muted text-[12px]">{when(f.createdAt)}</span>}
-                  <button onClick={() => download(f.id)} disabled={!!busy} className="flex items-center gap-1 bg-chip hover:bg-btn px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors">
+                  <button onClick={() => download(f.id)} disabled={!!busy} className="flex items-center gap-1 bg-chip hover:bg-btn border border-btn px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors">
                     {busy === `dl-${f.id}` ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />} Download
                   </button>
                 </div>
@@ -232,7 +252,7 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
               <div className="mt-3">
                 <DropZone items={up.items} onAdd={up.add} onRemove={busy ? undefined : up.remove} disabled={!!busy} hint="Add more files to this link (up to 2 GB each)" />
                 {up.items.some((i) => i.state !== "done") && (
-                  <button onClick={addFiles} disabled={!!busy} className="mt-2 bg-btn hover:bg-btn-hover px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors flex items-center gap-1.5">
+                  <button onClick={addFiles} disabled={!!busy} className={`mt-2 ${smallBtnB}`}>
                     {busy === "add" && <Loader2 size={13} className="animate-spin" />} Upload {up.items.filter((i) => i.state !== "done").length} file(s)
                   </button>
                 )}
@@ -242,36 +262,36 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
 
           {link && (
             <div className="flex items-center gap-2 mb-3">
-              <input readOnly value={link} onFocus={(e) => e.target.select()} className="flex-1 bg-white border border-line rounded-xl px-3 py-2 text-[12.5px] font-mono outline-none" />
+              <input readOnly value={link} onFocus={(e) => e.target.select()} className="flex-1 bg-white border border-[#E3E7EF] rounded-xl px-3 py-2 text-[12.5px] font-mono outline-none focus:border-[#C3CBDA]" />
               <button
                 onClick={async () => {
                   await navigator.clipboard.writeText(link);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1500);
                 }}
-                className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors"
+                className={smallBtnB}
               >
                 {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied" : "Copy"}
               </button>
-              <a href={mailtoFor(s.kind, s.recipientEmail ?? "", s.title, link, s.expiresAt, s.hasPassword)} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors">
+              <a href={mailtoFor(s.kind, s.recipientEmail ?? "", s.title, link, s.expiresAt, s.hasPassword)} className={smallBtnB}>
                 <Mail size={13} /> Email
               </a>
             </div>
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={makeLink} disabled={!!busy} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors">
+            <button onClick={makeLink} disabled={!!busy} className={smallBtnB}>
               <Link2 size={13} /> {link ? "Make another new link" : "Get a new link"}
             </button>
-            <button onClick={cancel} disabled={!!busy} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium text-[#B42318] transition-colors">
+            <button onClick={cancel} disabled={!!busy} className="flex items-center gap-1.5 bg-[#FDECEC] hover:bg-[#FADADA] border border-[#F6C9C9] text-[#B42318] px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors disabled:opacity-50">
               <Trash2 size={13} /> Cancel link & delete files
             </button>
             <span className="text-[12px] text-muted ml-auto">Created {when(s.createdAt)}{s.createdByEmail ? ` by ${s.createdByEmail}` : ""}</span>
           </div>
           {err && <div className="mt-2 text-[12.5px] text-[#B42318]">{err}</div>}
 
-          <div className="mt-4">
-            <div className="text-[12px] font-semibold uppercase tracking-wide text-muted mb-1.5 flex items-center gap-1.5"><Eye size={12} /> Activity</div>
+          <div className="mt-4 bg-white border border-[#E3E7EF] rounded-xl p-3">
+            <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-1.5 flex items-center gap-1.5"><Eye size={12} /> Activity</div>
             {events === null ? (
               <div className="text-[12.5px] text-muted">Loading…</div>
             ) : events.length === 0 ? (
