@@ -371,7 +371,7 @@ export function MatterPicker({
         key={id || "all"}
         onClick={() => pick(id)}
         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left transition-colors ${
-          active ? "bg-chip font-medium" : "hover:bg-chip/70"
+          active ? "bg-[#EEF1F6] font-medium" : "hover:bg-[#F4F6FA]"
         }`}
       >
         <span className="text-muted flex-shrink-0">{icon}</span>
@@ -387,7 +387,7 @@ export function MatterPicker({
         onClick={() => setOpen(!open)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors pl-3.5 pr-3 py-2 rounded-full text-[13.5px] font-medium max-w-[320px]"
+        className={`flex items-center gap-2 border border-btn transition-colors pl-3.5 pr-3 py-2 rounded-full text-[13px] font-medium max-w-[320px] ${open ? "bg-btn" : "bg-chip hover:bg-btn"}`}
       >
         {current ? (
           <Folder size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
@@ -407,7 +407,7 @@ export function MatterPicker({
           <ClickAway onClose={() => setOpen(false)} />
           <div
             role="listbox"
-            className="absolute left-0 top-[calc(100%+6px)] z-50 w-[300px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5"
+            className="absolute left-0 top-[calc(100%+14px)] z-50 w-[300px] bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5"
           >
             {matters.length > 6 && (
               <div className="flex items-center gap-2 px-3 py-2 mb-1 border-b border-line">

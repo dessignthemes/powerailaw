@@ -25,10 +25,12 @@ import {
   Check,
   FileSignature,
   Copy,
+  Plus,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { initialsFor } from "@/lib/initials";
 import SelectBox from "@/components/SelectBox";
+import { pageBtnB, frameOuter, frameInner, frameTitle } from "@/lib/ui";
 import { MatterPicker, formatWhen, formatSize, type Doc, type DocVersion } from "@/components/pdf/DocumentList";
 import {
   uploadAnyDocument,
@@ -68,10 +70,10 @@ function TypeBadge({ type }: { type: FileType }) {
   );
 }
 
+// Row buttons: the same look as the page buttons (light blue, 1px border, darker on hover), a little smaller.
 const beigeBtn =
-  "bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50";
-const blackBtn =
-  "bg-chip hover:bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-60";
+  "bg-chip hover:bg-btn border border-btn text-ink px-3 py-1.5 rounded-full text-[12.5px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 whitespace-nowrap";
+const blackBtn = beigeBtn;
 
 // openAdd: open the Add documents window right away (e.g. from "Go to Documents").
 export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = false }: { matterId?: string; openAdd?: boolean }) {
@@ -262,8 +264,8 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
   }
 
   const addButton = (
-    <button onClick={() => setAdding(true)} className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors">
-      + Add document
+    <button onClick={() => setAdding(true)} className={pageBtnB}>
+      <Plus size={14} /> Add document
     </button>
   );
 
@@ -284,21 +286,21 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
       ) : null}
 
       <div className="flex items-center gap-3 mb-5 flex-wrap">
-        <div className="relative flex-1 min-w-[240px] max-w-[420px]">
-          <Search size={15} strokeWidth={1.75} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+        <div className="relative flex-1 min-w-[240px] max-w-[420px] bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+          <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Search by name, matter, type or person"
             aria-label="Search documents"
-            className="w-full border border-line bg-white rounded-full pl-10 pr-9 py-2.5 text-[13.5px] outline-none focus:border-ink placeholder:text-muted"
+            className="w-full border border-[#E3E7EF] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#C3CBDA] placeholder:text-muted shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
           />
           {query && (
             <button
               onClick={() => setQuery("")}
               aria-label="Clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
             >
               <X size={14} strokeWidth={1.75} />
             </button>
@@ -327,7 +329,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
         </div>
       )}
       {notice && (
-        <div className="mb-5 flex items-start justify-between gap-3 rounded-xl border border-line bg-card-alt px-4 py-3 text-[13.5px]">
+        <div className="mb-5 flex items-start justify-between gap-3 rounded-xl border border-[#E6EAF1] bg-[#F4F6FA] px-4 py-3 text-[13.5px]">
           <span>{notice}</span>
           <button onClick={() => setNotice(null)} className="text-muted hover:text-ink flex-shrink-0" aria-label="Dismiss">
             <X size={15} strokeWidth={1.75} />
@@ -343,27 +345,33 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
         onChange={(e) => onVersionFile(e.target.files?.[0])}
       />
 
-      <div className="bg-card-alt rounded-2xl p-2">
+      <div className={frameOuter}>
+        <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5">
+          <span className={frameTitle}>
+            <FileText size={15} strokeWidth={1.75} />
+            Documents{loading ? "" : ` · ${shown.length}`}
+          </span>
+        </div>
         {loading ? (
-          <div className="bg-cream rounded-xl py-14 text-center text-[14px] text-muted">Loading documents…</div>
+          <div className={`${frameInner} py-14 text-center text-[14px] text-muted`}>Loading documents…</div>
         ) : docs.length === 0 ? (
-          <div className="bg-cream rounded-xl py-14 text-center">
+          <div className={`${frameInner} py-14 text-center flex flex-col items-center`}>
             <FileText size={22} strokeWidth={1.5} className="text-muted mx-auto mb-3" />
             <div className="text-[14.5px] font-medium">No documents {matterId ? "on this matter " : ""}yet</div>
             <div className="text-[13px] text-muted mt-1 mb-5">{ACCEPTED_SUMMARY}.</div>
             {addButton}
           </div>
         ) : shown.length === 0 ? (
-          <div className="bg-cream rounded-xl py-14 text-center">
+          <div className={`${frameInner} py-14 text-center`}>
             <div className="text-[14.5px] font-medium">No documents match “{query.trim()}”</div>
             <button onClick={() => setQuery("")} className={`${beigeBtn} mx-auto mt-4`}>
               Clear search
             </button>
           </div>
         ) : (
-          <div className="bg-cream rounded-xl divide-y divide-line">
+          <div className={`${frameInner} p-2 flex flex-col gap-1.5`}>
             {/* Column headings (click to sort) */}
-            <div className="flex items-center gap-3 px-5 py-2 text-[12px] font-semibold text-muted">
+            <div className="flex items-center gap-3 px-4 pt-1 pb-0.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted">
               <span className="w-4" />
               <span className="w-4" />
               {(
@@ -392,8 +400,8 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
               const open = expanded === d.id;
               const working = busy === d.id;
               return (
-                <div key={d.id}>
-                  <div className="flex items-center gap-3 px-5 py-4 flex-wrap">
+                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#EEF1F6] border-[#DDE3EE]" : "bg-[#F4F6FA] border-[#E6EAF1] hover:bg-[#EEF1F6]"}`}>
+                  <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
                     <button
                       onClick={() => setExpanded(open ? null : d.id)}
                       className="text-muted hover:text-ink"
@@ -459,7 +467,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                         <>
                           <span className="w-12 flex justify-center" title={tip || undefined}>
                             {by ? (
-                              <span className="w-8 h-8 rounded-full bg-card-alt border border-line text-[11px] font-semibold text-muted flex items-center justify-center">{initialsFor(who, by)}</span>
+                              <span className="w-8 h-8 rounded-full bg-white border border-[#E1E5EE] text-[11px] font-semibold text-muted flex items-center justify-center">{initialsFor(who, by)}</span>
                             ) : (
                               <span className="text-muted">—</span>
                             )}
@@ -478,21 +486,21 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                       disabled={working}
                       title="Delete document"
                       aria-label={`Delete ${d.title}`}
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:text-red-600 hover:bg-white transition-colors disabled:opacity-50"
                     >
                       {working ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={15} strokeWidth={1.75} />}
                     </button>
                   </div>
                   {latest && type === "doc" && (
-                    <div className="px-5 -mt-2 pb-3 pl-[68px] text-[12.5px] text-muted">
+                    <div className="px-4 -mt-1 pb-3 pl-[64px] text-[12.5px] text-muted">
                       Older Word format (.doc). To edit it in Power PDF, open it in Word, save it as .docx or PDF, and upload that as a new
                       version.
                     </div>
                   )}
                   {open && reqsFor(d.id).length > 0 && (
-                    <div className="px-5 pb-2 pl-[68px]">
-                      <div className="text-[12px] font-semibold uppercase tracking-wide text-muted mb-1.5">Signature requests</div>
-                      <div className="border border-line rounded-xl divide-y divide-line bg-white/50 mb-2">
+                    <div className="px-4 pb-2 pl-[64px]">
+                      <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-1.5">Signature requests</div>
+                      <div className="border border-[#E3E7EF] rounded-xl divide-y divide-[#E6EAF1] bg-white mb-2">
                         {reqsFor(d.id).map((r) => (
                           <div key={r.id} className="flex items-center gap-3 px-4 py-2.5 flex-wrap text-[13px]">
                             <span className="font-medium">{r.signerName}</span>
@@ -515,8 +523,9 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                     </div>
                   )}
                   {open && (
-                    <div className="px-5 pb-4 pl-[68px]">
-                      <div className="border border-line rounded-xl divide-y divide-line bg-white/50">
+                    <div className="px-4 pb-4 pl-[64px]">
+                      <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-1.5">Versions</div>
+                      <div className="border border-[#E3E7EF] rounded-xl divide-y divide-[#E6EAF1] bg-white">
                         {d.versions.map((v) => {
                           const vt = typeOf(v);
                           return (
