@@ -26,3 +26,9 @@ export const rowLight = "bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl";
 // A single white panel drawn with the widget frame around it (grey-blue ring), for blocks without a title.
 export const framedPanel =
   "bg-white border border-[#E3E7EF] rounded-2xl m-[7px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_3px_8px_-1px_rgba(27,25,26,0.08)]";
+// Dropdown in the widget style: grey-blue frame with a small mono title, white panel inside.
+export const popFrame =
+  "bg-[#ECEFF6] border border-[#E1E5EE] rounded-[22px] p-1.5 shadow-[0_24px_50px_-18px_rgba(18,17,16,0.30)]";
+export const popTitle = "flex items-center justify-between gap-2 px-3 pt-2 pb-2.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted";
+export const popInner = "bg-white border border-[#E3E7EF] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)]";
+export const popHeading = "px-2.5 pt-2.5 pb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted";

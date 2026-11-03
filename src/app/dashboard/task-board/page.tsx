@@ -1364,7 +1364,7 @@ function TaskBoard({
                 {/* More than 5 cards: about 5 show, the rest scroll (visible scroll bar);
                     "Add a task" stays pinned at the bottom. */}
                 <div
-                  className={`px-2.5 pt-1.5 -mt-1.5 flex-1 min-h-0 overflow-y-auto flex flex-col ${colTasks.length > 5 ? "scroll-on-hover pr-1" : "pb-3"}`}
+                  className={`px-2.5 pt-1.5 -mt-1.5 flex-1 min-h-0 overflow-y-auto flex flex-col rounded-b-[21px] ${colTasks.length > 5 ? "scroll-on-hover pr-1" : "pb-3"}`}
                   style={colTasks.length > 5 ? { maxHeight: 560 } : undefined}
                 >
                   {colTasks.length === 0 && inlineAddFor !== col.id ? (
@@ -1390,7 +1390,7 @@ function TaskBoard({
                           if (e.key === "Escape") setInlineAddFor(null);
                         }}
                         placeholder="Task title"
-                        className="w-full bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted focus:border-[#C3CBDA]"
+                        className="w-full bg-white border border-[#E3E7EF] rounded-lg px-3 py-[5px] text-[13px] leading-5 outline-none placeholder:text-muted focus:border-[#C3CBDA]"
                       />
                       <div className="px-1 pt-1.5 text-[11.5px] text-muted">Enter to add · Esc to cancel</div>
                     </div>
@@ -1408,7 +1408,7 @@ function TaskBoard({
                             if (e.key === "Escape") setInlineAddFor(null);
                           }}
                           placeholder="Task title"
-                          className="w-full bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted focus:border-[#C3CBDA]"
+                          className="w-full bg-white border border-[#E3E7EF] rounded-lg px-3 py-[5px] text-[13px] leading-5 outline-none placeholder:text-muted focus:border-[#C3CBDA]"
                         />
                         <div className="px-1 pt-1.5 text-[11.5px] text-muted">Enter to add · Esc to cancel</div>
                         </div>
@@ -1581,7 +1581,7 @@ function TaskBoard({
                           }}
                           className={`sticky bottom-0 z-[1] flex items-center justify-center gap-1.5 py-3 bg-[#ECEFF6] text-muted hover:text-ink transition-colors ${
                             // Long column: a solid bar across the full width, so cards scrolling under it never show through.
-                            colTasks.length > 5 ? "-ml-2.5 -mr-3.5 mt-1 border-t border-[#E1E5EE] rounded-b-[21px] shadow-[0_-6px_12px_-8px_rgba(27,25,26,0.18)]" : ""
+                            colTasks.length > 5 ? "-ml-2.5 -mr-1 mt-1 border-t border-[#E1E5EE] rounded-b-[21px] shadow-[0_-6px_12px_-8px_rgba(27,25,26,0.18)]" : ""
                           }`}
                         >
                           <Plus size={15} strokeWidth={1.75} />

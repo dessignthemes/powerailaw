@@ -1,8 +1,9 @@
 "use client";
 
+import { popFrame, popTitle, popInner, popHeading } from "@/lib/ui";
 import { descriptionText } from "@/components/RichTextEditor";
 import ClickAway from "@/components/ClickAway";
-import { Check } from "lucide-react";
+import { Check, Filter, SlidersHorizontal } from "lucide-react";
 import type { BoardTask, TaskPriority as Priority } from "@/components/NewTaskModal";
 import { displayName } from "@/lib/initials";
 import { isDueIn, isOverdue } from "@/lib/taskDates";
@@ -68,8 +69,8 @@ function toggle<T>(list: T[], v: T) {
 
 function Option({ on, label, onClick }: { on: boolean; label: React.ReactNode; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] hover:bg-chip text-left">
-      <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${on ? "bg-dark border-dark text-white" : "border-line"}`}>
+    <button onClick={onClick} className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] text-left transition-colors ${on ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"}`}>
+      <span className={`w-4 h-4 rounded-[5px] border flex items-center justify-center flex-shrink-0 ${on ? "bg-dark border-dark text-white" : "bg-white border-[#C9D1DE]"}`}>
         {on && <Check size={11} strokeWidth={3} />}
       </span>
       <span className="truncate">{label}</span>
@@ -78,7 +79,7 @@ function Option({ on, label, onClick }: { on: boolean; label: React.ReactNode; o
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <div className="px-2.5 pt-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{children}</div>
+  <div className={popHeading}>{children}</div>
 );
 
 export function FilterMenu({
@@ -95,15 +96,16 @@ export function FilterMenu({
   return (
     <>
       <ClickAway onClose={onClose} />
-      <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[280px] max-h-[70vh] overflow-y-auto bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5">
-        <div className="flex items-center justify-between px-2.5 pt-1.5">
-          <span className="text-[14px] font-semibold">Filter tasks</span>
+      <div className={`absolute right-0 top-[calc(100%+10px)] z-50 w-[290px] ${popFrame}`}>
+        <div className={popTitle}>
+          <span className="flex items-center gap-2"><Filter size={14} strokeWidth={1.75} /> Filter tasks</span>
           {countFilters(value) > 0 && (
-            <button onClick={() => onChange(NO_FILTERS)} className="text-[12.5px] text-muted hover:text-ink underline underline-offset-2">
+            <button onClick={() => onChange(NO_FILTERS)} className="font-sans normal-case tracking-normal text-[12px] font-medium text-ink bg-white border border-[#E1E5EE] hover:bg-[#F4F6FA] rounded-full px-2.5 py-0.5">
               Clear
             </button>
           )}
         </div>
+        <div className={`${popInner} p-1.5 max-h-[64vh] overflow-y-auto`}>
         <Heading>Priority</Heading>
         {(["High", "Medium", "Low"] as Priority[]).map((p) => (
           <Option key={p} on={value.priorities.includes(p)} label={p} onClick={() => onChange({ ...value, priorities: toggle(value.priorities, p) })} />
@@ -128,6 +130,7 @@ export function FilterMenu({
         {members.map((m) => (
           <Option key={m.id} on={value.creators.includes(m.id)} label={displayName(m.fullName, m.email)} onClick={() => onChange({ ...value, creators: toggle(value.creators, m.id) })} />
         ))}
+        </div>
       </div>
     </>
   );
@@ -144,16 +147,19 @@ export function DisplayMenu({ value, onChange, onClose }: { value: DisplayOption
   return (
     <>
       <ClickAway onClose={onClose} />
-      <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[260px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5">
-        <div className="px-2.5 pt-1.5 text-[14px] font-semibold">Display</div>
+      <div className={`absolute right-0 top-[calc(100%+10px)] z-50 w-[270px] ${popFrame}`}>
+        <div className={popTitle}>
+          <span className="flex items-center gap-2"><SlidersHorizontal size={14} strokeWidth={1.75} /> Display</span>
+        </div>
+        <div className={`${popInner} p-1.5`}>
         <Heading>Sort cards by</Heading>
         {sorts.map(([k, l]) => (
           <button
             key={k}
             onClick={() => onChange({ ...value, sort: k })}
-            className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] hover:bg-chip text-left"
+            className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] text-left transition-colors ${value.sort === k ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"}`}
           >
-            <span className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${value.sort === k ? "border-dark" : "border-line"}`}>
+            <span className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 bg-white ${value.sort === k ? "border-dark" : "border-[#C9D1DE]"}`}>
               {value.sort === k && <span className="w-2 h-2 rounded-full bg-dark" />}
             </span>
             {l}
@@ -161,7 +167,8 @@ export function DisplayMenu({ value, onChange, onClose }: { value: DisplayOption
         ))}
         <Heading>Columns</Heading>
         <Option on={value.hideDone} label="Hide the Done column" onClick={() => onChange({ ...value, hideDone: !value.hideDone })} />
-        <div className="px-2.5 pt-2 pb-1.5 text-[11.5px] text-muted">Saved in this browser.</div>
+        </div>
+        <div className="px-3 pt-2 pb-1 text-[11.5px] text-muted">Saved in this browser.</div>
       </div>
     </>
   );

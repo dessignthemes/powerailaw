@@ -1,5 +1,6 @@
 "use client";
 
+import { popFrame, popTitle, popInner } from "@/lib/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, ListChecks, Folder , MessageSquare, UserPlus, Receipt } from "lucide-react";
@@ -94,8 +95,12 @@ export default function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[360px] max-w-[calc(100vw-32px)] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] overflow-hidden">
-          <div className="px-4 py-3 border-b border-line text-[14px] font-semibold">Alerts</div>
+        <div className={`absolute right-0 top-[calc(100%+12px)] z-50 w-[370px] max-w-[calc(100vw-32px)] ${popFrame}`}>
+          <div className={popTitle}>
+            <span className="flex items-center gap-2"><Bell size={14} strokeWidth={1.75} /> Alerts</span>
+            {unread > 0 && <span className="font-sans normal-case tracking-normal text-[11.5px] font-medium text-[#B42318] bg-[#FDECEC] rounded-full px-2 py-0.5">{unread} new</span>}
+          </div>
+          <div className={`${popInner} overflow-hidden`}>
           {items.length === 0 ? (
             <div className="px-4 py-8 text-center text-[13px] text-muted">Nothing new. You&apos;ll see tasks and matters assigned to you here.</div>
           ) : (
@@ -103,8 +108,8 @@ export default function NotificationBell() {
               {items.map((n) => {
                 const Icon = n.kind === "invoice_approval" ? Receipt : n.kind === "new_lead" ? UserPlus : n.kind === "portal_message" || n.kind === "internal_message" ? MessageSquare : n.kind === "matter_assigned" ? Folder : ListChecks;
                 return (
-                  <Link key={n.id} href={hrefOf(n)} onClick={() => setOpen(false)} className={`flex gap-3 px-4 py-3 hover:bg-chip/60 border-b border-line last:border-b-0 ${n.read ? "" : "bg-[#FFF6F6]"}`}>
-                    <Icon size={16} strokeWidth={1.75} className="text-muted mt-0.5 flex-shrink-0" />
+                  <Link key={n.id} href={hrefOf(n)} onClick={() => setOpen(false)} className={`flex gap-3 px-4 py-3 border-b border-[#E6EAF1] last:border-b-0 transition-colors ${n.read ? "hover:bg-[#F4F6FA]" : "bg-[#FFF6F6] hover:bg-[#FDEEEE]"}`}>
+                    <span className="w-8 h-8 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] flex items-center justify-center flex-shrink-0"><Icon size={15} strokeWidth={1.75} className="text-muted" /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-[13px] text-muted">
                         {n.kind === "invoice_approval"
@@ -132,6 +137,7 @@ export default function NotificationBell() {
               })}
             </div>
           )}
+          </div>
         </div>
       )}
     </div>

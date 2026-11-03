@@ -1,5 +1,6 @@
 "use client";
 
+import { popFrame, popTitle, popInner } from "@/lib/ui";
 import { useEffect, useRef, useState } from "react";
 import { Plus, Hourglass, Flag, UserRound, CircleSlash, CalendarX } from "lucide-react";
 import type { CustomFilter } from "@/lib/tasks/customFilters";
@@ -36,8 +37,8 @@ export default function AddFilterMenu({
     };
   }, [onClose]);
 
-  const chip = "px-2.5 py-1 rounded-full text-[12.5px] font-medium bg-chip hover:bg-btn transition-colors disabled:opacity-40 disabled:hover:bg-chip";
-  const head = "flex items-center gap-1.5 text-[12px] font-semibold text-muted mb-1.5";
+  const chip = "px-2.5 py-1 rounded-full text-[12.5px] font-medium bg-chip hover:bg-btn border border-btn transition-colors disabled:opacity-40 disabled:hover:bg-chip";
+  const head = "flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-2";
   const typed = party.trim();
 
   return (
@@ -45,9 +46,13 @@ export default function AddFilterMenu({
       ref={box}
       role="dialog"
       aria-label="Add a filter"
-      className="absolute left-0 top-[calc(100%+6px)] z-50 w-[340px] max-w-[calc(100vw-32px)] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-3.5 flex flex-col gap-3.5"
+      className={`absolute left-0 top-[calc(100%+10px)] z-50 w-[350px] max-w-[calc(100vw-32px)] ${popFrame}`}
     >
-      <div className="text-[13px] text-muted">Add a quick filter to this board. Everyone in your firm sees it.</div>
+      <div className={popTitle}>
+        <span className="flex items-center gap-2"><Plus size={14} strokeWidth={1.75} /> Add a quick filter</span>
+      </div>
+      <div className={`${popInner} p-3.5 flex flex-col gap-3.5 max-h-[64vh] overflow-y-auto`}>
+      <div className="text-[12.5px] text-muted -mb-1">Everyone in your firm sees the filters on this board.</div>
 
       <div>
         <div className={head}>
@@ -72,9 +77,9 @@ export default function AddFilterMenu({
             onChange={(e) => setParty(e.target.value.slice(0, 60))}
             placeholder="Someone else, e.g. Surveyor"
             aria-label="Waiting on whom"
-            className="flex-1 min-w-0 bg-white border border-line rounded-full px-3 py-1.5 text-[13px] outline-none focus:border-[#AEB8C6]"
+            className="flex-1 min-w-0 bg-[#F4F6FA] border border-[#E3E7EF] rounded-full px-3 py-1.5 text-[13px] outline-none focus:bg-white focus:border-[#C3CBDA]"
           />
-          <button type="submit" disabled={!typed || has("waiting", typed)} className="flex items-center gap-1 bg-btn hover:bg-btn-hover disabled:opacity-40 px-3 py-1.5 rounded-full text-[12.5px] font-medium">
+          <button type="submit" disabled={!typed || has("waiting", typed)} className="flex items-center gap-1 bg-btn hover:bg-btn-hover border border-btn disabled:opacity-40 px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors">
             <Plus size={12} /> Add
           </button>
         </form>
@@ -115,6 +120,7 @@ export default function AddFilterMenu({
         <button disabled={has("nodue")} onClick={() => onAdd({ kind: "nodue" })} className={`${chip} flex items-center gap-1`}>
           <CalendarX size={12} /> No due date
         </button>
+      </div>
       </div>
     </div>
   );
