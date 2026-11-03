@@ -2,7 +2,7 @@
 
 import ClickAway from "@/components/ClickAway";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, X, Loader2, MapPin } from "lucide-react";
+import { Search, X, Loader2, MapPin, ChevronDown, Check, Users } from "lucide-react";
 
 export type SearchHit = {
   id: string;
@@ -47,6 +47,7 @@ export default function CalendarSearch({
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [owner, setOwner] = useState(""); // "" = all calendars
+  const [ownerOpen, setOwnerOpen] = useState(false);
   // The latest answer, tagged with the search it answers (so a stale one isn't shown).
   const [result, setResult] = useState<{ key: string; hits: SearchHit[] | null; error: string | null; skipped: string[]; more: boolean } | null>(null);
   const [showResults, setShowResults] = useState(false);
@@ -105,6 +106,7 @@ export default function CalendarSearch({
 
   function close() {
     setOpen(false);
+    setOwnerOpen(false);
     setShowResults(false);
     setQ("");
     setResult(null);
@@ -173,19 +175,63 @@ export default function CalendarSearch({
           aria-label="Search events"
           className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] placeholder:text-muted"
         />
-        <select
-          value={owner}
-          onChange={(ev) => setOwner(ev.target.value)}
-          aria-label="Whose calendar to search"
-          className="bg-white/70 hover:bg-white rounded-full px-2.5 py-1 text-[12.5px] font-medium outline-none cursor-pointer max-w-[150px]"
-        >
-          <option value="">All calendars</option>
-          {people.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.me ? "My calendar" : m.name}
-            </option>
-          ))}
-        </select>
+        <div className="relative flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setOwnerOpen((o) => !o)}
+            aria-haspopup="listbox"
+            aria-expanded={ownerOpen}
+            aria-label="Whose calendar to search"
+            className={`flex items-center gap-1.5 rounded-full pl-2.5 pr-2 py-1 text-[12.5px] font-medium max-w-[170px] border transition-colors ${
+              ownerOpen ? "bg-white border-[#C3CBDA]" : "bg-white/80 border-[#E1E5EE] hover:bg-white"
+            }`}
+          >
+            {(() => {
+              const m = people.find((x) => x.id === owner);
+              return (
+                <>
+                  {m && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colorOf(m.id).tx }} />}
+                  <span className="truncate">{!m ? "All calendars" : m.me ? "My calendar" : m.name}</span>
+                </>
+              );
+            })()}
+            <ChevronDown size={13} className={`flex-shrink-0 transition-transform ${ownerOpen ? "rotate-180" : ""}`} />
+          </button>
+          {ownerOpen && (
+            <>
+              <ClickAway onClose={() => setOwnerOpen(false)} />
+              <div
+                role="listbox"
+                className="absolute right-0 top-[calc(100%+14px)] z-[60] w-[220px] max-h-[320px] overflow-y-auto bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5"
+              >
+                <div className="px-3 pt-1.5 pb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted">Search in</div>
+                {[{ id: "", label: "All calendars", dot: null as string | null }, ...people.map((m) => ({ id: m.id, label: m.me ? "My calendar" : m.name, dot: colorOf(m.id).tx }))].map((o) => (
+                  <button
+                    key={o.id || "all"}
+                    type="button"
+                    role="option"
+                    aria-selected={owner === o.id}
+                    onClick={() => {
+                      setOwner(o.id);
+                      setOwnerOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left transition-colors ${
+                      owner === o.id ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"
+                    }`}
+                  >
+                    {o.dot ? (
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: o.dot }} />
+                    ) : (
+                      <Users size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
+                    )}
+                    <span className="flex-1 truncate">{o.label}</span>
+                    {owner === o.id && <Check size={14} strokeWidth={2} className="flex-shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
         <button onClick={close} aria-label="Close search" title="Close search" className="w-7 h-7 rounded-full hover:bg-btn flex items-center justify-center flex-shrink-0">
           <X size={14} />
         </button>
