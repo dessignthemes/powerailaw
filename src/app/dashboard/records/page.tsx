@@ -1,9 +1,10 @@
 "use client";
 
 import ClickAway from "@/components/ClickAway";
+import { pageBtn, pageBtnOpen, menuPanel, frameOuter, frameInner, frameTitle } from "@/lib/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download } from "lucide-react";
+import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download, Plus, ShieldCheck } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { getInitials, getAvatarColor, formatUpdatedAt } from "@/components/NewClientModal";
 import NewMatterModal from "@/components/NewMatterModal";
@@ -212,38 +213,38 @@ export default function RecordsPage() {
         </h1>
         <div className="relative flex items-center gap-2">
           {/* Conflict check for a prospect (the results are on the Conflict Checks page). */}
-          <button onClick={() => setConflictOpen(true)} className="bg-chip text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors flex items-center gap-1.5">
-            + Run conflict check
+          <button onClick={() => setConflictOpen(true)} className={pageBtn}>
+            <ShieldCheck size={14} /> Run conflict check
           </button>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            className="bg-btn text-ink pl-4 pr-3 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex items-center gap-1.5"
+            className={menuOpen ? pageBtnOpen : pageBtn}
           >
-            + Add contact
-            <ChevronDown size={14} strokeWidth={2} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} />
+            <Plus size={14} /> Add contact
+            <ChevronDown size={13} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} />
           </button>
           {menuOpen && (
             <>
               <ClickAway onClose={() => setMenuOpen(false)} />
               <div
                 role="menu"
-                className="absolute right-0 top-[calc(100%+6px)] z-50 w-[240px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5"
+                className={`absolute right-0 top-[calc(100%+14px)] z-50 w-[240px] ${menuPanel}`}
               >
                 {(["client", "matter", "person", "company"] as Kind[]).map((k) => (
                   <button
                     key={k}
                     role="menuitem"
                     onClick={() => startAdd(k)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left hover:bg-chip transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F4F6FA] transition-colors"
                   >
                     <KindIcon kind={k} />
                     {KIND_LABEL[k]}
                   </button>
                 ))}
-                <div className="border-t border-line my-1.5" />
-                <div className="px-3 pt-1 pb-1 text-[11.5px] font-semibold uppercase tracking-wide text-muted">Import contacts</div>
+                <div className="border-t border-[#E6EAF1] my-1.5" />
+                <div className="px-3 pt-1 pb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted">Import contacts</div>
                 {(
                   [
                     ["outlook", "From Microsoft Outlook"],
@@ -259,7 +260,7 @@ export default function RecordsPage() {
                       setMenuOpen(false);
                       setImporting(k);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left hover:bg-chip transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F4F6FA] transition-colors"
                   >
                     <Download size={14} className="text-muted" />
                     {label}
@@ -286,26 +287,26 @@ export default function RecordsPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                tab === t.key ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
+              className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
+                tab === t.key ? "bg-btn-hover border border-[#C3CBDA] text-ink" : "bg-white border border-[#D9DFEA] text-ink hover:bg-[#F4F6FA] hover:border-[#C3CBDA]"
               }`}
             >
               {t.label} <span className={tab === t.key ? "text-ink/60" : "text-muted"}>{loaded ? counts[t.key] : ""}</span>
             </button>
           ))}
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search size={15} strokeWidth={1.75} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+        <div className="relative w-full sm:w-80 bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+          <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Find a contact..."
             aria-label="Find a contact"
-            className="w-full border border-line bg-white rounded-full pl-10 pr-9 py-2 text-[13.5px] outline-none focus:border-ink placeholder:text-muted"
+            className="w-full border border-[#E3E7EF] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#C3CBDA] placeholder:text-muted shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
           />
           {query && (
-            <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink">
+            <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-ink">
               <X size={14} strokeWidth={1.75} />
             </button>
           )}
@@ -321,22 +322,28 @@ export default function RecordsPage() {
         </div>
       )}
       {setupRequired && (tab === "person" || tab === "company") && (
-        <div className="mb-5 rounded-xl border border-line bg-card-alt px-4 py-3 text-[13.5px]">
+        <div className="mb-5 rounded-xl border border-[#E6EAF1] bg-[#F4F6FA] px-4 py-3 text-[13.5px]">
           People and companies need a database update. Run <span className="font-medium">supabase/migrations/0014_contacts.sql</span> in the
           Supabase SQL editor, then refresh.
         </div>
       )}
 
-      <div className="bg-card-alt rounded-2xl p-2">
+      <div className={frameOuter}>
+        <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5">
+          <span className={frameTitle}>
+            <Bookmark size={15} strokeWidth={1.75} />
+            {tab === "all" ? "All contacts" : TABS.find((t) => t.key === tab)?.label}{loaded ? ` · ${shown.length}` : ""}
+          </span>
+        </div>
         {!loaded ? (
-          <div className="bg-cream rounded-xl py-14 text-center text-[14px] text-muted">Loading contacts…</div>
+          <div className={`${frameInner} py-14 text-center text-[14px] text-muted`}>Loading contacts…</div>
         ) : shown.length === 0 ? (
-          <div className="bg-cream rounded-xl py-14 text-center px-6">
+          <div className={`${frameInner} py-14 text-center px-6`}>
             <Bookmark size={22} strokeWidth={1.5} className="text-muted mx-auto mb-3" />
             {q ? (
               <>
                 <div className="text-[14.5px] font-medium">No contacts match “{query.trim()}”</div>
-                <button onClick={() => setQuery("")} className="bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium mt-4 transition-colors">
+                <button onClick={() => setQuery("")} className={`${pageBtn} mt-4 mx-auto`}>
                   Clear search
                 </button>
               </>
@@ -345,30 +352,30 @@ export default function RecordsPage() {
                 <div className="text-[14.5px] font-medium">{tab === "all" ? "No contacts yet" : `No ${EMPTY_LABEL[tab]} yet`}</div>
                 <div className="text-[13px] text-muted mt-1 mb-5">{EMPTY_HINT[tab]}</div>
                 {tab === "all" ? (
-                  <button onClick={() => setMenuOpen(true)} className={blackBtn}>
-                    + Add contact
+                  <button onClick={() => setMenuOpen(true)} className={`${pageBtn} mx-auto`}>
+                    <Plus size={14} /> Add contact
                   </button>
                 ) : (
-                  <button onClick={() => startAdd(tab)} className={blackBtn}>
-                    + Add {KIND_LABEL[tab].toLowerCase()}
+                  <button onClick={() => startAdd(tab)} className={`${pageBtn} mx-auto`}>
+                    <Plus size={14} /> Add {KIND_LABEL[tab].toLowerCase()}
                   </button>
                 )}
               </>
             )}
           </div>
         ) : (
-          <div className="bg-cream rounded-xl divide-y divide-line">
+          <div className={`${frameInner} p-2 flex flex-col gap-1.5`}>
             {shown.map((r) => (
               <button
                 key={r.key}
                 onClick={() => open(r)}
-                className="w-full flex items-center gap-3.5 px-5 py-3.5 text-left hover:bg-chip/50 transition-colors first:rounded-t-xl last:rounded-b-xl"
+                className="w-full flex items-center gap-3.5 px-4 py-3 text-left rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] transition-colors"
               >
                 <Avatar kind={r.kind} name={r.name} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-[14.5px] font-medium truncate">{r.name}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-line/60 text-[11.5px] font-medium text-ink flex-shrink-0">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white border border-[#E1E5EE] text-[11.5px] font-medium text-ink flex-shrink-0">
                       {KIND_LABEL[r.kind]}
                     </span>
                   </div>
