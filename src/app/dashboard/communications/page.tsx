@@ -6,6 +6,7 @@ import {
   Phone, PhoneIncoming, PhoneOutgoing, Laptop, Mail, MessageSquare, Mic, MessagesSquare, Plus, ChevronDown, Loader2, X, Check, Trash2, Search, ListChecks,
 } from "lucide-react";
 import ClickAway from "@/components/ClickAway";
+import { pageBtnB, pageBtnOpenB, smallBtnB, menuPanel, frameOuter, frameInner, frameTitle } from "@/lib/ui";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import type { Client } from "@/components/NewClientModal";
 
@@ -42,7 +43,7 @@ const localNow = () => {
 function MatterBadge({ m }: { m: MatterRef }) {
   if (!m) return null;
   return (
-    <Link href={`/dashboard/matters/${m.id}`} title={m.title} className="text-[11.5px] font-semibold bg-[#E1E7F4] rounded-md px-1.5 py-px hover:underline underline-offset-2 flex-shrink-0">
+    <Link href={`/dashboard/matters/${m.id}`} title={m.title} className="text-[11.5px] font-semibold bg-white border border-[#E1E5EE] rounded-md px-1.5 py-px hover:underline underline-offset-2 flex-shrink-0">
       {m.number ?? m.title.slice(0, 24)}
     </Link>
   );
@@ -358,7 +359,7 @@ function CallModal({ onClose, onSaved }: { onClose: () => void; onSaved: (msg: s
         <button onClick={onClose} disabled={busy} className="px-4 py-2 rounded-full hover:bg-chip font-medium">
           Cancel
         </button>
-        <button onClick={() => void save()} disabled={busy || (!f.contactName.trim() && !f.contactPhone.trim())} className="bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full font-medium flex items-center gap-2">
+        <button onClick={() => void save()} disabled={busy || (!f.contactName.trim() && !f.contactPhone.trim())} className={`${pageBtnB} disabled:opacity-50`}>
           {busy && <Loader2 size={14} className="animate-spin" />} Save call
         </button>
       </div>
@@ -408,7 +409,7 @@ function InternalModal({ onClose, onSaved }: { onClose: () => void; onSaved: (ms
         <button onClick={onClose} disabled={busy} className="px-4 py-2 rounded-full hover:bg-chip font-medium">
           Cancel
         </button>
-        <button onClick={() => void send()} disabled={busy || !to.length || !body.trim()} className="bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full font-medium flex items-center gap-2">
+        <button onClick={() => void send()} disabled={busy || !to.length || !body.trim()} className={`${pageBtnB} disabled:opacity-50`}>
           {busy && <Loader2 size={14} className="animate-spin" />} Send
         </button>
       </div>
@@ -496,13 +497,13 @@ export default function CommunicationsPage() {
         <aside>
           <h1 className="text-[26px] font-semibold mb-4">Communications</h1>
           <div className="relative mb-5">
-            <button onClick={() => setNewOpen((o) => !o)} className="bg-[#1B191A] text-white hover:opacity-90 px-4 py-2.5 rounded-full text-[14px] font-semibold flex items-center gap-2">
-              <Plus size={15} /> New <ChevronDown size={14} />
+            <button onClick={() => setNewOpen((o) => !o)} className={newOpen ? pageBtnOpenB : pageBtnB}>
+              <Plus size={14} /> New <ChevronDown size={13} />
             </button>
             {newOpen && (
               <>
                 <ClickAway onClose={() => setNewOpen(false)} />
-                <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[250px] bg-white border border-line rounded-2xl shadow-[0_12px_32px_rgba(27,25,26,0.12)] p-1.5">
+                <div className={`absolute left-0 top-[calc(100%+14px)] z-50 w-[250px] ${menuPanel}`}>
                   {[
                     { icon: Phone, label: "Phone call", sub: "Log it; add a call-back task", go: () => setModal("call") },
                     { icon: MessagesSquare, label: "Internal message", sub: "To colleagues, about a matter", go: () => setModal("internal") },
@@ -510,7 +511,7 @@ export default function CommunicationsPage() {
                     { icon: Mic, label: "Meeting", sub: "Add it in the Calendar", href: "/dashboard/calendar" },
                   ].map((o) =>
                     o.href ? (
-                      <Link key={o.label} href={o.href} className="flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-chip">
+                      <Link key={o.label} href={o.href} className="flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F4F6FA]">
                         <o.icon size={15} className="mt-0.5 text-muted" />
                         <span>
                           <span className="block text-[13.5px] font-medium">{o.label}</span>
@@ -518,7 +519,7 @@ export default function CommunicationsPage() {
                         </span>
                       </Link>
                     ) : (
-                      <button key={o.label} onClick={() => (setNewOpen(false), o.go?.())} className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-chip">
+                      <button key={o.label} onClick={() => (setNewOpen(false), o.go?.())} className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F4F6FA]">
                         <o.icon size={15} className="mt-0.5 text-muted" />
                         <span>
                           <span className="block text-[13.5px] font-medium">{o.label}</span>
@@ -531,18 +532,33 @@ export default function CommunicationsPage() {
               </>
             )}
           </div>
-          <nav className="flex flex-col gap-0.5">
+          <div className={frameOuter}>
+          <div className={`${frameTitle} px-3 pt-2.5 pb-2.5`}>
+            <MessagesSquare size={15} strokeWidth={1.75} /> Channels
+          </div>
+          <nav className={`${frameInner} p-2 flex flex-col gap-1`}>
             {SECTIONS.map((s) => (
-              <button key={s.key} onClick={() => setView(s.key)} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-left transition-colors ${view === s.key ? "bg-nav text-ink" : "text-muted hover:bg-nav hover:text-ink"}`}>
+              <button key={s.key} onClick={() => setView(s.key)} className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left border transition-colors ${view === s.key ? "bg-[#E6EBF4] border-[#D5DCE8] text-ink" : "bg-[#F4F6FA] border-[#E6EAF1] text-muted hover:bg-[#EAEEF5] hover:text-ink"}`}>
                 <s.icon size={16} strokeWidth={1.75} />
                 <span className="flex-1">{s.label}</span>
                 {s.key === "calls" && waitingCount > 0 && <span className="text-[11px] font-semibold bg-[#FB5D67] text-white rounded-full px-1.5 py-px">{waitingCount}</span>}
               </button>
             ))}
           </nav>
+          </div>
         </aside>
 
-        <section className="bg-card-alt rounded-2xl p-5 min-h-[520px] min-w-0 overflow-hidden">
+        <section className={`${frameOuter} min-w-0`}>
+          {(() => {
+            const cur = SECTIONS.find((x) => x.key === view);
+            const Icon = cur?.icon ?? MessagesSquare;
+            return (
+              <div className={`${frameTitle} px-3 pt-2.5 pb-2.5`}>
+                <Icon size={15} strokeWidth={1.75} /> {cur?.label ?? "Communications"}
+              </div>
+            );
+          })()}
+          <div className={`${frameInner} p-5 min-h-[520px] min-w-0 overflow-hidden`}>
           {notice && (
             <div className="mb-4 rounded-xl bg-[#E7F6EE] text-[#155C3A] px-4 py-2.5 text-[13.5px] flex items-center gap-2">
               <Check size={15} /> {notice}
@@ -559,16 +575,16 @@ export default function CommunicationsPage() {
                     ["all", "All calls"],
                   ] as const
                 ).map(([k, l]) => (
-                  <button key={k} onClick={() => setCallFilter(k)} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${callFilter === k ? "bg-btn-hover" : "bg-white hover:bg-btn"}`}>
+                  <button key={k} onClick={() => setCallFilter(k)} className={callFilter === k ? pageBtnOpenB : pageBtnB}>
                     {l}
                   </button>
                 ))}
-                <div className="flex items-center gap-2 bg-white rounded-full px-3 py-1.5 ml-auto w-[260px]">
+                <div className="flex items-center gap-2 bg-[#F4F6FA] border border-[#E3E7EF] rounded-full px-3 py-2 ml-auto w-[260px] focus-within:bg-white focus-within:border-[#C3CBDA]">
                   <Search size={13} className="text-muted" />
                   <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, phone or matter number" aria-label="Search calls" className="flex-1 min-w-0 bg-transparent outline-none text-[13px]" />
                 </div>
-                <button onClick={() => setModal("call")} className="bg-btn hover:bg-btn-hover px-4 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5">
-                  <Phone size={13} /> Log a call
+                <button onClick={() => setModal("call")} className={pageBtnB}>
+                  <Phone size={14} /> Log a call
                 </button>
               </div>
               {!items ? (
@@ -576,14 +592,14 @@ export default function CommunicationsPage() {
                   <Loader2 size={14} className="animate-spin" /> Loading…
                 </div>
               ) : calls.length === 0 ? (
-                empty(callFilter === "waiting" ? "No calls waiting for a call back." : "No calls logged yet.", <button onClick={() => setModal("call")} className="bg-white hover:bg-btn px-4 py-2 rounded-full text-[13px] font-medium text-ink">Log a call</button>)
+                empty(callFilter === "waiting" ? "No calls waiting for a call back." : "No calls logged yet.", <button onClick={() => setModal("call")} className={`${pageBtnB} mx-auto`}><Phone size={14} /> Log a call</button>)
               ) : (
                 <div className="flex flex-col gap-2">
                   {calls.map((c) => {
                     const waiting = c.callbackNeeded && !c.callbackDoneAt;
                     return (
-                      <div key={c.id} className={`group bg-white rounded-xl px-4 py-3 flex items-start gap-3 min-w-0 overflow-hidden ${waiting ? "border-l-[6px] border-[#FB5D67]" : ""}`}>
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${c.direction === "in" ? "bg-[#EEF3FB] text-[#2B6CB0]" : "bg-chip text-muted"}`} title={c.direction === "in" ? "Incoming" : "Outgoing"}>
+                      <div key={c.id} className={`group bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-4 py-3 flex items-start gap-3 min-w-0 overflow-hidden ${waiting ? "border-l-[6px] border-l-[#FB5D67]" : ""}`}>
+                        <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${c.direction === "in" ? "bg-white border border-[#DCE6F5] text-[#2B6CB0]" : "bg-white border border-[#E1E5EE] text-muted"}`} title={c.direction === "in" ? "Incoming" : "Outgoing"}>
                           {c.direction === "in" ? <PhoneIncoming size={15} /> : <PhoneOutgoing size={15} />}
                         </span>
                         <div className="min-w-0 flex-1">
@@ -605,7 +621,7 @@ export default function CommunicationsPage() {
                         </div>
                         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                           {waiting ? (
-                            <button onClick={() => void calledBack(c, true)} className="flex items-center gap-1.5 bg-[#1B191A] text-white px-3 py-1.5 rounded-full text-[12.5px] font-semibold hover:opacity-90">
+                            <button onClick={() => void calledBack(c, true)} className={smallBtnB}>
                               <Check size={13} /> Called back
                             </button>
                           ) : c.callbackDoneAt ? (
@@ -638,11 +654,11 @@ export default function CommunicationsPage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {(items as { id: string; from: string; clientId: string; matterId: string | null; matter: string | null; preview: string; unread: boolean; at: string }[]).map((m) => (
-                  <Link key={m.id} href={m.matterId ? `/dashboard/matters/${m.matterId}?tab=emails` : `/dashboard/client-intake?card=${m.clientId}`} className="bg-white rounded-xl px-4 py-3 hover:bg-chip/40 block min-w-0 overflow-hidden">
+                  <Link key={m.id} href={m.matterId ? `/dashboard/matters/${m.matterId}?tab=emails` : `/dashboard/client-intake?card=${m.clientId}`} className="bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-4 py-3 hover:bg-[#EAEEF5] transition-colors block min-w-0 overflow-hidden">
                     <div className="flex items-center gap-2 min-w-0">
                       {m.unread && <span className="w-2 h-2 rounded-full bg-[#3B82F6]" />}
                       <span className="font-semibold text-[14px]">{m.from}</span>
-                      {m.matter && <span className="text-[11.5px] font-semibold bg-[#E1E7F4] rounded-md px-1.5 py-px">{m.matter}</span>}
+                      {m.matter && <span className="text-[11.5px] font-semibold bg-white border border-[#E1E5EE] rounded-md px-1.5 py-px">{m.matter}</span>}
                       <span className="ml-auto text-[12px] text-muted">{when(m.at)}</span>
                     </div>
                     <div className="text-[13px] text-muted mt-0.5 whitespace-pre-line [overflow-wrap:anywhere]">{m.preview}</div>
@@ -656,12 +672,12 @@ export default function CommunicationsPage() {
               <Loader2 size={14} className="animate-spin text-muted" />
             ) : !items.length ? (
               view === "emails"
-                ? empty("No emails filed to matters yet. In the Inbox, open an email and click File to matter.", <Link href="/dashboard/inbox" className="bg-white hover:bg-btn px-4 py-2 rounded-full text-[13px] font-medium text-ink">Open the Inbox</Link>)
+                ? empty("No emails filed to matters yet. In the Inbox, open an email and click File to matter.", <Link href="/dashboard/inbox" className={`${pageBtnB} mx-auto w-fit`}>Open the Inbox</Link>)
                 : empty("No text messages yet. Texting clients from LawPower needs a phone provider such as RingCentral; ask to have it connected.")
             ) : (
               <div className="flex flex-col gap-2">
                 {(items as { id: string; direction: "in" | "out"; subject: string; from: string; to: string; at: string; snippet: string; matter: MatterRef }[]).map((m) => (
-                  <div key={m.id} className="bg-white rounded-xl px-4 py-3 min-w-0 overflow-hidden">
+                  <div key={m.id} className="bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-4 py-3 min-w-0 overflow-hidden">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[14px] truncate min-w-0">{m.direction === "out" ? `To ${m.to}` : m.from}</span>
                       <MatterBadge m={m.matter} />
@@ -683,11 +699,11 @@ export default function CommunicationsPage() {
             (!items ? (
               <Loader2 size={14} className="animate-spin text-muted" />
             ) : !items.length ? (
-              empty("No meetings in the next 30 days.", <Link href="/dashboard/calendar" className="bg-white hover:bg-btn px-4 py-2 rounded-full text-[13px] font-medium text-ink">Open the Calendar</Link>)
+              empty("No meetings in the next 30 days.", <Link href="/dashboard/calendar" className={`${pageBtnB} mx-auto w-fit`}>Open the Calendar</Link>)
             ) : (
               <div className="flex flex-col gap-2">
                 {(items as { id: string; title: string; start: string; allDay: boolean; location: string | null; link: string | null }[]).map((e) => (
-                  <div key={e.id} className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 min-w-0 overflow-hidden">
+                  <div key={e.id} className="bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-4 py-3 flex items-center gap-3 min-w-0 overflow-hidden">
                     <div className="w-[120px] flex-shrink-0 text-[13px] font-semibold">
                       {e.allDay ? new Date(`${e.start.slice(0, 10)}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : when(e.start)}
                     </div>
@@ -708,8 +724,8 @@ export default function CommunicationsPage() {
           {view === "internal" && (
             <>
               <div className="flex justify-end mb-4">
-                <button onClick={() => setModal("internal")} className="bg-btn hover:bg-btn-hover px-4 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5">
-                  <Plus size={13} /> New message
+                <button onClick={() => setModal("internal")} className={pageBtnB}>
+                  <Plus size={14} /> New message
                 </button>
               </div>
               {!items ? (
@@ -719,7 +735,7 @@ export default function CommunicationsPage() {
               ) : (
                 <div className="flex flex-col gap-2">
                   {(items as Comm[]).map((m) => (
-                    <div key={m.id} className="bg-white rounded-xl px-4 py-3 min-w-0 overflow-hidden">
+                    <div key={m.id} className="bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-4 py-3 min-w-0 overflow-hidden">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-[14px]">{m.createdBy?.name ?? "Someone"}</span>
                         <span className="text-[12.5px] text-muted">to {m.recipients.map((r) => r.name).join(", ")}</span>
@@ -733,6 +749,7 @@ export default function CommunicationsPage() {
               )}
             </>
           )}
+          </div>
         </section>
       </div>
       {modal === "call" && <CallModal onClose={() => setModal(null)} onSaved={(m) => saved(m, "calls")} />}
