@@ -37,7 +37,7 @@ function NavItem({
       title={compact ? label : undefined}
       aria-label={compact ? label : undefined}
       className={`flex items-center gap-2 py-[6px] rounded-lg border text-[13px] font-medium transition-[background-color,border-color,box-shadow] ${compact ? "justify-center px-0 h-8" : "px-3"} ${
-        active ? "bg-white border-[#DDE2EC] shadow-[0_1px_3px_rgba(27,25,26,0.08)] text-ink" : "border-transparent text-ink hover:bg-white hover:border-[#DDE2EC] hover:shadow-[0_1px_3px_rgba(27,25,26,0.08)]"
+        active ? "bg-[#CED0DB] border-transparent text-ink" : "border-transparent text-ink hover:bg-[#CED0DB]"
       }`}
     >
       <Icon size={compact ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
@@ -100,7 +100,7 @@ export default function Sidebar() {
       {collapsed ? (
         <div className="flex flex-col items-center gap-2 mb-4">
           <LogoMark size={28} />
-          <button onClick={toggleCollapsed} title="Expand menu" aria-label="Expand menu" className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:bg-white hover:text-ink transition-colors">
+          <button onClick={toggleCollapsed} title="Expand menu" aria-label="Expand menu" className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:bg-[#CED0DB] hover:text-ink transition-colors">
             <PanelLeftOpen size={17} strokeWidth={1.75} />
           </button>
         </div>
@@ -108,7 +108,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-2.5 px-2 mb-8">
           <LogoMark size={28} />
           <span className="font-display font-semibold text-[16px] flex-1">LawPower AI</span>
-          <button onClick={toggleCollapsed} title="Collapse menu" aria-label="Collapse menu" className="w-8 h-8 -mr-1 rounded-lg flex items-center justify-center text-muted hover:bg-white hover:text-ink transition-colors">
+          <button onClick={toggleCollapsed} title="Collapse menu" aria-label="Collapse menu" className="w-8 h-8 -mr-1 rounded-lg flex items-center justify-center text-muted hover:bg-[#CED0DB] hover:text-ink transition-colors">
             <PanelLeftClose size={16} strokeWidth={1.75} />
           </button>
         </div>
@@ -162,7 +162,7 @@ export default function Sidebar() {
           onClick={() => openIntegrations("general")}
           title={collapsed ? "Settings" : undefined}
           aria-label={collapsed ? "Settings" : undefined}
-          className={`w-full flex items-center gap-2 py-[6px] rounded-lg border border-transparent text-[13px] font-medium text-ink hover:bg-white hover:border-[#DDE2EC] hover:shadow-[0_1px_3px_rgba(27,25,26,0.08)] transition-[background-color,border-color,box-shadow] mb-2 text-left ${collapsed ? "justify-center h-9" : "px-3"}`}
+          className={`w-full flex items-center gap-2 py-[6px] rounded-lg border border-transparent text-[13px] font-medium text-ink hover:bg-[#CED0DB] transition-[background-color,border-color,box-shadow] mb-2 text-left ${collapsed ? "justify-center h-9" : "px-3"}`}
         >
           <Settings size={collapsed ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
           {!collapsed && (

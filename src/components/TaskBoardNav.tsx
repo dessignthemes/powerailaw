@@ -61,7 +61,7 @@ export default function TaskBoardNav() {
   }
 
   const item = (active: boolean) =>
-    `flex items-center gap-2 rounded-lg border text-[13px] font-medium transition-[background-color,border-color,box-shadow] ${active ? "bg-white border-[#DDE2EC] shadow-[0_1px_3px_rgba(27,25,26,0.08)] text-ink" : "border-transparent text-ink hover:bg-white hover:border-[#DDE2EC] hover:shadow-[0_1px_3px_rgba(27,25,26,0.08)]"}`;
+    `flex items-center gap-2 rounded-lg border text-[13px] font-medium transition-[background-color,border-color,box-shadow] ${active ? "bg-[#CED0DB] border-transparent text-ink" : "border-transparent text-ink hover:bg-[#CED0DB]"}`;
 
   return (
     <div>
