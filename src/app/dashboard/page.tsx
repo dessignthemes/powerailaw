@@ -6,6 +6,7 @@ import WidgetBoard, { AddWidgetModal } from "@/components/dashboard/widgets/Widg
 import { useDashboardLayout } from "@/components/dashboard/widgets/useDashboardLayout";
 import type { DashData, DashEvent } from "@/components/dashboard/widgets/types";
 import HeaderActions from "@/components/layout/HeaderActions";
+import { pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import TaskFilterDropdown, { scopeLabel, type TaskScope } from "@/components/TaskFilterDropdown";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { BoardTask, statusMeta } from "@/components/NewTaskModal";
@@ -307,10 +308,10 @@ export default function DashboardHome() {
               >
                 <RotateCcw size={14} /> Reset
               </button>
-              <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-medium bg-chip hover:bg-btn">
+              <button onClick={() => setAdding(true)} className={pageBtnB}>
                 <Plus size={14} /> Add widget
               </button>
-              <button onClick={() => setEditing(false)} className="px-5 py-2 rounded-full text-[13.5px] font-semibold bg-btn hover:bg-btn-hover">
+              <button onClick={() => setEditing(false)} className={`${pageBtnOpenB} hover:bg-btn-hover px-5`}>
                 Done
               </button>
             </>
@@ -330,11 +331,11 @@ export default function DashboardHome() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-semibold bg-white border border-line hover:bg-chip shadow-[0_1px_2px_rgba(27,25,26,0.06)] transition-colors">
-                <Plus size={15} strokeWidth={2} /> Add widget
+              <button onClick={() => setAdding(true)} className={pageBtnB}>
+                <Plus size={14} /> Add widget
               </button>
-              <button onClick={() => setEditing(true)} title="Move, resize and remove widgets" className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13.5px] font-semibold bg-white border border-line hover:bg-chip shadow-[0_1px_2px_rgba(27,25,26,0.06)] transition-colors">
-                <LayoutGrid size={15} strokeWidth={1.75} /> Edit
+              <button onClick={() => setEditing(true)} title="Move, resize and remove widgets" className={pageBtnB}>
+                <LayoutGrid size={14} /> Edit
               </button>
 
             </>
