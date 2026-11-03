@@ -1,6 +1,9 @@
 "use client";
 
 import { pageBtnB, pageBtnOpenB, framedPanel } from "@/lib/ui";
+// Quick filter pills: the page button style, about 30 percent smaller.
+const PILL = "bg-chip hover:bg-btn border border-btn text-ink px-2.5 py-[5px] rounded-full text-[11.5px] leading-4 font-medium flex items-center gap-1 whitespace-nowrap transition-colors";
+const PILL_ON = "bg-btn border border-btn text-ink px-2.5 py-[5px] rounded-full text-[11.5px] leading-4 font-medium flex items-center gap-1 whitespace-nowrap transition-colors";
 import ClickAway from "@/components/ClickAway";
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import PriorityDot from "@/components/PriorityDot";
@@ -992,12 +995,12 @@ function TaskBoard({
         </div>
       )}
 
-      <div className="flex items-center gap-2 mb-6 flex-wrap">
+      <div className="flex items-center gap-1.5 mb-6 flex-wrap">
         {filterPills.map((f) => (
           <button
             key={f}
             onClick={() => toggleFilter(f)}
-            className={activeFilters.includes(f) ? pageBtnOpenB : pageBtnB}
+            className={activeFilters.includes(f) ? PILL_ON : PILL}
           >
             {f}
           </button>
@@ -1008,7 +1011,7 @@ function TaskBoard({
             <span key={cf.id} className="group relative">
               <button
                 onClick={() => toggleFilter(key)}
-                className={`pl-3.5 pr-3.5 group-hover:pr-7 py-2 rounded-full text-[13px] font-medium border border-btn transition-all ${
+                className={`pl-2.5 pr-2.5 group-hover:pr-6 py-[5px] rounded-full text-[11.5px] leading-4 font-medium border border-btn transition-all ${
                   activeFilters.includes(key) ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
                 }`}
               >
@@ -1018,7 +1021,7 @@ function TaskBoard({
                 onClick={() => void removeCustomFilter(cf.id)}
                 aria-label={`Remove filter ${filterLabel(cf, nameOf)}`}
                 title="Remove this filter from this board"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full hidden group-hover:flex items-center justify-center text-muted hover:text-[#B42318] hover:bg-white"
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full hidden group-hover:flex items-center justify-center text-muted hover:text-[#B42318] hover:bg-white"
               >
                 <X size={11} />
               </button>
@@ -1028,9 +1031,9 @@ function TaskBoard({
         <div className="relative">
           <button
             onClick={() => setAddFilterOpen((o) => !o)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium bg-white border border-dashed border-[#C3CBDA] text-muted hover:text-ink hover:bg-[#F4F6FA] transition-colors"
+            className="flex items-center gap-1 px-2.5 py-[5px] rounded-full text-[11.5px] leading-4 font-medium bg-white border border-dashed border-[#C3CBDA] text-muted hover:text-ink hover:bg-[#F4F6FA] transition-colors"
           >
-            <Plus size={13} /> Add more
+            <Plus size={11} /> Add more
           </button>
           {addFilterOpen && (
             <AddFilterMenu
@@ -1045,11 +1048,11 @@ function TaskBoard({
         <div className="relative">
           <button
             onClick={() => setMatterMenuOpen((o) => !o)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium border border-btn transition-colors ${
+            className={`flex items-center gap-1 px-2.5 py-[5px] rounded-full text-[11.5px] leading-4 font-medium border border-btn transition-colors ${
               filterMatter || matterMenuOpen ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
             }`}
           >
-            {filterMatter ? filterMatter.matterNumber ?? filterMatter.title : "Matter"} <ChevronDown size={12} strokeWidth={1.75} />
+            {filterMatter ? filterMatter.matterNumber ?? filterMatter.title : "Matter"} <ChevronDown size={11} strokeWidth={1.75} />
           </button>
           {matterMenuOpen && (
             <>
@@ -1391,13 +1394,15 @@ function TaskBoard({
                           if (e.key === "Enter") addInlineTask(col);
                           if (e.key === "Escape") setInlineAddFor(null);
                         }}
-                        placeholder="Task title (Enter to add, Esc to cancel)"
+                        placeholder="Task title"
                         className="w-full bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted focus:border-[#C3CBDA]"
                       />
+                      <div className="px-1 pt-1.5 text-[11.5px] text-muted">Enter to add · Esc to cancel</div>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2">
                       {inlineAddFor === col.id && (
+                        <div>
                         <input
                           autoFocus
                           value={inlineValue}
@@ -1407,9 +1412,11 @@ function TaskBoard({
                             if (e.key === "Enter") addInlineTask(col);
                             if (e.key === "Escape") setInlineAddFor(null);
                           }}
-                          placeholder="Task title (Enter to add, Esc to cancel)"
+                          placeholder="Task title"
                           className="w-full bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted focus:border-[#C3CBDA]"
                         />
+                        <div className="px-1 pt-1.5 text-[11.5px] text-muted">Enter to add · Esc to cancel</div>
+                        </div>
                       )}
 
                       {colTasks.map((t) => (
@@ -1577,7 +1584,10 @@ function TaskBoard({
                             setInlineAddFor(col.id);
                             setInlineValue("");
                           }}
-                          className="sticky bottom-0 z-[1] flex items-center justify-center gap-1.5 py-3 bg-[#ECEFF6] rounded-b-[22px] text-muted hover:text-ink transition-colors"
+                          className={`sticky bottom-0 z-[1] flex items-center justify-center gap-1.5 py-3 bg-[#ECEFF6] text-muted hover:text-ink transition-colors ${
+                            // Long column: a solid bar across the full width, so cards scrolling under it never show through.
+                            colTasks.length > 5 ? "-ml-2.5 -mr-3.5 mt-1 border-t border-[#E1E5EE] rounded-b-[21px] shadow-[0_-6px_12px_-8px_rgba(27,25,26,0.18)]" : ""
+                          }`}
                         >
                           <Plus size={15} strokeWidth={1.75} />
                           <span className="text-[13px]">Add a task</span>
