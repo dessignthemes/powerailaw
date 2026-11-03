@@ -18,7 +18,7 @@ import {
   Sparkles,
   CircleCheck,
   Circle,
-  ShieldCheck, CreditCard, Plus } from "lucide-react";
+  ShieldCheck, CreditCard } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import InvoicesPanel from "@/components/invoices/InvoicesPanel";
 import TrustBalances from "@/components/invoices/TrustBalances";
@@ -231,28 +231,21 @@ function AiAccountant() {
             {addOpen && (
               <>
                 <ClickAway onClose={() => setAddOpen(false)} />
-                <div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-50 w-[300px] bg-[#ECEFF6] border border-[#E1E5EE] rounded-[22px] p-1.5 shadow-[0_20px_50px_-15px_rgba(20,24,33,0.25)]">
-                  <div className="px-3 pt-2 pb-2.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2">
-                    <Plus size={14} strokeWidth={1.75} /> Add to the books
-                  </div>
-                  <div className="bg-white border border-[#E3E7EF] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-2 flex flex-col gap-1.5">
+                <div role="menu" className="absolute right-0 top-[calc(100%+14px)] z-50 w-[280px] bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
                   {[
                     { icon: Upload, label: "Import bank or card CSV", hint: "AI categorizes every line", go: () => setModal({ kind: "import" }) },
                     { icon: CreditCard, label: "Import from LawPay", hint: "Payments matched to invoices", go: () => setModal({ kind: "lawpay" }) },
                     { icon: Receipt, label: "Add a receipt", hint: "PDF receipts are read by AI", go: () => setModal({ kind: "txn" }) },
                     { icon: PenLine, label: "Add manually", hint: "A payment, fee or expense", go: () => setModal({ kind: "txn" }) },
                   ].map((o) => (
-                    <button key={o.label} role="menuitem" onClick={() => { setAddOpen(false); o.go(); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] transition-colors">
-                      <span className="w-7 h-7 rounded-lg bg-white border border-[#E1E5EE] flex items-center justify-center flex-shrink-0">
-                        <o.icon size={15} strokeWidth={1.75} className="text-muted" />
-                      </span>
+                    <button key={o.label} role="menuitem" onClick={() => { setAddOpen(false); o.go(); }} className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-[#F4F6FA] transition-colors">
+                      <o.icon size={14} strokeWidth={1.75} className="mt-1 text-muted flex-shrink-0" />
                       <span>
                         <span className="block text-[13.5px] font-medium">{o.label}</span>
                         <span className="block text-[12px] text-muted">{o.hint}</span>
                       </span>
                     </button>
                   ))}
-                  </div>
                 </div>
               </>
             )}
