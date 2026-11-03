@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, Loader2, Printer, Info } from "lucide-react";
 import type { PracticeReport } from "@/lib/reports/practice";
+import { pageBtnB, pageBtnOpenB, frameOuter, frameInner, frameTitle } from "@/lib/ui";
 
 // ── Periods ─────────────────────────────────────────────────────────────────
 
@@ -54,20 +55,24 @@ const monthLabel = (ym: string, withYear = false) => {
 
 function Card({ title, sub, children, className = "" }: { title: string; sub?: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className={`bg-card-alt rounded-2xl p-5 break-inside-avoid ${className}`}>
-      <h3 className="text-[14.5px] font-semibold">{title}</h3>
-      {sub && <p className="text-[12.5px] text-muted mt-0.5">{sub}</p>}
-      <div className="mt-4">{children}</div>
+    <section className={`${frameOuter} break-inside-avoid flex flex-col ${className}`}>
+      <h3 className={`${frameTitle} px-3 pt-2.5 pb-2.5`}>{title}</h3>
+      <div className={`${frameInner} flex-1 p-5`}>
+        {sub && <p className="text-[12.5px] text-muted mb-4">{sub}</p>}
+        <div>{children}</div>
+      </div>
     </section>
   );
 }
 
 function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div className="bg-card-alt rounded-2xl px-5 py-4">
-      <div className="text-[12.5px] text-muted">{label}</div>
-      <div className="text-[26px] font-semibold mt-1 tabular-nums">{value}</div>
-      {note && <div className="text-[12px] text-muted mt-0.5">{note}</div>}
+    <div className={`${frameOuter} flex flex-col`}>
+      <div className={`${frameTitle} px-3 pt-2.5 pb-2.5`}><span className="truncate">{label}</span></div>
+      <div className={`${frameInner} flex-1 px-5 py-4`}>
+        <div className="text-[26px] font-semibold tabular-nums">{value}</div>
+        {note && <div className="text-[12px] text-muted mt-0.5">{note}</div>}
+      </div>
     </div>
   );
 }
@@ -79,7 +84,7 @@ function Donut({ parts, total, label }: { parts: { name: string; value: number }
   let offset = 0;
   return (
     <svg viewBox="0 0 180 180" className="w-[180px] h-[180px] flex-shrink-0" role="img" aria-label={`${label}: ${parts.map((p) => `${p.name} ${p.value}`).join(", ")}`}>
-      <circle cx="90" cy="90" r={r} fill="none" stroke="#E1E5EC" strokeWidth="22" />
+      <circle cx="90" cy="90" r={r} fill="none" stroke="#EEF1F6" strokeWidth="22" />
       {total > 0 &&
         parts
           .filter((p) => p.value > 0)
@@ -139,7 +144,7 @@ function Bars({ rows, format = (n: number) => String(n), colorBy = true }: { row
           <span className="truncate" title={r.name}>
             {r.name}
           </span>
-          <div className="h-3.5 rounded-full bg-[#E1E5EC] overflow-hidden">
+          <div className="h-3.5 rounded-full bg-[#EEF1F6] overflow-hidden">
             <div className="h-full rounded-full" style={{ width: `${(r.value / max) * 100}%`, backgroundColor: colorBy ? colorOf(r.name) : "#5E6E8C" }} />
           </div>
           <span className="tabular-nums font-medium min-w-[44px] text-right">{format(r.value)}</span>
@@ -155,7 +160,7 @@ function MonthColumns({ months, areas }: { months: PracticeReport["intakeByMonth
   const yearChanges = new Set(months.filter((m, i) => i === 0 || m.month.slice(0, 4) !== months[i - 1].month.slice(0, 4)).map((m) => m.month));
   return (
     <div>
-      <div className="flex items-end gap-1.5 h-[170px] border-b border-line pb-px">
+      <div className="flex items-end gap-1.5 h-[170px] border-b border-[#E6EAF1] pb-px">
         {months.map((m) => (
           <div key={m.month} className="flex-1 min-w-0 h-full flex flex-col justify-end items-center gap-1" title={`${monthLabel(m.month, true)}: ${m.count} new`}>
             {m.count > 0 && <span className="text-[11px] tabular-nums text-muted">{m.count}</span>}
@@ -185,7 +190,7 @@ function MoneyColumns({ months }: { months: PracticeReport["finance"]["byMonth"]
   const max = Math.max(1, ...months.flatMap((m) => [m.income, m.expenses]));
   return (
     <div>
-      <div className="flex items-end gap-2 h-[170px] border-b border-line pb-px">
+      <div className="flex items-end gap-2 h-[170px] border-b border-[#E6EAF1] pb-px">
         {months.map((m) => (
           <div key={m.month} className="flex-1 min-w-0 h-full flex items-end justify-center gap-[3px]" title={`${monthLabel(m.month, true)}: income ${money(m.income)}, expenses ${money(m.expenses)}`}>
             <div className="w-[45%] max-w-[16px] rounded-t-sm bg-[#3F7A5A]" style={{ height: `${(m.income / max) * 160}px` }} />
@@ -261,7 +266,7 @@ export default function ReportsPage() {
           <h1 className="text-[28px] font-semibold flex items-center gap-2.5">Reports</h1>
           <p className="text-[14.5px] text-muted mt-1">Practice overview: matters by practice area, intake, and the firm&apos;s finances.</p>
         </div>
-        <button onClick={() => window.print()} className="print:hidden bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5">
+        <button onClick={() => window.print()} className={`print:hidden ${pageBtnB}`}>
           <Printer size={14} /> Print or save as PDF
         </button>
       </div>
@@ -273,7 +278,7 @@ export default function ReportsPage() {
             role="tab"
             aria-selected={period === p.key}
             onClick={() => setPeriod(p.key)}
-            className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${period === p.key ? "bg-btn-hover" : "bg-chip hover:bg-btn"}`}
+            className={period === p.key ? pageBtnOpenB : pageBtnB}
           >
             {p.label}
           </button>
@@ -284,8 +289,10 @@ export default function ReportsPage() {
       {error ? (
         <div className="rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-4 py-3 text-[13.5px]">{error}</div>
       ) : !r ? (
-        <div className="text-[13.5px] text-muted flex items-center gap-2 py-10">
-          <Loader2 size={15} className="animate-spin" /> Putting the report together…
+        <div className={frameOuter}>
+          <div className={`${frameInner} text-[13.5px] text-muted flex items-center gap-2 py-10 px-6`}>
+            <Loader2 size={15} className="animate-spin" /> Putting the report together…
+          </div>
         </div>
       ) : (
         <div className="flex flex-col gap-10">
@@ -294,13 +301,13 @@ export default function ReportsPage() {
             <h2 className="text-[18px] font-semibold mb-4 flex items-center gap-2">
               <BarChart3 size={17} className="text-muted" /> Matters
             </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
               <Stat label="Current matters" value={r.totals.current.toLocaleString()} note="Everything not closed" />
               <Stat label={`New matters, ${periodLabel}`} value={r.totals.newInPeriod.toLocaleString()} note="Opened in LawPower" />
               <Stat label="Closed matters" value={r.totals.closed.toLocaleString()} note="All time" />
               <Stat label="All matters" value={r.totals.matters.toLocaleString()} note={r.totals.imported ? `${r.totals.imported.toLocaleString()} imported from LEAP` : undefined} />
             </div>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
               <Card title="Practice mix: current matters" sub="How much of the practice is each area right now">
                 {mix.length ? (
                   <div className="flex items-center gap-6 flex-wrap">
@@ -336,13 +343,13 @@ export default function ReportsPage() {
           {/* ── Finances ── */}
           <div>
             <h2 className="text-[18px] font-semibold mb-4">Finances</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
               <Stat label={`Income, ${periodLabel}`} value={money(r.finance.income)} note="From AI Accountant · trust money not included" />
               <Stat label={`Expenses, ${periodLabel}`} value={money(r.finance.expenses)} note="From AI Accountant" />
               <Stat label="Net" value={money(r.finance.net)} note="Income minus expenses" />
               <Stat label={`Billable time, ${periodLabel}`} value={`${r.finance.billableHours.toLocaleString("en-US", { maximumFractionDigits: 1 })} h`} note={`${money(r.finance.billableValue)} at hourly rates`} />
             </div>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
               <Card title="Income and expenses by month" sub={period === "all" ? "Last 12 months" : undefined} className="xl:col-span-2">
                 {r.finance.hasBooks ? <MoneyColumns months={r.finance.byMonth} /> : <Empty text="No transactions in AI Accountant for this period yet." />}
               </Card>
@@ -364,7 +371,7 @@ export default function ReportsPage() {
                     </thead>
                     <tbody>
                       {r.categories.map((c) => (
-                        <tr key={c.category} className="border-t border-line">
+                        <tr key={c.category} className="border-t border-[#E6EAF1]">
                           <td className="py-2 pr-3">
                             <span className="flex items-center gap-2">
                               <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: colorOf(c.category) }} />
