@@ -247,9 +247,12 @@ export default function AiTemplatesPage() {
           </p>
         </div>
         <div className="relative">
-          <button onClick={() => setNewOpen((o) => !o)} className="bg-white border border-line hover:bg-chip shadow-[0_1px_2px_rgba(27,25,26,0.06)] px-4 py-2 rounded-full text-[13.5px] font-semibold flex items-center gap-1.5 transition-colors">
-            <Plus size={14} /> New template <ChevronDown size={13} />
-          </button>
+          {/* Framed button (same frame as the bell / search): grey-blue ring, white pill inside */}
+          <div className="bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_6px_16px_-6px_rgba(27,25,26,0.16)] transition-shadow">
+            <button onClick={() => setNewOpen((o) => !o)} className="bg-white border border-[#E3E7EF] hover:bg-[#F4F6FA] shadow-[0_1px_3px_rgba(27,25,26,0.06)] px-5 py-2 rounded-full text-[13.5px] font-semibold flex items-center gap-1.5 transition-colors">
+              <Plus size={14} /> New template <ChevronDown size={13} />
+            </button>
+          </div>
           {newOpen && (
             <>
               <ClickAway onClose={() => setNewOpen(false)} />
