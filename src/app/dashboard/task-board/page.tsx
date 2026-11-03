@@ -6,6 +6,7 @@ const PILL = "bg-chip hover:bg-btn border border-btn text-ink px-2.5 py-[5px] ro
 const PILL_ON = "bg-btn border border-btn text-ink px-2.5 py-[5px] rounded-full text-[11.5px] leading-4 font-medium flex items-center gap-1 whitespace-nowrap transition-colors";
 import ClickAway from "@/components/ClickAway";
 import TemplatesModal from "@/components/templates/TemplatesModal";
+import NewTemplateMenu from "@/components/docTemplates/NewTemplateMenu";
 import PriorityDot from "@/components/PriorityDot";
 import { progress as checklistProgress, alerts as checklistAlerts } from "@/lib/checklist";
 import { Fragment, Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -932,13 +933,7 @@ function TaskBoard({
           >
             <Plus size={14} /> Add task
           </button>
-          <button
-            onClick={() => router.push("/dashboard/ai-templates")}
-            title="Checklist templates you can add to any task"
-            className={pageBtnB}
-          >
-            <Plus size={14} /> Add template
-          </button>
+          <NewTemplateMenu />
           {boardKey && (
             <div className="relative">
               <button
