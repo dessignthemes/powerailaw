@@ -29,7 +29,7 @@ import NewMatterModal, {
 } from "@/components/NewMatterModal";
 import { getInitials, getAvatarColor } from "@/components/NewClientModal";
 import { GenericDropdown } from "@/components/NewTaskModal";
-import { pageBtn, menuPanel, menuItem, frameOuter, frameInner, frameTitle } from "@/lib/ui";
+import { menuPanel, menuItem, frameOuter, frameInner, frameTitle, pageBtnB } from "@/lib/ui";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 
 function RowStatusPicker({
@@ -179,13 +179,13 @@ export default function MattersPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setImportOpen(true)}
-            className={pageBtn}
+            className={pageBtnB}
           >
             <Upload size={14} /> Import CSV file
           </button>
           <button
             onClick={() => setModalOpen(true)}
-            className={pageBtn}
+            className={pageBtnB}
           >
             <Plus size={14} /> Add matter
           </button>
@@ -232,7 +232,7 @@ export default function MattersPage() {
           <div className="text-[14px] text-muted mb-5">Add one from the sidebar or here.</div>
           <button
             onClick={() => setModalOpen(true)}
-            className={pageBtn}
+            className={pageBtnB}
           >
             <Plus size={14} /> Add matter
           </button>

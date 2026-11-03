@@ -1,4 +1,5 @@
 "use client";
+import { pageBtnB } from "@/lib/ui";
 
 import { useConflictCheck, ConflictRunButton, ConflictResultBar } from "@/components/conflicts/ConflictStrip";
 import HeaderActions from "@/components/layout/HeaderActions";
@@ -366,19 +367,19 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
         </div>
         {/* Client portal, Intake sheet, Engagement agreement and the conflict check sit in the top bar. */}
         <HeaderActions>
-          <button onClick={() => setLeadPickerOpen(true)} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+          <button onClick={() => setLeadPickerOpen(true)} className={pageBtnB}>
             <UserSearch size={14} /> Import from leads
           </button>
-          <Link href="/dashboard/leads" className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+          <Link href="/dashboard/leads" className={pageBtnB}>
             <Users size={14} /> Potential Leads
           </Link>
           <PortalButton clientId={cardId} size="button" onOpen={() => setSection("portal")} />
           {templates && cardId && (
             <>
-              <button onClick={intakeSheet} disabled={!!docBusy || saving} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
+              <button onClick={intakeSheet} disabled={!!docBusy || saving} className={`${pageBtnB} disabled:opacity-50`}>
                 {docBusy === "intake" ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />} Intake sheet
               </button>
-              <button onClick={() => setEngagementOpen(true)} disabled={saving} className="bg-btn hover:bg-btn-hover px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
+              <button onClick={() => setEngagementOpen(true)} disabled={saving} className={`${pageBtnB} disabled:opacity-50`}>
                 <FileSignature size={14} /> Engagement agreement
               </button>
             </>

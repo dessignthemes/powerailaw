@@ -1,7 +1,7 @@
 "use client";
 
 import ClickAway from "@/components/ClickAway";
-import { pageBtn, pageBtnOpen, menuPanel, frameOuter, frameInner, frameTitle } from "@/lib/ui";
+import { menuPanel, frameOuter, frameInner, frameTitle, pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download, Plus, ShieldCheck } from "lucide-react";
@@ -213,14 +213,14 @@ export default function RecordsPage() {
         </h1>
         <div className="relative flex items-center gap-2">
           {/* Conflict check for a prospect (the results are on the Conflict Checks page). */}
-          <button onClick={() => setConflictOpen(true)} className={pageBtn}>
+          <button onClick={() => setConflictOpen(true)} className={pageBtnB}>
             <ShieldCheck size={14} /> Run conflict check
           </button>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            className={menuOpen ? pageBtnOpen : pageBtn}
+            className={menuOpen ? pageBtnOpenB : pageBtnB}
           >
             <Plus size={14} /> Add contact
             <ChevronDown size={13} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} />
@@ -343,7 +343,7 @@ export default function RecordsPage() {
             {q ? (
               <>
                 <div className="text-[14.5px] font-medium">No contacts match “{query.trim()}”</div>
-                <button onClick={() => setQuery("")} className={`${pageBtn} mt-4 mx-auto`}>
+                <button onClick={() => setQuery("")} className={`${pageBtnB} mt-4 mx-auto`}>
                   Clear search
                 </button>
               </>
@@ -352,11 +352,11 @@ export default function RecordsPage() {
                 <div className="text-[14.5px] font-medium">{tab === "all" ? "No contacts yet" : `No ${EMPTY_LABEL[tab]} yet`}</div>
                 <div className="text-[13px] text-muted mt-1 mb-5">{EMPTY_HINT[tab]}</div>
                 {tab === "all" ? (
-                  <button onClick={() => setMenuOpen(true)} className={`${pageBtn} mx-auto`}>
+                  <button onClick={() => setMenuOpen(true)} className={`${pageBtnB} mx-auto`}>
                     <Plus size={14} /> Add contact
                   </button>
                 ) : (
-                  <button onClick={() => startAdd(tab)} className={`${pageBtn} mx-auto`}>
+                  <button onClick={() => startAdd(tab)} className={`${pageBtnB} mx-auto`}>
                     <Plus size={14} /> Add {KIND_LABEL[tab].toLowerCase()}
                   </button>
                 )}

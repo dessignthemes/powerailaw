@@ -5,7 +5,7 @@ import { Search, Sparkles, ClipboardPaste, FileText, Plus, ChevronDown, Loader2,
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import type { TaskTemplate } from "@/lib/checklist";
 import ClickAway from "@/components/ClickAway";
-import { pageBtn, pageBtnOpen } from "@/lib/ui";
+import { pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import TemplateEditor, { type EditorValue } from "@/components/docTemplates/TemplateEditor";
 import TemplateMaker, { type MakerDraft } from "@/components/docTemplates/TemplateMaker";
@@ -250,7 +250,7 @@ export default function AiTemplatesPage() {
         <div className="relative">
           <button
             onClick={() => setNewOpen((o) => !o)}
-            className={`${newOpen ? pageBtnOpen : pageBtn} border border-btn`}
+            className={newOpen ? pageBtnOpenB : pageBtnB}
           >
             <Plus size={14} /> New template <ChevronDown size={13} />
           </button>

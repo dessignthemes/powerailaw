@@ -1,4 +1,5 @@
 "use client";
+import { pageBtnB } from "@/lib/ui";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -72,7 +73,7 @@ export function ConflictRunButton({ state, ready }: { state: ConflictState; read
       onClick={state.run}
       disabled={!ready || state.running}
       title={ready ? "Check this client against every matter: leads, open and closed (uses AI credits)" : "Add the client's first and last name (or company name) first"}
-      className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap"
+      className={`${pageBtnB} disabled:opacity-50`}
     >
       {state.running ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
       {state.check ? "Run conflict check again" : "Run conflict check"}

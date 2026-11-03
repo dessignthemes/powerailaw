@@ -1,8 +1,9 @@
 "use client";
+import { pageBtnB } from "@/lib/ui";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, X, ChevronRight } from "lucide-react";
+import { Search, X, ChevronRight, Plus } from "lucide-react";
 import ClientAvatar from "@/components/clientCard/ClientAvatar";
 import ClientCardEditor from "@/components/clientCard/ClientCardEditor";
 
@@ -88,8 +89,8 @@ function ClientIntake() {
               <h1 className="text-[28px] font-semibold">Client Intake</h1>
               <p className="text-[14.5px] text-muted mt-1">Onboard new clients with a complete client card: people, contact details, address, notes, documents, mailings and matters.</p>
             </div>
-            <button onClick={() => go("new")} disabled={setup} className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors disabled:opacity-50">
-              + New client
+            <button onClick={() => go("new")} disabled={setup} className={`${pageBtnB} disabled:opacity-50`}>
+              <Plus size={14} /> New client
             </button>
           </div>
 
@@ -119,7 +120,7 @@ function ClientIntake() {
             ) : shown.length === 0 ? (
               <div className="bg-cream rounded-xl py-14 text-center">
                 <div className="text-[14.5px] font-medium">{q ? `No clients match “${q.trim()}”` : "No clients yet"}</div>
-                {!q && !setup && <button onClick={() => go("new")} className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium mt-4">+ New client</button>}
+                {!q && !setup && <button onClick={() => go("new")} className={`${pageBtnB} mt-4 mx-auto`}><Plus size={14} /> New client</button>}
               </div>
             ) : (
               <div className="bg-cream rounded-xl divide-y divide-line">

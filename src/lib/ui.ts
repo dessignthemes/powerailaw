@@ -14,3 +14,7 @@ export const frameOuter =
   "bg-[#ECEFF6] rounded-[22px] border border-[#E1E5EE] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]";
 export const frameInner = "bg-white rounded-2xl border border-[#E3E7EF] shadow-[0_1px_3px_rgba(27,25,26,0.06)]";
 export const frameTitle = "font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2";
+// Trial (Nov 2026): the same buttons with a 1px border in the hover colour.
+// Used on AI Templates, Client Intake, Matters and Contacts. If it stays, fold the border into pageBtn above.
+export const pageBtnB = `${pageBtn} border border-btn`;
+export const pageBtnOpenB = `${pageBtnOpen} border border-btn`;

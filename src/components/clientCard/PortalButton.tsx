@@ -1,4 +1,5 @@
 "use client";
+import { pageBtnB } from "@/lib/ui";
 
 import { useEffect, useState } from "react";
 import { Globe, X } from "lucide-react";
@@ -42,7 +43,7 @@ export default function PortalButton({
   const cls =
     size === "chip"
       ? "flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap flex-shrink-0"
-      : "bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap flex-shrink-0";
+      : `${pageBtnB} flex-shrink-0`;
 
   return (
     <>
