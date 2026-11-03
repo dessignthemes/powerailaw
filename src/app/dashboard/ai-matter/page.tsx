@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import PriorityDot from "@/components/PriorityDot";
 import Link from "next/link";
-import { Search, X, Sparkles, Loader2, RefreshCw, AlertTriangle, AlertCircle, Info, Check, Plus, CalendarDays, Users, FileText, Clock, ListChecks, ArrowUpRight } from "lucide-react";
+import { Search, X, Sparkles, Loader2, RefreshCw, AlertTriangle, AlertCircle, Info, Check, Plus, CalendarDays, Users, FileText, Clock, ListChecks, ArrowUpRight, Briefcase, ShieldAlert, ClipboardList, Lightbulb } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+import Frame from "@/components/ui/Frame";
+import { pageBtnB, smallBtnB, rowLight } from "@/lib/ui";
 import type { ReviewResult, Issue, NextStep } from "@/lib/ai/matterReview";
 
 const STATUSES = ["Open", "Lead", "Consultation", "Engaged", "Active", "Closed", "All"] as const;
@@ -29,7 +31,7 @@ const money = (n: number) => n.toLocaleString("en-US", { style: "currency", curr
 const sevStyle: Record<Issue["severity"], { icon: typeof AlertTriangle; cls: string; label: string }> = {
   high: { icon: AlertTriangle, cls: "bg-[#F9B2B3]", label: "Needs attention" },
   medium: { icon: AlertCircle, cls: "bg-[#F9E1C0]", label: "Should fix" },
-  low: { icon: Info, cls: "bg-card-alt border border-line", label: "Worth a look" },
+  low: { icon: Info, cls: "bg-white border border-[#E1E5EE]", label: "Worth a look" },
 };
 
 export default function AiMatterPage() {
@@ -110,20 +112,20 @@ export default function AiMatterPage() {
 
       <div className="grid lg:grid-cols-[340px_1fr] gap-5 items-start">
         {/* Matter list */}
-        <div className="bg-card-alt rounded-2xl p-3 lg:sticky lg:top-6">
+        <Frame title={`Matters · ${shown.length}`} icon={Briefcase} pad="p-3" className="lg:sticky lg:top-6">
           <div className="relative mb-2.5">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search matters or clients" aria-label="Search matters" className="w-full border border-line bg-white rounded-full pl-9 pr-8 py-2 text-[13.5px] outline-none focus:border-ink placeholder:text-muted" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search matters or clients" aria-label="Search matters" className="w-full border border-[#E3E7EF] bg-[#F4F6FA] rounded-full pl-9 pr-8 py-2 text-[13.5px] outline-none focus:border-[#C3CBDA] focus:bg-white placeholder:text-muted" />
             {q && <button onClick={() => setQ("")} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"><X size={14} /></button>}
           </div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {STATUSES.map((s) => (
-              <button key={s} onClick={() => setStatus(s)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium ${status === s ? "bg-btn" : "bg-white/70 hover:bg-white"}`}>{s}</button>
+              <button key={s} onClick={() => setStatus(s)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${status === s ? "bg-btn-hover border border-[#C3CBDA]" : "bg-white border border-[#D9DFEA] hover:bg-[#F4F6FA] hover:border-[#C3CBDA]"}`}>{s}</button>
             ))}
           </div>
           <div className="flex flex-col gap-1.5 max-h-[65vh] overflow-y-auto">
             {shown.length === 0 ? (
-              <div className="bg-cream rounded-xl px-4 py-10 text-center text-[13.5px] text-muted">
+              <div className={`${rowLight} px-4 py-10 text-center text-[13.5px] text-muted`}>
                 {matters.length === 0 ? <>No matters yet. <Link href="/dashboard/matters" className="underline underline-offset-2">Create one</Link>.</> : "No matters match."}
               </div>
             ) : (
@@ -133,50 +135,52 @@ export default function AiMatterPage() {
                   onClick={() => pick(m.id)}
                   aria-current={selected === m.id ? "true" : undefined}
                   title={[clientName(m.clientId), m.status].filter(Boolean).join(" · ")}
-                  className={`group/row w-full flex items-center gap-3 text-left px-3.5 py-2 rounded-xl shadow-[0_1px_1px_rgba(27,25,26,0.10)] transition-colors ${
-                    selected === m.id ? "bg-[#CFD7E8]" : "bg-[#E1E7F4] hover:bg-[#D5DDEE]"
+                  className={`group/row w-full flex items-center gap-2.5 text-left px-3 py-1.5 rounded-lg border transition-colors ${
+                    selected === m.id ? "bg-[#E6EBF4] border-[#D5DCE8]" : "bg-[#F4F6FA] border-[#E6EAF1] hover:bg-[#EAEEF5]"
                   }`}
                 >
-                  <span className="min-w-0 flex-1 text-[13.5px] font-medium truncate">{m.title}</span>
-                  <span className={`flex-shrink-0 ${selected === m.id ? "text-ink" : "text-muted group-hover/row:text-ink"}`} aria-hidden>→</span>
+                  <span className="min-w-0 flex-1 text-[13px] font-medium truncate">{m.title}</span>
+                  <span className={`flex-shrink-0 text-[13px] ${selected === m.id ? "text-ink" : "text-muted group-hover/row:text-ink"}`} aria-hidden>›</span>
                 </button>
               ))
             )}
           </div>
-        </div>
+        </Frame>
 
         {/* Review */}
         <div className="min-w-0">
           {!sel ? (
-            <div className="bg-card-alt rounded-2xl py-20 text-center">
+            <Frame title="AI matter review" icon={Sparkles} pad="py-20 text-center">
               <Sparkles size={24} strokeWidth={1.5} className="mx-auto mb-3 text-muted" />
               <div className="text-[15px] font-medium">Choose a matter to review</div>
               <div className="text-[13.5px] text-muted mt-1">The summary takes about 10 to 30 seconds.</div>
-            </div>
+            </Frame>
           ) : (
             <div className="grid gap-5">
-              <div className="bg-card-alt rounded-2xl p-6 flex items-start justify-between gap-4 flex-wrap">
+              <Frame title="Matter" icon={Briefcase} pad="p-6">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="min-w-0">
                   <div className="text-[22px] font-semibold">{sel.title}</div>
                   <div className="text-[13.5px] text-muted mt-0.5">{[clientName(sel.clientId) || "No client", sel.status, sel.category && sel.category !== "None" ? sel.category : ""].filter(Boolean).join(" · ")}</div>
                   {review && <div className="text-[12px] text-muted mt-1">Reviewed {new Date(review.generatedAt).toLocaleString()}</div>}
                 </div>
                 <div className="flex gap-2">
-                  <Link href={`/dashboard/matters/${sel.id}`} className="bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5">
+                  <Link href={`/dashboard/matters/${sel.id}`} className={pageBtnB}>
                     Open matter <ArrowUpRight size={13} />
                   </Link>
-                  <button onClick={() => run(sel.id)} disabled={busy} className="bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 disabled:opacity-60">
+                  <button onClick={() => run(sel.id)} disabled={busy} className={`${pageBtnB} disabled:opacity-60`}>
                     {busy ? <Loader2 size={14} className="animate-spin" /> : review ? <RefreshCw size={14} /> : <Sparkles size={14} />}
                     {busy ? "Reviewing…" : review ? "Refresh review" : "Summarize with AI"}
                   </button>
                 </div>
               </div>
+              </Frame>
 
               {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{error}</div>}
-              {notice && <div className="rounded-xl border border-line bg-card-alt px-4 py-3 text-[13.5px]">{notice}</div>}
+              {notice && <div className={`${rowLight} px-4 py-3 text-[13.5px]`}>{notice}</div>}
 
               {!review ? (
-                !busy && <div className="bg-card-alt rounded-2xl py-14 text-center text-[14px] text-muted">Click “Summarize with AI” to review this matter.</div>
+                !busy && <Frame pad="py-14 text-center text-[14px] text-muted">Click “Summarize with AI” to review this matter.</Frame>
               ) : (
                 <>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -186,27 +190,24 @@ export default function AiMatterPage() {
                       { icon: Clock, label: "Time", value: `${review.stats.totalHours} h`, sub: `${review.stats.billableHours} h billable` },
                       { icon: CalendarDays, label: "Billable value", value: money(review.stats.billableValue), sub: review.matter.dueDate ? `Due ${review.matter.dueDate}` : "No due date" },
                     ].map((s) => (
-                      <div key={s.label} className="bg-card-alt rounded-2xl p-4">
-                        <div className="flex items-center gap-1.5 text-[12.5px] text-muted"><s.icon size={13} /> {s.label}</div>
-                        <div className="text-[22px] font-semibold mt-1 tabular-nums">{s.value}</div>
+                      <Frame key={s.label} title={s.label} icon={s.icon} pad="p-4">
+                        <div className="text-[22px] font-semibold tabular-nums">{s.value}</div>
                         <div className={`text-[12px] ${s.sub.includes("overdue") && !s.sub.startsWith("none") ? "text-red-700" : "text-muted"}`}>{s.sub}</div>
-                      </div>
+                      </Frame>
                     ))}
                   </div>
 
                   {review.ai ? (
-                    <div className="bg-card-alt rounded-2xl p-6">
-                      <div className="flex items-center gap-2 text-[15px] font-semibold mb-2"><Sparkles size={15} /> Summary</div>
+                    <Frame title="Summary" icon={Sparkles} pad="p-6">
                       <p className="text-[14.5px] leading-relaxed">{review.ai.summary}</p>
-                      {review.ai.status && <p className="text-[13.5px] mt-3 bg-white border border-line rounded-xl px-3.5 py-2.5"><span className="font-medium">Status:</span> {review.ai.status}</p>}
-                    </div>
+                      {review.ai.status && <p className={`text-[13.5px] mt-3 ${rowLight} px-3.5 py-2.5`}><span className="font-medium">Status:</span> {review.ai.status}</p>}
+                    </Frame>
                   ) : (
-                    review.aiError && <div className="rounded-xl border border-line bg-card-alt px-4 py-3 text-[13.5px]">{review.aiError}</div>
+                    review.aiError && <div className={`${rowLight} px-4 py-3 text-[13.5px]`}>{review.aiError}</div>
                   )}
 
                   {/* Issues */}
-                  <div className="bg-card-alt rounded-2xl p-6">
-                    <div className="text-[15px] font-semibold mb-3">What&apos;s missing or needs fixing</div>
+                  <Frame title="What's missing or needs fixing" icon={AlertTriangle} pad="p-5">
                     {review.issues.length === 0 && !review.ai?.missing.length ? (
                       <div className="flex items-center gap-2 text-[13.5px] text-green-700"><Check size={15} /> No problems found by the automatic checks.</div>
                     ) : (
@@ -214,19 +215,19 @@ export default function AiMatterPage() {
                         {review.issues.map((i) => {
                           const S = sevStyle[i.severity];
                           return (
-                            <div key={i.key} className="bg-white border border-line rounded-xl px-4 py-3 flex items-start gap-3 flex-wrap">
+                            <div key={i.key} className={`${rowLight} px-4 py-3 flex items-start gap-3 flex-wrap`}>
                               <span className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${S.cls}`} title={S.label}><S.icon size={14} /></span>
                               <div className="flex-1 min-w-[220px]">
                                 <div className="text-[14px] font-medium">{i.title}</div>
                                 <div className="text-[13px] text-muted">{i.detail}</div>
                               </div>
                               {i.fix.kind === "link" && i.fix.href ? (
-                                <Link href={i.fix.href} className="bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium">{i.fix.label}</Link>
+                                <Link href={i.fix.href} className={smallBtnB}>{i.fix.label}</Link>
                               ) : i.fix.task ? (
                                 <button
                                   disabled={created.has(i.key)}
                                   onClick={() => createTasks([{ key: i.key, title: i.fix.task!.title, description: i.detail, priority: i.fix.task!.priority, dueDate: null }])}
-                                  className="bg-btn hover:bg-btn-hover px-3 py-1.5 rounded-full text-[12.5px] font-medium disabled:opacity-50"
+                                  className={smallBtnB}
                                 >
                                   {created.has(i.key) ? "Task created" : i.fix.label}
                                 </button>
@@ -235,13 +236,13 @@ export default function AiMatterPage() {
                           );
                         })}
                         {review.ai?.missing.map((m, k) => (
-                          <div key={`m${k}`} className="bg-white border border-line rounded-xl px-4 py-3 flex items-start gap-3 flex-wrap">
-                            <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-card-alt border border-line" title="Spotted by AI"><Sparkles size={13} /></span>
+                          <div key={`m${k}`} className={`${rowLight} px-4 py-3 flex items-start gap-3 flex-wrap`}>
+                            <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-[#E1E5EE]" title="Spotted by AI"><Sparkles size={13} /></span>
                             <div className="flex-1 min-w-[220px] text-[13.5px]">{m}</div>
                             <button
                               disabled={created.has(`miss-${k}`)}
                               onClick={() => createTasks([{ key: `miss-${k}`, title: `Get: ${m.slice(0, 120)}`, description: `${m}\n\nSpotted by AI Matter.`, priority: "Medium", dueDate: null }])}
-                              className="bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium disabled:opacity-50"
+                              className={smallBtnB}
                             >
                               {created.has(`miss-${k}`) ? "Task created" : "Create task"}
                             </button>
@@ -249,53 +250,53 @@ export default function AiMatterPage() {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </Frame>
 
                   {review.ai && review.ai.nextSteps.length > 0 && (
-                    <div className="bg-card-alt rounded-2xl p-6">
-                      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                        <div className="text-[15px] font-semibold">Suggested next steps</div>
+                    <Frame
+                      title="Suggested next steps"
+                      icon={ClipboardList}
+                      pad="p-5"
+                      right={
                         <button
                           onClick={() => createTasks(review.ai!.nextSteps.map(stepItem).filter((x) => !created.has(x.key)))}
                           disabled={review.ai.nextSteps.every((_, i) => created.has(`step-${i}`))}
-                          className="bg-btn hover:bg-btn-hover px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 disabled:opacity-50"
+                          className={smallBtnB}
                         >
                           <Plus size={13} /> Create all as tasks
                         </button>
-                      </div>
+                      }
+                    >
                       <div className="grid gap-2">
                         {review.ai.nextSteps.map((n, i) => (
-                          <div key={i} className="bg-white border border-line rounded-xl px-4 py-3 flex items-start gap-3 flex-wrap">
+                          <div key={i} className={`${rowLight} px-4 py-3 flex items-start gap-3 flex-wrap`}>
                             <div className="flex-1 min-w-[220px]">
                               <div className="text-[14px] font-medium">{n.title}</div>
                               <div className="text-[12.5px] text-muted">{[n.why, n.dueDate ? `by ${n.dueDate}` : ""].filter(Boolean).join(" · ")}</div>
                             </div>
                             <PriorityDot priority={n.priority} />
-                            <button onClick={() => createTasks([stepItem(n, i)])} disabled={created.has(`step-${i}`)} className="bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[12.5px] font-medium disabled:opacity-50">
+                            <button onClick={() => createTasks([stepItem(n, i)])} disabled={created.has(`step-${i}`)} className={smallBtnB}>
                               {created.has(`step-${i}`) ? "Task created" : "Create task"}
                             </button>
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </Frame>
                   )}
 
                   {review.ai && (
                     <div className="grid md:grid-cols-2 gap-5">
-                      <div className="bg-card-alt rounded-2xl p-6">
-                        <div className="flex items-center gap-2 text-[15px] font-semibold mb-3"><CalendarDays size={15} /> Key dates</div>
+                      <Frame title="Key dates" icon={CalendarDays} pad="p-5">
                         {review.ai.keyDates.length ? (
                           <ul className="grid gap-1.5 text-[13.5px]">{review.ai.keyDates.map((d, i) => <li key={i}><span className="font-medium tabular-nums">{d.date}</span> · {d.label}</li>)}</ul>
                         ) : <div className="text-[13.5px] text-muted">None found.</div>}
-                      </div>
-                      <div className="bg-card-alt rounded-2xl p-6">
-                        <div className="flex items-center gap-2 text-[15px] font-semibold mb-3"><Users size={15} /> Parties</div>
+                      </Frame>
+                      <Frame title="Parties" icon={Users} pad="p-5">
                         {review.ai.parties.length ? (
                           <ul className="grid gap-1.5 text-[13.5px]">{review.ai.parties.map((p, i) => <li key={i}><span className="font-medium">{p.name}</span>{p.role ? ` · ${p.role}` : ""}</li>)}</ul>
                         ) : <div className="text-[13.5px] text-muted">None found.</div>}
-                      </div>
-                      <div className="bg-card-alt rounded-2xl p-6">
-                        <div className="text-[15px] font-semibold mb-3">Key facts</div>
+                      </Frame>
+                      <Frame title="Key facts" icon={Lightbulb} pad="p-5">
                         {review.ai.keyFacts.length ? (
                           <ul className="grid gap-2 text-[13.5px] list-disc pl-5">
                             {review.ai.keyFacts.map((f, i) => {
@@ -304,13 +305,12 @@ export default function AiMatterPage() {
                             })}
                           </ul>
                         ) : <div className="text-[13.5px] text-muted">None found.</div>}
-                      </div>
-                      <div className="bg-card-alt rounded-2xl p-6">
-                        <div className="text-[15px] font-semibold mb-3">Risks</div>
+                      </Frame>
+                      <Frame title="Risks" icon={ShieldAlert} pad="p-5">
                         {review.ai.risks.length ? (
                           <ul className="grid gap-2 text-[13.5px] list-disc pl-5">{review.ai.risks.map((r, i) => <li key={i}>{r}</li>)}</ul>
                         ) : <div className="text-[13.5px] text-muted">None flagged.</div>}
-                      </div>
+                      </Frame>
                     </div>
                   )}
                   <p className="text-[12px] text-muted">

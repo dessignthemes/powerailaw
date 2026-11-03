@@ -18,3 +18,8 @@ export const frameTitle = "font-mono text-[11px] uppercase tracking-[0.12em] tex
 // Used on AI Templates, Client Intake, Matters and Contacts. If it stays, fold the border into pageBtn above.
 export const pageBtnB = `${pageBtn} border border-btn`;
 export const pageBtnOpenB = `${pageBtnOpen} border border-btn`;
+// Small buttons inside rows/panels: same bordered look, smaller.
+export const smallBtnB =
+  "bg-chip hover:bg-btn border border-btn text-ink px-3 py-1.5 rounded-full text-[12.5px] font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors disabled:opacity-50";
+// Light rows inside white panels.
+export const rowLight = "bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl";
