@@ -116,7 +116,7 @@ export default function CalendarSearch({
         onClick={() => setOpen(true)}
         title="Search calendars"
         aria-label="Search calendars"
-        className="w-9 h-9 rounded-full bg-chip hover:bg-btn transition-colors flex items-center justify-center"
+        className="w-[38px] h-[38px] rounded-full bg-chip hover:bg-btn border border-btn transition-colors flex items-center justify-center"
       >
         <Search size={15} strokeWidth={1.75} />
       </button>
@@ -136,7 +136,7 @@ export default function CalendarSearch({
           setShowResults(false);
           onPick(e);
         }}
-        className="w-full text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl hover:bg-chip transition-colors"
+        className="w-full text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl hover:bg-[#F4F6FA] transition-colors"
       >
         <span className="w-2.5 h-2.5 rounded-full mt-[5px] flex-shrink-0" style={{ backgroundColor: c.tx }} />
         <span className="min-w-0 flex-1">
@@ -158,7 +158,7 @@ export default function CalendarSearch({
   return (
     <div className="relative">
       {showResults && <ClickAway onClose={() => setShowResults(false)} />}
-      <div className="relative z-50 flex items-center gap-2 bg-chip rounded-full pl-3 pr-1 h-9 w-[min(440px,90vw)] border border-transparent focus-within:border-btn-ring">
+      <div className="relative z-50 flex items-center gap-2 bg-chip rounded-full pl-3 pr-1 h-[38px] w-[min(440px,90vw)] border border-btn focus-within:border-btn-ring">
         {loading ? <Loader2 size={15} className="animate-spin text-muted flex-shrink-0" /> : <Search size={15} strokeWidth={1.75} className="text-muted flex-shrink-0" />}
         <input
           ref={input}
@@ -192,7 +192,7 @@ export default function CalendarSearch({
       </div>
 
       {showResults && (error || hits) && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[min(440px,90vw)] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5">
+        <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[min(440px,90vw)] bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
           {error ? (
             <div className="px-3 py-3 text-[13px] text-red-700">{error}</div>
           ) : hits && hits.length === 0 ? (

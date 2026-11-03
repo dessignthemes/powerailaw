@@ -4,6 +4,7 @@ import ClickAway from "@/components/ClickAway";
 import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import Link from "next/link";
 import EventDetailModal from "@/components/EventDetailModal";
+import { pageBtnB, pageBtnOpenB, smallBtnB, menuPanel, frameOuter, frameInner, frameTitle } from "@/lib/ui";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import {
   ChevronLeft,
@@ -430,7 +431,7 @@ export default function CalendarPage() {
     <div className="px-10 py-10">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-card-alt rounded-full px-2 py-1.5">
+          <div className="flex items-center gap-1 bg-chip border border-btn rounded-full px-2 py-[7px]">
             <button
               onClick={() => shift(-1)}
               className="w-6 h-6 flex items-center justify-center text-muted hover:text-ink transition-colors"
@@ -449,15 +450,15 @@ export default function CalendarPage() {
           <div className="relative">
             <button
               onClick={() => setViewMenuOpen((o) => !o)}
-              className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors rounded-full px-3.5 py-2 text-[13.5px] font-medium"
+              className={viewMenuOpen ? pageBtnOpenB : pageBtnB}
             >
-              <ViewIcon size={14} strokeWidth={1.75} /> {view}
-              <ChevronDown size={12} strokeWidth={2} className="text-muted" />
+              <ViewIcon size={14} /> {view}
+              <ChevronDown size={13} />
             </button>
             {viewMenuOpen && (
               <>
                 <ClickAway onClose={() => setViewMenuOpen(false)} />
-                <div className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[160px]">
+                <div className={`absolute left-0 top-[calc(100%+14px)] z-50 ${menuPanel} w-[160px]`}>
                   {(["Month", "Week", "Day"] as ViewMode[]).map((v) => {
                     const Icon = viewIcons[v];
                     return (
@@ -467,7 +468,7 @@ export default function CalendarPage() {
                           setView(v);
                           setViewMenuOpen(false);
                         }}
-                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F4F6FA] transition-colors"
                       >
                         <span className="flex items-center gap-2">
                           <Icon size={15} strokeWidth={1.75} /> {v}
@@ -486,9 +487,9 @@ export default function CalendarPage() {
           <CalendarSearch members={members} colorOf={colorOf} onPick={openSearchHit} />
           <button
             onClick={() => setModalDate(toISODate(cursor))}
-            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
+            className={pageBtnB}
           >
-            <Plus size={14} strokeWidth={2} /> Add Event
+            <Plus size={14} /> Add Event
           </button>
         </div>
       </div>
@@ -506,18 +507,18 @@ export default function CalendarPage() {
           );
         if (sources === null)
           return (
-            <div className="bg-card-alt border border-line rounded-xl px-5 py-3 mb-6 text-[13.5px] text-muted flex items-center gap-2">
+            <div className="bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-5 py-3 mb-6 text-[13.5px] text-muted flex items-center gap-2">
               <Loader2 size={14} className="animate-spin" /> Loading your calendar…
             </div>
           );
         return (
           <div className="flex flex-col gap-2 mb-6">
             {sources.length === 0 && (
-              <div className="bg-card-alt border border-line rounded-xl px-5 py-3 flex items-center justify-between flex-wrap gap-3">
+              <div className="bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-5 py-3 flex items-center justify-between flex-wrap gap-3">
                 <span className="text-[13.5px] text-muted">Sync from Google or Outlook Calendar to see your events here.</span>
-                <span className="flex items-center gap-4 text-[13.5px] font-medium">
-                  <Link href={connect("google")} className="underline">Connect Google Calendar</Link>
-                  <Link href={connect("microsoft")} className="underline">Connect Outlook</Link>
+                <span className="flex items-center gap-2">
+                  <Link href={connect("google")} className={smallBtnB}>Connect Google Calendar</Link>
+                  <Link href={connect("microsoft")} className={smallBtnB}>Connect Outlook</Link>
                 </span>
               </div>
             )}
@@ -527,7 +528,7 @@ export default function CalendarPage() {
                   <AlertTriangle size={14} className="flex-shrink-0" />
                   {providerName[b.provider]}{b.email ? ` (${b.email})` : ""}: {b.message ?? "needs attention"}
                 </span>
-                <Link href={connect(b.provider)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-btn-hover">
+                <Link href={connect(b.provider)} className={smallBtnB}>
                   Reconnect
                 </Link>
               </div>
@@ -583,7 +584,7 @@ export default function CalendarPage() {
       {saveNotice && (
         <div
           className={`mb-5 -mt-2 rounded-xl px-4 py-3 text-[13.5px] flex items-center justify-between gap-3 border ${
-            saveNotice.kind === "error" ? "border-red-200 bg-red-50 text-red-700" : saveNotice.kind === "ok" ? "border-[#B9D6B2] bg-[#F1F7EF]" : "border-line bg-card-alt"
+            saveNotice.kind === "error" ? "border-red-200 bg-red-50 text-red-700" : saveNotice.kind === "ok" ? "border-[#B9D6B2] bg-[#F1F7EF]" : "border-[#E6EAF1] bg-[#F4F6FA]"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -606,8 +607,12 @@ export default function CalendarPage() {
       )}
 
       {view === "Month" && (
-        <div className="border border-line rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-7 bg-card-alt border-b border-line">
+        <div className={frameOuter}>
+          <div className={`${frameTitle} px-3 pt-2.5 pb-2.5`}>
+            <ViewIcon size={15} strokeWidth={1.75} /> {view} · {headerLabel}
+          </div>
+          <div className={`${frameInner} overflow-hidden`}>
+          <div className="grid grid-cols-7 bg-[#F4F6FA] border-b border-[#E6EAF1]">
             {weekDayShort.map((d) => (
               <div key={d} className="text-[12.5px] font-medium text-muted px-3 py-2.5 text-center">
                 {d}
@@ -624,7 +629,7 @@ export default function CalendarPage() {
                 <button
                   key={i}
                   onClick={() => setModalDate(iso)}
-                  className={`min-h-[140px] border-r border-b border-line px-2.5 py-2 text-left hover:bg-chip/60 transition-colors ${
+                  className={`min-h-[140px] border-r border-b border-line px-2.5 py-2 text-left hover:bg-[#F4F6FA] transition-colors ${
                     !inMonth ? "text-muted/40" : ""
                   } ${(i + 1) % 7 === 0 ? "border-r-0" : ""}`}
                 >
@@ -667,11 +672,16 @@ export default function CalendarPage() {
             })}
           </div>
         </div>
+        </div>
       )}
 
       {view === "Week" && (
-        <div className="border border-line rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-[60px_repeat(7,1fr)] bg-card-alt border-b border-line">
+        <div className={frameOuter}>
+          <div className={`${frameTitle} px-3 pt-2.5 pb-2.5`}>
+            <ViewIcon size={15} strokeWidth={1.75} /> {view} · {headerLabel}
+          </div>
+          <div className={`${frameInner} overflow-hidden`}>
+          <div className="grid grid-cols-[60px_repeat(7,1fr)] bg-[#F4F6FA] border-b border-[#E6EAF1]">
             <div />
             {weekDays.map((d) => {
               const iso = toISODate(d);
@@ -690,7 +700,7 @@ export default function CalendarPage() {
             })}
           </div>
           {weekDays.some((d) => eventsOnDay(shown, d).some((e) => e.allDay)) && (
-            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-line bg-cream">
+            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-[#E6EAF1] bg-[#FAFBFD]">
               <div className="text-[10.5px] text-muted text-right pr-2 py-1.5">all-day</div>
               {weekDays.map((d) => (
                 <div key={toISODate(d)} className="border-l border-line p-1 flex flex-col gap-1 min-w-0">
@@ -721,7 +731,7 @@ export default function CalendarPage() {
                       <button
                         key={`${iso}-${h}`}
                         onClick={() => setModalDate(iso)}
-                        className="border-t border-l border-line hover:bg-chip/50 transition-colors"
+                        className="border-t border-l border-line hover:bg-[#F4F6FA] transition-colors"
                         style={{ height: HOUR_PX }}
                       />
                     );
@@ -762,15 +772,20 @@ export default function CalendarPage() {
             )}
           </div>
         </div>
+        </div>
       )}
 
       {view === "Day" && (
-        <div className="border border-line rounded-2xl overflow-hidden">
-          <div className="bg-card-alt border-b border-line px-4 py-2.5 text-[13px] font-semibold text-center">
+        <div className={frameOuter}>
+          <div className={`${frameTitle} px-3 pt-2.5 pb-2.5`}>
+            <ViewIcon size={15} strokeWidth={1.75} /> {view} · {headerLabel}
+          </div>
+          <div className={`${frameInner} overflow-hidden`}>
+          <div className="bg-[#F4F6FA] border-b border-[#E6EAF1] px-4 py-2.5 text-[13px] font-semibold text-center">
             {cursor.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </div>
           {eventsOnDay(shown, cursor).some((e) => e.allDay) && (
-            <div className="border-b border-line bg-cream px-3 py-1.5 flex flex-wrap gap-1.5 items-center">
+            <div className="border-b border-[#E6EAF1] bg-[#FAFBFD] px-3 py-1.5 flex flex-wrap gap-1.5 items-center">
               <span className="text-[10.5px] text-muted mr-1">all-day</span>
               {eventsOnDay(shown, cursor)
                 .filter((e) => e.allDay)
@@ -786,7 +801,7 @@ export default function CalendarPage() {
               <button
                 key={h}
                 onClick={() => setModalDate(toISODate(cursor))}
-                className="w-full flex border-t border-line hover:bg-chip/50 transition-colors text-left"
+                className="w-full flex border-t border-line hover:bg-[#F4F6FA] transition-colors text-left"
                 style={{ height: HOUR_PX }}
               >
                 <span className="text-[11px] text-muted w-14 text-right pr-2 -translate-y-2 flex-shrink-0">
@@ -821,6 +836,7 @@ export default function CalendarPage() {
               </div>
             )}
           </div>
+        </div>
         </div>
       )}
 
