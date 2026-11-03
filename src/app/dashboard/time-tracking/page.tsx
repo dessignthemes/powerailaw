@@ -2,11 +2,13 @@
 
 import ClickAway from "@/components/ClickAway";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar, List, SlidersHorizontal, Plus, X, Clock, Check, ChevronDown, Trash2, Loader2, AlertTriangle, Timer, Pencil, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, List, SlidersHorizontal, Plus, X, Clock, Check, ChevronDown, Trash2, Loader2, AlertTriangle, Timer, Pencil, Users, DollarSign } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { displayName } from "@/lib/initials";
 import { formatMinutes, localYmd } from "@/lib/taskTimer";
 import SelectBox from "@/components/SelectBox";
+import Frame from "@/components/ui/Frame";
+import { pageBtnB, pageBtnOpenB, menuPanel } from "@/lib/ui";
 
 type Entry = {
   id: string;
@@ -157,7 +159,7 @@ export default function TimeTrackingPage() {
         key={e.id}
         onClick={mine ? () => setEditing(e) : undefined}
         title={mine ? "Click to edit" : undefined}
-        className={`flex items-center justify-between gap-4 px-5 py-3.5 border-b border-line last:border-b-0 ${mine ? "cursor-pointer hover:bg-chip/40 transition-colors" : ""}`}
+        className={`flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] ${mine ? "cursor-pointer hover:bg-[#EAEEF5] transition-colors" : ""}`}
       >
         <div className="min-w-0">
           <div className="text-[14.5px] font-medium truncate">{e.description || tn || "Untitled entry"}</div>
@@ -176,11 +178,11 @@ export default function TimeTrackingPage() {
             </span>
           )}
           {e.billable ? (
-            <span className="text-[11.5px] bg-card-alt px-2 py-1 rounded-full font-medium">
+            <span className="text-[11.5px] bg-white border border-[#E1E5EE] px-2 py-1 rounded-full font-medium">
               Billable{rate ? ` · ${money((rate * e.minutes) / 60)}` : ""}
             </span>
           ) : (
-            <span className="text-[11.5px] bg-card-alt text-muted px-2 py-1 rounded-full font-medium">Non-billable</span>
+            <span className="text-[11.5px] bg-white border border-[#E1E5EE] text-muted px-2 py-1 rounded-full font-medium">Non-billable</span>
           )}
           <span className="mono text-[13.5px] font-medium w-[60px] text-right">{formatMinutes(e.minutes)}</span>
           {mine && (
@@ -192,7 +194,7 @@ export default function TimeTrackingPage() {
                 }}
                 aria-label="Edit entry"
                 title="Edit entry"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-chip hover:text-ink hover:bg-btn transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-white border border-[#E1E5EE] hover:text-ink hover:bg-chip transition-colors"
               >
                 <Pencil size={13} strokeWidth={1.75} />
               </button>
@@ -203,7 +205,7 @@ export default function TimeTrackingPage() {
                 }}
                 aria-label="Delete entry"
                 title="Delete entry"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-chip hover:text-red-600 hover:bg-red-50 transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-white border border-[#E1E5EE] hover:text-red-600 hover:bg-red-50 transition-colors"
               >
                 <Trash2 size={13} strokeWidth={1.75} />
               </button>
@@ -218,7 +220,7 @@ export default function TimeTrackingPage() {
     <div className="px-10 py-10">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1 bg-card-alt rounded-full px-2 py-1.5">
+          <div className="flex items-center gap-1 bg-chip border border-btn rounded-full px-2 py-[7px]">
             <button onClick={() => shiftWeek(-7)} aria-label="Previous week" className="w-6 h-6 flex items-center justify-center text-muted hover:text-ink">
               <ChevronLeft size={15} strokeWidth={1.75} />
             </button>
@@ -231,16 +233,16 @@ export default function TimeTrackingPage() {
           <div className="relative">
             <button
               onClick={() => setViewMenuOpen((o) => !o)}
-              className="flex items-center gap-2 bg-chip hover:bg-btn transition-colors px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+              className={viewMenuOpen ? pageBtnOpenB : pageBtnB}
             >
               {view === "timesheet" ? <Calendar size={14} strokeWidth={1.75} /> : <List size={14} strokeWidth={1.75} />}
               {view === "timesheet" ? "Timesheet" : "Time entries"}
-              <ChevronDown size={12} strokeWidth={2} className="text-muted" />
+              <ChevronDown size={13} />
             </button>
             {viewMenuOpen && (
               <>
                 <ClickAway onClose={() => setViewMenuOpen(false)} />
-                <div className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[190px]">
+                <div className={`absolute left-0 top-[calc(100%+14px)] z-50 ${menuPanel} w-[190px]`}>
                   {(["timesheet", "entries"] as const).map((v) => (
                     <button
                       key={v}
@@ -248,7 +250,7 @@ export default function TimeTrackingPage() {
                         setView(v);
                         setViewMenuOpen(false);
                       }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip"
+                      className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F4F6FA]"
                     >
                       <span className="flex items-center gap-2.5">
                         {v === "timesheet" ? <Calendar size={15} strokeWidth={1.75} /> : <List size={15} strokeWidth={1.75} />}
@@ -268,14 +270,14 @@ export default function TimeTrackingPage() {
             <button
               onClick={() => setFilterOpen((o) => !o)}
               aria-label="Filters"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${billable !== "all" ? "bg-btn text-ink" : "bg-chip hover:bg-btn"}`}
+              className={`w-[38px] h-[38px] rounded-full border border-btn transition-colors flex items-center justify-center ${billable !== "all" || filterOpen ? "bg-btn text-ink" : "bg-chip hover:bg-btn"}`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
             </button>
             {filterOpen && (
               <>
                 <ClickAway onClose={() => setFilterOpen(false)} />
-                <div className="absolute right-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-4 w-[290px]">
+                <div className={`absolute right-0 top-[calc(100%+14px)] z-50 ${menuPanel} !p-4 w-[290px]`}>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[13.5px] font-medium text-muted">Billable</span>
                     <div className="flex bg-chip rounded-full p-1">
@@ -300,16 +302,16 @@ export default function TimeTrackingPage() {
               <button
                 onClick={() => setWhoOpen((o) => !o)}
                 aria-expanded={whoOpen}
-                className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13.5px] font-medium"
+                className={whoOpen ? pageBtnOpenB : pageBtnB}
               >
-                <Users size={14} strokeWidth={1.75} />
+                <Users size={14} />
                 {who === "me" ? "My time" : who === "all" ? "Everyone" : personName(who)}
                 <ChevronDown size={13} strokeWidth={1.75} />
               </button>
               {whoOpen && (
                 <>
                   <ClickAway onClose={() => setWhoOpen(false)} />
-                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[240px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]">
+                  <div className={`absolute right-0 top-[calc(100%+14px)] z-50 ${menuPanel} w-[240px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]`}>
                     {[
                       { key: "me", label: "My time" },
                       { key: "all", label: "Everyone" },
@@ -321,7 +323,7 @@ export default function TimeTrackingPage() {
                       )
                       .map((o, i) => (
                         <Fragment key={o.key}>
-                          {i === 2 && <div className="px-3 pt-2 pb-1 text-[11.5px] font-semibold text-muted border-t border-line mt-1">Team members</div>}
+                          {i === 2 && <div className="px-3 pt-2 pb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted border-t border-[#E6EAF1] mt-1">Team members</div>}
                           <button
                             onClick={() => {
                               setWhoOpen(false);
@@ -329,7 +331,7 @@ export default function TimeTrackingPage() {
                               setEntries(null);
                               setWho(o.key);
                             }}
-                            className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[14px] font-medium text-left ${who === o.key ? "bg-chip" : "hover:bg-chip"}`}
+                            className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left ${who === o.key ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"}`}
                           >
                             <span className="truncate">{o.label}</span>
                             {who === o.key && <Check size={14} />}
@@ -348,16 +350,16 @@ export default function TimeTrackingPage() {
               setWeekStart(getWeekStart(new Date()));
               setReloadKey((k) => k + 1); // reload even when already on this week
             }}
-            className={`px-3.5 py-2 rounded-full text-[13.5px] font-medium ${isThisWeek ? "bg-chip" : "bg-chip hover:bg-btn"}`}
+            className={isThisWeek ? pageBtnOpenB : pageBtnB}
           >
             This week
           </button>
 
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover"
+            className={pageBtnB}
           >
-            <Plus size={14} strokeWidth={2} /> Add entry
+            <Plus size={14} /> Add entry
           </button>
         </div>
       </div>
@@ -369,34 +371,42 @@ export default function TimeTrackingPage() {
       )}
 
       {entries !== null && visible.length > 0 && (
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-5 mb-6">
           {[
             ["Total", formatMinutes(totalMin)],
             ["Billable", formatMinutes(billableMin)],
             ["Billable amount", amount ? money(amount) : "—"],
           ].map(([k, v]) => (
-            <div key={k} className="bg-card-alt rounded-2xl px-5 py-4">
-              <div className="text-[12.5px] text-muted mb-1">{k}</div>
+            <Frame key={k} title={k} icon={k === "Total" ? Clock : k === "Billable" ? Timer : DollarSign} pad="px-5 py-4">
               <div className="text-[22px] font-display font-semibold">{v}</div>
-            </div>
+            </Frame>
           ))}
         </div>
       )}
 
       {entries === null ? (
-        <div className="flex items-center gap-2 text-[14px] text-muted py-10">
-          <Loader2 size={15} className="animate-spin" /> Loading time…
-        </div>
+        <Frame title="Time" icon={Clock} pad="py-10 px-6">
+          <div className="flex items-center gap-2 text-[14px] text-muted">
+            <Loader2 size={15} className="animate-spin" /> Loading time…
+          </div>
+        </Frame>
       ) : visible.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <Clock size={40} strokeWidth={1.25} className="text-muted mb-5" />
-          <div className="text-[17px] font-semibold mb-1.5">No time this week</div>
-          <div className="text-[14px] text-muted">Add an entry, or start the timer on a task. Your time adds up here by day.</div>
-        </div>
+        <Frame title="Time" icon={Clock} pad="py-24 px-6">
+          <div className="flex flex-col items-center justify-center text-center">
+            <Clock size={40} strokeWidth={1.25} className="text-muted mb-5" />
+            <div className="text-[17px] font-semibold mb-1.5">No time this week</div>
+            <div className="text-[14px] text-muted">Add an entry, or start the timer on a task. Your time adds up here by day.</div>
+            <button onClick={() => setModalOpen(true)} className={`${pageBtnB} mt-5`}>
+              <Plus size={14} /> Add entry
+            </button>
+          </div>
+        </Frame>
       ) : view === "entries" ? (
-        <div className="border border-line rounded-2xl overflow-hidden bg-white">{visible.map((e) => row(e, true))}</div>
+        <Frame title={`Time entries · ${visible.length}`} icon={List} pad="p-2">
+          <div className="flex flex-col gap-1.5">{visible.map((e) => row(e, true))}</div>
+        </Frame>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           {Array.from({ length: 7 }, (_, i) => {
             const d = new Date(weekStart);
             d.setDate(d.getDate() + i);
@@ -404,16 +414,15 @@ export default function TimeTrackingPage() {
             const list = visible.filter((e) => e.date === day);
             if (!list.length) return null;
             return (
-              <div key={day}>
-                <div className="flex items-center justify-between px-1 mb-2">
-                  <span className="text-[13.5px] font-semibold">
-                    {d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-                    {day === localYmd(new Date()) && <span className="text-muted font-normal"> · Today</span>}
-                  </span>
-                  <span className="mono text-[13px] text-muted">{formatMinutes(list.reduce((n, e) => n + e.minutes, 0))}</span>
-                </div>
-                <div className="border border-line rounded-2xl overflow-hidden bg-white">{list.map((e) => row(e, false))}</div>
-              </div>
+              <Frame
+                key={day}
+                title={`${d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}${day === localYmd(new Date()) ? " · Today" : ""}`}
+                icon={Calendar}
+                right={<span className="mono text-[13px] font-medium">{formatMinutes(list.reduce((n, e) => n + e.minutes, 0))}</span>}
+                pad="p-2"
+              >
+                <div className="flex flex-col gap-1.5">{list.map((e) => row(e, false))}</div>
+              </Frame>
             );
           })}
         </div>
@@ -625,7 +634,7 @@ function AddEntryModal({ entry, onClose, onSaved }: { entry?: Entry | null; onCl
           <button onClick={onClose} className="px-4 py-2 rounded-full text-[13.5px] font-medium text-muted hover:text-ink">
             Cancel
           </button>
-          <button onClick={save} disabled={saving} className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover disabled:opacity-50 flex items-center gap-1.5">
+          <button onClick={save} disabled={saving} className={`${pageBtnB} disabled:opacity-50`}>
             {saving && <Loader2 size={14} className="animate-spin" />} {entry ? "Save changes" : "Add entry"}
           </button>
         </div>
