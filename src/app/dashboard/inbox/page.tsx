@@ -2,6 +2,7 @@
 
 import ClickAway from "@/components/ClickAway";
 import PortalMessagesPanel from "@/components/mail/PortalMessagesPanel";
+import { pageBtnB, pageBtnOpenB, smallBtnB, menuPanel, frameOuter, frameInner } from "@/lib/ui";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -195,7 +196,7 @@ function FileToMatter({
       ) : (
         <button
           onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors"
         >
           <Briefcase size={12} /> File to matter
         </button>
@@ -212,13 +213,13 @@ function FileToMatter({
       {open && (
         <>
           <ClickAway onClose={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[320px]">
+          <div className={`absolute left-0 top-[calc(100%+12px)] z-50 ${menuPanel} w-[320px]`}>
             <input
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Matter number or name"
-              className="w-full bg-card-alt rounded-lg px-3 py-2 text-[13px] outline-none mb-1"
+              className="w-full bg-[#F4F6FA] border border-[#E3E7EF] rounded-lg px-3 py-2 text-[13px] outline-none mb-1 focus:border-[#C3CBDA]"
             />
             <div className="max-h-[300px] overflow-y-auto">
               {list.length === 0 ? (
@@ -229,7 +230,7 @@ function FileToMatter({
                     key={m.id}
                     onClick={() => void pick(m.id)}
                     disabled={busy}
-                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] hover:bg-chip disabled:opacity-50"
+                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] hover:bg-[#F4F6FA] disabled:opacity-50"
                   >
                     {m.matterNumber && <span className="font-semibold flex-shrink-0">{m.matterNumber}</span>}
                     <span className="truncate text-muted">{m.title}</span>
@@ -604,13 +605,13 @@ export default function InboxPage() {
         <div className="flex gap-3 flex-wrap justify-center">
           <Link
             href={connectHref("google")}
-            className="bg-btn text-ink px-5 py-2.5 rounded-full text-[14.5px] font-medium hover:bg-btn-hover transition-colors"
+            className={pageBtnB}
           >
             Connect Gmail
           </Link>
           <Link
             href={connectHref("microsoft")}
-            className="bg-chip px-5 py-2.5 rounded-full text-[14.5px] font-medium transition-colors hover:bg-btn"
+            className={pageBtnB}
           >
             Connect Outlook
           </Link>
@@ -683,28 +684,28 @@ export default function InboxPage() {
         />
       )}
       {actionNote && (
-        <div className="mb-2 flex items-center gap-2 rounded-xl bg-[#EEF3FB] px-4 py-2 text-[13px]">
+        <div className="mb-2 flex items-center gap-2 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] px-4 py-2 text-[13px]">
           {actionNote}
           <button onClick={() => setActionNote(null)} aria-label="Dismiss" className="ml-auto text-muted hover:text-ink">
             <X size={13} />
           </button>
         </div>
       )}
-      <div className="flex flex-col flex-1 min-h-0 border border-line rounded-2xl overflow-hidden bg-cream">
-        {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-line flex-wrap">
+      <div className={`${frameOuter} flex flex-col flex-1 min-h-0`}>
+        {/* Header (sits in the grey-blue frame, above the white panel) */}
+        <div className="flex items-center gap-3 px-2 pt-1 pb-2.5 flex-wrap">
           {panelHidden && (
             <button
               onClick={() => togglePanel(false)}
               title="Show folders"
               aria-label="Show folders"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-chip text-[13px] font-medium text-muted hover:text-ink"
+              className={pageBtnB}
             >
               <PanelLeftOpen size={15} strokeWidth={1.75} /> Folders
             </button>
           )}
           {conns.length > 1 ? (
-            <div className="flex bg-chip rounded-full p-1">
+            <div className="flex bg-chip border border-btn rounded-full p-1">
               {conns.map((c) => (
                 <button
                   key={c.provider}
@@ -718,8 +719,8 @@ export default function InboxPage() {
               ))}
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-[13.5px] font-medium">
-              <InboxIcon size={15} strokeWidth={1.75} className="text-muted" />
+            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
+              <InboxIcon size={15} strokeWidth={1.75} />
               {provider && providerLabel[provider]}
             </div>
           )}
@@ -729,7 +730,7 @@ export default function InboxPage() {
             return f ? <span className="text-[13px] font-semibold truncate">· {f.name}</span> : null;
           })()}
 
-          <form onSubmit={submitSearch} className="flex items-center gap-2 bg-white border border-line rounded-full px-3.5 py-1.5 ml-auto w-full sm:w-[320px]">
+          <form onSubmit={submitSearch} className="flex items-center gap-2 bg-white border border-[#E3E7EF] rounded-full px-3.5 py-2 ml-auto w-full sm:w-[320px] shadow-[0_1px_3px_rgba(27,25,26,0.06)] focus-within:border-[#C3CBDA]">
             <Search size={14} strokeWidth={1.75} className="text-muted" />
             <input
               value={query}
@@ -760,14 +761,14 @@ export default function InboxPage() {
           </form>
           <button
             onClick={() => setComposing("new")}
-            className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap"
+            className={composing === "new" ? pageBtnOpenB : pageBtnB}
           >
-            <PenSquare size={13} /> New email
+            <PenSquare size={14} /> New email
           </button>
           <button
             onClick={reload}
             disabled={listLoading}
-            className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink disabled:opacity-50"
+            className="w-[38px] h-[38px] rounded-full bg-chip hover:bg-btn border border-btn flex items-center justify-center text-ink transition-colors disabled:opacity-50"
             aria-label="Refresh"
             title="Refresh"
           >
@@ -775,13 +776,14 @@ export default function InboxPage() {
           </button>
         </div>
 
+        <div className={`${frameInner} flex flex-col flex-1 min-h-0 overflow-hidden`}>
         {!needsReconnect && provider && conn?.status === "ok" && conn.canSend === false && !syncNoteHidden && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#EEF3FB] border-b border-line text-[13px] flex-wrap">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F4F6FA] border-b border-[#E6EAF1] text-[13px] flex-wrap">
             <span>
               <b>Send email from LawPower, free:</b> reconnect {providerLabel[provider]} once and keep <b>Send email</b> ticked. Emails then go from your own address and appear in your Sent folder.
             </span>
             <span className="flex items-center gap-2">
-              <Link href={connectHref(provider)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-btn-hover">
+              <Link href={connectHref(provider)} className={smallBtnB}>
                 Reconnect {providerLabel[provider]}
               </Link>
               <button onClick={() => setSyncNoteHidden(true)} className="text-muted hover:text-ink text-[12.5px]">
@@ -792,10 +794,10 @@ export default function InboxPage() {
         )}
 
         {!needsReconnect && provider && conn?.status === "ok" && conn.canSend !== false && conn.syncsRead === false && !syncNoteHidden && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#EEF3FB] border-b border-line text-[13px] flex-wrap">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F4F6FA] border-b border-[#E6EAF1] text-[13px] flex-wrap">
             <span>Read / unread only changes in LawPower for now. Reconnect {providerLabel[provider]} once so it stays in step with {providerLabel[provider]} both ways.</span>
             <span className="flex items-center gap-2">
-              <Link href={connectHref(provider)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-btn-hover">
+              <Link href={connectHref(provider)} className={smallBtnB}>
                 Reconnect {providerLabel[provider]}
               </Link>
               <button onClick={() => setSyncNoteHidden(true)} className="text-muted hover:text-ink text-[12.5px]">
@@ -806,7 +808,7 @@ export default function InboxPage() {
         )}
 
         {needsReconnect && provider && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#F5E3B3]/60 border-b border-line text-[13px] flex-wrap">
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#F5E3B3]/60 border-b border-[#E6EAF1] text-[13px] flex-wrap">
             <span className="flex items-center gap-2">
               <AlertTriangle size={14} className="flex-shrink-0" />
               {listError?.message ??
@@ -814,7 +816,7 @@ export default function InboxPage() {
                   ? "Gmail access wasn't granted. Reconnect and keep the Gmail box ticked."
                   : `Your ${providerLabel[provider]} connection has expired.`)}
             </span>
-            <Link href={connectHref(provider)} className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[12.5px] font-medium hover:bg-btn-hover">
+            <Link href={connectHref(provider)} className={smallBtnB}>
               Reconnect {providerLabel[provider]}
             </Link>
           </div>
@@ -825,7 +827,7 @@ export default function InboxPage() {
           {!panelHidden && (
             <>
               <div className="fixed inset-0 bg-black/20 z-30 min-[900px]:hidden" onClick={() => togglePanel(true)} />
-              <div className="absolute min-[900px]:static inset-y-0 left-0 z-40 w-[250px] flex-shrink-0 border-r border-line bg-cream shadow-lg min-[900px]:shadow-none">
+              <div className="absolute min-[900px]:static inset-y-0 left-0 z-40 w-[250px] flex-shrink-0 border-r border-[#E6EAF1] bg-white shadow-lg min-[900px]:shadow-none">
                 <FolderPanel
                   folders={shownFolders}
                   loading={foldersLoading}
@@ -842,8 +844,8 @@ export default function InboxPage() {
             </>
           )}
           {/* List */}
-          <div className={`w-full md:w-[380px] md:flex-shrink-0 border-r border-line overflow-y-auto ${selectedId ? "hidden md:block" : ""}`}>
-            <div className="sticky top-0 z-10 bg-page/95 backdrop-blur border-b border-line px-4 py-2 flex items-center justify-between">
+          <div className={`w-full md:w-[380px] md:flex-shrink-0 border-r border-[#E6EAF1] overflow-y-auto ${selectedId ? "hidden md:block" : ""}`}>
+            <div className="sticky top-0 z-10 bg-[#F4F6FA]/95 backdrop-blur border-b border-[#E6EAF1] px-4 py-2 flex items-center justify-between">
               <button
                 role="switch"
                 aria-checked={threaded}
@@ -892,7 +894,7 @@ export default function InboxPage() {
                   const isOpen = convo && expanded.has(m.threadId!);
                   const kids = m.threadId ? threadRows[m.threadId] : undefined;
                   return (
-                    <div key={m.id} className="border-b border-line">
+                    <div key={m.id} className="border-b border-[#E6EAF1]">
                       <div
                         role="button"
                         tabIndex={0}
@@ -902,7 +904,7 @@ export default function InboxPage() {
                         }}
                         onKeyDown={(e) => e.key === "Enter" && open(m)}
                         className={`relative w-full text-left pr-4 py-3 cursor-pointer transition-colors ${convo ? "pl-8" : "pl-4"} ${
-                          inGroup(m, selectedId) ? "bg-chip" : "hover:bg-chip/50"
+                          inGroup(m, selectedId) ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"
                         } ${isOpen ? "border-l-[3px] border-[#2B6CB0]" : ""}`}
                       >
                         {convo && (
@@ -978,7 +980,7 @@ export default function InboxPage() {
                     <button
                       onClick={loadMore}
                       disabled={listLoading}
-                      className="w-full py-2 rounded-full bg-chip text-[13px] font-medium hover:bg-btn disabled:opacity-60 flex items-center justify-center gap-2"
+                      className="w-full py-2 rounded-full bg-chip border border-btn text-[13px] font-medium hover:bg-btn transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                     >
                       {listLoading && <Loader2 size={13} className="animate-spin" />} Load more
                     </button>
@@ -1003,7 +1005,7 @@ export default function InboxPage() {
               <div className="m-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{msgError}</div>
             ) : message ? (
               <>
-                <div className="px-6 pt-5 pb-4 border-b border-line">
+                <div className="px-6 pt-5 pb-4 border-b border-[#E6EAF1]">
                   <button onClick={() => setSelectedId(null)} className="md:hidden text-[13px] text-muted mb-3">
                     ← Back to inbox
                   </button>
@@ -1042,7 +1044,7 @@ export default function InboxPage() {
                           <button
                             onClick={() => summary && setTaskFrom(summary)}
                             disabled={!summary}
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn disabled:opacity-50"
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors disabled:opacity-50"
                           >
                             <ListChecks size={12} /> Turn into task
                           </button>
@@ -1061,7 +1063,7 @@ export default function InboxPage() {
                             }}
                             aria-pressed={flagged}
                             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium transition-colors ${
-                              flagged ? "bg-[#FDE8E8] text-[#B42318] hover:bg-[#FBD5D5]" : "bg-chip hover:bg-btn"
+                              flagged ? "bg-[#FDE8E8] text-[#B42318] border border-[#F6C9C9] hover:bg-[#FBD5D5]" : "bg-chip border border-btn hover:bg-btn"
                             }`}
                           >
                             <Flag size={12} className={flagged ? "fill-current" : ""} /> {flagged ? "Flagged as important" : "Flag as important"}
@@ -1076,7 +1078,7 @@ export default function InboxPage() {
                               setSelectedId(null);
                               setMessage(null);
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors"
                           >
                             <MailIcon size={12} /> Mark as unread
                           </button>
@@ -1085,15 +1087,15 @@ export default function InboxPage() {
                           href={message.webLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors"
                         >
                           <ExternalLink size={12} /> Open in {provider ? providerLabel[provider] : "mail"}
                         </a>
                           )}
-                          <button onClick={() => setComposing("forward")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn">
+                          <button onClick={() => setComposing("forward")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors">
                             <Forward size={12} /> Forward
                           </button>
-                          <button onClick={() => setComposing("reply")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip text-[12.5px] font-medium hover:bg-btn">
+                          <button onClick={() => setComposing("reply")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors">
                             <Reply size={12} /> Reply
                           </button>
                         </>
@@ -1125,7 +1127,7 @@ export default function InboxPage() {
                           {attMenu === i && provider && (
                             <>
                               <ClickAway onClose={() => setAttMenu(null)} />
-                              <div className="absolute left-0 top-[calc(100%+4px)] z-50 w-[250px] bg-white border border-line rounded-xl shadow-[0_12px_32px_rgba(27,25,26,0.14)] p-1.5 text-[13px]">
+                              <div className={`absolute left-0 top-[calc(100%+12px)] z-50 w-[250px] ${menuPanel} text-[13px]`}>
                                 {(
                                   [
                                     ["Preview", () => setPreviewAtt({ provider, messageId: message.id, index: i, attachment: a })],
@@ -1141,7 +1143,7 @@ export default function InboxPage() {
                                       setAttMenu(null);
                                       fn();
                                     }}
-                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-chip"
+                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#F4F6FA]"
                                   >
                                     {label}
                                   </button>
@@ -1153,7 +1155,7 @@ export default function InboxPage() {
                       ))}
                       <button
                         onClick={() => setSaveAtt({ mode: "all" })}
-                        className="flex items-center gap-1.5 text-[12.5px] font-medium bg-chip hover:bg-btn rounded-full px-3 py-1 transition-colors"
+                        className="flex items-center gap-1.5 text-[12.5px] font-medium bg-chip hover:bg-btn border border-btn rounded-full px-3 py-1 transition-colors"
                         title="Save the attachments to a matter's Documents"
                       >
                         <FolderInput size={12} /> {message.attachments.length > 1 ? `Save all ${message.attachments.length} to matter` : "Save to matter"}
@@ -1189,6 +1191,7 @@ export default function InboxPage() {
               </>
             ) : null}
           </div>
+        </div>
         </div>
       </div>
     </div>
