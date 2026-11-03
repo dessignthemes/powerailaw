@@ -2,6 +2,7 @@
 
 import LawPayImportModal from "@/components/accounting/LawPayImportModal";
 import ClickAway from "@/components/ClickAway";
+import { pageBtn, pageBtnOpen } from "@/lib/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Calculator,
@@ -18,7 +19,7 @@ import {
   Sparkles,
   CircleCheck,
   Circle,
-  ShieldCheck, CreditCard } from "lucide-react";
+  ShieldCheck, CreditCard, Plus } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import InvoicesPanel from "@/components/invoices/InvoicesPanel";
 import TrustBalances from "@/components/invoices/TrustBalances";
@@ -220,13 +221,13 @@ function AiAccountant() {
           <button
             onClick={() => setModal({ kind: "lawpay" })}
             title="Import your LawPay payments: invoices are matched and marked paid"
-            className="bg-white border border-btn hover:bg-card-alt px-4 py-2 rounded-full text-[13.5px] font-semibold transition-colors flex items-center gap-1.5 shadow-[0_1px_2px_rgba(27,25,26,0.08)]"
+            className={pageBtn}
           >
-            <CreditCard size={14} strokeWidth={2} /> LawPay
+            <CreditCard size={14} /> LawPay
           </button>
           <div className="relative">
-            <button onClick={() => setAddOpen(!addOpen)} className={`${blackBtn} font-semibold ${addOpen ? "bg-btn-hover" : ""}`} aria-haspopup="menu" aria-expanded={addOpen}>
-              + Add <ChevronDown size={14} strokeWidth={2} />
+            <button onClick={() => setAddOpen(!addOpen)} className={addOpen ? pageBtnOpen : pageBtn} aria-haspopup="menu" aria-expanded={addOpen}>
+              <Plus size={14} /> Add <ChevronDown size={13} />
             </button>
             {addOpen && (
               <>
@@ -250,8 +251,8 @@ function AiAccountant() {
               </>
             )}
           </div>
-          <button onClick={exportPackage} disabled={!!exporting || loading || setup || txns.length === 0} className={`${blackBtn} disabled:opacity-50`}>
-            {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} strokeWidth={2} />}
+          <button onClick={exportPackage} disabled={!!exporting || loading || setup || txns.length === 0} className={`${pageBtn} disabled:opacity-50 disabled:hover:bg-chip`}>
+            {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             {exporting ?? "Accountant package"}
           </button>
         </div>

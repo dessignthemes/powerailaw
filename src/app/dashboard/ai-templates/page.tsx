@@ -5,6 +5,7 @@ import { Search, Sparkles, ClipboardPaste, FileText, Plus, ChevronDown, Loader2,
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import type { TaskTemplate } from "@/lib/checklist";
 import ClickAway from "@/components/ClickAway";
+import { pageBtn, pageBtnOpen } from "@/lib/ui";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import TemplateEditor, { type EditorValue } from "@/components/docTemplates/TemplateEditor";
 import TemplateMaker, { type MakerDraft } from "@/components/docTemplates/TemplateMaker";
@@ -249,7 +250,7 @@ export default function AiTemplatesPage() {
         <div className="relative">
           <button
             onClick={() => setNewOpen((o) => !o)}
-            className={`px-3.5 py-2 rounded-full text-[13px] font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors ${newOpen ? "bg-btn" : "bg-chip hover:bg-btn"}`}
+            className={newOpen ? pageBtnOpen : pageBtn}
           >
             <Plus size={14} /> New template <ChevronDown size={13} />
           </button>

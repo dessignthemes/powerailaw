@@ -18,6 +18,7 @@ import {
   X,
   Upload,
   Search,
+  Plus,
 } from "lucide-react";
 import NewMatterModal, {
   numberOf,
@@ -28,6 +29,7 @@ import NewMatterModal, {
 } from "@/components/NewMatterModal";
 import { getInitials, getAvatarColor } from "@/components/NewClientModal";
 import { GenericDropdown } from "@/components/NewTaskModal";
+import { pageBtn, menuPanel, menuItem, frameOuter, frameInner, frameTitle } from "@/lib/ui";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 
 function RowStatusPicker({
@@ -54,7 +56,7 @@ function RowStatusPicker({
       {open && (
         <>
           <ClickAway onClose={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[170px]">
+          <div className={`absolute left-0 top-[calc(100%+12px)] z-50 ${menuPanel} w-[170px]`}>
             {matterStatusOrder.map((s) => {
               const OptIcon = matterStatusMeta[s].icon;
               return (
@@ -65,7 +67,7 @@ function RowStatusPicker({
                     onChange(s);
                     setOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F4F6FA] transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <OptIcon size={15} strokeWidth={2} className={matterStatusMeta[s].color} />
@@ -177,31 +179,31 @@ export default function MattersPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setImportOpen(true)}
-            className="flex items-center gap-1.5 bg-chip text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn transition-colors"
+            className={pageBtn}
           >
-            <Upload size={14} strokeWidth={1.75} /> Import CSV file
+            <Upload size={14} /> Import CSV file
           </button>
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
+            className={pageBtn}
           >
-            + Add matter
+            <Plus size={14} /> Add matter
           </button>
         </div>
       </div>
       {mattersLoaded && matters.length > 0 && (
-        <div className="relative max-w-[520px] -mt-3 mb-6">
-          <Search size={15} strokeWidth={1.75} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+        <div className="relative max-w-[520px] -mt-3 mb-6 bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+          <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Search matters: number, client, title, other side…"
             aria-label="Search matters"
-            className="w-full bg-white border border-line rounded-full pl-10 pr-24 py-2.5 text-[14px] outline-none focus:border-ink"
+            className="w-full bg-white border border-[#E3E7EF] rounded-full pl-10 pr-24 py-2 text-[14px] outline-none focus:border-[#C3CBDA] shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
           />
           {query && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[12.5px] text-muted">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[12.5px] text-muted">
               {shownMatters.length} found
               <button onClick={() => setQuery("")} aria-label="Clear search" className="hover:text-ink">
                 <X size={14} />
@@ -219,60 +221,63 @@ export default function MattersPage() {
       )}
 
       {!mattersLoaded ? (
-        <div className="border border-line rounded-2xl min-h-[320px] flex items-center justify-center text-[14px] text-muted">
-          Loading matters…
+        <div className={frameOuter}>
+          <div className={`${frameInner} min-h-[320px] flex items-center justify-center text-[14px] text-muted`}>Loading matters…</div>
         </div>
       ) : matters.length === 0 ? (
-        <div className="border border-line rounded-2xl min-h-[320px] flex flex-col items-center justify-center text-center">
+        <div className={frameOuter}>
+        <div className={`${frameInner} min-h-[320px] flex flex-col items-center justify-center text-center`}>
           <Briefcase size={26} strokeWidth={1.5} className="text-muted mb-4" />
           <div className="text-[16px] font-semibold mb-1">No matters yet</div>
           <div className="text-[14px] text-muted mb-5">Add one from the sidebar or here.</div>
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors"
+            className={pageBtn}
           >
-            + Add matter
+            <Plus size={14} /> Add matter
           </button>
+        </div>
         </div>
       ) : groups.length === 0 ? (
-        <div className="border border-line rounded-2xl min-h-[200px] flex flex-col items-center justify-center text-center text-[14px] text-muted">
-          No matters match &ldquo;{query}&rdquo;.
-          <button onClick={() => setQuery("")} className="mt-3 underline underline-offset-2 hover:text-ink">
-            Clear search
-          </button>
+        <div className={frameOuter}>
+          <div className={`${frameInner} min-h-[200px] flex flex-col items-center justify-center text-center text-[14px] text-muted`}>
+            No matters match &ldquo;{query}&rdquo;.
+            <button onClick={() => setQuery("")} className="mt-3 underline underline-offset-2 hover:text-ink">
+              Clear search
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 pb-20">
+        <div className="flex flex-col gap-5 pb-20">
           {groups.map((group) => {
             const GroupIcon = matterStatusMeta[group.status].icon;
             const isCollapsed = collapsed.has(group.status);
             return (
-              <div key={group.status}>
+              <div key={group.status} className={`${frameOuter} hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200`}>
                 <button
                   onClick={() => toggleCollapsed(group.status)}
-                  className="w-full flex items-center gap-2.5 bg-chip hover:bg-btn transition-colors px-4 py-3 rounded-xl text-left"
+                  className="w-full flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5 text-left"
+                  aria-expanded={!isCollapsed}
                 >
-                  {isCollapsed ? (
-                    <ChevronRight size={15} strokeWidth={1.75} className="text-muted" />
-                  ) : (
-                    <ChevronDown size={15} strokeWidth={1.75} className="text-muted" />
-                  )}
-                  <GroupIcon size={15} strokeWidth={2} className={matterStatusMeta[group.status].color} />
-                  <span className="text-[14.5px] font-semibold">{group.status}</span>
-                  <span className="text-[12px] text-muted bg-white rounded-full px-2 py-0.5">
-                    {group.items.length}
+                  <span className={frameTitle}>
+                    <GroupIcon size={15} strokeWidth={1.9} className={matterStatusMeta[group.status].color} />
+                    {group.status} · {group.items.length}
+                  </span>
+                  <span className="text-[12px] text-muted flex items-center gap-1 hover:text-ink">
+                    {isCollapsed ? "Show" : "Hide"}
+                    {isCollapsed ? <ChevronRight size={14} strokeWidth={1.75} /> : <ChevronDown size={14} strokeWidth={1.75} />}
                   </span>
                 </button>
 
                 {!isCollapsed && (
-                  <div className="border border-t-0 border-line rounded-b-xl overflow-visible divide-y divide-line">
+                  <div className={`${frameInner} p-2 flex flex-col gap-1.5 overflow-visible`}>
                     {group.items.map((m) => {
                       const client = clientFor(m.clientId);
                       return (
                         <div
                           key={m.id}
                           onClick={() => router.push(`/dashboard/matters/${m.id}`)}
-                          className="flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-chip/40 transition-colors cursor-pointer"
+                          className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <button
@@ -283,7 +288,7 @@ export default function MattersPage() {
                               className={`w-[18px] h-[18px] rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${
                                 selected.has(m.id)
                                   ? "bg-dark border-dark"
-                                  : "border-line hover:border-muted"
+                                  : "bg-white border-[#D9DFEA] hover:border-muted"
                               }`}
                             >
                               {selected.has(m.id) && <Check size={12} strokeWidth={2.5} className="text-white" />}
@@ -309,7 +314,7 @@ export default function MattersPage() {
                               </>
                             )}
                             {m.matterNumber && (
-                              <span className="text-[12px] font-semibold tracking-wide bg-chip rounded-md px-1.5 py-0.5 flex-shrink-0">{m.matterNumber}</span>
+                              <span className="text-[12px] font-semibold tracking-wide bg-white border border-[#E1E5EE] rounded-md px-1.5 py-0.5 flex-shrink-0">{m.matterNumber}</span>
                             )}
                             <span className="text-[14.5px] font-semibold truncate">{m.title}</span>
                           </div>
@@ -318,20 +323,20 @@ export default function MattersPage() {
                             <div className="relative" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => setRowMenuFor(rowMenuFor === m.id ? null : m.id)}
-                                className="w-7 h-7 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
+                                className="w-7 h-7 rounded-full hover:bg-white flex items-center justify-center text-muted hover:text-ink transition-colors"
                               >
                                 <MoreHorizontal size={16} strokeWidth={1.75} />
                               </button>
                               {rowMenuFor === m.id && (
                                 <>
                                   <ClickAway onClose={() => setRowMenuFor(null)} />
-                                  <div className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[180px]">
+                                  <div className={`absolute right-0 top-[calc(100%+12px)] z-50 ${menuPanel} w-[180px]`}>
                                     <button
                                       onClick={() => {
                                         setEditingMatter(m);
                                         setRowMenuFor(null);
                                       }}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
+                                      className={menuItem}
                                     >
                                       <Pencil size={14} strokeWidth={1.75} /> Edit
                                     </button>
@@ -340,7 +345,7 @@ export default function MattersPage() {
                                         updateMatterStatus(m, m.status === "Closed" ? "Active" : "Closed");
                                         setRowMenuFor(null);
                                       }}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
+                                      className={menuItem}
                                     >
                                       {m.status === "Closed" ? (
                                         <>
@@ -352,13 +357,13 @@ export default function MattersPage() {
                                         </>
                                       )}
                                     </button>
-                                    <div className="border-t border-line my-1" />
+                                    <div className="border-t border-[#E6EAF1] my-1" />
                                     <button
                                       onClick={() => {
                                         handleDelete([m.id]);
                                         setRowMenuFor(null);
                                       }}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-red-500 hover:bg-red-50 transition-colors"
+                                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-red-500 hover:bg-red-50 transition-colors text-left"
                                     >
                                       <Trash2 size={14} strokeWidth={1.75} /> Delete
                                     </button>
@@ -393,7 +398,7 @@ export default function MattersPage() {
                 <button
                   key={s}
                   onClick={() => bulkSetStatus(s)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
+                  className={menuItem}
                 >
                   <Icon size={15} strokeWidth={2} className={matterStatusMeta[s].color} />
                   {s}
