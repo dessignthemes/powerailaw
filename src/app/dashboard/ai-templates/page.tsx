@@ -250,7 +250,7 @@ export default function AiTemplatesPage() {
         <div className="relative">
           <button
             onClick={() => setNewOpen((o) => !o)}
-            className={newOpen ? pageBtnOpen : pageBtn}
+            className={`${newOpen ? pageBtnOpen : pageBtn} border border-btn`}
           >
             <Plus size={14} /> New template <ChevronDown size={13} />
           </button>
