@@ -1,5 +1,6 @@
 "use client";
 
+import { pageBtnB, pageBtnOpenB, framedPanel } from "@/lib/ui";
 import ClickAway from "@/components/ClickAway";
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import PriorityDot from "@/components/PriorityDot";
@@ -645,7 +646,7 @@ function TaskBoard({
               {boardMenu && (
                 <>
                   <ClickAway onClose={() => setBoardMenu(false)} />
-                  <div className="absolute left-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[230px] whitespace-nowrap">
+                  <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[230px] whitespace-nowrap">
                     <button
                       onClick={() => {
                         setBoardMenu(false);
@@ -760,7 +761,7 @@ function TaskBoard({
               <button
                 onClick={saveBoard}
                 disabled={boardBusy || !boardDialog.name.trim()}
-                className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-btn-hover disabled:opacity-40"
+                className={`${pageBtnOpenB} hover:bg-btn-hover disabled:opacity-40`}
               >
                 {boardBusy ? "Saving…" : boardDialog.mode === "new" ? "Create board" : "Save"}
               </button>
@@ -770,7 +771,7 @@ function TaskBoard({
       )}
 
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <div className="flex items-center bg-chip rounded-full p-1">
+        <div className="flex items-center bg-chip border border-btn rounded-full p-1">
           <button
             onClick={() => setView("board")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
@@ -795,9 +796,9 @@ function TaskBoard({
               aria-haspopup="menu"
               aria-expanded={jumpOpen}
               title="Jump to a column"
-              className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13.5px] font-medium transition-colors"
+              className={jumpOpen ? pageBtnOpenB : pageBtnB}
             >
-              <Columns3 size={14} strokeWidth={1.75} />
+              <Columns3 size={14} />
               Columns
               <span className="text-muted">
                 {onScreen.size && onScreen.size < shownColumns.length ? `${onScreen.size}/${shownColumns.length}` : shownColumns.length}
@@ -809,7 +810,7 @@ function TaskBoard({
                 <ClickAway onClose={() => setJumpOpen(false)} />
                 <div
                   role="menu"
-                  className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[260px] max-h-[60vh] overflow-y-auto"
+                  className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[260px] max-h-[60vh] overflow-y-auto"
                 >
                   <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Jump to column</div>
                   {shownColumns.map((c) => (
@@ -851,7 +852,7 @@ function TaskBoard({
 
         <div className="flex items-center gap-3">
           {searchOpen ? (
-            <div className="flex items-center gap-2 bg-white border border-line rounded-full pl-3 pr-1.5 h-9 w-[240px] focus-within:border-ink">
+            <div className="flex items-center gap-2 bg-white border border-btn rounded-full pl-3 pr-1.5 h-[38px] w-[240px] focus-within:border-[#AEB9D0]">
               <Search size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
               <input
                 autoFocus
@@ -886,7 +887,7 @@ function TaskBoard({
               onClick={() => setSearchOpen(true)}
               title={query.trim() ? `Searching for “${query.trim()}”` : "Search tasks"}
               aria-label={query.trim() ? `Searching for ${query.trim()}. Edit search` : "Search tasks"}
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
+              className={`w-[38px] h-[38px] rounded-full border border-btn transition-colors flex items-center justify-center ${
                 query.trim() ? "bg-btn text-ink" : "bg-chip hover:bg-btn"
               }`}
             >
@@ -898,7 +899,7 @@ function TaskBoard({
               onClick={() => setFilterOpen((o) => !o)}
               title="Filter tasks"
               aria-label="Filter tasks"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center relative ${advCount ? "bg-btn text-ink" : "bg-chip hover:bg-btn"}`}
+              className={`w-[38px] h-[38px] rounded-full border border-btn transition-colors flex items-center justify-center relative ${advCount || filterOpen ? "bg-btn text-ink" : "bg-chip hover:bg-btn"}`}
             >
               <Filter size={15} strokeWidth={1.75} />
               {advCount > 0 && (
@@ -914,8 +915,8 @@ function TaskBoard({
               onClick={() => setDisplayOpen((o) => !o)}
               title="Display options"
               aria-label="Display options"
-              className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${
-                display.sort !== "manual" || display.hideDone ? "bg-btn text-ink" : "bg-chip hover:bg-btn"
+              className={`w-[38px] h-[38px] rounded-full border border-btn transition-colors flex items-center justify-center ${
+                display.sort !== "manual" || display.hideDone || displayOpen ? "bg-btn text-ink" : "bg-chip hover:bg-btn"
               }`}
             >
               <SlidersHorizontal size={15} strokeWidth={1.75} />
@@ -924,16 +925,16 @@ function TaskBoard({
           </div>
           <button
             onClick={() => setModalStatus("todo")}
-            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
+            className={pageBtnB}
           >
-            <Plus size={14} strokeWidth={2} /> Add task
+            <Plus size={14} /> Add task
           </button>
           <button
             onClick={() => router.push("/dashboard/ai-templates")}
             title="Checklist templates you can add to any task"
-            className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
+            className={pageBtnB}
           >
-            <Plus size={14} strokeWidth={2} /> Add template
+            <Plus size={14} /> Add template
           </button>
           {boardKey && (
             <div className="relative">
@@ -942,14 +943,14 @@ function TaskBoard({
                   setNewColumnName("");
                   setAddingColumn((o) => !o);
                 }}
-                className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
+                className={addingColumn ? pageBtnOpenB : pageBtnB}
               >
-                <Plus size={14} strokeWidth={2} /> Add column
+                <Plus size={14} /> Add column
               </button>
               {addingColumn && (
                 <>
                   <ClickAway onClose={() => setAddingColumn(false)} />
-                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[260px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-3">
+                  <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-3">
                     <input
                       autoFocus
                       value={newColumnName}
@@ -960,7 +961,7 @@ function TaskBoard({
                         if (e.key === "Escape") setAddingColumn(false);
                       }}
                       placeholder="Column name, e.g. Clients"
-                      className="w-full bg-card-alt rounded-xl px-3 py-2 text-[13.5px] outline-none placeholder:text-muted mb-2"
+                      className="w-full bg-[#F4F6FA] border border-[#E3E7EF] rounded-xl px-3 py-2 text-[13.5px] outline-none placeholder:text-muted mb-2 focus:border-[#C3CBDA]"
                     />
                     <div className="flex justify-end gap-2">
                       <button onClick={() => setAddingColumn(false)} className="px-3 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink">
@@ -969,7 +970,7 @@ function TaskBoard({
                       <button
                         onClick={addColumn}
                         disabled={!newColumnName.trim()}
-                        className="bg-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium hover:bg-btn-hover disabled:opacity-40"
+                        className="bg-btn hover:bg-btn-hover border border-btn text-ink px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors disabled:opacity-40"
                       >
                         Add
                       </button>
@@ -996,9 +997,7 @@ function TaskBoard({
           <button
             key={f}
             onClick={() => toggleFilter(f)}
-            className={`px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-              activeFilters.includes(f) ? "bg-btn text-ink" : "bg-chip text-muted hover:text-ink"
-            }`}
+            className={activeFilters.includes(f) ? pageBtnOpenB : pageBtnB}
           >
             {f}
           </button>
@@ -1009,8 +1008,8 @@ function TaskBoard({
             <span key={cf.id} className="group relative">
               <button
                 onClick={() => toggleFilter(key)}
-                className={`pl-3.5 pr-3.5 group-hover:pr-7 py-1.5 rounded-full text-[13.5px] font-medium transition-all ${
-                  activeFilters.includes(key) ? "bg-btn text-ink" : "bg-chip text-muted hover:text-ink"
+                className={`pl-3.5 pr-3.5 group-hover:pr-7 py-2 rounded-full text-[13px] font-medium border border-btn transition-all ${
+                  activeFilters.includes(key) ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
                 }`}
               >
                 {filterLabel(cf, nameOf)}
@@ -1029,7 +1028,7 @@ function TaskBoard({
         <div className="relative">
           <button
             onClick={() => setAddFilterOpen((o) => !o)}
-            className="flex items-center gap-1 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium bg-white border border-dashed border-line text-muted hover:text-ink hover:border-[#AEB8C6] transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium bg-white border border-dashed border-[#C3CBDA] text-muted hover:text-ink hover:bg-[#F4F6FA] transition-colors"
           >
             <Plus size={13} /> Add more
           </button>
@@ -1046,8 +1045,8 @@ function TaskBoard({
         <div className="relative">
           <button
             onClick={() => setMatterMenuOpen((o) => !o)}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-              filterMatter ? "bg-btn text-ink" : "bg-chip text-muted hover:text-ink"
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium border border-btn transition-colors ${
+              filterMatter || matterMenuOpen ? "bg-btn text-ink" : "bg-chip text-ink hover:bg-btn"
             }`}
           >
             {filterMatter ? filterMatter.matterNumber ?? filterMatter.title : "Matter"} <ChevronDown size={12} strokeWidth={1.75} />
@@ -1055,7 +1054,7 @@ function TaskBoard({
           {matterMenuOpen && (
             <>
               <ClickAway onClose={() => setMatterMenuOpen(false)} />
-              <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[300px] max-h-[360px] overflow-y-auto">
+              <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[300px] max-h-[360px] overflow-y-auto">
                 {matterFilter && (
                   <button
                     onClick={() => {
@@ -1125,7 +1124,7 @@ function TaskBoard({
       )}
 
       {view === "list" ? (
-        <div className="border border-line rounded-2xl min-h-[420px] flex flex-col items-center justify-center text-center">
+        <div className={`${framedPanel} min-h-[420px] flex flex-col items-center justify-center text-center overflow-hidden`}>
           {!tasksLoaded ? (
             <div className="text-[14px] text-muted">Loading tasks…</div>
           ) : tasks.length === 0 ? (
@@ -1136,20 +1135,20 @@ function TaskBoard({
               </div>
               <button
                 onClick={() => setModalStatus("todo")}
-                className="bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors"
+                className={pageBtnB}
               >
                 <Plus size={14} strokeWidth={2} /> Add task
               </button>
             </>
           ) : (
-            <div className="w-full divide-y divide-line">
+            <div className="w-full divide-y divide-[#E6EAF1]">
               {tasks.map((t) => {
                 const Icon = statusMeta[t.status].icon;
                 return (
                   <div
                     key={t.id}
                     onClick={() => setSelectedTask(t)}
-                    className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-chip/40 transition-colors"
+                    className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#F4F6FA] transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={15} strokeWidth={2} className={statusMeta[t.status].color} />
@@ -1233,12 +1232,12 @@ function TaskBoard({
                   onClick={() => toggleCollapsed(col.id, false)}
                   title={`Expand ${col.title}`}
                   {...dropProps(col)}
-                  className={`snap-start flex-shrink-0 w-[52px] border rounded-2xl flex flex-col items-center gap-3 py-4 transition-colors ${
-                    dropCol === col.id ? "border-btn-ring bg-chip" : "border-line bg-card-alt hover:bg-line/50"
+                  className={`snap-start flex-shrink-0 w-[52px] border rounded-[22px] flex flex-col items-center gap-3 py-4 transition-colors shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] ${
+                    dropCol === col.id ? "border-btn-ring bg-chip" : "border-[#E1E5EE] bg-[#ECEFF6] hover:bg-[#E6EAF2]"
                   }`}
                 >
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
-                  <span className="text-[12px] text-muted bg-cream rounded-full px-1.5">{colTasks.length}</span>
+                  <span className="text-[12px] text-muted bg-white rounded-full px-1.5">{colTasks.length}</span>
                   <span className="text-[14px] font-semibold [writing-mode:vertical-rl] truncate max-h-[70%]">{col.title}</span>
                 </button>
               );
@@ -1258,8 +1257,8 @@ function TaskBoard({
                     : { alignSelf: "flex-start", maxHeight: "100%", minHeight: 220 }),
                 }}
                 {...dropProps(col)}
-                className={`snap-start border rounded-2xl flex flex-col min-h-0 transition-colors ${
-                  dropCol === col.id ? "border-btn-ring bg-chip" : "border-line bg-card-alt"
+                className={`snap-start border rounded-[22px] flex flex-col min-h-0 transition-colors shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] ${
+                  dropCol === col.id ? "border-btn-ring bg-chip" : "border-[#E1E5EE] bg-[#ECEFF6]"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
@@ -1285,7 +1284,7 @@ function TaskBoard({
                         {col.title}
                       </span>
                     )}
-                    <span className="text-[12px] text-muted bg-card-alt rounded-full px-1.5 flex-shrink-0">
+                    <span className="text-[12px] text-muted bg-white border border-[#E1E5EE] rounded-full px-1.5 flex-shrink-0">
                       {colTasks.length}
                     </span>
                   </div>
@@ -1309,7 +1308,7 @@ function TaskBoard({
                     {menuOpenFor === col.id && (
                       <>
                         <ClickAway onClose={() => setMenuOpenFor(null)} />
-                        <div className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[170px]">
+                        <div className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[170px]">
                           <button
                             onClick={() => {
                               setRenamingId(col.id);
@@ -1376,13 +1375,13 @@ function TaskBoard({
                         setInlineAddFor(col.id);
                         setInlineValue("");
                       }}
-                      className="flex-1 bg-cream rounded-xl flex flex-col items-center justify-center gap-1.5 text-muted hover:text-ink transition-colors"
+                      className="flex-1 bg-white/70 border border-dashed border-[#D2D9E6] rounded-2xl flex flex-col items-center justify-center gap-1.5 text-muted hover:text-ink hover:bg-white transition-colors"
                     >
                       <Plus size={16} strokeWidth={1.75} />
                       <span className="text-[13px]">Add a task</span>
                     </button>
                   ) : colTasks.length === 0 && inlineAddFor === col.id ? (
-                    <div className="flex-1 bg-cream rounded-xl px-4 pt-3">
+                    <div className="flex-1 bg-white border border-[#E3E7EF] rounded-2xl px-4 pt-3">
                       <input
                         autoFocus
                         value={inlineValue}
@@ -1393,7 +1392,7 @@ function TaskBoard({
                           if (e.key === "Escape") setInlineAddFor(null);
                         }}
                         placeholder="Task title (Enter to add, Esc to cancel)"
-                        className="w-full bg-cream border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted"
+                        className="w-full bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted focus:border-[#C3CBDA]"
                       />
                     </div>
                   ) : (
@@ -1409,7 +1408,7 @@ function TaskBoard({
                             if (e.key === "Escape") setInlineAddFor(null);
                           }}
                           placeholder="Task title (Enter to add, Esc to cancel)"
-                          className="w-full bg-cream border border-line rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted"
+                          className="w-full bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-3 text-[13.5px] outline-none placeholder:text-muted focus:border-[#C3CBDA]"
                         />
                       )}
 
@@ -1434,7 +1433,7 @@ function TaskBoard({
                             const target = upper ? t.id : (colTasks[i + 1]?.id ?? null);
                             if (dropBefore !== target) setDropBefore(target);
                           }}
-                          className={`${dragId === t.id ? "opacity-40" : ""} relative bg-page rounded-xl px-3 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.08),0_1px_2px_rgba(27,25,26,0.04)] hover:shadow-[0_4px_12px_rgba(27,25,26,0.10),0_2px_4px_rgba(27,25,26,0.05)] transition-shadow`}
+                          className={`${dragId === t.id ? "opacity-40" : ""} relative bg-white border border-[#E3E7EF] rounded-2xl px-3 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.06)] hover:shadow-[0_6px_16px_-6px_rgba(27,25,26,0.16)] transition-shadow`}
                         >
                           {dragId && dragId !== t.id && dropCol === col.id && dropBefore === t.id && (
                             <span className="absolute left-1 right-1 -top-[5.5px] h-[3px] rounded-full bg-[#3B82F6] pointer-events-none" aria-hidden />
@@ -1475,7 +1474,7 @@ function TaskBoard({
                                   />
                                   <div
                                     onClick={(e) => e.stopPropagation()}
-                                    className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[160px]"
+                                    className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[160px]"
                                   >
                                     <button
                                       onClick={() => {
@@ -1578,7 +1577,7 @@ function TaskBoard({
                             setInlineAddFor(col.id);
                             setInlineValue("");
                           }}
-                          className="sticky bottom-0 z-[1] flex items-center justify-center gap-1.5 py-3 bg-card-alt text-muted hover:text-ink transition-colors"
+                          className="sticky bottom-0 z-[1] flex items-center justify-center gap-1.5 py-3 bg-[#ECEFF6] rounded-b-[22px] text-muted hover:text-ink transition-colors"
                         >
                           <Plus size={15} strokeWidth={1.75} />
                           <span className="text-[13px]">Add a task</span>
