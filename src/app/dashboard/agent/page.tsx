@@ -522,7 +522,10 @@ function Agent() {
           ) : convError ? (
             <div className="max-w-[560px] mx-auto mt-16 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{convError}</div>
           ) : empty ? (
-            <div className="h-full flex flex-col items-center justify-center px-6">
+            // Centred when there is room; on short screens it starts at the top and scrolls
+            // (plain justify-center would push the top out of reach).
+            <div className="min-h-full flex flex-col items-center px-6 py-6">
+              <div className="my-auto w-full flex flex-col items-center">
               <div className="w-full max-w-[780px] flex items-start gap-2.5 mb-5">
                 <div className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-bold font-display flex-shrink-0">
                   L
@@ -554,6 +557,7 @@ function Agent() {
                   ))}
                 </div>
               </div>
+            </div>
             </div>
           ) : (
             <div className="max-w-[780px] mx-auto px-5 sm:px-8 py-6 space-y-6">
