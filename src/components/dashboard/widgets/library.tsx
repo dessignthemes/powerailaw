@@ -406,8 +406,28 @@ function PracticeMix({ d }: { d: DashData }) {
   if (!rows.length) return <Empty icon={PieChart} title="No open matters" />;
   return <Bars rows={rows} total={open.length} />;
 }
-function MatterRows({ d, list, right, empty }: { d: DashData; list: typeof d.matters; right: (m: (typeof d.matters)[number]) => React.ReactNode; empty: React.ReactNode }) {
+function MatterRows({ d, list, right, empty, compact = false }: { d: DashData; list: typeof d.matters; right: (m: (typeof d.matters)[number]) => React.ReactNode; empty: React.ReactNode; compact?: boolean }) {
   if (!list.length) return <>{empty}</>;
+  // Compact: one short line per matter (name, then number in grey), about half the height.
+  if (compact)
+    return (
+      <div className="flex flex-col gap-1 min-h-0 flex-1 scroll-on-hover pr-1">
+        {list.map((m) => (
+          <Link
+            key={m.id}
+            href={`/dashboard/matters/${m.id}`}
+            title={[m.title, m.matterNumber, m.status, m.category].filter(Boolean).join(" · ")}
+            className="flex-shrink-0 flex items-center gap-2 px-3 py-[5px] rounded-lg text-[13px] bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] transition-colors"
+          >
+            <span className="min-w-0 flex-1 truncate">
+              <span className="font-medium">{m.title}</span>
+              {m.matterNumber && <span className="text-muted text-[11.5px]"> · {m.matterNumber}</span>}
+            </span>
+            <span className="text-[11.5px] text-muted flex-shrink-0">{right(m)}</span>
+          </Link>
+        ))}
+      </div>
+    );
   return (
     <div className="flex flex-col gap-1.5 min-h-0 flex-1 scroll-on-hover pr-1">
       {list.map((m) => (
@@ -691,7 +711,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: "openMatters", name: "Open matters", desc: "How many matters are open, and how many started in the last 30 days.", category: "Matters", sizes: ["s", "m"], size: "s", icon: Folder, body: (d) => { const open = d.matters.filter((m) => OPEN(m.status)); const since = Date.now() - 30 * 86400000; return <Big n={open.length} label="open" sub={`${d.matters.filter((m) => Date.parse(m.createdAt) >= since).length} opened in 30 days`} />; } },
   { id: "byStatus", name: "Matters by status", desc: "Where your open matters sit: lead, consultation, engaged, active.", category: "Matters", sizes: ["m", "l"], size: "m", icon: Layers, body: (d) => <MattersByStatus d={d} /> },
   { id: "practiceMix", name: "Practice mix", desc: "Open matters by practice area.", category: "Matters", sizes: ["m", "l"], size: "m", icon: PieChart, body: (d) => <PracticeMix d={d} /> },
-  { id: "recentMatters", name: "Recently touched", desc: "The matters that changed most recently.", category: "Matters", sizes: ["m", "l"], size: "m", icon: History, body: (d) => <MatterRows d={d} list={[...d.matters].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 12)} right={(m) => timeAgo(m.updatedAt)} empty={<Empty icon={History} title="No matters yet" />} /> },
+  { id: "recentMatters", name: "Recently touched", desc: "The matters that changed most recently.", category: "Matters", sizes: ["m", "l"], size: "m", icon: History, body: (d) => <MatterRows compact d={d} list={[...d.matters].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 25)} right={(m) => timeAgo(m.updatedAt)} empty={<Empty icon={History} title="No matters yet" />} /> },
   { id: "myMatters", name: "My matters", desc: "Open matters assigned to you, with their due dates.", category: "Matters", sizes: ["m", "l"], size: "l", icon: UserRound, body: (d) => <MatterRows d={d} list={d.matters.filter((m) => OPEN(m.status) && (m.assignedTo ?? "").toLowerCase() === (d.meEmail ?? "").toLowerCase()).sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"))} right={(m) => (m.dueDate ? fmtDay(m.dueDate) : "")} empty={<Empty icon={UserRound} title="Nothing assigned to you" sub="Matters where you're Assigned to show here." />} /> },
   { id: "goneQuiet", name: "Gone quiet", desc: "Open matters nobody has touched in three weeks.", category: "Matters", sizes: ["m", "l"], size: "m", icon: Hourglass, body: (d) => { const cut = Date.now() - 21 * 86400000; return <MatterRows d={d} list={d.matters.filter((m) => OPEN(m.status) && Date.parse(m.updatedAt) < cut).sort((a, b) => a.updatedAt.localeCompare(b.updatedAt))} right={(m) => timeAgo(m.updatedAt)} empty={<Empty icon={Hourglass} title="Everything is moving" sub="Every open matter changed in the last 21 days." />} />; } },
 
