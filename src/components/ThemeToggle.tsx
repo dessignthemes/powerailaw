@@ -43,7 +43,7 @@ export default function ThemeToggle() {
       onClick={toggle}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       title={dark ? "Light mode" : "Dark mode"}
-      className="w-[38px] h-[30px] rounded-full bg-[#36405A] hover:bg-[#414C68] flex items-center justify-center text-white transition-colors"
+      className="lp-theme-btn w-[38px] h-[30px] rounded-full flex items-center justify-center transition-colors"
     >
       {dark ? <Sun size={16} strokeWidth={1.75} /> : <Moon size={16} strokeWidth={1.75} />}
     </button>

@@ -192,3 +192,7 @@ html.lp-scroll-locked body { overflow: hidden; }
     0 0 0 8px #E1E5EE,
     0 30px 80px -24px rgba(18, 17, 16, 0.32) !important;
 }
+
+/* Light/dark switch in the top bar (same colour as a selected button, e.g. "This week"). */
+.lp-theme-btn { background-color: #c0c9dd; color: #1b191a; }
+.lp-theme-btn:hover { background-color: #b3bdd4; }

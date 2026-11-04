@@ -149,3 +149,5 @@ html[data-theme="dark"] .bg-\[\#F4F1EA\] { background-color: #2c2922; }
 html[data-theme="dark"] .lp-clock-face { fill: #262a32; }
 html[data-theme="dark"] .lp-clock-ink { stroke: #d9dce3; }
 html[data-theme="dark"] .lp-clock-num { fill: #c9cdd6; }
+html[data-theme="dark"] .lp-theme-btn { background-color: #36405a; color: #e7e9ee; }
+html[data-theme="dark"] .lp-theme-btn:hover { background-color: #414c68; }
