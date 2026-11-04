@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { GenericDropdown } from "@/components/NewTaskModal";
 import { Client, getInitials, getAvatarColor } from "@/components/NewClientModal";
+import PracticeAreaList from "@/components/matters/PracticeAreaList";
+import { PRACTICE_AREAS_SORTED, type PracticeArea } from "@/lib/matters/practiceAreas";
 import { SUGGESTED_CODES, cleanCode, isValidCode, formatMatterNumber, NUMBER_PATTERN, cleanNumber } from "@/lib/matters/numbering";
 
 // Alphabetical by name, ignoring titles ("Mr. Adam Nowak" sorts under A).
@@ -32,17 +34,7 @@ const sortName = (n: string) => n.replace(/^(mr|mrs|ms|miss|dr|prof|hon|rev)\.?\
 const MAIN_TYPES: MatterCategory[] = ["Real Estate", "Litigation", "Estate Planning"];
 
 export type MatterStatus = "Lead" | "Consultation" | "Engaged" | "Active" | "Closed";
-export type MatterCategory =
-  | "None"
-  | "Litigation"
-  | "Family Law"
-  | "Immigration"
-  | "Personal Injury"
-  | "Criminal Defense"
-  | "Estate Planning"
-  | "Probate"
-  | "Real Estate"
-  | "Business / Corporate";
+export type MatterCategory = "None" | PracticeArea;
 export type BillingType = "Hourly" | "Flat fee";
 
 export type Matter = {
@@ -89,18 +81,7 @@ export const matterStatusMeta: Record<MatterStatus, { icon: typeof Circle; color
   Closed: { icon: CheckCircle2, color: "text-green-600" },
 };
 
-export const matterCategories: MatterCategory[] = [
-  "None",
-  "Litigation",
-  "Family Law",
-  "Immigration",
-  "Personal Injury",
-  "Criminal Defense",
-  "Estate Planning",
-  "Probate",
-  "Real Estate",
-  "Business / Corporate",
-];
+export const matterCategories: MatterCategory[] = ["None", ...PRACTICE_AREAS_SORTED];
 
 function InlineField({
   icon,
@@ -286,25 +267,19 @@ export default function NewMatterModal({
                   <span className={`min-w-[180px] text-left ${category ? "text-ink" : "text-muted"}`}>{category ?? "Select matter type"}</span>
                 }
               >
-                <div className="max-h-[min(360px,50vh)] overflow-y-auto min-w-[240px]">
-                  {[...MAIN_TYPES, ...matterCategories.filter((c) => c !== "None" && !MAIN_TYPES.includes(c))].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        setCategory(t);
-                        setTypeOpen(false);
-                        const first = SUGGESTED_CODES[t]?.[0]?.code;
-                        // Fill in the usual abbreviation unless one was typed for this type already.
-                        if (first && !SUGGESTED_CODES[t].some((x) => x.code === matterCode)) setMatterCode(first);
-                      }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors whitespace-nowrap"
-                    >
-                      {t}
-                      {category === t && <Check size={14} strokeWidth={2} />}
-                    </button>
-                  ))}
-                </div>
+                <PracticeAreaList
+                  options={PRACTICE_AREAS_SORTED}
+                  first={MAIN_TYPES}
+                  value={category}
+                  onPick={(v) => {
+                    const t = (v ?? null) as MatterCategory | null;
+                    setCategory(t);
+                    setTypeOpen(false);
+                    const first = t ? SUGGESTED_CODES[t]?.[0]?.code : undefined;
+                    // Fill in the usual abbreviation unless one was typed for this type already.
+                    if (t && first && !SUGGESTED_CODES[t].some((x) => x.code === matterCode)) setMatterCode(first);
+                  }}
+                />
               </GenericDropdown>
             </div>
             <div>
@@ -541,21 +516,15 @@ export default function NewMatterModal({
               </>
             }
           >
-            {matterCategories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setCategory(cat === "None" ? null : cat);
-                  setCategoryOpen(false);
-                }}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
-              >
-                {cat}
-                {(cat === "None" ? category === null : cat === category) && (
-                  <Check size={14} strokeWidth={2} />
-                )}
-              </button>
-            ))}
+            <PracticeAreaList
+              options={PRACTICE_AREAS_SORTED}
+              noneLabel="None"
+              value={category}
+              onPick={(v) => {
+                setCategory((v ?? null) as MatterCategory | null);
+                setCategoryOpen(false);
+              }}
+            />
           </GenericDropdown>
           )}
 

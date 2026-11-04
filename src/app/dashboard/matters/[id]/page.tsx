@@ -1,5 +1,7 @@
 "use client";
 
+import PracticeAreaList from "@/components/matters/PracticeAreaList";
+import { PRACTICE_AREAS_SORTED } from "@/lib/matters/practiceAreas";
 import MatterNumberEdit from "@/components/matters/MatterNumberEdit";
 import MatterContactsCard from "@/components/matters/MatterContactsCard";
 import ClickAway from "@/components/ClickAway";
@@ -35,7 +37,6 @@ import NewMatterModal, {
   BillingType,
   matterStatusOrder,
   matterStatusMeta,
-  matterCategories,
 } from "@/components/NewMatterModal";
 import { getInitials, getAvatarColor } from "@/components/NewClientModal";
 import { GenericDropdown } from "@/components/NewTaskModal";
@@ -301,21 +302,15 @@ export default function MatterDetailPage() {
             setOpen={setCategoryOpen}
             trigger={<>{matter.category ?? "—"}</>}
           >
-            {matterCategories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  patch({ category: cat === "None" ? null : cat });
-                  setCategoryOpen(false);
-                }}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
-              >
-                {cat}
-                {(cat === "None" ? matter.category === null : cat === matter.category) && (
-                  <Check size={14} strokeWidth={2} />
-                )}
-              </button>
-            ))}
+            <PracticeAreaList
+              options={PRACTICE_AREAS_SORTED}
+              noneLabel="None"
+              value={matter.category ?? null}
+              onPick={(v) => {
+                patch({ category: (v ?? null) as Matter["category"] });
+                setCategoryOpen(false);
+              }}
+            />
           </GenericDropdown>
         </div>
 

@@ -16,6 +16,12 @@ export const SUGGESTED_CODES: Record<string, { code: string; label: string }[]> 
   "Personal Injury": [{ code: "PI", label: "Personal injury" }],
   "Criminal Defense": [{ code: "CRIM", label: "Criminal defense" }],
   "Business / Corporate": [{ code: "BUS", label: "Business" }],
+  // Prefixes the firm already uses on its matter numbers.
+  "Real Estate Purchase": [{ code: "REP", label: "Purchase" }],
+  "Real Estate Sale": [{ code: "RES", label: "Sale" }],
+  "Immigration – General": [{ code: "IL", label: "Immigration" }],
+  "Collections & Debt": [{ code: "COL", label: "Collections" }],
+  "Debt Collection": [{ code: "COL", label: "Collections" }],
 };
 
 // 2–6 characters, letters first (REP, RES, LIT, EP …).
