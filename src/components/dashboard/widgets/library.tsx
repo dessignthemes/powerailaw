@@ -586,24 +586,24 @@ function ClockFace() {
             <feDropShadow dx="1" dy="1.5" stdDeviation="1.2" floodColor="#000" floodOpacity="0.25" />
           </filter>
         </defs>
-        <circle cx="100" cy="100" r="98" fill="#fff" />
+        <circle className="lp-clock-face" cx="100" cy="100" r="98" fill="#fff" />
         {[...Array(60)].map((_, i) => (
-          <line key={i} x1="100" y1="5" x2="100" y2={i % 5 ? "12" : "17"} stroke="#141414" strokeWidth={i % 5 ? 2.2 : 5} strokeLinecap="round" transform={`rotate(${i * 6} 100 100)`} />
+          <line key={i} x1="100" y1="5" x2="100" y2={i % 5 ? "12" : "17"} className="lp-clock-ink" stroke="#141414" strokeWidth={i % 5 ? 2.2 : 5} strokeLinecap="round" transform={`rotate(${i * 6} 100 100)`} />
         ))}
         {[...Array(12)].map((_, i) => {
           const n = i + 1;
           const ang = (n * 30 * Math.PI) / 180;
           return (
-            <text key={n} x={100 + 70 * Math.sin(ang)} y={100 - 70 * Math.cos(ang)} textAnchor="middle" dominantBaseline="central" fontSize="18" fill="#1B1B1B" fontFamily="Helvetica, Arial, sans-serif">
+            <text key={n} x={100 + 70 * Math.sin(ang)} y={100 - 70 * Math.cos(ang)} textAnchor="middle" dominantBaseline="central" className="lp-clock-num" fontSize="18" fill="#1B1B1B" fontFamily="Helvetica, Arial, sans-serif">
               {n}
             </text>
           );
         })}
         <g ref={hourRef} filter="url(#lpHandShadow)">
-          <line x1="100" y1="104" x2="100" y2="50" stroke="#141414" strokeWidth="9" strokeLinecap="round" />
+          <line className="lp-clock-ink" x1="100" y1="104" x2="100" y2="50" stroke="#141414" strokeWidth="9" strokeLinecap="round" />
         </g>
         <g ref={minRef} filter="url(#lpHandShadow)">
-          <line x1="100" y1="106" x2="100" y2="18" stroke="#141414" strokeWidth="5" strokeLinecap="round" />
+          <line className="lp-clock-ink" x1="100" y1="106" x2="100" y2="18" stroke="#141414" strokeWidth="5" strokeLinecap="round" />
         </g>
         <g ref={secRef} filter="url(#lpHandShadow)">
           <line x1="100" y1="114" x2="100" y2="20" stroke="#E2A43A" strokeWidth="1.6" strokeLinecap="round" />
