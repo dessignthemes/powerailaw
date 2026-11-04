@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "./dark.css";
 import ScrollLock from "@/components/ScrollLock";
 
 // One font everywhere: Inter (headings, text and numbers).
@@ -20,7 +21,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       className={`${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Dark mode before the first paint (dashboard pages only), so there's no white flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(location.pathname.indexOf('/dashboard')===0&&localStorage.getItem('lp-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}",
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-white text-ink font-body">
         {children}
         <ScrollLock />

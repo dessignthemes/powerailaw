@@ -3,6 +3,7 @@ import { IntegrationsModalProvider } from "@/context/IntegrationsModalContext";
 import { WorkspaceDataProvider } from "@/context/WorkspaceDataContext";
 import UpdateBanner from "@/components/UpdateBanner";
 import NotificationBell from "@/components/NotificationBell";
+import ThemeToggle from "@/components/ThemeToggle";
 import GlobalSearch from "@/components/GlobalSearch";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="bg-white border border-[#E3E7EF] rounded-full p-[2px] flex items-center gap-2 shadow-[0_1px_2px_rgba(27,25,26,0.05)]">
                   <div id="page-header-right" className="flex items-center gap-1.5 empty:hidden" />
                   <NotificationBell />
+                  <ThemeToggle />
                 </div>
               </div>
             </div>
