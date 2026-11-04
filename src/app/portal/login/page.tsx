@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import PortalHeader from "../PortalHeader";
 
-const input = "w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-btn-ring";
+const input = "w-full bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-btn-ring";
 
 export default function PortalLogin() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function PortalLogin() {
     <>
       <PortalHeader />
       <main className="flex-1 flex items-start justify-center px-5 py-14">
-        <div className="w-full max-w-[400px] bg-card-alt rounded-3xl p-8">
+        <div className="w-full max-w-[400px] bg-white border border-[#E3E7EF] rounded-3xl m-[7px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-8">
           <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center mb-4"><Lock size={17} strokeWidth={1.75} /></div>
           <h1 className="text-[24px] font-semibold mb-1">Client sign in</h1>
           <p className="text-[13.5px] text-muted mb-6">See and download the documents your lawyer has shared with you.</p>
@@ -47,7 +47,7 @@ export default function PortalLogin() {
               <input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
             </label>
             {error && <div className="text-[13px] text-[#B42318]">{error}</div>}
-            <button disabled={busy} className="mt-2 bg-dark text-white rounded-full py-2.5 text-[14.5px] font-medium hover:bg-dark2 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+            <button disabled={busy} className="mt-2 bg-btn hover:bg-btn-hover border border-btn text-ink rounded-full py-2.5 text-[14.5px] font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
               {busy && <Loader2 size={15} className="animate-spin" />} Sign in
             </button>
           </form>

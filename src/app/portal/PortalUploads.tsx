@@ -127,7 +127,7 @@ export default function PortalUploads({
 
   const pending = items.filter((x) => x.state !== "done").length;
   return (
-    <section className="bg-card-alt rounded-2xl p-5 mb-8">
+    <section className="bg-white border border-[#E3E7EF] rounded-2xl m-[7px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5 mb-8">
       <div className="flex items-center gap-2 mb-1">
         <Upload size={16} className="text-muted" />
         <h2 className="text-[15px] font-semibold" style={{ letterSpacing: 0 }}>
@@ -139,7 +139,7 @@ export default function PortalUploads({
       {!fixedMatterId && matters.length > 1 && (
         <label className="flex flex-col gap-1 mb-3 text-[13px]">
           <span className="font-medium">Which matter are these for?</span>
-          <select value={matterId} onChange={(e) => setMatterId(e.target.value)} className="bg-white border border-line rounded-lg px-3 py-2 text-[13.5px] outline-none max-w-[480px]">
+          <select value={matterId} onChange={(e) => setMatterId(e.target.value)} className="bg-white border border-[#E3E7EF] rounded-lg px-3 py-2 text-[13.5px] outline-none max-w-[480px]">
             <option value="">Choose…</option>
             {matters.map((m) => (
               <option key={m.id} value={m.id}>
@@ -164,7 +164,7 @@ export default function PortalUploads({
           add(e.dataTransfer.files);
         }}
         disabled={busy}
-        className={`w-full border-2 border-dashed rounded-2xl py-7 flex flex-col items-center gap-1.5 transition-colors ${over ? "border-ink bg-white" : "border-btn hover:bg-white"}`}
+        className={`w-full border-2 border-dashed rounded-2xl py-7 flex flex-col items-center gap-1.5 transition-colors ${over ? "border-ink bg-[#F4F6FA]" : "border-btn hover:bg-[#F4F6FA]"}`}
       >
         <Upload size={18} className="text-muted" />
         <span className="text-[14px] font-medium">Choose files or drop them here</span>
@@ -175,7 +175,7 @@ export default function PortalUploads({
       {items.length > 0 && (
         <div className="mt-3 flex flex-col gap-1.5">
           {items.map((it, i) => (
-            <div key={`${it.file.name}-${i}`} className="bg-white border border-line rounded-xl px-3 py-2">
+            <div key={`${it.file.name}-${i}`} className="bg-white border border-[#E3E7EF] rounded-xl px-3 py-2">
               <div className="flex items-center gap-2 text-[13px]">
                 <FileText size={14} className="text-muted flex-shrink-0" />
                 <span className="truncate flex-1">{it.file.name}</span>
@@ -196,7 +196,7 @@ export default function PortalUploads({
               {it.error && <div className="text-[12px] text-[#B42318] mt-1">{it.error}</div>}
             </div>
           ))}
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Add a note (optional), e.g. what these documents are" className="mt-1 bg-white border border-line rounded-xl px-3 py-2 text-[13.5px] outline-none resize-y" />
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Add a note (optional), e.g. what these documents are" className="mt-1 bg-white border border-[#E3E7EF] rounded-xl px-3 py-2 text-[13.5px] outline-none resize-y" />
         </div>
       )}
 
@@ -214,7 +214,7 @@ export default function PortalUploads({
         <button
           onClick={() => void send()}
           disabled={busy || !pending || !matterId}
-          className="ml-auto bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-2"
+          className="ml-auto bg-btn hover:bg-btn-hover border border-btn disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-2"
         >
           {busy && <Loader2 size={14} className="animate-spin" />} {busy ? "Sending…" : `Send ${pending === 1 ? "1 file" : `${pending} files`}`}
         </button>

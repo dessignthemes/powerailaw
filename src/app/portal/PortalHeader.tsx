@@ -3,7 +3,7 @@ import LogoMark from "@/components/LogoMark";
 
 export default function PortalHeader({ firm, right }: { firm?: string; right?: React.ReactNode }) {
   return (
-    <header className="bg-white border-b border-line">
+    <header className="bg-white border-b border-[#E6EAF1]">
       <div className="max-w-[960px] mx-auto px-5 h-[64px] flex items-center justify-between gap-4">
         <Link href="/portal" className="flex items-center gap-2.5 min-w-0">
           <LogoMark size={28} />

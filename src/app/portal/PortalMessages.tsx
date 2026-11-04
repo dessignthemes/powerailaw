@@ -153,7 +153,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
   }
 
   return (
-    <div className="bg-card-alt rounded-2xl p-4">
+    <div className="bg-white border border-[#E3E7EF] rounded-2xl m-[7px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-4">
       <div className="text-[14px] font-semibold mb-3">{matter.title}</div>
       <div className="flex flex-col gap-2.5">
         {list.length === 0 && <div className="text-[13px] text-muted">No messages yet. You can send a message or files to {firm} here.</div>}
@@ -162,7 +162,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
           const mine = x.mine ?? !fromFirm;
           return (
             <div key={x.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${mine ? "bg-[#E1E7F4]" : "bg-white"}`}>
+              <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${mine ? "bg-[#E1E7F4] border border-[#D5DDEE]" : "bg-[#F4F6FA] border border-[#E6EAF1]"}`}>
                 <div className="text-[11.5px] text-muted mb-0.5 flex items-center gap-1.5 flex-wrap">
                   {x.thread === "shared" && <span className="bg-[#FFF1DE] text-[#8A4B14] font-semibold rounded px-1.5 py-px">Shared</span>}
                   {mine ? "You" : fromFirm ? `${x.senderName}, ${firm}` : x.senderName} · {when(x.createdAt)}
@@ -171,15 +171,15 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
                 {x.attachments.length > 0 && (
                   <div className="flex flex-col gap-1.5 mt-2">
                     {x.attachments.map((a) => (
-                      <div key={a.id} className="flex items-center gap-2 bg-card-alt rounded-xl px-3 py-2">
+                      <div key={a.id} className="flex items-center gap-2 bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-3 py-2">
                         <FileText size={15} className="text-muted flex-shrink-0" />
                         <span className="text-[13px] font-medium truncate flex-1">{a.title}</span>
                         {a.versionId && (
                           <>
-                            <a href={`/api/portal/file/${a.versionId}`} target="_blank" rel="noopener" className="text-[12.5px] font-medium bg-chip hover:bg-btn rounded-full px-2.5 py-1">
+                            <a href={`/api/portal/file/${a.versionId}`} target="_blank" rel="noopener" className="text-[12.5px] font-medium bg-chip hover:bg-btn border border-btn rounded-full px-2.5 py-1">
                               Open
                             </a>
-                            <a href={`/api/portal/file/${a.versionId}?download=1`} aria-label={`Download ${a.title}`} className="bg-btn hover:bg-btn-hover rounded-full p-1.5">
+                            <a href={`/api/portal/file/${a.versionId}?download=1`} aria-label={`Download ${a.title}`} className="bg-btn hover:bg-btn-hover border border-btn rounded-full p-1.5">
                               <Download size={13} />
                             </a>
                           </>
@@ -199,7 +199,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
           onChange={(e) => setReply(e.target.value)}
           rows={3}
           placeholder={`Reply securely to ${firm}…`}
-          className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none resize-y"
+          className="bg-white border border-[#E3E7EF] rounded-xl px-3 py-2.5 text-[14px] outline-none resize-y"
         />
         {files.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -227,7 +227,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
         )}
         <div className="flex flex-wrap items-center gap-2">
           {matter.id && (
-            <label className={`flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium cursor-pointer ${busy ? "opacity-50 pointer-events-none" : ""}`}>
+            <label className={`flex items-center gap-1.5 bg-chip hover:bg-btn border border-btn px-3.5 py-2 rounded-full text-[13px] font-medium cursor-pointer ${busy ? "opacity-50 pointer-events-none" : ""}`}>
               <Paperclip size={13} /> Attach files
               <input type="file" multiple accept={ACCEPT} className="sr-only" onChange={(e) => (addFiles(e.target.files), (e.target.value = ""))} />
             </label>
@@ -253,7 +253,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
           <button
             onClick={() => void send()}
             disabled={busy || (!reply.trim() && !files.length)}
-            className="ml-auto flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium"
+            className="ml-auto flex items-center gap-1.5 bg-btn hover:bg-btn-hover border border-btn disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium"
           >
             {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Send
           </button>

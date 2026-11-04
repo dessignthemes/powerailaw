@@ -16,7 +16,7 @@ const blankPerson = (): PortalPerson => ({
   email: "", phone: "", cell: "",
 });
 
-const input = "w-full bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#AEB8C6]";
+const input = "w-full bg-white border border-[#E3E7EF] rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#AEB8C6]";
 
 function Field({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
   return (
@@ -29,7 +29,7 @@ function Field({ label, children, wide = false }: { label: string; children: Rea
 
 function Section({ icon: Icon, title, hint, children }: { icon: typeof UserRound; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-card-alt rounded-2xl p-5 sm:p-6">
+    <section className="bg-white border border-[#E3E7EF] rounded-2xl m-[7px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5 sm:p-6">
       <div className="flex items-center gap-2 mb-1">
         <Icon size={16} className="text-muted" />
         <h2 className="text-[16px] font-semibold">{title}</h2>
@@ -247,7 +247,7 @@ export default function PortalIntakePage() {
             {form.people.length < 6 && (
               <button
                 onClick={() => setForm((f) => (f ? { ...f, people: [...f.people, blankPerson()] } : f))}
-                className="self-start flex items-center gap-1.5 bg-chip hover:bg-btn px-4 py-2 rounded-full text-[13.5px] font-medium"
+                className="self-start flex items-center gap-1.5 bg-chip hover:bg-btn border border-btn px-4 py-2 rounded-full text-[13.5px] font-medium"
               >
                 <Plus size={14} /> Add a person (e.g. spouse or co-client)
               </button>
@@ -357,7 +357,7 @@ export default function PortalIntakePage() {
               <button
                 onClick={() => void save()}
                 disabled={saving}
-                className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-6 py-2.5 rounded-full text-[14px] font-medium"
+                className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover border border-btn disabled:opacity-50 px-6 py-2.5 rounded-full text-[14px] font-medium"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Save
               </button>

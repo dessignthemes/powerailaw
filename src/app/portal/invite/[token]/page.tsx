@@ -5,7 +5,7 @@ import { use, useEffect, useState } from "react";
 import { Loader2, ShieldCheck } from "lucide-react";
 import PortalHeader from "../../PortalHeader";
 
-const input = "w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-btn-ring";
+const input = "w-full bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-btn-ring";
 type Info = { firm: string; clientName: string; email: string; returning: boolean };
 
 export default function PortalInvite({ params }: { params: Promise<{ token: string }> }) {
@@ -54,7 +54,7 @@ export default function PortalInvite({ params }: { params: Promise<{ token: stri
     <>
       <PortalHeader firm={info?.firm} />
       <main className="flex-1 flex items-start justify-center px-5 py-14">
-        <div className="w-full max-w-[420px] bg-card-alt rounded-3xl p-8">
+        <div className="w-full max-w-[420px] bg-white border border-[#E3E7EF] rounded-3xl m-[7px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-8">
           {fatal ? (
             <div className="text-center py-6">
               <div className="text-[16px] font-medium mb-2">{fatal}</div>
@@ -72,7 +72,7 @@ export default function PortalInvite({ params }: { params: Promise<{ token: stri
               <form onSubmit={submit} className="flex flex-col gap-3">
                 <label className="grid gap-1">
                   <span className="text-[13px] text-muted">Your sign-in email</span>
-                  <input value={info.email} readOnly className={`${input} bg-card-alt text-muted`} />
+                  <input value={info.email} readOnly className={`${input} bg-[#F4F6FA] text-muted`} />
                 </label>
                 <label className="grid gap-1">
                   <span className="text-[13px] text-muted">Password (at least 8 characters)</span>
@@ -83,7 +83,7 @@ export default function PortalInvite({ params }: { params: Promise<{ token: stri
                   <input type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} className={input} />
                 </label>
                 {error && <div className="text-[13px] text-[#B42318]">{error}</div>}
-                <button disabled={busy} className="mt-2 bg-dark text-white rounded-full py-2.5 text-[14.5px] font-medium hover:bg-dark2 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                <button disabled={busy} className="mt-2 bg-btn hover:bg-btn-hover border border-btn text-ink rounded-full py-2.5 text-[14.5px] font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
                   {busy && <Loader2 size={15} className="animate-spin" />} {info.returning ? "Save password & sign in" : "Create password & sign in"}
                 </button>
               </form>
