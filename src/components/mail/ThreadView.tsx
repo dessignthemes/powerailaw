@@ -3,12 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Loader2, MessagesSquare, Paperclip } from "lucide-react";
 import type { MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
-import { emailDocument } from "@/lib/mail/emailDocument";
+import { emailDocument, withDarkMode, DARK_FRAME_FILTER } from "@/lib/mail/emailDocument";
+import { useIsDark } from "@/components/ThemeToggle";
 
 // An email's content at its full height, so several emails can sit one under
 // another in a conversation. Still sandboxed: no scripts can run inside, links
 // open in a new tab; the same origin is only allowed so the height can be read.
 export function AutoHeightFrame({ srcDoc, title, minHeight = 120 }: { srcDoc: string; title: string; minHeight?: number }) {
+  const dark = useIsDark();
+  const doc = withDarkMode(srcDoc, dark);
   const ref = useRef<HTMLIFrameElement>(null);
   const [h, setH] = useState(minHeight);
   useEffect(() => {
@@ -42,8 +45,8 @@ export function AutoHeightFrame({ srcDoc, title, minHeight = 120 }: { srcDoc: st
       title=""
       aria-label={title}
       sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-      srcDoc={srcDoc}
-      style={{ height: h }}
+      srcDoc={doc}
+      style={{ height: h, ...(dark ? { filter: DARK_FRAME_FILTER, backgroundColor: "#E2E2E4" } : {}) }}
       className="w-full bg-white block"
     />
   );

@@ -34,7 +34,8 @@ import type { MailFolder, MailMessage, MailProvider, MailSummary } from "@/lib/m
 import FolderPanel, { MAIL_DRAG_TYPE } from "@/components/mail/FolderPanel";
 import AttachmentPreview, { attachmentUrl } from "@/components/mail/AttachmentPreview";
 import SaveAttachmentsModal, { type SaveMode } from "@/components/mail/SaveAttachmentsModal";
-import { emailDocument } from "@/lib/mail/emailDocument";
+import { emailDocument, withDarkMode, DARK_FRAME_FILTER } from "@/lib/mail/emailDocument";
+import { useIsDark } from "@/components/ThemeToggle";
 import { AutoHeightFrame, ThreadView } from "@/components/mail/ThreadView";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 
@@ -621,6 +622,7 @@ export default function InboxPage() {
 
   const conn = conns?.find((c) => c.provider === provider) ?? null;
   const srcDoc = useMemo(() => (message ? emailDocument(message, showImages) : ""), [message, showImages]);
+  const dark = useIsDark();
   const needsReconnect =
     listError?.code === "reconnect" || listError?.code === "missing_scope" || conn?.status === "reconnect" || conn?.status === "missing_scope";
 
@@ -1247,7 +1249,8 @@ export default function InboxPage() {
                   <iframe
                     aria-label="Email content"
                     sandbox="allow-popups allow-popups-to-escape-sandbox"
-                    srcDoc={srcDoc}
+                    srcDoc={withDarkMode(srcDoc, dark)}
+                    style={dark ? { filter: DARK_FRAME_FILTER, backgroundColor: "#E2E2E4" } : undefined}
                     className="flex-1 w-full bg-white"
                   />
                 )}

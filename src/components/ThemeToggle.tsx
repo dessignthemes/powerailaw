@@ -13,6 +13,11 @@ function subscribe(cb: () => void) {
 }
 const isDark = () => document.documentElement.dataset.theme === "dark";
 
+// True while the dashboard is in dark mode (for parts that can't use CSS, like email frames).
+export function useIsDark() {
+  return useSyncExternalStore(subscribe, isDark, () => false);
+}
+
 function apply(on: boolean) {
   if (on) document.documentElement.dataset.theme = "dark";
   else delete document.documentElement.dataset.theme;
