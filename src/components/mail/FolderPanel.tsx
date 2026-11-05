@@ -16,9 +16,22 @@ import {
   PanelLeftClose,
   Loader2,
   FolderPlus,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import type { FolderKind, MailFolder } from "@/lib/mail/types";
 import { sortFolders } from "@/lib/mail/folders";
+
+function readOrder(key: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(key);
+    const v = raw ? JSON.parse(raw) : [];
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 // Data type used when email rows are dragged onto a folder (see the Inbox list).
 export const MAIL_DRAG_TYPE = "application/x-lawpower-mail";
@@ -105,7 +118,7 @@ export default function FolderPanel({
           disabled={createBusy}
           placeholder="Folder name"
           aria-label="New folder name"
-          className="flex-1 min-w-0 bg-white border border-[#E3E7EF] rounded-lg px-2 py-1 text-[13px] outline-none focus:border-[#C3CBDA]"
+          className="flex-1 min-w-0 bg-white border border-[#9AA8C4] rounded-lg px-2 py-1 text-[13px] outline-none focus:border-[#5E6E91] focus:ring-2 focus:ring-[#D5DDEE]"
         />
         {createBusy && <Loader2 size={13} className="animate-spin text-muted flex-shrink-0" />}
       </div>
@@ -113,7 +126,30 @@ export default function FolderPanel({
     </div>
   );
 
-  const sorted = sortFolders(folders);
+  // Your own folder order (Move up / Move down), kept in this browser for this mailbox.
+  const orderKey = `lp-folder-order:${accountEmail ?? "mail"}`;
+  const [saved, setSaved] = useState<{ key: string; ids: string[] } | null>(null);
+  const order = saved?.key === orderKey ? saved.ids : readOrder(orderKey);
+  const setOrder = (ids: string[]) => setSaved({ key: orderKey, ids });
+  const base = sortFolders(folders);
+  const pos = new Map(order.map((id, i) => [id, i]));
+  const sorted = base
+    .map((f, i) => ({ f, i }))
+    .sort((a, b) => (pos.get(a.f.id) ?? 10000 + a.i) - (pos.get(b.f.id) ?? 10000 + b.i))
+    .map((x) => x.f);
+  const move = (f: MailFolder, dir: -1 | 1) => {
+    const sibs = sorted.filter((x) => (x.parentId ?? null) === (f.parentId ?? null));
+    const i = sibs.findIndex((x) => x.id === f.id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= sibs.length) return;
+    const ids = sibs.map((x) => x.id);
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    const next = [...ids, ...order.filter((id) => !ids.includes(id))];
+    setOrder(next);
+    try {
+      localStorage.setItem(orderKey, JSON.stringify(next));
+    } catch {}
+  };
   const roots = sorted.filter((f) => !f.parentId);
   const childrenOf = (id: string) => sorted.filter((f) => f.parentId === id);
   const favs = favorites.map((id) => folders.find((f) => f.id === id)).filter((f): f is MailFolder => !!f);
@@ -124,6 +160,10 @@ export default function FolderPanel({
     const kids = inFavorites ? [] : childrenOf(f.id);
     const isFav = favorites.includes(f.id);
     const showCount = f.unread > 0 && f.kind !== "sent" && f.kind !== "trash";
+    // Your own folders also show how many emails they hold, even when all are read.
+    const showTotal = !showCount && f.kind === "custom" && (f.total ?? 0) > 0;
+    const sibs = inFavorites ? [] : sorted.filter((x) => (x.parentId ?? null) === (f.parentId ?? null));
+    const idx = sibs.findIndex((x) => x.id === f.id);
     return (
       <div key={`${inFavorites ? "fav" : "all"}-${f.id}`}>
         <div
@@ -169,7 +209,7 @@ export default function FolderPanel({
           )}
           <button onClick={() => onSelect(f)} className="flex-1 min-w-0 flex items-center gap-2 py-1.5 text-left">
             <Icon size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
-            <span className={`text-[13px] truncate ${active || showCount ? "font-semibold" : ""}`}>{f.name}</span>
+            <span className={`text-[13px] truncate ${active || showCount || showTotal ? "font-semibold" : ""}`}>{f.name}</span>
           </button>
           <button
             onClick={() => onToggleFavorite(f)}
@@ -189,7 +229,34 @@ export default function FolderPanel({
               <FolderPlus size={12} />
             </button>
           )}
+          {!inFavorites && sibs.length > 1 && (
+            <span className="flex-shrink-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => move(f, -1)}
+                disabled={idx <= 0}
+                title="Move up"
+                aria-label={`Move ${f.name} up`}
+                className="w-4 h-4 flex items-center justify-center text-muted hover:text-ink disabled:opacity-30"
+              >
+                <ArrowUp size={11} />
+              </button>
+              <button
+                onClick={() => move(f, 1)}
+                disabled={idx >= sibs.length - 1}
+                title="Move down"
+                aria-label={`Move ${f.name} down`}
+                className="w-4 h-4 flex items-center justify-center text-muted hover:text-ink disabled:opacity-30"
+              >
+                <ArrowDown size={11} />
+              </button>
+            </span>
+          )}
           {showCount && <span className="text-[12px] font-semibold text-[#1F3A93] tabular-nums flex-shrink-0">{f.unread}</span>}
+          {showTotal && (
+            <span className="text-[12px] font-semibold text-ink tabular-nums flex-shrink-0" title={`${f.total} email${f.total === 1 ? "" : "s"}`}>
+              {f.total}
+            </span>
+          )}
         </div>
         {!inFavorites && creating === f.id && newFolderBox(depth + 1)}
         {kids.length > 0 && !collapsed.has(f.id) && kids.map((k) => row(k, depth + 1))}
