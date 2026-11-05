@@ -15,9 +15,13 @@ import {
   ChevronRight,
   PanelLeftClose,
   Loader2,
+  FolderPlus,
 } from "lucide-react";
 import type { FolderKind, MailFolder } from "@/lib/mail/types";
 import { sortFolders } from "@/lib/mail/folders";
+
+// Data type used when email rows are dragged onto a folder (see the Inbox list).
+export const MAIL_DRAG_TYPE = "application/x-lawpower-mail";
 
 const ICON: Record<FolderKind, typeof Folder> = {
   inbox: InboxIcon,
@@ -42,6 +46,8 @@ export default function FolderPanel({
   onSelect,
   onToggleFavorite,
   onHide,
+  onCreate,
+  onDropEmails,
 }: {
   folders: MailFolder[];
   loading: boolean;
@@ -53,10 +59,59 @@ export default function FolderPanel({
   onSelect: (f: MailFolder) => void;
   onToggleFavorite: (f: MailFolder) => void;
   onHide: () => void;
+  onCreate?: (name: string, parentId: string | null) => Promise<string | null>; // returns an error message, or null when it worked
+  onDropEmails?: (folder: MailFolder, ids: string[]) => void;
 }) {
   const [favOpen, setFavOpen] = useState(true);
   const [allOpen, setAllOpen] = useState(true);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // New folder: null = closed, "" = top level, otherwise the parent folder's id.
+  const [creating, setCreating] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const [createBusy, setCreateBusy] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [dropOn, setDropOn] = useState<string | null>(null);
+
+  const startCreate = (parentId: string) => {
+    setCreating(parentId);
+    setNewName("");
+    setCreateError(null);
+    if (parentId) setCollapsed((c) => { const n = new Set(c); n.delete(parentId); return n; });
+  };
+  const submitCreate = async () => {
+    const name = newName.trim();
+    if (!name || !onCreate || creating === null) return;
+    setCreateBusy(true);
+    const err = await onCreate(name, creating || null);
+    setCreateBusy(false);
+    if (err) setCreateError(err);
+    else {
+      setCreating(null);
+      setNewName("");
+    }
+  };
+  const newFolderBox = (depth: number) => (
+    <div className="py-1" style={{ paddingLeft: 6 + depth * 14 + 20 }}>
+      <div className="flex items-center gap-1.5 pr-1">
+        <Folder size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
+        <input
+          autoFocus
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") submitCreate();
+            if (e.key === "Escape") setCreating(null);
+          }}
+          disabled={createBusy}
+          placeholder="Folder name"
+          aria-label="New folder name"
+          className="flex-1 min-w-0 bg-white border border-[#E3E7EF] rounded-lg px-2 py-1 text-[13px] outline-none focus:border-[#C3CBDA]"
+        />
+        {createBusy && <Loader2 size={13} className="animate-spin text-muted flex-shrink-0" />}
+      </div>
+      <div className="text-[11px] text-muted mt-1">{createError ?? "Enter to create · Esc to cancel"}</div>
+    </div>
+  );
 
   const sorted = sortFolders(folders);
   const roots = sorted.filter((f) => !f.parentId);
@@ -72,8 +127,27 @@ export default function FolderPanel({
     return (
       <div key={`${inFavorites ? "fav" : "all"}-${f.id}`}>
         <div
-          className={`group flex items-center gap-1.5 pr-2 rounded-lg transition-colors ${active ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"}`}
+          className={`group flex items-center gap-1.5 pr-2 rounded-lg transition-colors ${
+            dropOn === `${inFavorites ? "fav" : "all"}-${f.id}` ? "bg-[#E6EBF4] ring-2 ring-[#9DB0D6]" : active ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"
+          }`}
           style={{ paddingLeft: 6 + depth * 14 }}
+          onDragOver={(e) => {
+            if (!onDropEmails || active || f.kind === "drafts" || f.kind === "sent" || !e.dataTransfer.types.includes(MAIL_DRAG_TYPE)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            setDropOn(`${inFavorites ? "fav" : "all"}-${f.id}`);
+          }}
+          onDragLeave={() => setDropOn((d) => (d === `${inFavorites ? "fav" : "all"}-${f.id}` ? null : d))}
+          onDrop={(e) => {
+            setDropOn(null);
+            const raw = e.dataTransfer.getData(MAIL_DRAG_TYPE);
+            if (!raw || !onDropEmails) return;
+            e.preventDefault();
+            try {
+              const ids = JSON.parse(raw) as string[];
+              if (Array.isArray(ids) && ids.length) onDropEmails(f, ids);
+            } catch {}
+          }}
         >
           {kids.length > 0 ? (
             <button
@@ -105,8 +179,19 @@ export default function FolderPanel({
           >
             <Star size={12} fill={isFav ? "currentColor" : "none"} />
           </button>
+          {onCreate && !inFavorites && depth === 0 && (
+            <button
+              onClick={() => startCreate(f.id)}
+              title={`New folder inside ${f.name}`}
+              aria-label={`New folder inside ${f.name}`}
+              className="flex-shrink-0 text-muted opacity-0 group-hover:opacity-100 hover:text-ink transition-opacity"
+            >
+              <FolderPlus size={12} />
+            </button>
+          )}
           {showCount && <span className="text-[12px] font-semibold text-[#1F3A93] tabular-nums flex-shrink-0">{f.unread}</span>}
         </div>
+        {!inFavorites && creating === f.id && newFolderBox(depth + 1)}
         {kids.length > 0 && !collapsed.has(f.id) && kids.map((k) => row(k, depth + 1))}
       </div>
     );
@@ -116,6 +201,17 @@ export default function FolderPanel({
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted">Folders</span>
+        <span className="flex-1" />
+        {onCreate && (
+          <button
+            onClick={() => startCreate("")}
+            title="New folder"
+            aria-label="New folder"
+            className="h-7 px-2.5 mr-1 rounded-full bg-chip hover:bg-btn border border-btn flex items-center gap-1 text-[12px] font-medium transition-colors"
+          >
+            <FolderPlus size={13} strokeWidth={1.75} /> New
+          </button>
+        )}
         <button onClick={onHide} title="Hide folders" aria-label="Hide folders" className="w-7 h-7 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink">
           <PanelLeftClose size={15} strokeWidth={1.75} />
         </button>
@@ -150,6 +246,8 @@ export default function FolderPanel({
               <span className="truncate">{accountEmail ?? "Mailbox"}</span>
             </button>
             {allOpen && roots.map((f) => row(f, 0))}
+            {creating === "" && newFolderBox(0)}
+            {onDropEmails && <div className="text-[11px] text-muted px-2 pt-3">Tip: drag an email onto a folder to move it.</div>}
           </>
         )}
       </div>

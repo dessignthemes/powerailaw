@@ -31,7 +31,7 @@ import {
 import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/ComposeEmail";
 import CreateTaskFromEmail, { htmlToText } from "@/components/mail/CreateTaskFromEmail";
 import type { MailFolder, MailMessage, MailProvider, MailSummary } from "@/lib/mail/types";
-import FolderPanel from "@/components/mail/FolderPanel";
+import FolderPanel, { MAIL_DRAG_TYPE } from "@/components/mail/FolderPanel";
 import AttachmentPreview, { attachmentUrl } from "@/components/mail/AttachmentPreview";
 import SaveAttachmentsModal, { type SaveMode } from "@/components/mail/SaveAttachmentsModal";
 import { emailDocument } from "@/lib/mail/emailDocument";
@@ -467,6 +467,52 @@ export default function InboxPage() {
 
   const shownFolders = folders.length ? folders : cachedFolders(provider);
 
+  // Move emails (dragged onto a folder). They leave the list straight away and come back if the mailbox says no.
+  const [moveNotice, setMoveNotice] = useState<string | null>(null);
+  async function moveEmails(to: MailFolder, ids: string[]) {
+    if (!provider) return;
+    const inbox = shownFolders.find((f) => f.kind === "inbox")?.id ?? null;
+    const from = folderId ?? (provider === "google" ? "INBOX" : inbox);
+    if (to.id === from) return;
+    const moving = messages.filter((m) => ids.includes(m.id));
+    setMessages((list) => list.filter((m) => !ids.includes(m.id)));
+    if (selectedId && ids.includes(selectedId)) setSelectedId(null);
+    setMoveNotice(`Moving ${ids.length === 1 ? "1 email" : `${ids.length} emails`} to ${to.name}…`);
+    const failed: string[] = [];
+    let error = "";
+    for (const id of ids) {
+      const res = await fetch(`/api/mail/messages/${encodeURIComponent(id)}/move`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, to: to.id, from }),
+      }).catch(() => null);
+      if (!res?.ok) {
+        failed.push(id);
+        error = ((await res?.json().catch(() => null)) as { error?: string } | null)?.error ?? "The email couldn't be moved.";
+      }
+    }
+    if (failed.length) {
+      setMessages((list) => [...list, ...moving.filter((m) => failed.includes(m.id))].sort((a, b) => (a.date < b.date ? 1 : -1)));
+      setMoveNotice(error);
+    } else {
+      setMoveNotice(`Moved ${ids.length === 1 ? "1 email" : `${ids.length} emails`} to ${to.name}.`);
+      setTimeout(() => setMoveNotice((n) => (n?.startsWith("Moved") ? null : n)), 4000);
+    }
+    setFoldersTry((n) => n + 1); // refresh folder counts
+  }
+
+  async function createFolder(name: string, parentId: string | null): Promise<string | null> {
+    if (!provider) return "Connect a mailbox first.";
+    const res = await fetch("/api/mail/folders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider, name, parentId }),
+    }).catch(() => null);
+    if (!res?.ok) return ((await res?.json().catch(() => null)) as { error?: string } | null)?.error ?? "The folder couldn't be created.";
+    setFoldersTry((n) => n + 1);
+    return null;
+  }
+
   function retryFolders() {
     setFoldersError(null);
     setFoldersLoading(true);
@@ -839,6 +885,8 @@ export default function InboxPage() {
                   onSelect={selectFolder}
                   onToggleFavorite={toggleFavorite}
                   onHide={() => togglePanel(true)}
+                  onCreate={createFolder}
+                  onDropEmails={moveEmails}
                 />
               </div>
             </>
@@ -870,6 +918,14 @@ export default function InboxPage() {
                 </span>
               </button>
             </div>
+            {moveNotice && (
+              <div className="m-3 mb-0 flex items-center gap-2 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] px-3.5 py-2 text-[13px]">
+                <span className="flex-1">{moveNotice}</span>
+                <button onClick={() => setMoveNotice(null)} aria-label="Dismiss" className="text-muted hover:text-ink">
+                  <X size={13} />
+                </button>
+              </div>
+            )}
             {listError && !needsReconnect && (
               <div className="m-3 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[13px] text-red-700">{listError.message}</div>
             )}
@@ -898,6 +954,13 @@ export default function InboxPage() {
                       <div
                         role="button"
                         tabIndex={0}
+                        draggable
+                        onDragStart={(e) => {
+                          // A conversation row moves every email of it listed here.
+                          const ids = groups && m.threadId ? (groups.get(`t:${m.threadId}`) ?? [m]).map((x) => x.id) : [m.id];
+                          e.dataTransfer.setData(MAIL_DRAG_TYPE, JSON.stringify(ids));
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
                         onClick={() => {
                           open(m);
                           if (convo && !isOpen) toggleThread(m.threadId!);

@@ -224,3 +224,31 @@ export async function getOutlookAttachment(token: string, id: string, index: num
   if (!res.ok) throw new MailError("provider_error", "Outlook didn't send the attachment. Please try again.");
   return { name: att.name, mimeType: att.contentType || "application/octet-stream", bytes: new Uint8Array(await res.arrayBuffer()) };
 }
+
+// New mail folder (top level, or inside another folder). Needs Mail.ReadWrite.
+export async function createOutlookFolder(token: string, name: string, parentId?: string | null): Promise<{ id: string }> {
+  if (parentId && !/^[A-Za-z0-9_=+/-]+$/.test(parentId)) throw new MailError("provider_error", "Invalid folder.");
+  const path = parentId ? `/me/mailFolders/${encodeURIComponent(parentId)}/childFolders` : "/me/mailFolders";
+  const res = await fetch(`${GRAPH}${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ displayName: name }),
+  });
+  if (res.status === 409) throw new MailError("provider_error", "A folder with that name already exists there.");
+  if (res.status === 403) throw new MailError("missing_scope", "Outlook didn't allow creating folders. Reconnect Outlook and allow mail access.");
+  if (!res.ok) throw new MailError("provider_error", `Outlook didn't create the folder (${res.status}).`);
+  const d = (await res.json()) as { id: string };
+  return { id: d.id };
+}
+
+// Move one email to another folder (Outlook gives the moved email a new id). Needs Mail.ReadWrite.
+export async function moveOutlookMessage(token: string, id: string, folderId: string): Promise<void> {
+  if (!/^[A-Za-z0-9_=+/-]+$/.test(id) || !/^[A-Za-z0-9_=+/-]+$/.test(folderId)) throw new MailError("provider_error", "Invalid message or folder.");
+  const res = await fetch(`${GRAPH}/me/messages/${encodeURIComponent(id)}/move`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ destinationId: folderId }),
+  });
+  if (res.status === 403) throw new MailError("missing_scope", "Outlook didn't allow moving emails. Reconnect Outlook and allow mail access.");
+  if (!res.ok) throw new MailError("provider_error", `Outlook didn't move the email (${res.status}).`);
+}

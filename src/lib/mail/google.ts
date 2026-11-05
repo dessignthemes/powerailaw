@@ -247,3 +247,47 @@ export async function getGmailAttachment(token: string, id: string, index: numbe
   const bytes = new Uint8Array(Buffer.from((d.data ?? "").replace(/-/g, "+").replace(/_/g, "/"), "base64"));
   return { name: part.name, mimeType: part.mimeType || "application/octet-stream", bytes };
 }
+
+// New Gmail label (Gmail's folders). Inside another label it's named "Parent/Name". Needs gmail.modify.
+export async function createGmailLabel(token: string, name: string, parentId?: string | null): Promise<{ id: string }> {
+  let full = name;
+  if (parentId) {
+    if (!/^[A-Za-z0-9_-]+$/.test(parentId)) throw new MailError("provider_error", "Invalid folder.");
+    const p = await gmail<{ name: string; type: string }>(token, `/labels/${encodeURIComponent(parentId)}`);
+    if (p.type === "user") full = `${p.name}/${name}`;
+  }
+  const res = await fetch(`${API}/labels`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ name: full, labelListVisibility: "labelShow", messageListVisibility: "show" }),
+  });
+  if (res.status === 409) throw new MailError("provider_error", "A folder with that name already exists.");
+  if (res.status === 403) throw new MailError("missing_scope", "Gmail didn't allow creating folders. Reconnect Gmail and allow mail access.");
+  if (!res.ok) throw new MailError("provider_error", `Gmail didn't create the folder (${res.status}).`);
+  const d = (await res.json()) as { id: string };
+  return { id: d.id };
+}
+
+// Move one email: add the destination label and take off the folder it was in.
+// Trash uses Gmail's own trash call. Needs gmail.modify.
+export async function moveGmailMessage(token: string, id: string, to: string, from?: string | null): Promise<void> {
+  if (!/^[A-Za-z0-9_-]+$/.test(id) || !/^[A-Za-z0-9_-]+$/.test(to) || (from && !/^[A-Za-z0-9_-]+$/.test(from))) {
+    throw new MailError("provider_error", "Invalid message or folder.");
+  }
+  const call = (path: string, body?: unknown) =>
+    fetch(`${API}/messages/${id}${path}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  let res: Response;
+  if (to === "TRASH") res = await call("/trash");
+  else {
+    const fixed = new Set(["SENT", "DRAFT", "UNREAD", "STARRED", "IMPORTANT"]);
+    const remove = from && from !== to && !fixed.has(from) ? [from] : [];
+    if (from === "TRASH") await call("/untrash");
+    res = await call("/modify", { addLabelIds: [to], removeLabelIds: remove });
+  }
+  if (res.status === 403) throw new MailError("missing_scope", "Gmail didn't allow moving emails. Reconnect Gmail and allow mail access.");
+  if (!res.ok) throw new MailError("provider_error", `Gmail didn't move the email (${res.status}).`);
+}
