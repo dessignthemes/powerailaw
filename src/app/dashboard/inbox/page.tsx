@@ -2,7 +2,7 @@
 
 import ClickAway from "@/components/ClickAway";
 import PortalMessagesPanel from "@/components/mail/PortalMessagesPanel";
-import { pageBtnB, pageBtnOpenB, smallBtnB, menuPanel, frameOuter, frameInner } from "@/lib/ui";
+import { pageBtnB, smallBtnB, menuPanel, frameOuter, frameInner } from "@/lib/ui";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -807,7 +807,7 @@ export default function InboxPage() {
           </form>
           <button
             onClick={() => setComposing("new")}
-            className={composing === "new" ? pageBtnOpenB : pageBtnB}
+            className={`text-ink px-3.5 py-2 rounded-full text-[13px] font-semibold flex items-center gap-1.5 whitespace-nowrap border border-[#AEB9D0] transition-colors ${composing === "new" ? "bg-[#B3BDD4]" : "bg-btn-hover hover:bg-[#B3BDD4]"}`}
           >
             <PenSquare size={14} /> New email
           </button>
