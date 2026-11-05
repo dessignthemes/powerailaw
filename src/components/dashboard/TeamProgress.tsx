@@ -101,7 +101,7 @@ export default function TeamProgress({ tasks, members, onPick, className = "bg-c
         </div>
         <div className="flex gap-1 bg-white rounded-full p-1">
           {PERIODS.map((p) => (
-            <button key={p.key} onClick={() => setPeriod(p.key)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${period === p.key ? "bg-btn-hover" : "hover:bg-chip text-muted"}`}>
+            <button key={p.key} onClick={() => setPeriod(p.key)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium border transition-colors ${period === p.key ? "bg-btn border-btn text-ink" : "bg-chip border-[#DCE2EE] text-ink hover:bg-btn hover:border-btn"}`}>
               {p.label}
             </button>
           ))}
