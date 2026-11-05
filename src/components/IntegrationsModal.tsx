@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import MoreIntegrations from "@/components/settings/MoreIntegrations";
+import ContactSupportModal from "@/components/ContactSupportModal";
 import {
   Settings,
   Shield,
@@ -24,6 +25,7 @@ import {
   ListChecks,
   Zap,
   Info,
+  LifeBuoy,
 } from "lucide-react";
 
 // The signature editor (fonts, colours, pictures) loads only when it's opened.
@@ -323,6 +325,7 @@ export default function IntegrationsModal({
   const { meEmail } = useWorkspaceData();
   const [active, setActive] = useState<SettingsTabKey>(initialTab);
   const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   // Firm details come from the signed-in person's own workspace; a new
   // account starts with these empty.
@@ -596,7 +599,16 @@ export default function IntegrationsModal({
                 </button>
               );
             })}
+            {/* Support: opens the Contact support form (also in the left menu). */}
+            <button
+              onClick={() => setSupportOpen(true)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-left transition-colors text-muted hover:bg-chip hover:text-ink"
+            >
+              <LifeBuoy size={16} strokeWidth={1.75} />
+              Support
+            </button>
           </nav>
+          {supportOpen && <ContactSupportModal email={meEmail ?? ""} onClose={() => setSupportOpen(false)} />}
         </div>
 
         <div className="flex-1 overflow-y-auto">
