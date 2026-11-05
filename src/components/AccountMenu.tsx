@@ -2,7 +2,7 @@
 
 import ClickAway from "@/components/ClickAway";
 import { useEffect, useState } from "react";
-import { Settings, Shield, Headphones, LogOut, ChevronsUpDown, Users, Sunrise } from "lucide-react";
+import { Settings, Shield, LifeBuoy, LogOut, ChevronsUpDown, Users, Sunrise } from "lucide-react";
 import { useIntegrationsModal } from "@/context/IntegrationsModalContext";
 import LogoMark from "@/components/LogoMark";
 
@@ -107,7 +107,7 @@ export default function AccountMenu({
                 }}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[14px] font-medium hover:bg-chip transition-colors text-left"
               >
-                <Headphones size={16} strokeWidth={1.75} />
+                <LifeBuoy size={16} strokeWidth={1.75} />
                 Support
               </button>
             </div>
