@@ -6,7 +6,7 @@ import type { WaitingOn } from "@/lib/tasks/waitingOn";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MatterChip from "@/components/tasks/MatterChip";
 import { boardForMatter } from "@/lib/matters/boards";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   X,
   ChevronDown,
@@ -111,10 +111,46 @@ export function GenericDropdown({
   align?: "left" | "right";
   direction?: "down" | "up";
 }) {
+  // The menu is placed on the screen itself (position: fixed), so a pop-up window around it
+  // never cuts it off or makes you scroll sideways; it's kept inside the window's edges.
+  const btn = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const b = btn.current?.getBoundingClientRect();
+      const m = menu.current;
+      if (!b || !m) return;
+      const w = m.offsetWidth;
+      const h = m.offsetHeight;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      let left = align === "left" ? b.left : b.right - w;
+      left = Math.max(12, Math.min(left, vw - w - 12));
+      const below = vh - b.bottom - 12;
+      const above = b.top - 12;
+      const up = direction === "up" ? above >= Math.min(h, 200) || above > below : h > below && above > below;
+      const top = up ? Math.max(12, b.top - 6 - h) : Math.min(b.bottom + 6, vh - h - 12);
+      setPos({ left, top: Math.max(12, top) });
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, align, direction]);
+
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen(!open)}
+        ref={btn}
+        onClick={() => {
+          if (!open) setPos(null);
+          setOpen(!open);
+        }}
         className="flex items-center gap-1.5 bg-chip hover:bg-btn transition-colors px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap max-w-[380px] overflow-hidden"
       >
         {trigger}
@@ -124,11 +160,9 @@ export function GenericDropdown({
         <>
           <ClickAway onClose={() => setOpen(false)} />
           <div
-            className={`absolute ${
-              direction === "up" ? "bottom-[calc(100%+6px)]" : "top-[calc(100%+6px)]"
-            } ${
-              align === "left" ? "left-0" : "right-0"
-            } z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 min-w-[180px] w-max max-w-[min(92vw,440px)]`}
+            ref={menu}
+            style={{ position: "fixed", left: pos?.left ?? -9999, top: pos?.top ?? -9999, visibility: pos ? "visible" : "hidden" }}
+            className="z-[70] bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 min-w-[180px] w-max max-w-[min(92vw,460px)] max-h-[min(70vh,520px)] overflow-y-auto"
           >
             {children}
           </div>
@@ -207,7 +241,7 @@ export default function NewTaskModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-cream rounded-3xl w-full max-w-[620px] max-h-[90vh] overflow-y-auto"
+        className="bg-cream rounded-3xl w-full max-w-[760px] max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between px-7 pt-6 pb-2">
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
