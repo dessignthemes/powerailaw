@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Users, Check, ChevronDown, Pin } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Users, Check, ChevronDown, Pin, Plus } from "lucide-react";
+import NewTaskModal from "@/components/NewTaskModal";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 
 // Whose tasks the dashboard shows: "me" (default), "all", or a team member's email.
 export type TaskScope = "me" | "all" | string;
@@ -29,6 +32,8 @@ export default function TaskFilterDropdown({
   onPin?: (s: TaskScope) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const { addTask } = useWorkspaceData();
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -85,12 +90,33 @@ export default function TaskFilterDropdown({
       </button>
       {open && (
         <div className="absolute right-0 top-[calc(100%+18px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[260px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]">
+          <button
+            onClick={() => {
+              setOpen(false);
+              setAdding(true);
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[14px] font-semibold text-left bg-chip hover:bg-btn border border-btn transition-colors mb-1"
+          >
+            <Plus size={15} /> Add task
+          </button>
           {item("me", "My tasks")}
           {item("all", "View all tasks")}
           {others.length > 0 && <div className="px-3 pt-2.5 pb-1 text-[11.5px] font-semibold text-muted border-t border-line mt-1">Team members</div>}
           {others.map((m) => item(m.email, m.fullName || m.email))}
           {onPin && <div className="px-3 pt-2 pb-1 text-[11.5px] text-muted border-t border-line mt-1 flex items-center gap-1.5"><Pin size={11} /> Pin a view to open the Dashboard with it.</div>}
         </div>
+      )}
+      {adding &&
+        createPortal(
+        <NewTaskModal
+          defaultStatus="todo"
+          onClose={() => setAdding(false)}
+          onCreate={(task) => {
+            addTask({ ...task, comments: [] });
+            setAdding(false);
+          }}
+        />,
+        document.body,
       )}
     </div>
   );
