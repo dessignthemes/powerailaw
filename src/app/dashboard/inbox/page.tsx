@@ -27,6 +27,7 @@ import {
   ChevronRight,
   FolderInput,
   Reply,
+  Trash2,
 } from "lucide-react";
 import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/ComposeEmail";
 import CreateTaskFromEmail, { htmlToText } from "@/components/mail/CreateTaskFromEmail";
@@ -500,6 +501,21 @@ export default function InboxPage() {
       setTimeout(() => setMoveNotice((n) => (n?.startsWith("Moved") ? null : n)), 4000);
     }
     setFoldersTry((n) => n + 1); // refresh folder counts
+  }
+
+  // Delete = move to the mailbox's Deleted Items / Trash (can be restored from there).
+  const trashFolder: MailFolder = shownFolders.find((f) => f.kind === "trash") ?? {
+    id: provider === "google" ? "TRASH" : "deleteditems",
+    name: provider === "google" ? "Trash" : "Deleted Items",
+    kind: "trash",
+    parentId: null,
+    unread: 0,
+    total: null,
+  };
+  const inTrash = !!folderId && folderId === trashFolder.id;
+  function deleteEmail(id: string) {
+    setMessage(null);
+    void moveEmails(trashFolder, [id]);
   }
 
   async function createFolder(name: string, parentId: string | null): Promise<string | null> {
@@ -1163,6 +1179,15 @@ export default function InboxPage() {
                           <button onClick={() => setComposing("reply")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors">
                             <Reply size={12} /> Reply
                           </button>
+                          {!inTrash && (
+                            <button
+                              onClick={() => deleteEmail(message.id)}
+                              title={`Move to ${trashFolder.name}`}
+                              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDECEC] border border-[#F6C9C9] text-[#B42318] text-[12.5px] font-medium hover:bg-[#FADADA] transition-colors"
+                            >
+                              <Trash2 size={12} /> Delete
+                            </button>
+                          )}
                         </>
                       );
                     })()}
