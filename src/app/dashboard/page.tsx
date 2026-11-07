@@ -9,7 +9,7 @@ import HeaderActions from "@/components/layout/HeaderActions";
 import { pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import TaskFilterDropdown, { scopeLabel, type TaskScope } from "@/components/TaskFilterDropdown";
 import TaskDetailModal from "@/components/TaskDetailModal";
-import { BoardTask, statusMeta } from "@/components/NewTaskModal";
+import NewTaskModal, { BoardTask, statusMeta } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MemberAvatar from "@/components/MemberAvatar";
 import EventDetailModal from "@/components/EventDetailModal";
@@ -239,7 +239,8 @@ export default function DashboardHome() {
   const { layout, setLayout, resetLayout } = useDashboardLayout(meEmail);
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
-  const { matters, clients } = useWorkspaceData();
+  const [newTask, setNewTask] = useState(false);
+  const { matters, clients, addTask } = useWorkspaceData();
   const d: DashData = {
     range,
     dueLabel: activeRange.due,
@@ -331,6 +332,9 @@ export default function DashboardHome() {
                   </button>
                 ))}
               </div>
+              <button onClick={() => setNewTask(true)} className={pageBtnB}>
+                <Plus size={14} /> Add task
+              </button>
               <button onClick={() => setAdding(true)} className={pageBtnB}>
                 <Plus size={14} /> Add widget
               </button>
@@ -349,6 +353,17 @@ export default function DashboardHome() {
       </HeaderActions>
 
       <WidgetBoard layout={layout} onChange={setLayout} editing={editing} d={d} />
+
+      {newTask && (
+        <NewTaskModal
+          defaultStatus="todo"
+          onClose={() => setNewTask(false)}
+          onCreate={(task) => {
+            addTask({ ...task, comments: [] });
+            setNewTask(false);
+          }}
+        />
+      )}
 
       {editing && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-white border border-line rounded-full pl-5 pr-2 py-2 shadow-[0_12px_32px_-12px_rgba(27,25,26,0.35)]">
