@@ -95,9 +95,9 @@ export default function TaskFilterDropdown({
               setOpen(false);
               setAdding(true);
             }}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[14px] font-semibold text-left bg-chip hover:bg-btn border border-btn transition-colors mb-1"
+            className="self-start ml-1.5 mt-1 mb-1.5 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium bg-chip hover:bg-btn border border-btn transition-colors whitespace-nowrap"
           >
-            <Plus size={15} /> Add task
+            <Plus size={14} /> Add task
           </button>
           {item("me", "My tasks")}
           {item("all", "View all tasks")}
