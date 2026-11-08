@@ -196,3 +196,6 @@ html.lp-scroll-locked body { overflow: hidden; }
 /* Light/dark switch in the top bar (same colour as a selected button, e.g. "This week"). */
 .lp-theme-btn { background-color: #c0c9dd; color: #1b191a; }
 .lp-theme-btn:hover { background-color: #b3bdd4; }
+
+/* While a Dashboard widget is being dragged. */
+body.lp-dragging, body.lp-dragging * { cursor: grabbing !important; user-select: none !important; }

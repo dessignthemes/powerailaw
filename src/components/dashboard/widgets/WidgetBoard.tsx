@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Minus, X, Search, Plus, Check, LayoutGrid } from "lucide-react";
 import { WIDGETS, WIDGET, WidgetSizeContext } from "./library";
 import { SIZE_SPAN, GRID_GAP, MIN_COL, MAX_COLS, SIZE_LABEL, type DashData, type LayoutItem, type WidgetDef, type WidgetSize } from "./types";
@@ -60,9 +61,7 @@ export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize
 }
 
 export default function WidgetBoard({ layout, onChange, editing, d }: { layout: LayoutItem[]; onChange: (l: LayoutItem[]) => void; editing: boolean; d: DashData }) {
-  const [dragId, setDragId] = useState<string | null>(null);
-  const lastOver = useRef<string | null>(null);
-  // Fit as many square columns as the page allows (2 to 5), filling the width.
+  // Fit as many square columns as the page allows (up to 5), filling the width.
   const gridRef = useRef<HTMLDivElement>(null);
   const [grid, setGrid] = useState({ cols: 4, size: 260 });
   useEffect(() => {
@@ -79,78 +78,199 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const items = layout.filter((x) => WIDGET(x.id));
 
-  function moveTo(id: string, overId: string) {
-    if (id === overId) return;
-    const from = items.findIndex((x) => x.id === id);
-    const to = items.findIndex((x) => x.id === overId);
+  // ── Dragging (Edit view) ──────────────────────────────────────────────────
+  // Pick a widget up and it follows the pointer; the others slide out of the way
+  // and a dashed outline shows where it will land. Saved when you let go.
+  const saved = layout.filter((x) => WIDGET(x.id));
+  const [order, setOrder] = useState<LayoutItem[] | null>(null); // live order while dragging
+  const items = order ?? saved;
+  const [drag, setDrag] = useState<{ id: string; w: number; h: number; dx: number; dy: number; x: number; y: number } | null>(null);
+  const els = useRef(new Map<string, HTMLDivElement>());
+  const rectsBefore = useRef<Map<string, DOMRect> | null>(null);
+  const pointer = useRef({ x: 0, y: 0 });
+  const orderRef = useRef<LayoutItem[] | null>(null);
+  const setLive = (o: LayoutItem[] | null) => {
+    orderRef.current = o;
+    setOrder(o);
+  };
+
+  // Smooth slide (FLIP): after the order changes, each widget glides from where it was.
+  useLayoutEffect(() => {
+    const before = rectsBefore.current;
+    if (!before) return;
+    rectsBefore.current = null;
+    els.current.forEach((el, id) => {
+      const a = before.get(id);
+      if (!a) return;
+      const b = el.getBoundingClientRect();
+      const dx = a.left - b.left;
+      const dy = a.top - b.top;
+      if (!dx && !dy) return;
+      el.style.transition = "none";
+      el.style.transform = `translate(${dx}px, ${dy}px)`;
+      requestAnimationFrame(() => {
+        el.style.transition = "transform 220ms cubic-bezier(.2,.8,.2,1)";
+        el.style.transform = "";
+      });
+    });
+  }, [order]);
+
+  function reorderToward(x: number, y: number, id: string) {
+    const cur = orderRef.current;
+    if (!cur) return;
+    const from = cur.findIndex((it) => it.id === id);
+    let best: { id: string; dist: number; r: DOMRect } | null = null;
+    els.current.forEach((el, oid) => {
+      if (oid === id) return;
+      const r = el.getBoundingClientRect();
+      const inside = x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const dist = inside ? 0 : Math.hypot(x - cx, y - cy);
+      if (!best || dist < best.dist) best = { id: oid, dist, r };
+    });
+    const target = best as { id: string; dist: number; r: DOMRect } | null;
+    if (!target || target.dist > Math.max(grid.size, 260)) return;
+    const to = cur.findIndex((it) => it.id === target.id);
     if (from < 0 || to < 0) return;
-    const next = [...items];
+    // Only move once the pointer is past the middle of the other widget (no back-and-forth jumping).
+    const r = target.r;
+    const sameRow = y >= r.top && y <= r.bottom;
+    const past = sameRow ? (to > from ? x > r.left + r.width / 2 : x < r.left + r.width / 2) : to > from ? y > r.top + r.height / 2 : y < r.top + r.height / 2;
+    if (!past) return;
+    const before = new Map<string, DOMRect>();
+    els.current.forEach((el, k) => before.set(k, el.getBoundingClientRect()));
+    rectsBefore.current = before;
+    const next = [...cur];
     const [it] = next.splice(from, 1);
     next.splice(to, 0, it);
-    onChange(next);
+    setLive(next);
   }
 
+  function startDrag(e: React.PointerEvent, id: string) {
+    if (!editing || e.button !== 0) return;
+    if ((e.target as HTMLElement).closest("button")) return; // − and the size picker
+    const el = els.current.get(id);
+    if (!el) return;
+    e.preventDefault();
+    const r = el.getBoundingClientRect();
+    pointer.current = { x: e.clientX, y: e.clientY };
+    setLive(saved);
+    setDrag({ id, w: r.width, h: r.height, dx: e.clientX - r.left, dy: e.clientY - r.top, x: e.clientX, y: e.clientY });
+  }
+
+  useEffect(() => {
+    if (!drag) return;
+    const id = drag.id;
+    let raf = 0;
+    const move = (ev: PointerEvent) => {
+      pointer.current = { x: ev.clientX, y: ev.clientY };
+      setDrag((g) => (g ? { ...g, x: ev.clientX, y: ev.clientY } : g));
+      reorderToward(ev.clientX, ev.clientY, id);
+    };
+    // Scroll the page when dragging near the top or bottom edge.
+    const tick = () => {
+      const { y } = pointer.current;
+      const edge = 90;
+      const vh = window.innerHeight;
+      const speed = y < edge ? -Math.ceil((edge - y) / 6) : y > vh - edge ? Math.ceil((y - (vh - edge)) / 6) : 0;
+      if (speed) {
+        const scroller = gridRef.current?.closest("main")?.parentElement;
+        window.scrollBy(0, speed);
+        if (scroller && scroller.scrollHeight > scroller.clientHeight) scroller.scrollTop += speed;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    const up = () => {
+      const final = orderRef.current;
+      setDrag(null);
+      setLive(null);
+      if (final && final.map((x) => x.id).join() !== saved.map((x) => x.id).join()) onChange(final);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    document.body.classList.add("lp-dragging");
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      document.body.classList.remove("lp-dragging");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per drag
+  }, [drag?.id]);
+
+  const dragDef = drag ? WIDGET(drag.id) : null;
+  const dragItem = drag ? items.find((x) => x.id === drag.id) : null;
+
   return (
-    <div ref={gridRef} className="grid grid-flow-row-dense" style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`, gridAutoRows: `${grid.size}px`, gap: GRID_GAP }}>
-      {items.map((it) => {
-        const def = WIDGET(it.id)!;
-        const size = def.sizes.includes(it.size) ? it.size : def.size;
-        return (
-          <div
-            key={it.id}
-            style={{ gridColumn: `span ${Math.min(SIZE_SPAN[size][0], grid.cols)}`, gridRow: `span ${SIZE_SPAN[size][1]}` }}
-            className={`relative min-w-0 ${editing ? "cursor-grab active:cursor-grabbing" : ""} ${dragId === it.id ? "opacity-40" : ""}`}
-            draggable={editing}
-            onDragStart={(e) => {
-              setDragId(it.id);
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData("text/plain", it.id);
-            }}
-            onDragOver={(e) => {
-              if (!dragId) return;
-              e.preventDefault();
-              if (lastOver.current !== it.id) {
-                lastOver.current = it.id;
-                moveTo(dragId, it.id);
-              }
-            }}
-            onDragEnd={() => {
-              setDragId(null);
-              lastOver.current = null;
-            }}
-            onDrop={(e) => e.preventDefault()}
-          >
-            <div className={`h-full ${editing ? "pointer-events-none select-none rounded-[22px] ring-1 ring-line shadow-[0_8px_24px_-12px_rgba(27,25,26,0.25)] animate-[lpWiggle_0.35s_ease-in-out]" : ""}`}>
-              <WidgetShell def={def} size={size} d={d} />
-            </div>
-            {editing && (
-              <>
-                <button
-                  onClick={() => onChange(items.filter((x) => x.id !== it.id))}
-                  aria-label={`Remove ${def.name}`}
-                  title="Remove from the Dashboard"
-                  className="absolute -top-2.5 -left-2.5 z-10 w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center shadow hover:scale-105 transition-transform"
-                >
-                  <Minus size={14} strokeWidth={2.5} />
-                </button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
-                  <SizePicker dark sizes={def.sizes} value={size} onPick={(s) => onChange(items.map((x) => (x.id === it.id ? { ...x, size: s } : x)))} />
+    <>
+      <div ref={gridRef} className="grid grid-flow-row-dense" style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`, gridAutoRows: `${grid.size}px`, gap: GRID_GAP }}>
+        {items.map((it) => {
+          const def = WIDGET(it.id)!;
+          const size = def.sizes.includes(it.size) ? it.size : def.size;
+          const isDragged = drag?.id === it.id;
+          return (
+            <div
+              key={it.id}
+              ref={(el) => {
+                if (el) els.current.set(it.id, el);
+                else els.current.delete(it.id);
+              }}
+              style={{ gridColumn: `span ${Math.min(SIZE_SPAN[size][0], grid.cols)}`, gridRow: `span ${SIZE_SPAN[size][1]}`, touchAction: editing ? "none" : undefined }}
+              className={`relative min-w-0 ${editing ? (drag ? "cursor-grabbing" : "cursor-grab") : ""}`}
+              onPointerDown={(e) => startDrag(e, it.id)}
+            >
+              {isDragged ? (
+                // Where it will land.
+                <div className="h-full rounded-[22px] border-2 border-dashed border-[#9DB0D6] bg-[#E6EBF4]/60" />
+              ) : (
+                <div className={`h-full ${editing ? "pointer-events-none select-none rounded-[22px] ring-1 ring-line shadow-[0_8px_24px_-12px_rgba(27,25,26,0.25)]" : ""} ${editing && !drag ? "animate-[lpWiggle_0.35s_ease-in-out]" : ""}`}>
+                  <WidgetShell def={def} size={size} d={d} />
                 </div>
-              </>
-            )}
+              )}
+              {editing && !isDragged && (
+                <>
+                  <button
+                    onClick={() => onChange(saved.filter((x) => x.id !== it.id))}
+                    aria-label={`Remove ${def.name}`}
+                    title="Remove from the Dashboard"
+                    className="absolute -top-2.5 -left-2.5 z-10 w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center shadow hover:scale-105 transition-transform"
+                  >
+                    <Minus size={14} strokeWidth={2.5} />
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
+                    <SizePicker dark sizes={def.sizes} value={size} onPick={(s) => onChange(saved.map((x) => (x.id === it.id ? { ...x, size: s } : x)))} />
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+        {editing && !items.length && (
+          <div className="col-span-full row-span-1 rounded-2xl border-2 border-dashed border-line flex flex-col items-center justify-center text-center text-muted">
+            <LayoutGrid size={22} className="mb-2" />
+            <div className="text-[14px] font-medium text-ink">No widgets yet</div>
+            <div className="text-[13px]">Click Add widget to pick some.</div>
           </div>
-        );
-      })}
-      {editing && !items.length && (
-        <div className="col-span-full row-span-1 rounded-2xl border-2 border-dashed border-line flex flex-col items-center justify-center text-center text-muted">
-          <LayoutGrid size={22} className="mb-2" />
-          <div className="text-[14px] font-medium text-ink">No widgets yet</div>
-          <div className="text-[13px]">Click Add widget to pick some.</div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+
+      {/* The widget in your hand, following the pointer. */}
+      {drag && dragDef && dragItem &&
+        createPortal(
+          <div
+            style={{ position: "fixed", left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.w, height: drag.h, zIndex: 80, pointerEvents: "none" }}
+            className="rotate-[1.2deg] scale-[1.03] shadow-[0_30px_60px_-20px_rgba(27,25,26,0.45)] rounded-[22px] transition-transform"
+          >
+            <WidgetShell def={dragDef} size={dragDef.sizes.includes(dragItem.size) ? dragItem.size : dragDef.size} d={d} />
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 
