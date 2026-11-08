@@ -116,29 +116,52 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
     });
   }, [order]);
 
-  function reorderToward(x: number, y: number, id: string) {
+  // Where the pointer is decides the spot: over another widget → take its place.
+  // After a move there's a short pause, and the same widget only counts again once
+  // the pointer has left it, so nothing flips back and forth.
+  const lastTarget = useRef<string | null>(null);
+  const coolUntil = useRef(0);
+  const lastMovePos = useRef({ x: -999, y: -999 });
+  function reorderToward(x: number, y: number, id: string, now: number) {
     const cur = orderRef.current;
     if (!cur) return;
-    const from = cur.findIndex((it) => it.id === id);
-    let best: { id: string; dist: number; r: DOMRect } | null = null;
+    let over: string | null = null;
+    let overDragged = false;
+    let lowest = 0;
     els.current.forEach((el, oid) => {
-      if (oid === id) return;
       const r = el.getBoundingClientRect();
-      const inside = x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const dist = inside ? 0 : Math.hypot(x - cx, y - cy);
-      if (!best || dist < best.dist) best = { id: oid, dist, r };
+      lowest = Math.max(lowest, r.bottom);
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+        if (oid === id) overDragged = true;
+        else over = oid;
+      }
     });
-    const target = best as { id: string; dist: number; r: DOMRect } | null;
-    if (!target || target.dist > Math.max(grid.size, 260)) return;
-    const to = cur.findIndex((it) => it.id === target.id);
-    if (from < 0 || to < 0) return;
-    // Only move once the pointer is past the middle of the other widget (no back-and-forth jumping).
-    const r = target.r;
-    const sameRow = y >= r.top && y <= r.bottom;
-    const past = sameRow ? (to > from ? x > r.left + r.width / 2 : x < r.left + r.width / 2) : to > from ? y > r.top + r.height / 2 : y < r.top + r.height / 2;
-    if (!past) return;
+    if (overDragged) {
+      lastTarget.current = null;
+      return;
+    }
+    const from = cur.findIndex((it) => it.id === id);
+    // Below every widget → move to the end.
+    let to = -1;
+    let key: string | null = null;
+    if (over) {
+      to = cur.findIndex((it) => it.id === over);
+      key = over;
+    } else if (y > lowest) {
+      to = cur.length - 1;
+      key = "__end";
+    }
+    if (key === null) {
+      lastTarget.current = null;
+      return;
+    }
+    if (key === lastTarget.current || from < 0 || to < 0 || from === to) return;
+    if (now < coolUntil.current) return;
+    // The pointer has to have moved since the last swap (stops chain reactions when widgets reflow).
+    if (Math.hypot(x - lastMovePos.current.x, y - lastMovePos.current.y) < 8) return;
+    lastMovePos.current = { x, y };
+    lastTarget.current = key;
+    coolUntil.current = now + 230;
     const before = new Map<string, DOMRect>();
     els.current.forEach((el, k) => before.set(k, el.getBoundingClientRect()));
     rectsBefore.current = before;
@@ -157,6 +180,9 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
     const r = el.getBoundingClientRect();
     pointer.current = { x: e.clientX, y: e.clientY };
     setLive(saved);
+    lastTarget.current = null;
+    coolUntil.current = 0;
+    lastMovePos.current = { x: -999, y: -999 };
     setDrag({ id, w: r.width, h: r.height, dx: e.clientX - r.left, dy: e.clientY - r.top, x: e.clientX, y: e.clientY });
   }
 
@@ -167,7 +193,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
     const move = (ev: PointerEvent) => {
       pointer.current = { x: ev.clientX, y: ev.clientY };
       setDrag((g) => (g ? { ...g, x: ev.clientX, y: ev.clientY } : g));
-      reorderToward(ev.clientX, ev.clientY, id);
+      reorderToward(ev.clientX, ev.clientY, id, ev.timeStamp);
     };
     // Scroll the page when dragging near the top or bottom edge.
     const tick = () => {
