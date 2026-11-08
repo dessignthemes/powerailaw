@@ -234,7 +234,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
 
   return (
     <>
-      <div ref={gridRef} className="grid grid-flow-row-dense" style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`, gridAutoRows: `${grid.size}px`, gap: GRID_GAP }}>
+      <div ref={gridRef} className="grid" style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`, gridAutoRows: `${grid.size}px`, gap: GRID_GAP }}>
         {items.map((it) => {
           const def = WIDGET(it.id)!;
           const size = def.sizes.includes(it.size) ? it.size : def.size;
