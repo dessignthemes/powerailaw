@@ -2,7 +2,7 @@ import "server-only";
 import { canSeeTask } from "@/lib/data/tasks";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireUserOrg, AccessError, DOCUMENTS_BUCKET } from "@/lib/data/documents";
+import { requireUserOrg, AccessError, DOCUMENTS_BUCKET, hasFileDates } from "@/lib/data/documents";
 import { extractText, detectKind, MIME_BY_KIND, MAX_FILE_BYTES, type ExtractedChunk } from "@/lib/ai/extract";
 import { toSearchQuery, sensitiveReason } from "@/lib/ai/safety";
 import { readScannedPdf } from "@/lib/ai/ocr";
@@ -31,7 +31,7 @@ export async function assertMatter(ctx: AiCtx, matterId: string) {
 export type MatterContext = {
   matter: Record<string, unknown> & { id: string; title: string };
   client: { id: string; name: string; type: string; email: string | null; phone: string | null } | null;
-  documents: { id: string; title: string; versionId: string; versionNumber: number; pageCount: number; indexStatus: string | null }[];
+  documents: { id: string; title: string; versionId: string; versionNumber: number; pageCount: number; fileModifiedAt?: string | null; indexStatus: string | null }[];
   tasks: { id: string; title: string; status: string; priority: string; dueDate: string | null }[];
 };
 
@@ -51,7 +51,7 @@ export async function getMatterContext(ctx: AiCtx, matterId: string): Promise<Ma
       : Promise.resolve({ data: null }),
     s
       .from("documents")
-      .select("id, title, document_versions(id, version_number, page_count)")
+      .select(`id, title, document_versions(id, version_number, page_count${(await hasFileDates()) ? ", file_modified_at" : ""})`)
       .eq("org_id", ctx.orgId)
       .eq("matter_id", matterId)
       .order("updated_at", { ascending: false })
@@ -65,11 +65,11 @@ export async function getMatterContext(ctx: AiCtx, matterId: string): Promise<Ma
       .limit(50),
   ]);
 
-  type DocRow = { id: string; title: string; document_versions: { id: string; version_number: number; page_count: number }[] };
+  type DocRow = { id: string; title: string; document_versions: { id: string; version_number: number; page_count: number; file_modified_at?: string | null }[] };
   const latest = ((docs.data ?? []) as DocRow[])
     .map((d) => {
       const v = [...(d.document_versions ?? [])].sort((a, b) => b.version_number - a.version_number)[0];
-      return v ? { id: d.id, title: d.title, versionId: v.id, versionNumber: v.version_number, pageCount: v.page_count } : null;
+      return v ? { id: d.id, title: d.title, versionId: v.id, versionNumber: v.version_number, pageCount: v.page_count, fileModifiedAt: v.file_modified_at ?? null } : null;
     })
     .filter(Boolean) as Omit<MatterContext["documents"][number], "indexStatus">[];
 

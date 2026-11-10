@@ -24,6 +24,7 @@ export type DocumentVersion = {
   note: string;
   createdByEmail: string | null;
   createdAt: string;
+  fileModifiedAt: string | null; // "Date modified" of the file on the computer it came from
 };
 
 export type MatterDocument = {
@@ -79,6 +80,29 @@ export async function hasFileTypes(): Promise<boolean> {
   return fileTypesReady;
 }
 
+// Whether migration 0068 (file dates on versions) has been run. Only a
+// positive answer is cached, so running the migration takes effect at once.
+let fileDatesReady = false;
+export async function hasFileDates(): Promise<boolean> {
+  if (fileDatesReady) return true;
+  const { error } = await createAdminClient().from("document_versions").select("file_modified_at").limit(1);
+  if (!error) fileDatesReady = true;
+  return fileDatesReady;
+}
+
+// A file date the browser sent: a real time, not in the future, not before 1990.
+export function cleanFileDate(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = Date.parse(v);
+  if (!Number.isFinite(t) || t < Date.UTC(1990, 0, 1) || t > Date.now() + 5 * 60_000) return null;
+  return new Date(t).toISOString();
+}
+
+async function fileDateColumns(fileModifiedAt: string | null | undefined) {
+  const v = cleanFileDate(fileModifiedAt);
+  return v && (await hasFileDates()) ? { file_modified_at: v } : {};
+}
+
 export async function requireFileTypes() {
   if (!(await hasFileTypes())) {
     throw new MigrationRequiredError(
@@ -98,6 +122,7 @@ type VersionRow = {
   note: string;
   created_by_email: string | null;
   created_at: string;
+  file_modified_at?: string | null;
 };
 
 function toVersion(v: VersionRow): DocumentVersion {
@@ -111,6 +136,7 @@ function toVersion(v: VersionRow): DocumentVersion {
     note: v.note,
     createdByEmail: v.created_by_email,
     createdAt: v.created_at,
+    fileModifiedAt: v.file_modified_at ?? null,
   };
 }
 
@@ -246,7 +272,8 @@ function toDocument(row: DocRow): MatterDocument {
 const VERSION_FIELDS = "id, version_number, size_bytes, page_count, has_form_fields, note, created_by_email, created_at";
 
 async function docSelect() {
-  const fields = (await hasFileTypes()) ? `${VERSION_FIELDS}, file_type` : VERSION_FIELDS;
+  let fields = (await hasFileTypes()) ? `${VERSION_FIELDS}, file_type` : VERSION_FIELDS;
+  if (await hasFileDates()) fields += ", file_modified_at";
   return `id, matter_id, title, created_at, updated_at, matters(title), document_versions(${fields})`;
 }
 
@@ -281,6 +308,7 @@ export async function createDocumentFromUpload(opts: {
   title: string;
   path: string;
   note?: string;
+  fileModifiedAt?: string | null;
 }): Promise<MatterDocument> {
   const type = assertPathBelongs(opts.path, opts.orgId, opts.matterId);
   const supabase = createAdminClient();
@@ -317,6 +345,7 @@ export async function createDocumentFromUpload(opts: {
     created_by: opts.userId,
     created_by_email: opts.userEmail,
     ...cols,
+    ...(await fileDateColumns(opts.fileModifiedAt)),
   });
   if (vError) {
     await supabase.from("documents").delete().eq("id", doc.id);
@@ -335,6 +364,7 @@ export async function addVersionFromUpload(opts: {
   path: string;
   basedOnVersionId: string | null;
   note: string;
+  fileModifiedAt?: string | null;
 }): Promise<MatterDocument> {
   const type = assertPathBelongs(opts.path, opts.orgId, opts.matterId);
   const supabase = createAdminClient();
@@ -346,6 +376,7 @@ export async function addVersionFromUpload(opts: {
     throw e;
   }
   const check = await validateUploaded(opts.path, type);
+  const dateCols = await fileDateColumns(opts.fileModifiedAt);
 
   // Next version number; the unique (document_id, version_number) constraint
   // catches two people saving at the same instant, so retry a couple of times.
@@ -372,6 +403,7 @@ export async function addVersionFromUpload(opts: {
       created_by: opts.userId,
       created_by_email: opts.userEmail,
       ...cols,
+      ...dateCols,
     });
     if (!error) {
       await supabase

@@ -22,13 +22,14 @@ export async function GET(request: Request) {
   }
 }
 
-// POST /api/documents { matterId, title, path } — finalize a new upload
+// POST /api/documents { matterId, title, path, fileModifiedAt? } — finalize a new upload
 export async function POST(request: Request) {
   try {
-    const { matterId, title, path } = (await request.json()) as {
+    const { matterId, title, path, fileModifiedAt } = (await request.json()) as {
       matterId: string;
       title: string;
       path: string;
+      fileModifiedAt?: string | null;
     };
     const ctx = await requireMatterAccess(matterId);
     const document = await createDocumentFromUpload({
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
       userEmail: ctx.user.email,
       title,
       path,
+      fileModifiedAt,
     });
     return NextResponse.json({ document }, { status: 201 });
   } catch (error) {

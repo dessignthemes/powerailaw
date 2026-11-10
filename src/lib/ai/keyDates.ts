@@ -165,6 +165,7 @@ How to decide:
 1. Work out each document's own date: for a contract, the date it was fully signed (last signature); for a letter, the date on the letter. Ignore the order the documents are listed in.
 2. The contract is the basis for every date and figure. Change a term ONLY if it was modified during the attorney review process by an attorney review letter, rider or addendum. Apply those documents in date order: for any term modified more than once, the LAST in time letter / rider / addendum controls. A later letter that accepts, rejects or replaces an earlier proposal must be followed as written. Terms nobody modified stay exactly as the contract states them.
 3. Attorney review is completed on the date the last attorney review letter was accepted or attorney review was declared concluded. If no review letters were sent, it ends 3 business days after the contract was fully signed (give that as a rule).
+   A <document> tag may carry fileModified="YYYY-MM-DD": the day the file was last saved on the firm's computer before it was uploaded (its "Date modified"). When the last attorney review letter had to be initialled, signed or accepted and returned (it shows initials, a signature or acceptance added to it) and no date is written beside that acceptance, attorney review was concluded on that document's fileModified day, if it is later than the date printed on the letter. Say so in that date's quote (e.g. "initialled and returned; file modified 10/30/2026"). Never use fileModified to move a date earlier, and never for a contract or document whose signatures are dated.
 4. For a date stated as a period ("within 10 days after completion of attorney review"), give the rule (days, businessDays, from) and leave date null unless an exact calendar date is written. "Business days" = businessDays true.
 5. Documents are handed over in the order they were added (oldest first), but each document's own date decides its place. Some are scanned pages (attached as PDFs or images): read them fully, including handwritten or typed entries in blanks, ticked checkboxes (e.g. whether there is a mortgage contingency), and the dates beside signatures.
 6. Never invent a date. If something is unclear, leave it null and say why in notes.
@@ -200,6 +201,12 @@ async function readWithAi(
   }
   const tz = await firmTimezone(ctx.orgId);
   const today = todayIn(tz).ymd;
+  // The file's "Date modified" as a calendar day in the firm's time zone.
+  const dayIn = (iso: string | null | undefined) => {
+    if (!iso) return "";
+    const p = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+    return /^\d{4}-\d{2}-\d{2}$/.test(p) ? ` fileModified="${p}"` : "";
+  };
 
   // Every document that can matter, most important first (contract, attorney
   // review letters, riders/addenda, then commitment, binder, escrow…), up to 40;
@@ -239,13 +246,13 @@ async function readWithAi(
     if (!scanned) {
       budget -= text.length;
       meta.push({ id, title: d.title, readable: true });
-      content.push({ type: "text", text: `<document source="${id}" name="${name}">\n${text}\n</document>` });
+      content.push({ type: "text", text: `<document source="${id}" name="${name}"${dayIn(d.fileModifiedAt)}>\n${text}\n</document>` });
     } else {
       const file = await scannedFile(ctx, d.versionId, fileBudget);
       if (file) {
         fileBudget -= file.size;
         meta.push({ id, title: d.title, readable: true });
-        content.push({ type: "text", text: `<document source="${id}" name="${name}"> (scanned; its pages follow)` });
+        content.push({ type: "text", text: `<document source="${id}" name="${name}"${dayIn(d.fileModifiedAt)}> (scanned; its pages follow)` });
         content.push(file.block);
         content.push({ type: "text", text: "</document>" });
       } else {
@@ -253,8 +260,8 @@ async function readWithAi(
         content.push({
           type: "text",
           text: text.trim()
-            ? `<document source="${id}" name="${name}">\n${text}\n</document>`
-            : `<document source="${id}" name="${name}">(no readable text and not a PDF or image that can be read)</document>`,
+            ? `<document source="${id}" name="${name}"${dayIn(d.fileModifiedAt)}>\n${text}\n</document>`
+            : `<document source="${id}" name="${name}"${dayIn(d.fileModifiedAt)}>(no readable text and not a PDF or image that can be read)</document>`,
         });
       }
     }

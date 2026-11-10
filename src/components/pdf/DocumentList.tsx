@@ -23,6 +23,7 @@ export type DocVersion = {
   note: string;
   createdByEmail: string | null;
   createdAt: string;
+  fileModifiedAt?: string | null; // "Date modified" of the uploaded file
 };
 
 export type Doc = {

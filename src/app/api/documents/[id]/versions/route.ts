@@ -9,10 +9,11 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { path, basedOnVersionId, note } = (await request.json()) as {
+    const { path, basedOnVersionId, note, fileModifiedAt } = (await request.json()) as {
       path: string;
       basedOnVersionId?: string | null;
       note?: string;
+      fileModifiedAt?: string | null;
     };
     const ctx = await requireDocumentAccess(id);
     const document = await addVersionFromUpload({
@@ -24,6 +25,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       path,
       basedOnVersionId: basedOnVersionId ?? null,
       note: note ?? "",
+      fileModifiedAt,
     });
     return NextResponse.json({ document }, { status: 201 });
   } catch (error) {

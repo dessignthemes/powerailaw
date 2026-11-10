@@ -62,23 +62,28 @@ async function uploadBytes(
   return path as string;
 }
 
+// The file's "Date modified" from the computer it was picked on (browsers don't
+// share the created date). Files made inside the app get "now", which is right.
+const fileDate = (file: File) => (file.lastModified > 0 ? new Date(file.lastModified).toISOString() : null);
+
 export async function uploadNewDocument(matterId: string, file: File) {
   const bytes = await precheckPdf(file, file.name);
   const path = await uploadBytes(bytes, { matterId }, file.name);
   const { document } = await fetch("/api/documents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ matterId, title: file.name, path }),
+    body: JSON.stringify({ matterId, title: file.name, path, fileModifiedAt: fileDate(file) }),
   }).then(readJson);
   return document;
 }
 
-export async function uploadNewVersion(documentId: string, bytes: Uint8Array, basedOnVersionId: string, note: string) {
+// fileModifiedAt: only when the content is the same file (e.g. Word converted to PDF).
+export async function uploadNewVersion(documentId: string, bytes: Uint8Array, basedOnVersionId: string, note: string, fileModifiedAt?: string | null) {
   const path = await uploadBytes(bytes, { documentId }, "edited.pdf");
   const { document } = await fetch(`/api/documents/${documentId}/versions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path, basedOnVersionId, note }),
+    body: JSON.stringify({ path, basedOnVersionId, note, fileModifiedAt: fileModifiedAt ?? null }),
   }).then(readJson);
   return document;
 }
@@ -115,7 +120,7 @@ export async function uploadAnyDocument(matterId: string, file: File) {
   const { document } = await fetch("/api/documents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ matterId, title: file.name, path }),
+    body: JSON.stringify({ matterId, title: file.name, path, fileModifiedAt: fileDate(file) }),
   }).then(readJson);
   return document;
 }
@@ -127,7 +132,7 @@ export async function uploadFileAsVersion(documentId: string, file: File, basedO
   const { document } = await fetch(`/api/documents/${documentId}/versions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path, basedOnVersionId, note: `Uploaded ${file.name}` }),
+    body: JSON.stringify({ path, basedOnVersionId, note: `Uploaded ${file.name}`, fileModifiedAt: fileDate(file) }),
   }).then(readJson);
   return document;
 }
@@ -156,7 +161,7 @@ export async function previewWordVersion(versionId: string, title: string): Prom
 
 // Converts a Word (.docx) version to PDF in the browser and saves the PDF as
 // the document's next version. The Word version stays in the history.
-export async function convertWordVersionToPdf(documentId: string, title: string, version: { id: string; versionNumber: number }) {
+export async function convertWordVersionToPdf(documentId: string, title: string, version: { id: string; versionNumber: number; fileModifiedAt?: string | null }) {
   const { docxToPdf, ConvertError } = await import("@/lib/pdf/docxToPdf");
   const [bytes, fonts] = await Promise.all([fetchVersionBytes(version.id), loadFonts()]);
   let pdf: Uint8Array;
@@ -170,6 +175,6 @@ export async function convertWordVersionToPdf(documentId: string, title: string,
     throw new UploadError("This Word file couldn't be converted. Open it in Word, use Save as PDF and upload that PDF instead.");
   }
   if (pdf.byteLength > MAX_PDF_BYTES) throw new UploadError("The converted PDF is larger than 100 MB, so it can't be saved.");
-  const document = await uploadNewVersion(documentId, pdf, version.id, `Converted to PDF from version ${version.versionNumber} (Word)`);
+  const document = await uploadNewVersion(documentId, pdf, version.id, `Converted to PDF from version ${version.versionNumber} (Word)`, version.fileModifiedAt);
   return { document, skippedImages };
 }

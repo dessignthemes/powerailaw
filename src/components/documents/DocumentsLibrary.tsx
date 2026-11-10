@@ -83,7 +83,10 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
   const nameOf = (email: string | null | undefined) => (email ? teamMembers.find((m) => m.email.toLowerCase() === email.toLowerCase())?.fullName || email : null);
   const [sortBy, setSortBy] = useState<{ key: "modified" | "created" | "name" | "staff"; desc: boolean }>({ key: "modified", desc: true });
   const createdOf = (d: { createdAt: string; versions: { createdAt: string }[] }) => d.versions[d.versions.length - 1]?.createdAt ?? d.createdAt;
-  const modifiedOf = (d: { updatedAt: string; versions: { createdAt: string }[] }) => d.versions[0]?.createdAt ?? d.updatedAt;
+  // Modified = the file's own "Date modified" (as in File Explorer) when it was
+  // uploaded from a computer, otherwise when it was saved here.
+  const modifiedOf = (d: { updatedAt: string; versions: { createdAt: string; fileModifiedAt?: string | null }[] }) =>
+    d.versions[0]?.fileModifiedAt ?? d.versions[0]?.createdAt ?? d.updatedAt;
   const shortDay = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   // E-signature requests for this workspace, grouped by document.
   const [signing, setSigning] = useState<{ doc: Doc; version: DocVersion } | null>(null);
@@ -378,7 +381,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                 [
                   ["name", "Name", "flex-1 min-w-[220px] text-left"],
                   ["staff", "Staff", "w-12 text-center ml-auto"],
-                  ["created", "Created", "w-[104px] text-left"],
+                  ["created", "Added", "w-[104px] text-left"],
                   ["modified", "Modified", "w-[104px] text-left"],
                 ] as const
               ).map(([k, label, cls]) => (
@@ -472,10 +475,17 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                               <span className="text-muted">—</span>
                             )}
                           </span>
-                          <span className="w-[104px] text-[12.5px] whitespace-nowrap" title={new Date(createdOf(d)).toLocaleString()}>
+                          <span className="w-[104px] text-[12.5px] whitespace-nowrap" title={`Added to LawPower ${new Date(createdOf(d)).toLocaleString()}`}>
                             {shortDay(createdOf(d))}
                           </span>
-                          <span className="w-[104px] text-[12.5px] whitespace-nowrap" title={new Date(modifiedOf(d)).toLocaleString()}>
+                          <span
+                            className="w-[104px] text-[12.5px] whitespace-nowrap"
+                            title={
+                              d.versions[0]?.fileModifiedAt
+                                ? `File last modified ${new Date(modifiedOf(d)).toLocaleString()} (on the computer it was uploaded from)`
+                                : `Saved in LawPower ${new Date(modifiedOf(d)).toLocaleString()}`
+                            }
+                          >
                             {shortDay(modifiedOf(d))}
                           </span>
                         </>
@@ -535,6 +545,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                               <span className="flex-1 min-w-[220px] text-muted">
                                 {v.note || (v.versionNumber === 1 ? "Original upload" : "Edited")}. {formatWhen(v.createdAt)}
                                 {v.createdByEmail ? `, ${v.createdByEmail}` : ""}.{" "}
+                                {v.fileModifiedAt ? `File modified ${formatWhen(v.fileModifiedAt)}. ` : ""}
                                 {vt === "pdf" && v.pageCount > 0 ? `${v.pageCount} ${v.pageCount === 1 ? "page" : "pages"}, ` : ""}
                                 {formatSize(v.sizeBytes)}
                               </span>
