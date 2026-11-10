@@ -2,7 +2,7 @@
 
 import MatterLinks from "@/components/matters/MatterLinks";
 import { useEffect, useState } from "react";
-import { X, Loader2, Trash2, User, Building2, Landmark, ScrollText, Users } from "lucide-react";
+import { X, Loader2, Trash2, User, Building2, Landmark, ScrollText, Users, UserPlus, Search } from "lucide-react";
 import SelectBox from "@/components/SelectBox";
 import { COMPANY_ROLES, PERSON_ROLES, VENDOR_TYPES, GOVERNMENT_TYPES, KIND_NAMES, type Contact, type ContactCategory, type ContactInput, type ContactKind } from "@/lib/records/contactTypes";
 
@@ -24,11 +24,15 @@ export default function ContactModal({
   companies = [],
   allContacts = [],
   onOpenContact,
+  onSetEmployer,
 }: {
   contact?: Contact;
   companies?: { id: string; name: string; category?: ContactCategory }[]; // for "Works at"
   allContacts?: Contact[]; // to list a company's people
   onOpenContact?: (c: Contact) => void;
+  // Put someone already in Contacts at this company (employerId), or take them off it (null);
+  // { name } adds a new person here.
+  onSetEmployer?: (person: Contact | { name: string }, employerId: string | null) => Promise<void>;
   initialKind: ContactKind;
   clients: { id: string; name: string }[];
   matters: { id: string; title: string; matterNumber?: string | null; status: string; clientId?: string | null }[];
@@ -56,6 +60,37 @@ export default function ContactModal({
     ? companies.filter((c) => c.id !== contact?.id && c.name.toLowerCase().includes(employerQuery.trim().toLowerCase())).slice(0, 8)
     : [];
   const people = contact && kind === "company" ? allContacts.filter((c) => c.employerId === contact.id) : [];
+  // "+ Add person" under People at this company: pick from Contacts (or add a new one).
+  const [addingPerson, setAddingPerson] = useState(false);
+  const [personQuery, setPersonQuery] = useState("");
+  const [linking, setLinking] = useState<string | null>(null);
+  const personMatches = (() => {
+    const words = personQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length || !contact) return [];
+    const out: Contact[] = [];
+    for (const c of allContacts) {
+      if (c.kind !== "person" || c.employerId === contact.id) continue;
+      const hay = `${c.name} ${c.email ?? ""} ${c.phone ?? ""} ${c.company}`.toLowerCase();
+      if (words.every((w) => hay.includes(w))) out.push(c);
+      if (out.length >= 8) break;
+    }
+    return out;
+  })();
+  const companyName = (id: string | null) => (id ? companies.find((c) => c.id === id)?.name ?? "" : "");
+  async function link(person: Contact | { name: string }, employer: string | null) {
+    if (!onSetEmployer) return;
+    const key = "id" in person ? person.id : "new";
+    setLinking(key);
+    setError(null);
+    try {
+      await onSetEmployer(person, employer);
+      if (employer) setPersonQuery("");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLinking(null);
+    }
+  }
   const [saving, setSaving] = useState<"save" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -325,19 +360,89 @@ export default function ContactModal({
               <Users size={14} /> People at {name || "this company"} · {people.length}
             </div>
             {people.length === 0 ? (
-              <div className="text-[12.5px] text-muted">No one yet. Open a person and pick this company under “Works at”.</div>
+              <div className="text-[12.5px] text-muted">No one yet.{onSetEmployer ? " Use Add person to pick someone from Contacts." : " Open a person and pick this company under “Works at”."}</div>
             ) : (
               <div className="flex flex-col gap-1 max-h-[220px] overflow-y-auto">
                 {people.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => onOpenContact?.(p)}
-                    className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] text-left text-[13px]"
-                  >
-                    <span className="truncate">{p.name}</span>
-                    <span className="text-[12px] text-muted truncate">{[p.role, p.email, p.phone].filter(Boolean).join(" · ")}</span>
-                  </button>
+                  <div key={p.id} className="flex items-center gap-1 rounded-lg bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5]">
+                    <button onClick={() => onOpenContact?.(p)} className="flex-1 min-w-0 flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[13px]">
+                      <span className="truncate">{p.name}</span>
+                      <span className="text-[12px] text-muted truncate">{[p.role, p.email, p.phone].filter(Boolean).join(" · ")}</span>
+                    </button>
+                    {onSetEmployer && (
+                      <button
+                        onClick={() => void link(p, null)}
+                        disabled={!!linking}
+                        title={`Take ${p.name} off ${name || "this company"} (the person stays in Contacts)`}
+                        aria-label={`Take ${p.name} off this company`}
+                        className="w-7 h-7 mr-1 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-white flex-shrink-0 disabled:opacity-50"
+                      >
+                        {linking === p.id ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
+                      </button>
+                    )}
+                  </div>
                 ))}
+              </div>
+            )}
+            {onSetEmployer && contact && (
+              <div className="mt-2">
+                {!addingPerson ? (
+                  <button
+                    onClick={() => setAddingPerson(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-medium bg-chip border border-btn hover:bg-btn transition-colors"
+                  >
+                    <UserPlus size={13} /> Add person
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-[#E6EAF1] bg-white p-2">
+                    <div className="flex items-center gap-2 bg-chip rounded-full px-3 py-1.5">
+                      <Search size={13} className="text-muted flex-shrink-0" />
+                      <input
+                        autoFocus
+                        value={personQuery}
+                        onChange={(e) => setPersonQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === "Escape" && (setAddingPerson(false), setPersonQuery(""))}
+                        placeholder="Search people in Contacts by name, email or phone"
+                        aria-label="Search people in Contacts"
+                        className="flex-1 min-w-0 bg-transparent outline-none text-[13px]"
+                      />
+                      <button onClick={() => (setAddingPerson(false), setPersonQuery(""))} aria-label="Close" className="text-muted hover:text-ink">
+                        <X size={13} />
+                      </button>
+                    </div>
+                    {personQuery.trim() && (
+                      <div className="mt-1.5 flex flex-col gap-1 max-h-[220px] overflow-y-auto">
+                        {personMatches.map((c) => {
+                          const at = companyName(c.employerId) || c.company;
+                          return (
+                            <button
+                              key={c.id}
+                              onClick={() => void link(c, contact.id)}
+                              disabled={!!linking}
+                              className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg hover:bg-[#F4F6FA] text-left text-[13px] disabled:opacity-50"
+                            >
+                              <span className="min-w-0">
+                                <span className="block truncate font-medium">{c.name}</span>
+                                <span className="block truncate text-[11.5px] text-muted">
+                                  {[at ? `now at ${at} (moves here)` : "", c.email, c.phone].filter(Boolean).join(" · ") || "No company yet"}
+                                </span>
+                              </span>
+                              {linking === c.id ? <Loader2 size={13} className="animate-spin flex-shrink-0" /> : <span className="text-[12px] text-muted flex-shrink-0">Add</span>}
+                            </button>
+                          );
+                        })}
+                        {personMatches.length === 0 && <div className="px-3 py-1.5 text-[12.5px] text-muted">No one in Contacts matches “{personQuery.trim()}”.</div>}
+                        <button
+                          onClick={() => void link({ name: personQuery.trim() }, contact.id)}
+                          disabled={!!linking || personQuery.trim().length < 2}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-[#F4F6FA] text-left text-[12.5px] text-muted hover:text-ink disabled:opacity-50"
+                        >
+                          {linking === "new" ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />} Add “{personQuery.trim()}” as a new person here
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

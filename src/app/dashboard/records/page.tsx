@@ -257,6 +257,22 @@ export default function RecordsPage() {
     setEditingContact(null);
   }
 
+  // A company's People list: put someone at the company (or take them off), or add a new person there.
+  async function setEmployer(person: Contact | { name: string }, employerId: string | null) {
+    const company = employerId ? contacts.find((c) => c.id === employerId) : null;
+    const isNew = !("id" in person);
+    const input = isNew
+      ? { kind: "person", name: person.name, role: "", company: company?.name ?? "", email: null, phone: null, address: null, notes: "", clientId: null, matterId: null, employerId, category: company?.category || undefined, vendorType: company?.vendorType || undefined }
+      : { ...person, employerId, company: company?.name ?? (employerId ? person.company : ""), ...(company && (company.category === "vendor" || company.category === "government") && !person.category ? { category: company.category, vendorType: company.vendorType } : {}) };
+    const d = await fetch(isNew ? "/api/contacts" : `/api/contacts/${(person as Contact).id}`, {
+      method: isNew ? "POST" : "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }).then(readJson);
+    const saved: Contact = d.contact;
+    setContacts((list) => (isNew ? [saved, ...list] : list.map((c) => (c.id === saved.id ? saved : c))));
+  }
+
   async function deleteContact(id: string) {
     await fetch(`/api/contacts/${id}`, { method: "DELETE" }).then(readJson);
     setContacts((list) => list.filter((c) => c.id !== id));
@@ -567,6 +583,7 @@ export default function RecordsPage() {
           companies={companyList}
           allContacts={contacts}
           onOpenContact={(c) => setEditingContact(c)}
+          onSetEmployer={setEmployer}
           onClose={() => setEditingContact(null)}
           onSave={(input) => saveContact(input, editingContact.id)}
           onDelete={() => deleteContact(editingContact.id)}
