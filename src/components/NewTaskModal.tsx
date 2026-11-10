@@ -135,13 +135,22 @@ export function GenericDropdown({
       setPos({ left, top: Math.max(12, top) });
     };
     place();
+    // Scrolling the page: the menu moves with its button, and closes once the
+    // button scrolls out of view (so it never floats over the list on its own).
+    // Scrolling inside the menu itself is left alone.
+    const onScroll = (e: Event) => {
+      if (menu.current && e.target instanceof Node && menu.current.contains(e.target)) return;
+      const b = btn.current?.getBoundingClientRect();
+      if (!b || b.bottom < 0 || b.top > window.innerHeight) return setOpen(false);
+      place();
+    };
     window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
-  }, [open, align, direction]);
+  }, [open, align, direction, setOpen]);
 
   return (
     <div className="relative">
@@ -162,7 +171,7 @@ export function GenericDropdown({
           <div
             ref={menu}
             style={{ position: "fixed", left: pos?.left ?? -9999, top: pos?.top ?? -9999, visibility: pos ? "visible" : "hidden" }}
-            className="z-[70] bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 min-w-[180px] w-max max-w-[min(92vw,460px)] max-h-[min(70vh,520px)] overflow-y-auto"
+            className="z-[70] bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 min-w-[180px] w-max max-w-[min(92vw,460px)] max-h-[min(70vh,520px)] overflow-y-auto overscroll-contain"
           >
             {children}
           </div>
