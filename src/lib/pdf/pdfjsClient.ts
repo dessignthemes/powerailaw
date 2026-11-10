@@ -41,6 +41,9 @@ export async function openPdf(bytes: Uint8Array): Promise<{ doc: PdfDoc; close: 
     cMapUrl: "/pdfjs/cmaps/",
     cMapPacked: true,
     standardFontDataUrl: "/pdfjs/standard_fonts/",
+    // Decoders for scanned images (fax/CCITT, JBIG2, JPEG 2000) and colour profiles.
+    wasmUrl: "/pdfjs/wasm/",
+    iccUrl: "/pdfjs/iccs/",
   });
   // Never prompt for a password — report it instead.
   task.onPassword = () => {

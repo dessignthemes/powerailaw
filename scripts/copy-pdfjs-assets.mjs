@@ -18,6 +18,10 @@ mkdirSync(dest, { recursive: true });
 cpSync(join(src, "legacy", "build", "pdf.worker.min.mjs"), join(dest, "pdf.worker.min.mjs"));
 cpSync(join(src, "standard_fonts"), join(dest, "standard_fonts"), { recursive: true });
 cpSync(join(src, "cmaps"), join(dest, "cmaps"), { recursive: true });
+// Image decoders pdf.js loads on demand (fax/CCITT and JBIG2 scans, JPEG 2000,
+// colour profiles). Without them those scanned pages show up blank or faint.
+cpSync(join(src, "wasm"), join(dest, "wasm"), { recursive: true });
+if (existsSync(join(src, "iccs"))) cpSync(join(src, "iccs"), join(dest, "iccs"), { recursive: true });
 // Worker entry: polyfill first (imports run in order), then the real worker.
 // Keeps Safari working, where ReadableStream has no async iterator.
 writeFileSync(
