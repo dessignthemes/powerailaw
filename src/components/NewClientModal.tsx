@@ -123,15 +123,17 @@ function InlineField({
 
 export default function NewClientModal({
   client,
+  initialName,
   onClose,
   onSubmit,
 }: {
   client?: Client;
+  initialName?: string; // a new client's name, typed already (e.g. in a search box)
   onClose: () => void;
   onSubmit: (client: Client) => void;
 }) {
   const isEdit = !!client;
-  const [name, setName] = useState(client?.name ?? "");
+  const [name, setName] = useState(client?.name ?? initialName ?? "");
   const [description, setDescription] = useState(client?.description ?? "");
   const [status, setStatus] = useState<ClientStatus>(client?.status ?? "Active");
   const [type, setType] = useState<ClientType>(client?.type ?? "Individual");

@@ -2,6 +2,8 @@
 
 import PortalButton from "@/components/clientCard/PortalButton";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MatterCreateWindow from "@/components/matters/MatterCreateWindow";
 import {
   X,
@@ -22,7 +24,7 @@ import {
   Search,
 } from "lucide-react";
 import { GenericDropdown } from "@/components/NewTaskModal";
-import { Client, getInitials, getAvatarColor } from "@/components/NewClientModal";
+import NewClientModal, { Client, getInitials, getAvatarColor } from "@/components/NewClientModal";
 import PracticeAreaList from "@/components/matters/PracticeAreaList";
 import { PRACTICE_AREAS_SORTED, type PracticeArea } from "@/lib/matters/practiceAreas";
 import { SUGGESTED_CODES, cleanCode, isValidCode, formatMatterNumber, NUMBER_PATTERN, cleanNumber } from "@/lib/matters/numbering";
@@ -222,7 +224,43 @@ export default function NewMatterModal({
   const [billingOpen, setBillingOpen] = useState(false);
 
   const StatusIcon = matterStatusMeta[status].icon;
-  const selectedClient = clients.find((c) => c.id === clientId) ?? null;
+  // "+ Add new client" in the client list: a quick New client window; the new
+  // client is picked straight away.
+  const { addClient } = useWorkspaceData();
+  const [newClientOpen, setNewClientOpen] = useState(false);
+  const [extraClients, setExtraClients] = useState<Client[]>([]);
+  const allClients = [...clients, ...extraClients.filter((x) => !clients.some((c) => c.id === x.id))];
+  const selectedClient = allClients.find((c) => c.id === clientId) ?? null;
+
+  const addNewClientBtn = (
+    <button
+      type="button"
+      onClick={() => {
+        setClientOpen(false);
+        setNewClientOpen(true);
+      }}
+      className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium bg-chip border border-btn hover:bg-btn transition-colors flex-shrink-0"
+    >
+      <UserPlus size={13} strokeWidth={1.75} /> Add new client
+    </button>
+  );
+  const newClientWindow =
+    newClientOpen && typeof document !== "undefined"
+      ? createPortal(
+          <NewClientModal
+            initialName={clientQ.trim()}
+            onClose={() => setNewClientOpen(false)}
+            onSubmit={(c) => {
+              addClient(c);
+              setExtraClients((list) => [...list, c]);
+              setClientId(c.id);
+              setClientQ("");
+              setNewClientOpen(false);
+            }}
+          />,
+          document.body
+        )
+      : null;
 
   // The matter as typed so far.
   function buildMatter(): Matter {
@@ -433,8 +471,13 @@ export default function NewMatterModal({
               )
             }
           >
-            {clients.length === 0 ? (
-              <div className="px-3 py-2.5 text-[13.5px] text-muted">No clients yet</div>
+            {allClients.length === 0 ? (
+              <div className="w-[min(380px,80vw)]">
+                <div className="flex items-center justify-between gap-3 px-3 py-2">
+                  <span className="text-[13.5px] text-muted">No clients yet</span>
+                  {addNewClientBtn}
+                </div>
+              </div>
             ) : (
               <div className="w-[min(380px,80vw)]">
                 <div className="flex items-center gap-2 bg-chip rounded-full px-3 py-1.5 mb-1.5 mx-0.5">
@@ -448,10 +491,11 @@ export default function NewMatterModal({
                     className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px]"
                   />
                 </div>
+                <div className="flex justify-end px-0.5 mb-1.5">{addNewClientBtn}</div>
                 <div className="max-h-[min(230px,30vh)] overflow-y-auto">
                   {(() => {
                     const q = clientQ.trim().toLowerCase();
-                    const list = clients.filter((c) => !q || c.name.toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q)).sort((a, b) => sortName(a.name).localeCompare(sortName(b.name)));
+                    const list = allClients.filter((c) => !q || c.name.toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q)).sort((a, b) => sortName(a.name).localeCompare(sortName(b.name)));
                     if (!list.length) return <div className="px-3 py-2.5 text-[13.5px] text-muted">No clients match “{clientQ.trim()}”.</div>;
                     return list.map((c) => (
                       <button
@@ -482,6 +526,7 @@ export default function NewMatterModal({
             )}
           </GenericDropdown>
 
+          {newClientWindow}
           {/* Client portal for the chosen client: invite them or manage their access. */}
           {clientId && <PortalButton clientId={clientId} defaultEmail={selectedClient?.email ?? undefined} defaultName={selectedClient?.name} />}
 
