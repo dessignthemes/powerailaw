@@ -19,6 +19,7 @@ import {
   Upload,
   Search,
   Plus,
+  ArrowUpDown,
 } from "lucide-react";
 import NewMatterModal, {
   numberOf,
@@ -99,6 +100,25 @@ export default function MattersPage() {
   // Import CSV file (matters from LEAP, Clio, PracticePanther, a spreadsheet…).
   const [importOpen, setImportOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // Shown only after the matters load in the browser, so reading the saved choice here is safe.
+  const [sortBy, setSortByState] = useState<SortKey>(() => {
+    try {
+      const v = typeof window !== "undefined" ? (localStorage.getItem("lp:matters-sort") as SortKey | null) : null;
+      return v && SORTS.some((x) => x.key === v) ? v : "default";
+    } catch {
+      return "default";
+    }
+  });
+  const [sortOpen, setSortOpen] = useState(false);
+  const setSortBy = (k: SortKey) => {
+    setSortByState(k);
+    setSortOpen(false);
+    try {
+      localStorage.setItem("lp:matters-sort", k);
+    } catch {
+      /* private mode */
+    }
+  };
 
   const [modalOpen, setModalOpen] = useState(false);
   // ?new=1 (Dashboard → Shortcuts → New matter) opens the New matter window.
@@ -166,8 +186,10 @@ export default function MattersPage() {
       })
     : matters;
 
+  // Sort by (inside each status group); the choice is remembered in this browser.
+  const sorted = sortMatters(shownMatters, sortBy, (m) => clientFor(m.clientId)?.name ?? "");
   const groups = matterStatusOrder
-    .map((status) => ({ status, items: shownMatters.filter((m) => m.status === status) }))
+    .map((status) => ({ status, items: sorted.filter((m) => m.status === status) }))
     .filter((g) => g.items.length > 0);
 
   return (
@@ -192,7 +214,8 @@ export default function MattersPage() {
         </div>
       </div>
       {mattersLoaded && matters.length > 0 && (
-        <div className="relative max-w-[520px] -mt-3 mb-6 bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="flex items-center gap-3 flex-wrap -mt-3 mb-6">
+        <div className="relative flex-1 min-w-[260px] max-w-[520px] bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
@@ -210,6 +233,32 @@ export default function MattersPage() {
               </button>
             </span>
           )}
+        </div>
+        <div className="bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+          <GenericDropdown
+            open={sortOpen}
+            setOpen={setSortOpen}
+            trigger={
+              <>
+                <ArrowUpDown size={13} strokeWidth={1.75} />
+                Sort: {SORTS.find((x) => x.key === sortBy)?.label}
+              </>
+            }
+          >
+            <div className="min-w-[220px]">
+              {SORTS.map((o) => (
+                <button
+                  key={o.key}
+                  onClick={() => setSortBy(o.key)}
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-chip transition-colors text-left"
+                >
+                  {o.label}
+                  {o.key === sortBy && <Check size={14} strokeWidth={2} />}
+                </button>
+              ))}
+            </div>
+          </GenericDropdown>
+        </div>
         </div>
       )}
       {importOpen && (
@@ -445,4 +494,56 @@ export default function MattersPage() {
       )}
     </div>
   );
+}
+
+// ── Sort by ──────────────────────────────────────────────────────────────────
+type SortKey = "default" | "numberDesc" | "numberAsc" | "nameAsc" | "nameDesc" | "clientAsc" | "updated" | "newest" | "oldest" | "due";
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: "default", label: "Default" },
+  { key: "numberDesc", label: "Matter number (newest first)" },
+  { key: "numberAsc", label: "Matter number (oldest first)" },
+  { key: "nameAsc", label: "Name A–Z" },
+  { key: "nameDesc", label: "Name Z–A" },
+  { key: "clientAsc", label: "Client A–Z" },
+  { key: "updated", label: "Recently updated" },
+  { key: "newest", label: "Newest added" },
+  { key: "oldest", label: "Oldest added" },
+  { key: "due", label: "Due date (soonest first)" },
+];
+// "Mr. Henryk Kwasnik – Residential (NJ)" sorts under H, not M.
+const plainName = (s: string) => s.replace(/^\s*((mr|mrs|ms|miss|dr)\.?\s+)+/i, "").trim().toLowerCase();
+// "REP-2026-3718" → year 2026, number 3718 (matters without a number go last).
+const numberKey = (m: Matter) => {
+  const n = numberOf(m)?.match(/-(\d{4})-(\d+)/);
+  return n ? Number(n[1]) * 1e7 + Number(n[2]) : null;
+};
+function sortMatters(list: Matter[], by: SortKey, clientName: (m: Matter) => string): Matter[] {
+  if (by === "default") return list;
+  const a = [...list];
+  const text = (x: string, y: string) => x.localeCompare(y, "en", { sensitivity: "base", numeric: true });
+  const last = <T,>(x: T | null, y: T | null, cmp: (p: T, q: T) => number) => (x === null ? (y === null ? 0 : 1) : y === null ? -1 : cmp(x, y));
+  a.sort((x, y) => {
+    switch (by) {
+      case "numberDesc":
+        return last(numberKey(x), numberKey(y), (p, q) => q - p);
+      case "numberAsc":
+        return last(numberKey(x), numberKey(y), (p, q) => p - q);
+      case "nameAsc":
+        return text(plainName(x.title), plainName(y.title));
+      case "nameDesc":
+        return text(plainName(y.title), plainName(x.title));
+      case "clientAsc":
+        return last(clientName(x) ? plainName(clientName(x)) : null, clientName(y) ? plainName(clientName(y)) : null, text) || text(plainName(x.title), plainName(y.title));
+      case "updated":
+        return (y.updatedAt ?? "").localeCompare(x.updatedAt ?? "");
+      case "newest":
+        return (y.createdAt ?? "").localeCompare(x.createdAt ?? "");
+      case "oldest":
+        return (x.createdAt ?? "").localeCompare(y.createdAt ?? "");
+      case "due":
+        return last(x.dueDate || null, y.dueDate || null, (p, q) => p.localeCompare(q));
+    }
+    return 0;
+  });
+  return a;
 }
