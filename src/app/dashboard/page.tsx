@@ -202,6 +202,11 @@ export default function DashboardHome() {
             {t.title}
           </span>
           <span className="text-[12px] text-muted flex-shrink-0">{statusMeta[t.status].label}</span>
+          {!done && t.dueDate && t.dueDate < todayStr && (
+            <span className="text-[11.5px] font-semibold bg-[#FDECEC] text-[#B42318] rounded-md px-1.5 py-0.5 flex-shrink-0">
+              Overdue · {new Date(`${t.dueDate}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          )}
           <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[160px] hidden sm:inline">
             {boardName(t.boardId)}
           </span>
