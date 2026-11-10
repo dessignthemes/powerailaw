@@ -2,7 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cleanDetails, layoutFor, type MatterDetails } from "@/lib/matters/details";
 
-// Matter details ↔ Contacts.
+// Matter details ↔ Contacts (our client, the other side, vendors, opposing attorneys, who referred the client).
 // The people and companies in a matter's Details (realtors, attorneys, title
 // company, lender, the other side…) are looked up in Contacts first:
 //   • found  → empty Details fields are filled from the contact card (email,
@@ -16,7 +16,7 @@ const db = () => createAdminClient();
 
 type Pro = { kind: "pro"; prefix: string; vendorType: string; role: string };
 type Company = { kind: "company"; key: string; vendorType: string; role: string };
-type Party = { kind: "party"; prefix: "buyer" | "seller" | "other"; role: string };
+type Party = { kind: "party"; prefix: "buyer" | "seller" | "other" | "client"; role: string };
 type Group = Pro | Company | Party;
 
 const GROUPS: Group[] = [
@@ -25,6 +25,8 @@ const GROUPS: Group[] = [
   { kind: "pro", prefix: "buyerAttorney", vendorType: "Law firm", role: "Buyer's attorney" },
   { kind: "pro", prefix: "sellerAttorney", vendorType: "Law firm", role: "Seller's attorney" },
   { kind: "pro", prefix: "otherAttorney", vendorType: "Law firm", role: "Other side's attorney" },
+  // Who referred the client (the type comes from the Source field).
+  { kind: "pro", prefix: "referral", vendorType: "", role: "Referred by" },
   { kind: "company", key: "titleCompany", vendorType: "Title company", role: "Title company" },
   { kind: "company", key: "lender", vendorType: "Lender / bank", role: "Lender" },
   { kind: "company", key: "inspector", vendorType: "Inspector", role: "Inspector" },
@@ -33,11 +35,24 @@ const GROUPS: Group[] = [
   { kind: "party", prefix: "buyer", role: "Buyer" },
   { kind: "party", prefix: "seller", role: "Seller" },
   { kind: "party", prefix: "other", role: "Other party" },
+  { kind: "party", prefix: "client", role: "Client" },
 ];
+
+// "Realtor" → the company is a Real estate agency, and so on.
+function referralVendorType(source: string) {
+  const s = source.toLowerCase();
+  if (/attorney|lawyer|law firm|counsel/.test(s)) return "Law firm";
+  if (/realtor|real estate|broker|agent/.test(s)) return "Real estate agency";
+  if (/lender|bank|mortgage|loan/.test(s)) return "Lender / bank";
+  if (/title/.test(s)) return "Title company";
+  if (/insur/.test(s)) return "Insurance company";
+  if (/accountant|cpa/.test(s)) return "Accountant";
+  return "";
+}
 
 const keysOf = (g: Group) =>
   g.kind === "pro"
-    ? [`${g.prefix}Firm`, `${g.prefix}Name`, `${g.prefix}Email`, `${g.prefix}Phone`]
+    ? [`${g.prefix}Firm`, `${g.prefix}Name`, `${g.prefix}Email`, `${g.prefix}Phone`, ...(g.prefix === "referral" ? ["referralType"] : [])]
     : g.kind === "company"
       ? [g.key]
       : [`${g.prefix}Names`, `${g.prefix}Email`, `${g.prefix}Phone`, `${g.prefix}Address`];
@@ -146,6 +161,15 @@ async function linkToMatter(orgId: string, userId: string | null, matterId: stri
   return !r.error;
 }
 
+// A client record (Clients / Client Intake) with this name.
+async function isClientRecord(orgId: string, name: string) {
+  const target = normPerson(name);
+  const word = longestWord(target);
+  if (!word) return false;
+  const { data } = await db().from("clients").select("name").eq("org_id", orgId).ilike("name", `%${word}%`).limit(100);
+  return ((data ?? []) as { name: string }[]).some((c) => normPerson(c.name) === target || normCompany(c.name) === normCompany(name));
+}
+
 const partyKind = (name: string) =>
   /^estate of\b|\bestate$/i.test(name) ? "estate" : /\btrust\b/i.test(name) ? "trust" : /\b(llc|inc|corp|corporation|company|l\.?p\.?|bank|association)\b/i.test(name) ? "company" : "person";
 
@@ -171,6 +195,9 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
   for (const g of groups) {
     try {
       if (g.kind === "pro") {
+        const vendorType = g.prefix === "referral" ? referralVendorType(val("referralType")) : g.vendorType;
+        // A referral from a past client or a friend isn't a vendor.
+        const category = vendorType ? "vendor" : "other";
         const firmName = val(`${g.prefix}Firm`);
         const personName = val(`${g.prefix}Name`);
         const email = val(`${g.prefix}Email`).toLowerCase();
@@ -179,7 +206,7 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
         let company = firmName ? await findCompany(orgId, firmName) : null;
         if (company) res.matched++;
         else if (firmName) {
-          company = await insertContact(orgId, userId, { kind: "company", name: firmName, category: "vendor", vendor_type: g.vendorType });
+          company = await insertContact(orgId, userId, { kind: "company", name: firmName, category, vendor_type: vendorType });
           if (company) res.created++;
         }
         let person: ContactRow | null = null;
@@ -196,8 +223,8 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
               company: firmName,
               email: isEmail(email) ? email : null,
               phone: phone || null,
-              category: "vendor",
-              vendor_type: g.vendorType,
+              category,
+              vendor_type: vendorType,
               employer_id: company?.id ?? null,
             });
             if (person) res.created++;
@@ -225,7 +252,10 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
         }
         if (company && (await linkToMatter(orgId, userId, matterId, company.id, g.role))) res.linked++;
       } else {
-        if (g.prefix === ourParty) continue;
+        // Our own client goes to Contacts as a Client (checked for conflicts); the other side as Other.
+        const ours = g.prefix === ourParty;
+        if (g.prefix === "client" && ourParty !== "client") continue;
+        const role = ours && g.prefix !== "client" ? `${g.role} (our client)` : g.role;
         const all = val(`${g.prefix}Names`);
         // "Robert Klag, Alex Quinonez" → two people; "Smith and Sons LLC" stays one company.
         const names = (partyKind(all) === "person" ? all.split(/,|;|\band\b|&/i) : [all]).map((x) => x.trim()).filter((x) => x.length > 1);
@@ -236,6 +266,11 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
         const address = val(`${g.prefix}Address`);
         for (const name of names.slice(0, 6)) {
           const kind = partyKind(name);
+          // Our client may already be a client record (Client Intake): use that, don't add a second card.
+          if (ours && (await isClientRecord(orgId, name))) {
+            res.matched++;
+            continue;
+          }
           let c = kind === "person" ? await findPerson(orgId, name, one && isEmail(email) ? email : null, null) : await findCompany(orgId, name);
           if (c) {
             res.matched++;
@@ -244,11 +279,11 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
             c = await insertContact(orgId, userId, {
               kind,
               name,
-              role: g.role,
+              role,
               email: one && isEmail(email) ? email : null,
               phone: one ? phone || null : null,
               address: address || null,
-              category: "other",
+              category: ours ? "client" : "other",
             });
             if (c) res.created++;
           }
@@ -257,7 +292,7 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
             fill(`${g.prefix}Phone`, firstPhone(c));
             fill(`${g.prefix}Address`, c.address ?? null);
           }
-          if (c && (await linkToMatter(orgId, userId, matterId, c.id, g.role))) res.linked++;
+          if (c && (await linkToMatter(orgId, userId, matterId, c.id, role))) res.linked++;
         }
       }
     } catch (e) {

@@ -60,8 +60,25 @@ const MORE: DetailSection = {
   ],
 };
 
+// Where the client came from: linked to the referrer's contact card, so Reports
+// can show which attorneys, realtors and lenders send the firm business.
+export const REFERRAL_TYPES = ["Attorney", "Realtor", "Lender", "Title company", "Past client", "Friend or family", "Website / online", "Other"];
+const REFERRAL: DetailSection = {
+  id: "referral",
+  title: "Referred by",
+  fields: [
+    { key: "referralType", label: "Source", placeholder: "Attorney, realtor, lender, past client…" },
+    { key: "referralName", label: "Person" },
+    { key: "referralFirm", label: "Company / firm" },
+    { key: "referralEmail", label: "Email", kind: "email" },
+    { key: "referralPhone", label: "Phone", kind: "phone" },
+  ],
+};
+export const REFERRAL_KEYS = REFERRAL.fields.map((f) => f.key);
+
 export const PURCHASE_LAYOUT: DetailSection[] = [
   { id: "buyer", title: "Buyer (our client)", client: true, fields: party("buyer", "Buyer") },
+  REFERRAL,
   { id: "buyerAgent", title: "Buyer's realtor", fields: contact("buyerAgent", "Realtor", "Brokerage") },
   { id: "seller", title: "Seller", fields: party("seller", "Seller") },
   { id: "sellerAttorney", title: "Seller's attorney", fields: contact("sellerAttorney", "Attorney", "Law firm") },
@@ -74,6 +91,7 @@ export const PURCHASE_LAYOUT: DetailSection[] = [
 
 export const SALE_LAYOUT: DetailSection[] = [
   { id: "seller", title: "Seller (our client)", client: true, fields: party("seller", "Seller") },
+  REFERRAL,
   { id: "listingAgent", title: "Seller's realtor (listing)", fields: contact("listingAgent", "Listing agent", "Brokerage") },
   { id: "buyer", title: "Buyer", fields: party("buyer", "Buyer") },
   { id: "buyerAttorney", title: "Buyer's attorney", fields: contact("buyerAttorney", "Attorney", "Law firm") },
@@ -86,6 +104,7 @@ export const SALE_LAYOUT: DetailSection[] = [
 
 const GENERAL_LAYOUT: DetailSection[] = [
   { id: "client", title: "Client", client: true, fields: [{ key: "clientNames", label: "Client", kind: "names" }, { key: "clientEmail", label: "Email", kind: "email" }, { key: "clientPhone", label: "Phone", kind: "phone" }] },
+  REFERRAL,
   { id: "other", title: "Other party", fields: [{ key: "otherNames", label: "Name", kind: "names" }, ...contact("otherAttorney", "Attorney", "Law firm")] },
 ];
 
@@ -99,9 +118,9 @@ export function layoutFor(m: { matterCode?: string | null; category?: string | n
   return { layout: GENERAL_LAYOUT, side: null };
 }
 
-// Every field key the AI may fill.
+// Every field key the AI may fill (who referred the client isn't in the documents).
 export const AI_FIELDS = [
-  ...new Set([...PURCHASE_LAYOUT, ...SALE_LAYOUT].flatMap((s) => s.fields.map((f) => f.key))),
+  ...new Set([...PURCHASE_LAYOUT, ...SALE_LAYOUT].flatMap((s) => s.fields.map((f) => f.key)).filter((k) => !REFERRAL_KEYS.includes(k))),
 ];
 
 const num = (v: string | undefined) => {

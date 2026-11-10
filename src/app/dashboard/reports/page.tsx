@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, Loader2, Printer, Info } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, Loader2, Printer, Info, Users } from "lucide-react";
 import type { PracticeReport } from "@/lib/reports/practice";
 import { pageBtnB, pageBtnOpenB, frameOuter, frameInner, frameTitle } from "@/lib/ui";
 
@@ -221,6 +222,172 @@ function Empty({ text }: { text: string }) {
   return <div className="text-[13px] text-muted py-6 text-center">{text}</div>;
 }
 
+// ── Where the business comes from ───────────────────────────────────────────
+type RelRow = { id: string; name: string; company: string; deals: number; open: number };
+type RelReport = {
+  matters: number;
+  linkedMatters: number;
+  offices: RelRow[];
+  realtors: RelRow[];
+  lenders: RelRow[];
+  lawFirms: RelRow[];
+  attorneys: RelRow[];
+  titleCompanies: RelRow[];
+  others: RelRow[];
+  referrers: RelRow[];
+  referralTypes: { name: string; value: number }[];
+};
+
+function RelTable({ rows, empty, person }: { rows: RelRow[]; empty: string; person?: boolean }) {
+  const [all, setAll] = useState(false);
+  if (!rows.length) return <Empty text={empty} />;
+  const shown = all ? rows : rows.slice(0, 10);
+  return (
+    <div>
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr className="text-left text-muted text-[12px]">
+            <th className="font-medium py-1.5 pr-3">Name</th>
+            <th className="font-medium py-1.5 px-2 text-right">Matters</th>
+            <th className="font-medium py-1.5 pl-2 text-right">Open</th>
+          </tr>
+        </thead>
+        <tbody>
+          {shown.map((r) => (
+            <tr key={r.id} className="border-t border-[#E6EAF1]">
+              <td className="py-2 pr-3 min-w-0">
+                <Link href={`/dashboard/records?contact=${r.id}`} className="hover:underline font-medium">
+                  {r.name}
+                </Link>
+                {person && r.company && <div className="text-[11.5px] text-muted truncate">{r.company}</div>}
+              </td>
+              <td className="py-2 px-2 text-right tabular-nums font-medium">{r.deals}</td>
+              <td className="py-2 pl-2 text-right tabular-nums text-muted">{r.open}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {rows.length > 10 && (
+        <button onClick={() => setAll((a) => !a)} className="mt-2 text-[12.5px] text-muted underline underline-offset-2 hover:text-ink print:hidden">
+          {all ? "Show top 10" : `Show all ${rows.length}`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Relationships({ from, to, periodLabel }: { from: string | null; to: string | null; periodLabel: string }) {
+  const [data, setData] = useState<{ key: string; r: RelReport } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+  const key = `${from}|${to}|${tick}`;
+  useEffect(() => {
+    let live = true;
+    const qs = new URLSearchParams();
+    if (from) qs.set("from", from);
+    if (to) qs.set("to", to);
+    fetch(`/api/reports/relationships?${qs}`)
+      .then(async (res) => {
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d?.error ?? "The relationships report couldn't be loaded.");
+        return d as RelReport;
+      })
+      .then((r) => live && (setData({ key, r }), setError(null)))
+      .catch((e: Error) => live && setError(e.message));
+    return () => {
+      live = false;
+    };
+  }, [key, from, to]);
+  const r = data?.key === key ? data.r : null;
+  // Link every matter's Details to Contacts (for matters filled in before this existed).
+  const [linking, setLinking] = useState<{ done: number; total: number } | null>(null);
+  const [linkNote, setLinkNote] = useState<string | null>(null);
+  async function linkAll() {
+    setLinkNote(null);
+    let offset = 0;
+    const sum = { created: 0, linked: 0 };
+    try {
+      for (let i = 0; i < 200; i++) {
+        const res = await fetch("/api/reports/relationships", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ offset }) });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d?.error ?? "Linking stopped part-way. Click the button again to carry on.");
+        sum.created += d.created ?? 0;
+        sum.linked += d.linked ?? 0;
+        offset = d.next;
+        setLinking({ done: d.next, total: d.total });
+        if (d.done) break;
+      }
+      setLinkNote(`Done: ${sum.linked.toLocaleString()} links made, ${sum.created.toLocaleString()} new contact cards added.`);
+      setTick((t) => t + 1); // count again
+    } catch (e) {
+      setLinkNote((e as Error).message);
+    } finally {
+      setLinking(null);
+    }
+  }
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
+        <h2 className="text-[18px] font-semibold">Where the business comes from</h2>
+        <button onClick={() => void linkAll()} disabled={!!linking} className={`print:hidden ${pageBtnB} disabled:opacity-60`}>
+          {linking ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
+          {linking ? `Linking matters… ${linking.done} of ${linking.total}` : "Link all matters to Contacts"}
+        </button>
+      </div>
+      {linkNote && <div className="mb-3 rounded-xl bg-[#E8F6EE] text-[#1F7A4D] px-3 py-2 text-[12.5px]">{linkNote}</div>}
+      <p className="text-[13px] text-muted mb-4">
+        Matters opened {periodLabel} by the offices, realtors, lenders, attorneys and referral sources on them. People and companies are counted when they&apos;re
+        linked to the matter from its Details (or Related contacts).
+      </p>
+      {error ? (
+        <div className="rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-4 py-3 text-[13.5px]">{error}</div>
+      ) : !r ? (
+        <div className="text-[13.5px] text-muted flex items-center gap-2 py-4">
+          <Loader2 size={15} className="animate-spin" /> Counting deals…
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
+            <Stat label="Matters in the period" value={r.matters.toLocaleString()} />
+            <Stat label="With linked contacts" value={r.linkedMatters.toLocaleString()} note="Open a matter's Details and click Match with Contacts to link older ones" />
+            <Stat label="Real estate offices" value={r.offices.length.toLocaleString()} />
+            <Stat label="Referral sources" value={r.referrers.length.toLocaleString()} />
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <Card title="Referred by" sub="Who sent the client to the firm (Details → Referred by)">
+              <RelTable rows={r.referrers} empty="No referrals recorded yet. Fill in Referred by on a matter's Details." person />
+            </Card>
+            <Card title="Referral sources" sub="By the Source in Referred by">
+              {r.referralTypes.length ? <Bars rows={r.referralTypes} colorBy={false} /> : <Empty text="No referral sources recorded yet." />}
+            </Card>
+            <Card title="Real estate offices" sub="Matters with the office or one of its realtors">
+              <RelTable rows={r.offices} empty="No real estate offices linked yet." />
+            </Card>
+            <Card title="Realtors">
+              <RelTable rows={r.realtors} empty="No realtors linked yet." person />
+            </Card>
+            <Card title="Lenders">
+              <RelTable rows={r.lenders} empty="No lenders linked yet." />
+            </Card>
+            <Card title="Title companies">
+              <RelTable rows={r.titleCompanies} empty="No title companies linked yet." />
+            </Card>
+            <Card title="Law firms" sub="Usually the other side's attorneys">
+              <RelTable rows={r.lawFirms} empty="No law firms linked yet." />
+            </Card>
+            <Card title="Attorneys">
+              <RelTable rows={r.attorneys} empty="No attorneys linked yet." person />
+            </Card>
+            <Card title="Inspectors, surveyors and others" className="xl:col-span-2">
+              <RelTable rows={r.others} empty="None linked yet." />
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
@@ -391,6 +558,9 @@ export default function ReportsPage() {
               </Card>
             </div>
           </div>
+
+          {/* ── Relationships ── */}
+          <Relationships from={range.from} to={range.to} periodLabel={periodLabel} />
 
           {r.totals.imported > 0 && (
             <p className="text-[12.5px] text-muted flex gap-2 items-start">

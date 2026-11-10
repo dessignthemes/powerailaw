@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { cleanDetails, layoutFor, AI_FIELDS, type MatterDetails } from "@/lib/matters/details";
+import { cleanDetails, layoutFor, AI_FIELDS, REFERRAL_KEYS, type MatterDetails } from "@/lib/matters/details";
 
 export class DetailsError extends Error {
   constructor(public status: 400 | 404 | 503, message: string) {
@@ -42,7 +42,7 @@ export async function getDetails(orgId: string, matterId: string): Promise<Matte
 export async function saveDetails(orgId: string, matterId: string, changes: Record<string, unknown>): Promise<MatterDetails> {
   const m = await load(orgId, matterId);
   const details = cleanDetails(m.details);
-  const allowed = new Set([...AI_FIELDS, "clientNames", "clientEmail", "clientPhone", "otherNames", "otherAttorneyFirm", "otherAttorneyName", "otherAttorneyEmail", "otherAttorneyPhone"]);
+  const allowed = new Set([...AI_FIELDS, ...REFERRAL_KEYS, "clientNames", "clientEmail", "clientPhone", "otherNames", "otherAttorneyFirm", "otherAttorneyName", "otherAttorneyEmail", "otherAttorneyPhone"]);
   for (const [k, v] of Object.entries(changes).slice(0, 80)) {
     if (!allowed.has(k)) continue;
     const value = typeof v === "string" ? v.trim().slice(0, 500) : "";
