@@ -11,7 +11,7 @@ import TeamProgress from "@/components/dashboard/TeamProgress";
 import ScrollHint from "@/components/ScrollHint";
 import MemberAvatar from "@/components/MemberAvatar";
 import { priorityMeta } from "@/components/NewTaskModal";
-import { isOverdue, ymd } from "@/lib/taskDates";
+import { isDueIn, isOverdue, ymd } from "@/lib/taskDates";
 import type { DashData, WidgetDef, WidgetSize } from "./types";
 
 // ── small shared pieces ──────────────────────────────────────────────────────
@@ -338,6 +338,82 @@ function MyOpenTasks({ d }: { d: DashData }) {
         </div>
       ))}
     </div>
+  );
+}
+
+// Two task lists that don't follow "View Team Tasks": one is always yours,
+// the other always the whole team's. Both follow Today / Week / Month.
+const PRI_RANK: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
+function ScopedTasks({ d, team }: { d: DashData; team?: boolean }) {
+  const small = useSmall();
+  const me = (d.meEmail ?? "").toLowerCase();
+  const pool = d.allTasks.filter(
+    (t) =>
+      t.status !== "done" &&
+      (team || (t.assignee ?? "").toLowerCase() === me || (!t.assignee && (t.offeredTo ?? []).some((e) => e.toLowerCase() === me)))
+  );
+  const byPri = (a: (typeof pool)[number], b: (typeof pool)[number]) =>
+    (PRI_RANK[a.priority] ?? 3) - (PRI_RANK[b.priority] ?? 3) || (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999");
+  const late = pool.filter(isOverdue).sort(byPri);
+  const due = pool.filter((t) => isDueIn(t, d.range) && !isOverdue(t)).sort(byPri);
+  const undated = pool.filter((t) => !t.dueDate);
+  if (!d.tasksLoaded) return <div className="text-[14px] text-muted m-auto">Loading tasks…</div>;
+  const memberId = (email?: string | null) => d.teamMembers.find((m) => m.email.toLowerCase() === (email ?? "").toLowerCase())?.id ?? null;
+  const row = (t: (typeof pool)[number]) => (
+    <div key={t.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#F4F6FA] cursor-pointer" onClick={() => d.openTask(t)}>
+      <button onClick={(e) => (e.stopPropagation(), d.toggleDone(t))} aria-label="Mark as done" className="text-muted hover:text-green-600 flex-shrink-0">
+        <Circle size={16} strokeWidth={1.75} />
+      </button>
+      <span className="min-w-0 flex-1">
+        <span className={`block ${small ? "text-[13px]" : "text-[14px]"} font-medium truncate`}>{t.title}</span>
+        <span className={`block text-[11.5px] truncate ${isOverdue(t) ? "text-[#B42318]" : "text-muted"}`}>
+          {t.dueDate ? `${isOverdue(t) ? "Overdue · " : ""}${fmtDay(t.dueDate)}` : "No due date"} · {d.boardName(t.boardId)}
+          {team && <span className="text-muted"> · {t.assignee ? firstName(d, t.assignee) : "Unassigned"}</span>}
+        </span>
+      </span>
+      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: priorityMeta[t.priority]?.bg }} title={`${t.priority} priority`} />
+      {team && <MemberAvatar userId={memberId(t.assignee)} label="Assigned to" />}
+    </div>
+  );
+  const head = (label: string, n: number, red?: boolean) => (
+    <div className={`px-2 pt-2 pb-1 mono text-[11px] uppercase tracking-wider ${red ? "text-[#B42318]" : "text-muted"}`}>
+      {label} · {n}
+    </div>
+  );
+  return (
+    <>
+      <div className={`${small ? "text-[16px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
+        {late.length + due.length} {late.length + due.length === 1 ? "task" : "tasks"} {d.dueLabel.toLowerCase()}
+      </div>
+      <div className={`${small ? "text-[12px]" : "text-[13px]"} mb-2`}>
+        <span className={late.length ? "text-[#B42318] font-medium" : "text-muted"}>{late.length ? `${late.length} overdue` : "Nothing overdue"}</span>
+        <span className="text-muted"> · {pool.length} open{team ? " across the team" : ""}</span>
+      </div>
+      {!late.length && !due.length && (team || !undated.length) ? (
+        <Empty icon={CheckCircle2} title={`Nothing due ${d.rangeWord}`} sub={team ? "The whole team is on track." : "No open tasks for you."} />
+      ) : (
+        <div className="flex flex-col min-h-0 flex-1 scroll-on-hover -mx-1">
+          {late.length > 0 && (
+            <>
+              {head("Overdue", late.length, true)}
+              {late.map(row)}
+            </>
+          )}
+          {due.length > 0 && (
+            <>
+              {head(d.dueLabel, due.length)}
+              {due.map(row)}
+            </>
+          )}
+          {!team && undated.length > 0 && (
+            <>
+              {head("No due date", undated.length)}
+              {undated.map(row)}
+            </>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -702,6 +778,8 @@ export const WIDGETS: WidgetDef[] = [
   { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open task board"), body: (d) => <TasksList d={d} /> },
   { id: "activity", name: "Recent activity", desc: "Tasks created, updated and completed, newest first.", category: "Tasks", sizes: ["m", "l", "xl"], size: "m", icon: Activity, body: (d) => <RecentActivity d={d} /> },
   { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: BarChart3, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" hideLabel onPick={(email) => d.setScope(email)} /> },
+  { id: "myTasksScoped", name: "My tasks", desc: "Always your own tasks (even when View Team Tasks shows someone else): overdue first, then due today / this week / month, then no due date.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: UserRound, title: (d) => `My tasks · ${d.rangeWord}`, body: (d) => <ScopedTasks d={d} /> },
+  { id: "teamTasks", name: "Team tasks", desc: "Always the whole team's open tasks, with who each one belongs to: overdue first, then due today / this week / month.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: Users, title: (d) => `Team tasks · ${d.rangeWord}`, body: (d) => <ScopedTasks d={d} team /> },
   { id: "myTasks", name: "My open tasks", desc: "Your open tasks, soonest first. Tick one off without leaving the Dashboard.", category: "Tasks", sizes: ["m", "l"], size: "l", icon: CheckCircle2, body: (d) => <MyOpenTasks d={d} /> },
   { id: "overdue", name: "Overdue", desc: "Open tasks past their due date across the firm.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: AlarmClock, body: (d) => { const n = d.allTasks.filter(isOverdue).length; return <Big n={n} label={n ? "past their due date" : "Nothing overdue"} />; } },
   { id: "dueCount", name: "Due today (count)", desc: "How many tasks are due today across the firm, and how many are yours.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: CalendarClock, title: () => "Due today", body: (d) => { const due = d.allTasks.filter((t) => t.status !== "done" && t.dueDate === d.todayStr); const mine = due.filter((t) => (t.assignee ?? "").toLowerCase() === (d.meEmail ?? "").toLowerCase()).length; return <Big n={due.length} label={due.length ? `${mine} of them yours` : "Nothing due today"} />; } },
