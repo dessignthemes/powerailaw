@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { getSessionUser } from "@/lib/auth";
-import { CONTACTS_MIGRATION, CONTACT_TYPES_MIGRATION, type Contact, type ContactInput } from "@/lib/records/contactTypes";
+import { CONTACTS_MIGRATION, CONTACT_TYPES_MIGRATION, GOVERNMENT_MIGRATION, type Contact, type ContactInput } from "@/lib/records/contactTypes";
 
 export class ContactsSetupError extends Error {
   constructor() {
@@ -52,7 +52,7 @@ const toContact = (r: Row): Contact => ({
   notes: r.notes ?? "",
   clientId: r.client_id,
   matterId: r.matter_id,
-  category: (["client", "vendor", "other"].includes(r.category ?? "") ? r.category : "") as Contact["category"],
+  category: (["client", "vendor", "government", "other"].includes(r.category ?? "") ? r.category : "") as Contact["category"],
   vendorType: r.vendor_type ?? "",
   employerId: r.employer_id ?? null,
   shortName: r.short_name ?? "",
@@ -92,7 +92,7 @@ const schema = z.object({
   clientId: z.string().uuid().nullable().optional().default(null),
   matterId: z.string().uuid().nullable().optional().default(null),
   // Added in 0067 (left out = unchanged).
-  category: z.enum(["", "client", "vendor", "other"]).optional(),
+  category: z.enum(["", "client", "vendor", "government", "other"]).optional(),
   vendorType: z.string().trim().max(60).optional(),
   employerId: z.string().uuid().nullable().optional(),
   shortName: z.string().trim().max(200).optional(),
@@ -113,6 +113,11 @@ function missingNewColumns(e: unknown) {
     (x.code === "42703" || x.code === "PGRST204" || x.code === "23514" ||
       /category|vendor_type|employer_id|short_name|work_phone|home_phone|contacts_kind_check/.test(x.message ?? ""))
   );
+}
+export class GovernmentSetupError extends Error {
+  constructor() {
+    super(`The Government group needs a database update. Run supabase/migrations/${GOVERNMENT_MIGRATION} in the Supabase SQL editor, then try again.`);
+  }
 }
 export class ContactTypesSetupError extends Error {
   constructor() {
@@ -221,6 +226,7 @@ export async function createContact(input: ContactInput | unknown): Promise<Cont
     .insert({ ...row, org_id: orgId, created_by: user?.id ?? null })
     .select("*")
     .single();
+  if (error && v.category === "government" && (error as { code?: string }).code === "23514") throw new GovernmentSetupError();
   if (error && missingNewColumns(error)) {
     if (v.kind === "trust" || v.kind === "estate" || v.category || v.employerId) throw new ContactTypesSetupError();
     ({ data, error } = await createAdminClient().from("contacts").insert({ ...baseOnly(row), org_id: orgId, created_by: user?.id ?? null }).select("*").single());
@@ -255,6 +261,7 @@ export async function updateContact(id: string, input: unknown): Promise<Contact
     .eq("org_id", orgId)
     .select("*")
     .maybeSingle();
+  if (error && v.category === "government" && (error as { code?: string }).code === "23514") throw new GovernmentSetupError();
   if (error && missingNewColumns(error)) {
     if (v.kind === "trust" || v.kind === "estate" || v.category || v.employerId) throw new ContactTypesSetupError();
     ({ data, error } = await createAdminClient().from("contacts").update({ ...baseOnly(row), updated_at: new Date().toISOString() }).eq("id", id).eq("org_id", orgId).select("*").maybeSingle());

@@ -4,7 +4,7 @@ import MatterLinks from "@/components/matters/MatterLinks";
 import { useEffect, useState } from "react";
 import { X, Loader2, Trash2, User, Building2, Landmark, ScrollText, Users } from "lucide-react";
 import SelectBox from "@/components/SelectBox";
-import { COMPANY_ROLES, PERSON_ROLES, VENDOR_TYPES, KIND_NAMES, type Contact, type ContactCategory, type ContactInput, type ContactKind } from "@/lib/records/contactTypes";
+import { COMPANY_ROLES, PERSON_ROLES, VENDOR_TYPES, GOVERNMENT_TYPES, KIND_NAMES, type Contact, type ContactCategory, type ContactInput, type ContactKind } from "@/lib/records/contactTypes";
 
 const field =
   "w-full border border-line rounded-xl px-3.5 py-2.5 text-[14px] bg-white outline-none focus:border-ink placeholder:text-muted";
@@ -89,7 +89,7 @@ export default function ContactModal({
         clientId: clientId || null,
         matterId: matterId || null,
         category,
-        vendorType: category === "vendor" ? vendorType : "",
+        vendorType: category === "vendor" || category === "government" ? vendorType : "",
         employerId: kind === "person" ? employerId : null,
         mobile: mobile.trim() || null,
       });
@@ -150,11 +150,15 @@ export default function ContactModal({
             {([
               ["client", "Client"],
               ["vendor", "Vendor / supplier"],
+              ["government", "Government"],
               ["other", "Other"],
             ] as const).map(([k, l]) => (
               <button
                 key={k}
-                onClick={() => setCategory(category === k ? "" : k)}
+                onClick={() => {
+                  setCategory(category === k ? "" : k);
+                  if (category !== k && (category === "vendor" || category === "government")) setVendorType(""); // types differ per group
+                }}
                 className={`px-3 py-1 rounded-full text-[12.5px] font-medium border transition-colors ${
                   category === k ? "bg-btn border-btn text-ink" : "bg-white border-[#D9DFEA] text-ink hover:bg-chip"
                 }`}
@@ -168,19 +172,25 @@ export default function ContactModal({
               ? "Clients are included in conflict-of-interest checks."
               : category === "vendor"
                 ? "Vendors are companies (and their people) the firm works with: title companies, law firms, lenders…"
-                : "Pick Client for anyone the firm represents (they're checked for conflicts), or Vendor for title companies, law firms, lenders and the like."}
+                : category === "government"
+                  ? "Courts, county clerks, townships, tax offices and state or federal agencies (and the people who work there)."
+                  : "Pick Client for anyone the firm represents (they're checked for conflicts), or Vendor for title companies, law firms, lenders and the like."}
           </div>
-          {category === "vendor" && (
-            <div className="mt-2.5 max-w-[280px]">
-              <SelectBox label="Vendor type" value={vendorType} onChange={setVendorType}>
-                <option value="">Vendor type</option>
-                {VENDOR_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-                {vendorType && !VENDOR_TYPES.includes(vendorType) && <option value={vendorType}>{vendorType}</option>}
-              </SelectBox>
-            </div>
-          )}
+          {(category === "vendor" || category === "government") && (() => {
+            const types = category === "government" ? GOVERNMENT_TYPES : VENDOR_TYPES;
+            const label = category === "government" ? "Office type" : "Vendor type";
+            return (
+              <div className="mt-2.5 max-w-[280px]">
+                <SelectBox label={label} value={vendorType} onChange={setVendorType}>
+                  <option value="">{label}</option>
+                  {types.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                  {vendorType && !types.includes(vendorType) && <option value={vendorType}>{vendorType}</option>}
+                </SelectBox>
+              </div>
+            );
+          })()}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

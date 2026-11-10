@@ -13,20 +13,22 @@ BG={
  'FDECEC':'#3a2024','FFF6F6':'#2d1d20','FDEEEE':'#3a2024','FADADA':'#4a2529','FDE8E8':'#3a2024','FBD5D5':'#4a2529',
  # amber
  'FDF1E7':'#36291b','FFF8EE':'#2f251a','FFF4E5':'#36291b','FFF1DE':'#36291b','F9E1C0':'#45331e','F5E3B3':'#41361c',
+ # blue (Government tag)
+ 'EAF0FB':'#1f2a3a',
  # green
  'F1F7EF':'#1c2f22','E7F6EE':'#1c2f22','E8F6EE':'#1c2f22','EFF8F2':'#1c2f22','CAF0D9':'#21402c','DCEBD8':'#21402c',
 }
 BORDER={
  'E6EAF1':'#2e333d','E3E7EF':'#30353f','E1E5EE':'#30353f','DDE2EC':'#333945','D9DFEA':'#363c48','D5DCE8':'#3a4150','DDE3EE':'#333945',
  'D1D7E0':'#3a4150','C3CBDA':'#4a5264','EEF1F5':'#2a2f39','DCE6F5':'#2f3a4f','D2D9E6':'#3a4150','C9D1DE':'#4a5264','AEB9D0':'#5a6479',
- 'F6C9C9':'#5a2c2f','F3C2C2':'#5a2c2f','F6D4A6':'#5a4526','E6CF8F':'#5a4b26','B9D6B2':'#2f5a3a',
+ 'C5D3EE':'#34425e','F6C9C9':'#5a2c2f','F3C2C2':'#5a2c2f','F6D4A6':'#5a4526','E6CF8F':'#5a4b26','B9D6B2':'#2f5a3a',
 }
 TEXT={
  '1B191A':'#E7E9EE','5B616B':'#9AA1AE','6B7280':'#9AA1AE',
  '9F1D1D':'#F2A5A5','B42318':'#F2A5A5','B4232C':'#F2A5A5',
  '8A4B14':'#E9C18A','8A6D1D':'#E5CC85','6B5415':'#E5CC85',
  '2F5E2A':'#9BD8A8','155C3A':'#9BD8A8','14532D':'#9BD8A8','1F7A4D':'#9BD8A8',
- '1f3a93':'#9db7f5','1F3A93':'#9db7f5','2B6CB0':'#9db7f5','4C2E91':'#c2aef2',
+ '2D4F8A':'#9db7f5','1f3a93':'#9db7f5','1F3A93':'#9db7f5','2B6CB0':'#9db7f5','4C2E91':'#c2aef2',
 }
 def esc(c): return re.sub(r'([\[\]#:/.!%,()])',r'\\\1',c)
 STATES={'':'','hover:':':hover','focus:':':focus','focus-within:':':focus-within','group-hover:':''}

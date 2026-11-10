@@ -4,7 +4,8 @@ import ClickAway from "@/components/ClickAway";
 import { menuPanel, frameOuter, frameInner, frameTitle, pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download, Plus, ShieldCheck, Landmark, ScrollText } from "lucide-react";
+import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download, Plus, ShieldCheck, Landmark, ScrollText, Filter, Check } from "lucide-react";
+import { GenericDropdown } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { getInitials, getAvatarColor, formatUpdatedAt } from "@/components/NewClientModal";
 import NewMatterModal from "@/components/NewMatterModal";
@@ -15,7 +16,7 @@ import RunConflictModal from "@/components/conflicts/RunConflictModal";
 import type { Contact, ContactInput, ContactKind } from "@/lib/records/contactTypes";
 
 type Kind = "client" | "matter" | "person" | "company" | "trust" | "estate";
-type Tab = "all" | "client" | "vendor" | "matter" | "person" | "company" | "trustEstate";
+type Tab = "all" | "client" | "vendor" | "government" | "matter" | "person" | "company" | "trustEstate";
 
 type Row = {
   key: string;
@@ -25,6 +26,7 @@ type Row = {
   detail: string[];
   cat: string; // "client" | "vendor" | "other" | "" (contacts) — client cards count as clients
   tag: string; // e.g. "Vendor · Title company"
+  type: string; // vendor or government office type ("" = none)
   search: string;
   updatedAt: string;
 };
@@ -33,6 +35,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "all", label: "Everything" },
   { key: "client", label: "Clients" },
   { key: "vendor", label: "Vendors" },
+  { key: "government", label: "Government" },
   { key: "matter", label: "Matters" },
   { key: "person", label: "People" },
   { key: "company", label: "Companies" },
@@ -40,11 +43,12 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 const KIND_LABEL: Record<Kind, string> = { client: "Client", matter: "Matter", person: "Person", company: "Company", trust: "Trust", estate: "Estate" };
-const EMPTY_LABEL: Record<Tab, string> = { all: "contacts", client: "clients", vendor: "vendors", matter: "matters", person: "people", company: "companies", trustEstate: "trusts or estates" };
+const EMPTY_LABEL: Record<Tab, string> = { all: "contacts", client: "clients", vendor: "vendors", government: "government offices", matter: "matters", person: "people", company: "companies", trustEstate: "trusts or estates" };
 const EMPTY_HINT: Record<Tab, string> = {
   all: "Add clients, matters, and the people and companies involved in your cases.",
   client: "Add the people and businesses you represent. Clients are included in conflict checks.",
   vendor: "Title companies, law firms, lenders and other companies the firm works with (and their people).",
+  government: "County clerks, superior and surrogate's courts, townships, tax offices and state or federal agencies.",
   matter: "Add a case or piece of work for a client.",
   person: "Add opposing counsel, witnesses, experts and anyone else involved in a matter.",
   company: "Add courts, opposing parties, vendors and other organizations.",
@@ -55,6 +59,7 @@ const inTab = (r: { kind: Kind; cat: string }, t: Tab) =>
   t === "all" ||
   (t === "client" && (r.kind === "client" || r.cat === "client")) ||
   (t === "vendor" && r.cat === "vendor") ||
+  (t === "government" && r.cat === "government") ||
   (t === "trustEstate" && (r.kind === "trust" || r.kind === "estate")) ||
   r.kind === t;
 const PAGE = 200;
@@ -79,6 +84,8 @@ export default function RecordsPage() {
 
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [typeOpen, setTypeOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [conflictOpen, setConflictOpen] = useState(false);
 
@@ -138,6 +145,7 @@ export default function RecordsPage() {
         kind: "client",
         cat: "client",
         tag: "",
+        type: "",
         id: c.id,
         name: c.name,
         detail,
@@ -157,6 +165,7 @@ export default function RecordsPage() {
         kind: "matter",
         cat: "",
         tag: "",
+        type: "",
         id: m.id,
         name: m.title,
         detail,
@@ -186,7 +195,15 @@ export default function RecordsPage() {
         key: `${p.kind}:${p.id}`,
         kind: p.kind,
         cat: p.category,
-        tag: p.category === "vendor" ? ["Vendor", p.vendorType].filter(Boolean).join(" · ") : p.category === "client" ? "Client" : "",
+        tag:
+          p.category === "vendor"
+            ? ["Vendor", p.vendorType].filter(Boolean).join(" · ")
+            : p.category === "government"
+              ? ["Government", p.vendorType].filter(Boolean).join(" · ")
+              : p.category === "client"
+                ? "Client"
+                : "",
+        type: p.category === "vendor" || p.category === "government" ? p.vendorType : "",
         id: p.id,
         name: p.name,
         detail,
@@ -198,7 +215,7 @@ export default function RecordsPage() {
   }, [clients, matters, contacts, clientName, matterTitle]);
 
   const counts = useMemo(() => {
-    const c: Record<Tab, number> = { all: rows.length, client: 0, vendor: 0, matter: 0, person: 0, company: 0, trustEstate: 0 };
+    const c: Record<Tab, number> = { all: rows.length, client: 0, vendor: 0, government: 0, matter: 0, person: 0, company: 0, trustEstate: 0 };
     for (const r of rows) for (const t of TABS) if (t.key !== "all" && inTab(r, t.key)) c[t.key]++;
     return c;
   }, [rows]);
@@ -206,8 +223,15 @@ export default function RecordsPage() {
   const q = query.trim().toLowerCase();
   const shown = useMemo(() => {
     const words = q.split(/\s+/).filter(Boolean);
-    return rows.filter((r) => inTab(r, tab) && words.every((w) => r.search.toLowerCase().includes(w)));
-  }, [rows, tab, q]);
+    return rows.filter((r) => inTab(r, tab) && (!typeFilter || r.type === typeFilter) && words.every((w) => r.search.toLowerCase().includes(w)));
+  }, [rows, tab, q, typeFilter]);
+
+  // Types of company in this tab (Title company, Law firm, County clerk…), most common first.
+  const typeCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of rows) if (r.type && inTab(r, tab)) m.set(r.type, (m.get(r.type) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [rows, tab]);
 
   function open(r: Row) {
     if (r.kind === "matter") router.push(`/dashboard/matters/${r.id}`);
@@ -324,6 +348,7 @@ export default function RecordsPage() {
               key={t.key}
               onClick={() => {
                 setTab(t.key);
+                setTypeFilter("");
                 setLimit(PAGE);
               }}
               className={tab === t.key ? pageBtnOpenB : pageBtnB}
@@ -332,6 +357,53 @@ export default function RecordsPage() {
             </button>
           ))}
         </div>
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+        {loaded && (typeCounts.length > 0 || typeFilter) && (
+          <div className="bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+            <GenericDropdown
+              open={typeOpen}
+              setOpen={setTypeOpen}
+              align="right"
+              trigger={
+                <>
+                  <Filter size={13} strokeWidth={1.75} />
+                  {typeFilter || "All types"}
+                </>
+              }
+            >
+              <div className="min-w-[250px] max-h-[min(420px,60vh)] overflow-y-auto">
+                <button
+                  onClick={() => {
+                    setTypeFilter("");
+                    setTypeOpen(false);
+                    setLimit(PAGE);
+                  }}
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-chip transition-colors text-left"
+                >
+                  All types
+                  {!typeFilter && <Check size={14} strokeWidth={2} />}
+                </button>
+                {typeCounts.map(([t, n]) => (
+                  <button
+                    key={t}
+                    onClick={() => {
+                      setTypeFilter(t);
+                      setTypeOpen(false);
+                      setLimit(PAGE);
+                    }}
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-chip transition-colors text-left"
+                  >
+                    <span className="truncate">{t}</span>
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[12px] text-muted font-normal">{n.toLocaleString()}</span>
+                      {typeFilter === t && <Check size={14} strokeWidth={2} />}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </GenericDropdown>
+          </div>
+        )}
         <div className="relative w-full sm:w-80 bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
@@ -350,6 +422,7 @@ export default function RecordsPage() {
               <X size={14} strokeWidth={1.75} />
             </button>
           )}
+        </div>
         </div>
       </div>
 
@@ -372,7 +445,9 @@ export default function RecordsPage() {
         <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5">
           <span className={frameTitle}>
             <Bookmark size={15} strokeWidth={1.75} />
-            {tab === "all" ? "All contacts" : TABS.find((t) => t.key === tab)?.label}{loaded ? ` · ${shown.length}` : ""}
+            {tab === "all" ? "All contacts" : TABS.find((t) => t.key === tab)?.label}
+            {typeFilter ? ` · ${typeFilter}` : ""}
+            {loaded ? ` · ${shown.length.toLocaleString()}` : ""}
           </span>
         </div>
         {!loaded ? (
@@ -396,8 +471,8 @@ export default function RecordsPage() {
                     <Plus size={14} /> Add contact
                   </button>
                 ) : (
-                  <button onClick={() => startAdd(tab === "vendor" ? "company" : tab === "trustEstate" ? "trust" : tab)} className={`${pageBtnB} mx-auto`}>
-                    <Plus size={14} /> Add {tab === "vendor" ? "vendor" : tab === "trustEstate" ? "trust" : KIND_LABEL[tab].toLowerCase()}
+                  <button onClick={() => startAdd(tab === "vendor" || tab === "government" ? "company" : tab === "trustEstate" ? "trust" : tab)} className={`${pageBtnB} mx-auto`}>
+                    <Plus size={14} /> Add {tab === "vendor" ? "vendor" : tab === "government" ? "government office" : tab === "trustEstate" ? "trust" : KIND_LABEL[tab].toLowerCase()}
                   </button>
                 )}
               </>
@@ -421,7 +496,11 @@ export default function RecordsPage() {
                     {r.tag && (
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11.5px] font-medium flex-shrink-0 border ${
-                          r.cat === "vendor" ? "bg-[#FFF4E5] border-[#F6D4A6] text-[#8A4B14]" : "bg-[#E8F6EE] border-[#B9D6B2] text-[#1F7A4D]"
+                          r.cat === "vendor"
+                            ? "bg-[#FFF4E5] border-[#F6D4A6] text-[#8A4B14]"
+                            : r.cat === "government"
+                              ? "bg-[#EAF0FB] border-[#C5D3EE] text-[#2D4F8A]"
+                              : "bg-[#E8F6EE] border-[#B9D6B2] text-[#1F7A4D]"
                         }`}
                       >
                         {r.tag}

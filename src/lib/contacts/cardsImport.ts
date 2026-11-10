@@ -5,7 +5,7 @@
 // reviews and can change any of it before anything is saved.
 
 import { unzipSync, strFromU8 } from "fflate";
-import type { ContactCategory, ContactKind } from "@/lib/records/contactTypes";
+import { governmentTypeOf, type ContactCategory, type ContactKind } from "@/lib/records/contactTypes";
 
 export type CardRow = {
   key: string; // stable id from the file, so a second import skips cards already brought in
@@ -131,7 +131,6 @@ const VENDOR_RULES: [RegExp, string][] = [
   [/\b(apprais\w*)\b/i, "Appraiser"],
   [/\b(inspect\w*)\b/i, "Inspector"],
   [/\b(cpa|accounting|accountants?|bookkeeping)\b/i, "Accountant"],
-  [/\b(township|borough|city of|county|state of|department|court|clerk|tax collector|municipal|board of|authority)\b/i, "Court / government"],
 ];
 
 export function vendorTypeOf(name: string): string {
@@ -236,8 +235,12 @@ export function cardsFromRows(rows: string[][]): CardRow[] {
     const catText = get(r, col.category).toLowerCase();
     // A company's line of work from its name; a person only when the name says so ("…, Esq.", "Attorney at Law").
     const vendorType = kind === "company" ? vendorTypeOf(name) : kind === "person" && /\besq\b|attorney|counsel(l)?or/i.test(name) ? "Law firm" : "";
-    const category: CardRow["category"] =
-      supplier || /vendor|supplier/.test(catText) ? "vendor" : /client/.test(catText) ? "client" : /other/.test(catText) ? "other" : vendorType ? "vendor" : "client";
+    // Courts, county clerks, townships…: the Government group (a clear court name wins over a vendor word like "Law Division").
+    const govType = kind === "company" ? governmentTypeOf(name) : "";
+    const isGov = !!govType && (!vendorType || /surrogate|superior court|tax court|municipal court|county clerk|sheriff|judiciary/i.test(name)) && !/client/.test(catText);
+    const category: CardRow["category"] = isGov
+      ? "government"
+      : supplier || /vendor|supplier/.test(catText) ? "vendor" : /client/.test(catText) ? "client" : /other/.test(catText) ? "other" : vendorType ? "vendor" : "client";
     // Same short name + name can repeat in a list (two different people): number them.
     const base = `${get(r, col.shortName)}|${name}`.toLowerCase();
     const n = (seen.get(base) ?? 0) + 1;
@@ -246,7 +249,7 @@ export function cardsFromRows(rows: string[][]): CardRow[] {
       key: (n > 1 ? `${base}#${n}` : base).slice(0, 400),
       kind,
       category,
-      vendorType: category === "vendor" ? vendorType || (supplier ? "Other vendor" : "") : "",
+      vendorType: category === "government" ? govType : category === "vendor" ? vendorType || (supplier ? "Other vendor" : "") : "",
       name: name.slice(0, 200),
       shortName: get(r, col.shortName).slice(0, 200),
       email,
@@ -285,8 +288,8 @@ export function linkPeople(cards: CardRow[]) {
     c.employerKey = co.key;
     c.employerName = co.name;
     // Someone at a vendor is part of that vendor (not a client).
-    if (co.category === "vendor") {
-      c.category = "vendor";
+    if (co.category === "vendor" || co.category === "government") {
+      c.category = co.category;
       c.vendorType = co.vendorType;
     }
   }

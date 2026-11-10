@@ -14,7 +14,7 @@ export class CardsImportError extends Error {
 const db = () => createAdminClient();
 const MAX_BATCH = 600;
 const KINDS = new Set(["person", "company", "trust", "estate"]);
-const CATS = new Set(["client", "vendor", "other"]);
+const CATS = new Set(["client", "vendor", "government", "other"]);
 const clip = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
 const opt = (v: unknown, max: number) => clip(v, max) || null;
 
@@ -53,7 +53,7 @@ function clean(list: unknown): Clean[] {
       key,
       kind: KINDS.has(String(raw.kind)) ? String(raw.kind) : "person",
       category,
-      vendorType: category === "vendor" ? clip(raw.vendorType, 60) : "",
+      vendorType: category === "vendor" || category === "government" ? clip(raw.vendorType, 60) : "",
       name,
       shortName: clip(raw.shortName, 200),
       email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null,

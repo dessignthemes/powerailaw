@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { X, FileSpreadsheet, Loader2, Check, Search, User, Building2, Landmark, ScrollText, Users } from "lucide-react";
 import { readXlsx, readCsv, cardsFromRows, importOrder, type CardRow } from "@/lib/contacts/cardsImport";
-import { KIND_NAMES, VENDOR_TYPES, type ContactKind } from "@/lib/records/contactTypes";
+import { KIND_NAMES, VENDOR_TYPES, GOVERNMENT_TYPES, type ContactKind } from "@/lib/records/contactTypes";
 
 type Filter = "all" | "person" | "company" | "trust" | "estate" | "client" | "vendor" | "linked";
 const BATCH = 500;
@@ -230,16 +230,17 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
                   <select
                     value={x.category}
                     onChange={(e) => change(x.key, { category: e.target.value as CardRow["category"] })}
-                    className={`border rounded-lg px-2 py-1 text-[12.5px] ${x.category === "vendor" ? "bg-[#FFF4E5] border-[#F6D4A6]" : x.category === "client" ? "bg-[#E8F6EE] border-[#B9D6B2]" : "bg-white border-[#D9DFEA]"}`}
+                    className={`border rounded-lg px-2 py-1 text-[12.5px] ${x.category === "vendor" ? "bg-[#FFF4E5] border-[#F6D4A6]" : x.category === "government" ? "bg-[#EAF0FB] border-[#C5D3EE]" : x.category === "client" ? "bg-[#E8F6EE] border-[#B9D6B2]" : "bg-white border-[#D9DFEA]"}`}
                   >
                     <option value="client">Client</option>
                     <option value="vendor">Vendor</option>
+                    <option value="government">Government</option>
                     <option value="other">Other</option>
                   </select>
-                  {x.category === "vendor" && x.kind !== "person" ? (
+                  {(x.category === "vendor" || x.category === "government") && x.kind !== "person" ? (
                     <select value={x.vendorType} onChange={(e) => change(x.key, { vendorType: e.target.value })} className="bg-white border border-[#D9DFEA] rounded-lg px-2 py-1 text-[12.5px] min-w-0">
-                      <option value="">Vendor type</option>
-                      {VENDOR_TYPES.map((t) => (
+                      <option value="">{x.category === "government" ? "Office type" : "Vendor type"}</option>
+                      {(x.category === "government" ? GOVERNMENT_TYPES : VENDOR_TYPES).map((t) => (
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
