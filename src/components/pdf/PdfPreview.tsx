@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { X, Loader2, PenLine, Download, ZoomIn, ZoomOut } from "lucide-react";
+import { X, Loader2, PenLine, Download, ZoomIn, ZoomOut, FileOutput } from "lucide-react";
 import PdfPages from "@/components/esign/PdfPages";
-import { fetchVersionBytes, versionDownloadUrl } from "@/lib/pdf/upload";
+import { fetchVersionBytes, previewWordVersion, versionDownloadUrl } from "@/lib/pdf/upload";
 
 // Read-only view of a PDF: every page, zoom, and quick links to edit or download.
 export default function PdfPreview({
@@ -13,6 +13,7 @@ export default function PdfPreview({
   source,
   title,
   subtitle,
+  word,
   onClose,
 }: {
   documentId?: string;
@@ -21,6 +22,8 @@ export default function PdfPreview({
   source?: { url: string; downloadUrl: string };
   title: string;
   subtitle?: string;
+  // A Word file: shown as pages without converting or saving anything.
+  word?: { onConvert?: () => void };
   onClose: () => void;
 }) {
   const [bytes, setBytes] = useState<Uint8Array | null>(null);
@@ -39,10 +42,12 @@ export default function PdfPreview({
           }
           return new Uint8Array(await r.arrayBuffer());
         })
-      : fetchVersionBytes(versionId ?? "");
+      : word
+        ? previewWordVersion(versionId ?? "", title)
+        : fetchVersionBytes(versionId ?? "");
     load
       .then((b) => live && setBytes(b))
-      .catch((e: Error) => live && setError(e?.message || "The PDF couldn't be loaded. Try Download instead."));
+      .catch((e: Error) => live && setError(e?.message || "The preview couldn't be loaded. Try Download instead."));
     return () => {
       live = false;
     };
@@ -91,6 +96,7 @@ export default function PdfPreview({
               {title}
             </div>
             {subtitle && <div className="text-[12.5px] text-muted truncate">{subtitle}</div>}
+            {word && <div className="text-[12px] text-muted truncate">Word preview. Spacing may differ slightly from Word. Nothing is converted or saved.</div>}
           </div>
           <div className="flex items-center gap-1 bg-chip rounded-full p-0.5">
             <button onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} aria-label="Zoom out" className="w-8 h-8 rounded-full hover:bg-white flex items-center justify-center">
@@ -103,7 +109,12 @@ export default function PdfPreview({
               <ZoomIn size={15} strokeWidth={1.75} />
             </button>
           </div>
-          {documentId && versionId && (
+          {word?.onConvert && (
+            <button onClick={word.onConvert} className="bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5">
+              <FileOutput size={13} strokeWidth={2} /> Convert to PDF
+            </button>
+          )}
+          {documentId && versionId && !word && (
           <Link
             href={`/dashboard/power-pdf/${documentId}?version=${versionId}`}
             className="bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5"

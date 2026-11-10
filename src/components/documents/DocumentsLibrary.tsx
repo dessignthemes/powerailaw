@@ -428,7 +428,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                         {latest?.createdByEmail ? ` by ${nameOf(latest.createdByEmail)}` : ""}
                       </div>
                     </div>
-                    {latest && type === "pdf" && (
+                    {latest && (type === "pdf" || type === "docx") && (
                       <button onClick={() => setPreview({ doc: d, versionId: latest.id, versionNumber: latest.versionNumber })} className={beigeBtn}>
                         <Eye size={13} strokeWidth={2} /> Preview
                       </button>
@@ -538,7 +538,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                                 {vt === "pdf" && v.pageCount > 0 ? `${v.pageCount} ${v.pageCount === 1 ? "page" : "pages"}, ` : ""}
                                 {formatSize(v.sizeBytes)}
                               </span>
-                              {vt === "pdf" && (
+                              {(vt === "pdf" || vt === "docx") && (
                                 <button
                                   onClick={() => setPreview({ doc: d, versionId: v.id, versionNumber: v.versionNumber })}
                                   className="text-[12.5px] font-medium text-muted hover:text-ink underline underline-offset-2"
@@ -610,6 +610,11 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
           versionId={preview.versionId}
           title={preview.doc.title}
           subtitle={`${preview.doc.matterTitle ?? ""}${preview.doc.matterTitle ? " · " : ""}version ${preview.versionNumber} of ${preview.doc.versions.length}`}
+          word={(() => {
+            const v = preview.doc.versions.find((x) => x.id === preview.versionId);
+            if (!v || typeOf(v) !== "docx") return undefined;
+            return { onConvert: () => (setPreview(null), setConverting({ doc: preview.doc, version: v })) };
+          })()}
           onClose={() => setPreview(null)}
         />
       )}

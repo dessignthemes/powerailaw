@@ -142,6 +142,18 @@ async function loadFonts() {
   return { regular, bold, italic, boldItalic };
 }
 
+// Draws a Word (.docx) version as PDF pages in the browser, only to look at it.
+// Nothing is saved and no new version is made.
+export async function previewWordVersion(versionId: string, title: string): Promise<Uint8Array> {
+  const { docxToPdf } = await import("@/lib/pdf/docxToPdf");
+  const [bytes, fonts] = await Promise.all([fetchVersionBytes(versionId), loadFonts()]);
+  try {
+    return (await docxToPdf(bytes.slice().buffer, fonts, title)).pdf;
+  } catch {
+    throw new UploadError("This Word file couldn't be shown here. Use Download to open it in Word.");
+  }
+}
+
 // Converts a Word (.docx) version to PDF in the browser and saves the PDF as
 // the document's next version. The Word version stays in the history.
 export async function convertWordVersionToPdf(documentId: string, title: string, version: { id: string; versionNumber: number }) {

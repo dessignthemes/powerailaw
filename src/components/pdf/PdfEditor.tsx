@@ -577,6 +577,15 @@ export default function PdfEditor({
             {!isLatest && " (older version)"}
           </div>
         </div>
+        {doc.matterId && (
+          <Link
+            href={`/dashboard/matters/${doc.matterId}?tab=documents`}
+            title={`Back to ${doc.matterTitle ?? "the matter"} (Documents tab)`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-chip border border-btn hover:bg-btn transition-colors"
+          >
+            <ArrowLeft size={13} /> Back to matter
+          </Link>
+        )}
 
         {locked ? (
           <span className="flex items-center gap-1.5 bg-chip px-3 py-1.5 rounded-full text-[13px] font-medium">
