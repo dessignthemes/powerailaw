@@ -33,7 +33,6 @@ import SelectBox from "@/components/SelectBox";
 import { pageBtnB, frameOuter, frameInner, frameTitle } from "@/lib/ui";
 import { MatterPicker, formatWhen, formatSize, type Doc, type DocVersion } from "@/components/pdf/DocumentList";
 import {
-  uploadAnyDocument,
   uploadFileAsVersion,
   convertWordVersionToPdf,
   versionDownloadUrl,
@@ -43,13 +42,11 @@ import { ACCEPT_ATTR, ACCEPTED_SUMMARY, fileTypeLabel, type FileType } from "@/l
 import SendForSignature from "@/components/esign/SendForSignature";
 import SecureMessages from "@/components/matters/SecureMessages";
 import PdfPreview from "@/components/pdf/PdfPreview";
+import { DOCS_CHANGED_EVENT, notifyDocsChanged, enqueueUploads } from "@/lib/uploads/backgroundUploads";
 import { STATUS_LABEL, type SignRequest } from "@/lib/esign/types";
 
 // Lets the matter page know its documents changed (its key dates are re-read).
-export const DOCS_CHANGED_EVENT = "lp:documents-changed";
-const notifyDocsChanged = (matterId: string | null | undefined) => {
-  if (matterId) window.dispatchEvent(new CustomEvent(DOCS_CHANGED_EVENT, { detail: { matterId } }));
-};
+export { DOCS_CHANGED_EVENT };
 
 const typeOf = (v: DocVersion | undefined): FileType => v?.fileType ?? "pdf";
 
@@ -265,6 +262,16 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
     setDocs((list) => list.map((x) => (x.id === doc.id ? (document as Doc) : x)));
     router.push(`/dashboard/power-pdf/${doc.id}?version=${pdf.id}`);
   }
+
+  // Documents added in the background show up as each one finishes.
+  useEffect(() => {
+    const onDocs = (e: Event) => {
+      const id = (e as CustomEvent<{ matterId: string }>).detail?.matterId;
+      if (!fixedMatterId || id === fixedMatterId) reload();
+    };
+    window.addEventListener(DOCS_CHANGED_EVENT, onDocs);
+    return () => window.removeEventListener(DOCS_CHANGED_EVENT, onDocs);
+  }, [fixedMatterId, reload]);
 
   const addButton = (
     <button onClick={() => setAdding(true)} className={pageBtnB}>
@@ -612,7 +619,6 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
           fixedMatterId={fixedMatterId}
           initialMatterId={matterFilter}
           onClose={() => setAdding(false)}
-          onUploaded={() => reload()}
         />
       )}
       {preview && (
@@ -684,18 +690,16 @@ function AddDocumentModal({
   fixedMatterId,
   initialMatterId,
   onClose,
-  onUploaded,
 }: {
   matters: { id: string; title: string }[];
   mattersLoaded: boolean;
   fixedMatterId?: string;
   initialMatterId: string;
   onClose: () => void;
-  onUploaded: () => void;
 }) {
   const [matterId, setMatterId] = useState(fixedMatterId ?? initialMatterId);
   const [files, setFiles] = useState<Pending[]>([]);
-  const [running, setRunning] = useState(false);
+  const running = false; // uploads now run in the background (see BackgroundUploads)
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -713,34 +717,16 @@ function AddDocumentModal({
     if (input.current) input.current.value = "";
   }
 
-  async function upload() {
+  // Hands the files over to the background uploader and closes, so you can
+  // keep working; a small panel at the bottom right shows the progress.
+  function upload() {
     if (!matterId) {
       setError("Choose the matter these documents belong to.");
       return;
     }
-    setError(null);
-    setRunning(true);
-    let ok = 0;
-    let failed = 0;
-    for (let i = 0; i < files.length; i++) {
-      if (files[i].status === "done") continue;
-      setFiles((cur) => cur.map((p, j) => (j === i ? { ...p, status: "uploading", error: undefined } : p)));
-      try {
-        await uploadAnyDocument(matterId, files[i].file);
-        ok++;
-        setFiles((cur) => cur.map((p, j) => (j === i ? { ...p, status: "done" } : p)));
-      } catch (e) {
-        failed++;
-        const msg = e instanceof UploadError ? e.message : "The upload failed. Please try again.";
-        setFiles((cur) => cur.map((p, j) => (j === i ? { ...p, status: "error", error: msg } : p)));
-      }
-    }
-    setRunning(false);
-    if (ok) {
-      onUploaded();
-      notifyDocsChanged(matterId);
-    }
-    if (!failed) onClose();
+    const title = matters.find((m) => m.id === matterId)?.title ?? "Matter";
+    enqueueUploads(matterId, title, files.filter((p) => p.status !== "done").map((p) => p.file));
+    onClose();
   }
 
   const waiting = files.filter((p) => p.status !== "done").length;
@@ -840,7 +826,7 @@ function AddDocumentModal({
             className="bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medium flex items-center gap-1.5 hover:bg-btn-hover transition-colors disabled:opacity-50"
           >
             {running ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} strokeWidth={2} />}
-            {running ? "Uploading…" : waiting > 1 ? `Add ${waiting} documents` : "Add document"}
+            {waiting > 1 ? `Add ${waiting} documents` : "Add document"}
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import UpdateBanner from "@/components/UpdateBanner";
 import NotificationBell from "@/components/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
 import GlobalSearch from "@/components/GlobalSearch";
+import BackgroundUploads from "@/components/documents/BackgroundUploads";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -31,6 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </main>
         </div>
         <UpdateBanner />
+        <BackgroundUploads />
       </IntegrationsModalProvider>
     </WorkspaceDataProvider>
   );
