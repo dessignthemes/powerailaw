@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, ClipboardList, Loader2, Sparkles, FileSearch } from "lucide-react";
+import { ChevronDown, ChevronRight, ClipboardList, Loader2, Sparkles, FileSearch, Contact } from "lucide-react";
 import { layoutFor, estimateToClose, money, type DetailField, type MatterDetails } from "@/lib/matters/details";
 import type { Matter } from "@/components/NewMatterModal";
 import type { KeyDatesApi } from "@/components/matters/KeyDatesCard";
@@ -48,6 +48,33 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
     }
   }
 
+  // Look everyone in Details up in Contacts (fills blanks, adds who's missing).
+  const [matching, setMatching] = useState(false);
+  const [matchNote, setMatchNote] = useState<string | null>(null);
+  async function matchContacts() {
+    setMatching(true);
+    setMatchNote(null);
+    try {
+      const res = await fetch(`/api/matters/${matter.id}/details`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "contacts" }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d?.error ?? "Something went wrong. Please try again.");
+      setDetails(d.details ?? {});
+      const r = d.contacts as { created: number; matched: number; linked: number; filled: number };
+      const parts = [
+        r.matched ? `${r.matched} found in Contacts` : "",
+        r.created ? `${r.created} added to Contacts` : "",
+        r.filled ? `${r.filled} ${r.filled === 1 ? "detail" : "details"} filled from contact cards` : "",
+        r.linked ? `${r.linked} put on this matter's contacts` : "",
+      ].filter(Boolean);
+      setMatchNote(parts.length ? `${parts.join(" · ")}.` : "Nothing new: everyone here is already in Contacts.");
+      setError(null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setMatching(false);
+    }
+  }
+
   const filled = details ? Object.keys(details).length : 0;
 
   return (
@@ -57,16 +84,31 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
         <span className="text-[14px] font-semibold">Details</span>
         {matter.matterNumber && <span className="text-[12.5px] text-muted">{matter.matterNumber}</span>}
         <button
+          onClick={() => void matchContacts()}
+          disabled={matching || !filled}
+          title="Look up every person and company here in Contacts: fill empty fields from their cards, add anyone missing (under their company), and put them on this matter"
+          className="ml-auto flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors"
+        >
+          {matching ? <Loader2 size={12} className="animate-spin" /> : <Contact size={12} strokeWidth={1.75} />}
+          {matching ? "Matching…" : "Match with Contacts"}
+        </button>
+        <button
           onClick={() => void keyDates.refresh()}
           disabled={keyDates.reading}
           title="Read the matter's documents and fill in what they say (fields you typed are kept)"
-          className="ml-auto flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors"
+          className="flex items-center gap-1.5 bg-chip hover:bg-btn disabled:opacity-50 px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors"
         >
           {keyDates.reading ? <Loader2 size={12} className="animate-spin" /> : <FileSearch size={12} strokeWidth={1.75} />}
           {keyDates.reading ? "Reading…" : "Fill from documents"}
         </button>
       </div>
       {error && <div className="mx-4 mt-3 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-3 py-2 text-[12.5px]">{error}</div>}
+      {matchNote && (
+        <div className="mx-4 mt-3 rounded-xl bg-[#E8F6EE] text-[#1F7A4D] px-3 py-2 text-[12.5px] flex items-start gap-2">
+          <span className="flex-1">{matchNote}</span>
+          <button onClick={() => setMatchNote(null)} className="underline underline-offset-2">OK</button>
+        </div>
+      )}
       {details === null ? (
         <div className="p-4 text-[13px] text-muted flex items-center gap-2">
           <Loader2 size={13} className="animate-spin" /> Loading…
@@ -167,7 +209,7 @@ function FieldRow({ field, value, hint, onSave }: { field: DetailField; value?: 
           }`}
         />
         {fromDocs && (
-          <span title={`From ${value.source}`} className="absolute right-1.5 text-[#7C6CF2]">
+          <span title={value.source === "Contacts" ? "From the contact card in Contacts" : `From ${value.source}`} className="absolute right-1.5 text-[#7C6CF2]">
             <Sparkles size={11} />
           </span>
         )}

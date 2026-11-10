@@ -1,4 +1,5 @@
 import "server-only";
+import { syncDetailsWithContacts } from "@/lib/contacts/detailsSync";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, aiConfig, dailyLimitMessage } from "@/lib/ai/provider";
@@ -678,6 +679,9 @@ async function saveReadDetails(ctx: AiCtx, matterId: string, read: MatterDetails
   const next: MatterDetails = { ...current };
   for (const [k, v] of Object.entries(read)) if (!current[k]?.manual) next[k] = v;
   await s.from("matters").update({ details: next }).eq("id", matterId).eq("org_id", ctx.orgId);
+  // Look the people and companies up in Contacts: fill blanks from their cards,
+  // add the ones that aren't there yet, and put them on the matter.
+  await syncDetailsWithContacts(ctx.orgId, ctx.userId, matterId).catch((e) => console.error("Details → Contacts failed:", e));
 }
 
 // ── Field lists per matter type ───────────────────────────────────────────────
