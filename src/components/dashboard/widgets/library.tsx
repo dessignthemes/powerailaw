@@ -148,39 +148,29 @@ function DueCard({ d, small }: { d: DashData; small?: boolean }) {
   );
 }
 
+const OVERDUE_RED = "#D92D20";
 function PriorityCard({ d, small }: { d: DashData; small?: boolean }) {
-  const n = (p: string) => d.dueTasks.filter((t) => t.priority === p).length;
-  const lateOf = (p: string) => d.dueTasks.filter((t) => t.priority === p && isOverdue(t)).length;
-  const late = d.dueTasks.filter(isOverdue).length;
+  const n = (p: string) => (p === "Overdue" ? d.dueTasks.filter(isOverdue).length : d.dueTasks.filter((t) => t.priority === p).length);
   return (
     <>
       <div className={`${small ? "text-[16px]" : "text-[22px]"} leading-tight font-display font-semibold mb-1`}>
         {d.tasksLoaded ? d.dueTasks.length : "–"} {d.dueTasks.length === 1 ? "task" : "tasks"} by priority
       </div>
-      {d.tasksLoaded && (
-        <div className={`${small ? "text-[12px]" : "text-[13px]"} ${late ? "text-[#B42318] font-medium" : "text-muted"}`}>
-          {late ? `${late} overdue (past the due date)` : "Nothing overdue"}
-        </div>
-      )}
       <div className={`${small ? "mt-2" : "mt-4"} flex flex-col gap-1.5`}>
-        {(["High", "Medium", "Low"] as const).map((p) => {
+        {(["High", "Medium", "Low", "Overdue"] as const).map((p) => {
           const count = n(p);
-          const lateN = lateOf(p);
           const active = d.priorityFilter === p;
           return (
             <button
               key={p}
               onClick={() => d.setPriorityFilter(active ? null : p)}
               disabled={!count && !active}
-              style={{ borderLeftColor: priorityMeta[p].bg }}
-              title={count ? `Show only ${p.toLowerCase()} priority in the Tasks widget${lateN ? ` (${lateN} overdue)` : ""}` : undefined}
+              style={{ borderLeftColor: p === "Overdue" ? OVERDUE_RED : priorityMeta[p].bg }}
+              title={count ? (p === "Overdue" ? "Show only overdue tasks in the Tasks widget" : `Show only ${p.toLowerCase()} priority in the Tasks widget`) : undefined}
               className={`group/row flex items-center gap-2 pl-2.5 pr-3 ${small ? "py-1 text-[13px] border-l-[6px]" : "py-2 text-[14.5px] border-l-[8px]"} rounded-xl font-medium text-ink bg-[#F4F6FA] hover:bg-[#EAEEF5] transition-colors disabled:opacity-45 ${active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""}`}
             >
               <span className="font-semibold tabular-nums w-5 text-right">{d.tasksLoaded ? count : "–"}</span>
               <span className="truncate flex-1 text-left">{p}</span>
-              {lateN > 0 && (
-                <span className={`flex-shrink-0 rounded-md px-1.5 ${small ? "text-[11px]" : "text-[12px]"} font-semibold bg-[#FDECEC] text-[#B42318]`}>{lateN} overdue</span>
-              )}
               <span className="opacity-70 group-hover/row:opacity-100">→</span>
             </button>
           );
@@ -233,7 +223,7 @@ function CalendarCard({ d, small }: { d: DashData; small?: boolean }) {
 }
 
 function TasksList({ d }: { d: DashData }) {
-  const due = d.priorityFilter ? d.dueTasks.filter((t) => t.priority === d.priorityFilter) : d.dueTasks;
+  const due = !d.priorityFilter ? d.dueTasks : d.priorityFilter === "Overdue" ? d.dueTasks.filter(isOverdue) : d.dueTasks.filter((t) => t.priority === d.priorityFilter);
   if (!d.tasksLoaded) return <div className="text-[14px] text-muted m-auto">Loading tasks…</div>;
   if (!due.length && !d.undatedTasks.length)
     return <Empty icon={ListChecks} title={`Nothing due ${d.rangeWord}`} sub="New tasks show up here." />;

@@ -32,7 +32,7 @@ void PRIORITIES;
 export default function DashboardHome() {
   const [range, setRange] = useState<RangeKey>("today");
   // Clicking a priority on the "By priority" card shows only those tasks below.
-  const [priorityFilter, setPriorityFilter] = useState<(typeof PRIORITIES)[number] | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<(typeof PRIORITIES)[number] | "Overdue" | null>(null);
 
   // Greeting follows the user's own clock (set in the browser, refreshed every minute).
   const [greeting, setGreeting] = useState<string | null>(null);

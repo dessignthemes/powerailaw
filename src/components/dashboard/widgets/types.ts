@@ -46,8 +46,8 @@ export type DashData = {
   openEvent: (e: DashEvent) => void;
   toggleDone: (t: BoardTask) => void;
   renderTaskRow: (t: BoardTask) => React.ReactNode;
-  priorityFilter: "High" | "Medium" | "Low" | null;
-  setPriorityFilter: (p: "High" | "Medium" | "Low" | null) => void;
+  priorityFilter: "High" | "Medium" | "Low" | "Overdue" | null;
+  setPriorityFilter: (p: "High" | "Medium" | "Low" | "Overdue" | null) => void;
   setScope: (s: string) => void;
   fmtTime: (e: DashEvent) => string;
   eventStart: (e: DashEvent) => Date;
