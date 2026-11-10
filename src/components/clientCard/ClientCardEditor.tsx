@@ -45,7 +45,7 @@ function Heading({ children }: { children: React.ReactNode }) {
 }
 function Field({ label, children, wide }: { label: string; children: React.ReactNode; wide?: boolean }) {
   return (
-    <label className={`grid grid-cols-[130px_1fr] items-center gap-3 ${wide ? "md:col-span-2" : ""}`}>
+    <label className={`grid grid-cols-[130px_1fr] items-center gap-3 min-w-0 ${wide ? "@3xl:col-span-2" : ""}`}>
       <span className="text-[13.5px] text-muted">{label}</span>
       {children}
     </label>
@@ -495,7 +495,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
         </aside>
 
         {/* Right panel */}
-        <section className="bg-white p-6 md:p-8 overflow-x-auto">
+        <section className="@container bg-white p-6 md:p-8 min-w-0">
           {section === "person" && cardType === "person" && <PersonView person={person} setPerson={setPerson} photo={profile.photo} setPhoto={(ph) => setP((p) => ({ ...p, photo: ph }))} />}
           {section === "person" && cardType === "company" && <CompanyView profile={profile} setP={setP} photo={profile.photo} setPhoto={(ph) => setP((p) => ({ ...p, photo: ph }))} />}
           {section === "intake" && <IntakeView profile={profile} setP={setP} cardType={cardType} />}
@@ -597,7 +597,7 @@ function PersonView({ person: p, setPerson, photo, setPhoto }: { person: Person;
       <Tabs value={tab} onChange={setTab} items={[["general", "General"], ["other", "Other"], ["extra", "Additional Fields"]]} />
       {tab === "general" && (
         <>
-          <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+          <div className="grid @3xl:grid-cols-2 gap-x-8 gap-y-3">
             <label className="grid grid-cols-[130px_96px_1fr] items-center gap-2">
               <span className="text-[13.5px] text-muted">First name</span>
               <select
@@ -618,9 +618,9 @@ function PersonView({ person: p, setPerson, photo, setPhoto }: { person: Person;
             <Field label="Suffix"><input value={p.suffix} onChange={(e) => setPerson({ suffix: e.target.value })} placeholder="Jr., Sr., III, Esq." className={input} /></Field>
             <Field label="Middle name"><input value={p.middle} onChange={(e) => setPerson({ middle: e.target.value })} className={input} /></Field>
             <Field label="Gender">
-              <div className="flex gap-4 text-[13.5px]">
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[13.5px]">
                 {(["Male", "Female", "Other"] as const).map((g) => (
-                  <label key={g} className="flex items-center gap-1.5"><input type="radio" checked={p.gender === g} onChange={() => setPerson({ gender: g })} className="accent-black" /> {g}</label>
+                  <label key={g} className="flex items-center gap-1.5 whitespace-nowrap cursor-pointer"><input type="radio" checked={p.gender === g} onChange={() => setPerson({ gender: g })} className="accent-black" /> {g}</label>
                 ))}
               </div>
             </Field>
@@ -633,12 +633,12 @@ function PersonView({ person: p, setPerson, photo, setPhoto }: { person: Person;
             <Field label="Previous names"><input value={p.previousNames} onChange={(e) => setPerson({ previousNames: e.target.value })} className={input} /></Field>
           </div>
           <Heading>Contact</Heading>
-          <div className="grid md:grid-cols-[1fr_150px] gap-8 items-start">
+          <div className="grid @xl:grid-cols-[1fr_150px] gap-8 items-start">
             <ContactLines lines={p.contacts} onChange={(contacts) => setPerson({ contacts })} />
             <PhotoBox photo={photo} setPhoto={setPhoto} />
           </div>
           <Heading>Birth / Death</Heading>
-          <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+          <div className="grid @3xl:grid-cols-2 gap-x-8 gap-y-3">
             <Field label="Date of birth">
               <div className="flex items-center gap-3">
                 <input type="date" value={p.dob} onChange={(e) => setPerson({ dob: e.target.value })} className={input} />
@@ -654,7 +654,7 @@ function PersonView({ person: p, setPerson, photo, setPhoto }: { person: Person;
         </>
       )}
       {tab === "other" && (
-        <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+        <div className="grid @3xl:grid-cols-2 gap-x-8 gap-y-3">
           <Field label="Occupation"><input value={p.occupation} onChange={(e) => setPerson({ occupation: e.target.value })} className={input} /></Field>
           <Field label="Employer"><input value={p.employer} onChange={(e) => setPerson({ employer: e.target.value })} className={input} /></Field>
           <Field label="Education"><input value={p.education} onChange={(e) => setPerson({ education: e.target.value })} placeholder="Highest level, school" className={input} /></Field>
@@ -663,7 +663,7 @@ function PersonView({ person: p, setPerson, photo, setPhoto }: { person: Person;
           <Field label="SSN (last 4)">
             <input value={p.ssnLast4} onChange={(e) => setPerson({ ssnLast4: e.target.value.replace(/\D/g, "").slice(0, 4) })} inputMode="numeric" placeholder="1234" className={input} />
           </Field>
-          <p className="md:col-span-2 text-[12.5px] text-muted">Only the last 4 digits of a Social Security number are kept here, to limit sensitive data on file.</p>
+          <p className="@3xl:col-span-2 text-[12.5px] text-muted">Only the last 4 digits of a Social Security number are kept here, to limit sensitive data on file.</p>
         </div>
       )}
       {tab === "extra" && (
@@ -691,7 +691,7 @@ function CompanyView({ profile, setP, photo, setPhoto }: { profile: Profile; set
   return (
     <div>
       <div className="text-[13px] font-semibold uppercase tracking-wide text-muted mb-5">Company details</div>
-      <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+      <div className="grid @3xl:grid-cols-2 gap-x-8 gap-y-3">
         <Field label="Company name"><input value={c.name} onChange={(e) => set({ name: e.target.value })} className={input} /></Field>
         <Field label="Legal name"><input value={c.legalName} onChange={(e) => set({ legalName: e.target.value })} placeholder="If different" className={input} /></Field>
         <Field label="Entity type">
@@ -702,7 +702,7 @@ function CompanyView({ profile, setP, photo, setPhoto }: { profile: Profile; set
         <Field label="EIN"><input value={c.ein} onChange={(e) => set({ ein: e.target.value })} placeholder="12-3456789" className={input} /></Field>
       </div>
       <Heading>Contact</Heading>
-      <div className="grid md:grid-cols-[1fr_150px] gap-8 items-start">
+      <div className="grid @xl:grid-cols-[1fr_150px] gap-8 items-start">
         <ContactLines lines={c.contacts} onChange={(contacts) => set({ contacts })} />
         <PhotoBox photo={photo} setPhoto={setPhoto} />
       </div>
@@ -753,7 +753,7 @@ function ContactPeople({ entityType, people, onChange }: { entityType: string; p
                 <X size={14} />
               </button>
             </div>
-            <div className="grid md:grid-cols-2 gap-x-6 gap-y-3">
+            <div className="grid @3xl:grid-cols-2 gap-x-6 gap-y-3">
               <Field label="Name">
                 <input value={p.name} onChange={(e) => setOne(p.id, { name: e.target.value })} placeholder="e.g. John Smith" className={input} />
               </Field>
@@ -802,7 +802,7 @@ function DetailsView({ cardType, profile, setP, person, setPerson, auto }: {
         <ContactLines lines={profile.company.contacts} onChange={(contacts) => setP((p) => ({ ...p, company: { ...p.company, contacts } }))} />
       )}
       <Heading>Letter</Heading>
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid @3xl:grid-cols-2 gap-6">
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[13.5px] text-muted">Letter title (address block)</span>
@@ -832,7 +832,7 @@ function DetailsView({ cardType, profile, setP, person, setPerson, auto }: {
 
 function AddressFields({ a, set }: { a: Profile["address"]["street"]; set: (patch: Partial<Profile["address"]["street"]>) => void }) {
   return (
-    <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+    <div className="grid @3xl:grid-cols-2 gap-x-8 gap-y-3">
       <Field label="Building name" wide><input value={a.building} onChange={(e) => set({ building: e.target.value })} className={input} /></Field>
       <Field label="Street" wide><input value={a.street} onChange={(e) => set({ street: e.target.value })} placeholder="123 Main St" className={input} /></Field>
       <label className="grid grid-cols-[130px_96px_1fr] items-center gap-2">
@@ -883,7 +883,7 @@ function AddressView({ profile, setP }: { profile: Profile; setP: (fn: (p: Profi
           )}
         </>
       ) : (
-        <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+        <div className="grid @3xl:grid-cols-2 gap-x-8 gap-y-3">
           <Field label="P.O. Box"><input value={b.box} onChange={(e) => setBox({ box: e.target.value })} className={input} /></Field>
           <Field label="Town / City"><input value={b.city} onChange={(e) => setBox({ city: e.target.value })} className={input} /></Field>
           <Field label="State"><input value={b.state} onChange={(e) => setBox({ state: e.target.value })} className={input} /></Field>
@@ -904,7 +904,7 @@ function NotesView({ profile, setP }: { profile: Profile; setP: (fn: (p: Profile
       <div className="text-[13px] font-semibold uppercase tracking-wide text-muted mb-3">Notes &amp; other</div>
       <textarea value={profile.notes} onChange={(e) => setP((p) => ({ ...p, notes: e.target.value }))} rows={10} placeholder="Enter your notes here…" className={`${input} resize-y`} />
       <Heading>Bank account</Heading>
-      <div className="grid md:grid-cols-3 gap-3">
+      <div className="grid @2xl:grid-cols-3 gap-3">
         <label className="grid gap-1"><span className="text-[13px] text-muted">Routing no.</span><input value={bank.routing} onChange={(e) => setBank({ routing: e.target.value.replace(/\D/g, "").slice(0, 9) })} inputMode="numeric" className={input} /></label>
         <label className="grid gap-1">
           <span className="text-[13px] text-muted flex items-center justify-between">Account no.
@@ -914,7 +914,7 @@ function NotesView({ profile, setP }: { profile: Profile; setP: (fn: (p: Profile
         </label>
         <label className="grid gap-1"><span className="text-[13px] text-muted">Account name</span><input value={bank.name} onChange={(e) => setBank({ name: e.target.value })} className={input} /></label>
       </div>
-      <div className="grid md:grid-cols-3 gap-3 mt-3">
+      <div className="grid @2xl:grid-cols-3 gap-3 mt-3">
         <label className="grid gap-1"><span className="text-[13px] text-muted">Name of bank</span><input value={bank.institution} onChange={(e) => setBank({ institution: e.target.value })} className={input} /></label>
         <label className="grid gap-1"><span className="text-[13px] text-muted">Bank phone</span><input value={bank.phone} onChange={(e) => setBank({ phone: e.target.value })} type="tel" className={input} /></label>
         <label className="grid gap-1"><span className="text-[13px] text-muted">Bank address</span><input value={bank.address} onChange={(e) => setBank({ address: e.target.value })} className={input} /></label>
@@ -1182,7 +1182,7 @@ function IntakeView({ profile, setP, cardType }: { profile: Profile; setP: (fn: 
     <div>
       <div className="text-[13px] font-semibold uppercase tracking-wide text-muted mb-5">Intake</div>
       <Heading>Reason for visit</Heading>
-      <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+      <div className="grid @3xl:grid-cols-2 gap-x-8 gap-y-3">
         <Field label="Referred by"><input value={it.referredBy} onChange={(e) => set({ referredBy: e.target.value })} placeholder="Person, website, ad…" className={input} /></Field>
         <Field label="Practice area">
           <select value={it.practiceArea} onChange={(e) => set({ practiceArea: e.target.value })} className={`${smallSelect} w-full`}>
@@ -1209,7 +1209,7 @@ function IntakeView({ profile, setP, cardType }: { profile: Profile; setP: (fn: 
       {cardType === "person" && (
         <>
           <Heading>Family</Heading>
-          <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+          <div className="grid @3xl:grid-cols-2 gap-x-8 gap-y-3">
             <Field label="Date of marriage"><input type="date" value={it.marriageDate} onChange={(e) => set({ marriageDate: e.target.value })} className={input} /></Field>
             <Field label="Children">
               <div className="flex gap-4 text-[13.5px]">
