@@ -4,17 +4,18 @@ import ClickAway from "@/components/ClickAway";
 import { menuPanel, frameOuter, frameInner, frameTitle, pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download, Plus, ShieldCheck } from "lucide-react";
+import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download, Plus, ShieldCheck, Landmark, ScrollText } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { getInitials, getAvatarColor, formatUpdatedAt } from "@/components/NewClientModal";
 import NewMatterModal from "@/components/NewMatterModal";
 import ContactModal from "@/components/records/ContactModal";
 import ImportContactsModal, { type ImportSource } from "@/components/records/ImportContactsModal";
+import CardsImportModal from "@/components/records/CardsImportModal";
 import RunConflictModal from "@/components/conflicts/RunConflictModal";
 import type { Contact, ContactInput, ContactKind } from "@/lib/records/contactTypes";
 
-type Kind = "client" | "matter" | "person" | "company";
-type Tab = "all" | Kind;
+type Kind = "client" | "matter" | "person" | "company" | "trust" | "estate";
+type Tab = "all" | "client" | "vendor" | "matter" | "person" | "company" | "trustEstate";
 
 type Row = {
   key: string;
@@ -22,6 +23,8 @@ type Row = {
   id: string;
   name: string;
   detail: string[];
+  cat: string; // "client" | "vendor" | "other" | "" (contacts) — client cards count as clients
+  tag: string; // e.g. "Vendor · Title company"
   search: string;
   updatedAt: string;
 };
@@ -29,20 +32,32 @@ type Row = {
 const TABS: { key: Tab; label: string }[] = [
   { key: "all", label: "Everything" },
   { key: "client", label: "Clients" },
+  { key: "vendor", label: "Vendors" },
   { key: "matter", label: "Matters" },
   { key: "person", label: "People" },
   { key: "company", label: "Companies" },
+  { key: "trustEstate", label: "Trusts & estates" },
 ];
 
-const KIND_LABEL: Record<Kind, string> = { client: "Client", matter: "Matter", person: "Person", company: "Company" };
-const EMPTY_LABEL: Record<Kind, string> = { client: "clients", matter: "matters", person: "people", company: "companies" };
+const KIND_LABEL: Record<Kind, string> = { client: "Client", matter: "Matter", person: "Person", company: "Company", trust: "Trust", estate: "Estate" };
+const EMPTY_LABEL: Record<Tab, string> = { all: "contacts", client: "clients", vendor: "vendors", matter: "matters", person: "people", company: "companies", trustEstate: "trusts or estates" };
 const EMPTY_HINT: Record<Tab, string> = {
   all: "Add clients, matters, and the people and companies involved in your cases.",
-  client: "Add the people and businesses you represent.",
+  client: "Add the people and businesses you represent. Clients are included in conflict checks.",
+  vendor: "Title companies, law firms, lenders and other companies the firm works with (and their people).",
   matter: "Add a case or piece of work for a client.",
   person: "Add opposing counsel, witnesses, experts and anyone else involved in a matter.",
   company: "Add courts, opposing parties, vendors and other organizations.",
+  trustEstate: "Trusts and estates the firm works for or with.",
 };
+// Which tab a row belongs to (a row can be in several: a vendor company is in Vendors and Companies).
+const inTab = (r: { kind: Kind; cat: string }, t: Tab) =>
+  t === "all" ||
+  (t === "client" && (r.kind === "client" || r.cat === "client")) ||
+  (t === "vendor" && r.cat === "vendor") ||
+  (t === "trustEstate" && (r.kind === "trust" || r.kind === "estate")) ||
+  r.kind === t;
+const PAGE = 200;
 
 async function readJson(res: Response) {
   const data = await res.json().catch(() => ({}));
@@ -69,8 +84,10 @@ export default function RecordsPage() {
 
   const [adding, setAdding] = useState<Kind | null>(null);
   const [importing, setImporting] = useState<ImportSource | null>(null);
+  const [cardsImport, setCardsImport] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [limit, setLimit] = useState(PAGE);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,6 +121,10 @@ export default function RecordsPage() {
   }, []);
 
   const loaded = clientsLoaded && mattersLoaded && contactsLoaded;
+  const companyList = useMemo(
+    () => contacts.filter((c) => c.kind === "company").map((c) => ({ id: c.id, name: c.name, category: c.category })).sort((a, b) => a.name.localeCompare(b.name)),
+    [contacts],
+  );
   const clientName = useCallback((id: string | null) => (id ? clients.find((c) => c.id === id)?.name ?? null : null), [clients]);
   const matterTitle = useCallback((id: string | null) => (id ? matters.find((m) => m.id === id)?.title ?? null : null), [matters]);
 
@@ -115,6 +136,8 @@ export default function RecordsPage() {
       out.push({
         key: `client:${c.id}`,
         kind: "client",
+        cat: "client",
+        tag: "",
         id: c.id,
         name: c.name,
         detail,
@@ -132,6 +155,8 @@ export default function RecordsPage() {
       out.push({
         key: `matter:${m.id}`,
         kind: "matter",
+        cat: "",
+        tag: "",
         id: m.id,
         name: m.title,
         detail,
@@ -139,12 +164,19 @@ export default function RecordsPage() {
         updatedAt: m.updatedAt,
       });
     }
+    const byId = new Map(contacts.map((c) => [c.id, c]));
+    const staff = new Map<string, number>();
+    for (const c of contacts) if (c.employerId) staff.set(c.employerId, (staff.get(c.employerId) ?? 0) + 1);
     for (const p of contacts) {
       const matter = matterTitle(p.matterId);
       const client = clientName(p.clientId);
+      const employer = p.employerId ? byId.get(p.employerId)?.name ?? p.company : p.company;
+      const n = staff.get(p.id) ?? 0;
       const detail = [
         p.role,
-        p.kind === "person" ? p.company : "",
+        p.kind === "person" && employer ? `at ${employer}` : "",
+        p.kind !== "person" && n ? plural(n, "person", "people") : "",
+        [p.city, p.state].filter(Boolean).join(", "),
         p.email ?? "",
         p.phone ?? "",
         matter ? `Matter: ${matter}` : "",
@@ -153,10 +185,12 @@ export default function RecordsPage() {
       out.push({
         key: `${p.kind}:${p.id}`,
         kind: p.kind,
+        cat: p.category,
+        tag: p.category === "vendor" ? ["Vendor", p.vendorType].filter(Boolean).join(" · ") : p.category === "client" ? "Client" : "",
         id: p.id,
         name: p.name,
         detail,
-        search: [p.name, p.notes, p.address ?? "", ...detail].join(" "),
+        search: [p.name, p.shortName, p.notes, p.address ?? "", p.mobile ?? "", p.vendorType, ...detail].join(" "),
         updatedAt: p.updatedAt,
       });
     }
@@ -164,15 +198,15 @@ export default function RecordsPage() {
   }, [clients, matters, contacts, clientName, matterTitle]);
 
   const counts = useMemo(() => {
-    const c: Record<Tab, number> = { all: rows.length, client: 0, matter: 0, person: 0, company: 0 };
-    for (const r of rows) c[r.kind]++;
+    const c: Record<Tab, number> = { all: rows.length, client: 0, vendor: 0, matter: 0, person: 0, company: 0, trustEstate: 0 };
+    for (const r of rows) for (const t of TABS) if (t.key !== "all" && inTab(r, t.key)) c[t.key]++;
     return c;
   }, [rows]);
 
   const q = query.trim().toLowerCase();
   const shown = useMemo(() => {
     const words = q.split(/\s+/).filter(Boolean);
-    return rows.filter((r) => (tab === "all" || r.kind === tab) && words.every((w) => r.search.toLowerCase().includes(w)));
+    return rows.filter((r) => inTab(r, tab) && words.every((w) => r.search.toLowerCase().includes(w)));
   }, [rows, tab, q]);
 
   function open(r: Row) {
@@ -232,7 +266,7 @@ export default function RecordsPage() {
                 role="menu"
                 className={`absolute right-0 top-[calc(100%+14px)] z-50 w-[240px] ${menuPanel}`}
               >
-                {(["client", "matter", "person", "company"] as Kind[]).map((k) => (
+                {(["client", "matter", "person", "company", "trust", "estate"] as Kind[]).map((k) => (
                   <button
                     key={k}
                     role="menuitem"
@@ -250,15 +284,17 @@ export default function RecordsPage() {
                     ["outlook", "From Microsoft Outlook"],
                     ["iphone", "From iPhone / iCloud"],
                     ["ringcentral", "From RingCentral"],
+                    ["cards", "From Excel (Cards)"],
                     ["csv", "From a CSV file"],
-                  ] as [ImportSource, string][]
+                  ] as [ImportSource | "cards", string][]
                 ).map(([k, label]) => (
                   <button
                     key={k}
                     role="menuitem"
                     onClick={() => {
                       setMenuOpen(false);
-                      setImporting(k);
+                      if (k === "cards") setCardsImport(true);
+                      else setImporting(k);
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F4F6FA] transition-colors"
                   >
@@ -286,7 +322,10 @@ export default function RecordsPage() {
           {TABS.map((t) => (
             <button
               key={t.key}
-              onClick={() => setTab(t.key)}
+              onClick={() => {
+                setTab(t.key);
+                setLimit(PAGE);
+              }}
               className={tab === t.key ? pageBtnOpenB : pageBtnB}
             >
               {t.label} <span className={tab === t.key ? "text-ink/60" : "text-muted font-normal"}>{loaded ? counts[t.key] : ""}</span>
@@ -297,7 +336,10 @@ export default function RecordsPage() {
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setLimit(PAGE);
+            }}
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Find a contact..."
             aria-label="Find a contact"
@@ -354,8 +396,8 @@ export default function RecordsPage() {
                     <Plus size={14} /> Add contact
                   </button>
                 ) : (
-                  <button onClick={() => startAdd(tab)} className={`${pageBtnB} mx-auto`}>
-                    <Plus size={14} /> Add {KIND_LABEL[tab].toLowerCase()}
+                  <button onClick={() => startAdd(tab === "vendor" ? "company" : tab === "trustEstate" ? "trust" : tab)} className={`${pageBtnB} mx-auto`}>
+                    <Plus size={14} /> Add {tab === "vendor" ? "vendor" : tab === "trustEstate" ? "trust" : KIND_LABEL[tab].toLowerCase()}
                   </button>
                 )}
               </>
@@ -363,7 +405,7 @@ export default function RecordsPage() {
           </div>
         ) : (
           <div className={`${frameInner} p-2 flex flex-col gap-1.5`}>
-            {shown.map((r) => (
+            {shown.slice(0, limit).map((r) => (
               <button
                 key={r.key}
                 onClick={() => open(r)}
@@ -376,6 +418,15 @@ export default function RecordsPage() {
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white border border-[#E1E5EE] text-[11.5px] font-medium text-ink flex-shrink-0">
                       {KIND_LABEL[r.kind]}
                     </span>
+                    {r.tag && (
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11.5px] font-medium flex-shrink-0 border ${
+                          r.cat === "vendor" ? "bg-[#FFF4E5] border-[#F6D4A6] text-[#8A4B14]" : "bg-[#E8F6EE] border-[#B9D6B2] text-[#1F7A4D]"
+                        }`}
+                      >
+                        {r.tag}
+                      </span>
+                    )}
                   </div>
                   {r.detail.length > 0 && <div className="text-[12.5px] text-muted truncate">{r.detail.join(" · ")}</div>}
                 </div>
@@ -383,6 +434,11 @@ export default function RecordsPage() {
                 <ChevronRight size={16} strokeWidth={1.75} className="text-muted flex-shrink-0" />
               </button>
             ))}
+            {shown.length > limit && (
+              <button onClick={() => setLimit((l) => l + PAGE * 2)} className={`${pageBtnB} mx-auto my-2`}>
+                Show more ({(shown.length - limit).toLocaleString()} more)
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -397,7 +453,7 @@ export default function RecordsPage() {
           }}
         />
       )}
-      {(adding === "person" || adding === "company") &&
+      {(adding === "person" || adding === "company" || adding === "trust" || adding === "estate") &&
         (setupRequired ? (
           <SetupModal onClose={() => setAdding(null)} />
         ) : (
@@ -405,10 +461,12 @@ export default function RecordsPage() {
             initialKind={adding as ContactKind}
             clients={clients}
             matters={matters}
+            companies={companyList}
             onClose={() => setAdding(null)}
             onSave={(input) => saveContact(input)}
           />
         ))}
+      {cardsImport && <CardsImportModal onClose={() => setCardsImport(false)} onImported={() => setReloadKey((k) => k + 1)} />}
       {importing && <ImportContactsModal source={importing} onClose={() => setImporting(null)} onImported={() => setReloadKey((k) => k + 1)} />}
       {conflictOpen && (
         <RunConflictModal
@@ -423,9 +481,13 @@ export default function RecordsPage() {
       {editingContact && (
         <ContactModal
           contact={editingContact}
+          key={editingContact.id}
           initialKind={editingContact.kind}
           clients={clients}
           matters={matters}
+          companies={companyList}
+          allContacts={contacts}
+          onOpenContact={(c) => setEditingContact(c)}
           onClose={() => setEditingContact(null)}
           onSave={(input) => saveContact(input, editingContact.id)}
           onDelete={() => deleteContact(editingContact.id)}
@@ -440,6 +502,8 @@ function KindIcon({ kind }: { kind: Kind }) {
   if (kind === "client") return <CircleUser {...p} />;
   if (kind === "matter") return <Briefcase {...p} />;
   if (kind === "person") return <User {...p} />;
+  if (kind === "trust") return <Landmark {...p} />;
+  if (kind === "estate") return <ScrollText {...p} />;
   return <Building2 {...p} />;
 }
 
@@ -457,7 +521,15 @@ function Avatar({ kind, name }: { kind: Kind; name: string }) {
   return (
     // Matters and companies: dark slate circle with a white icon (as visible as the people's initials).
     <span className="w-8 h-8 rounded-full bg-[#5E6E8C] flex items-center justify-center flex-shrink-0">
-      {kind === "matter" ? <Briefcase size={15} strokeWidth={1.9} className="text-white" /> : <Building2 size={15} strokeWidth={1.9} className="text-white" />}
+      {kind === "matter" ? (
+        <Briefcase size={15} strokeWidth={1.9} className="text-white" />
+      ) : kind === "trust" ? (
+        <Landmark size={15} strokeWidth={1.9} className="text-white" />
+      ) : kind === "estate" ? (
+        <ScrollText size={15} strokeWidth={1.9} className="text-white" />
+      ) : (
+        <Building2 size={15} strokeWidth={1.9} className="text-white" />
+      )}
     </span>
   );
 }

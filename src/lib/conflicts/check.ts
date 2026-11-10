@@ -106,7 +106,8 @@ async function firmParties(orgId: string, excludeClientId: string | null) {
   if (cQ.error) cQ = (await s.from("clients").select("id, name, email, phone").eq("org_id", orgId).limit(20000)) as typeof cQ;
   if (cQ.error) throw cQ.error;
   const mc = await s.from("matter_contacts").select("matter_id, contact_id, client_id, role").eq("org_id", orgId).limit(50000);
-  const contacts = await s.from("contacts").select("id, name, company, email, phone").eq("org_id", orgId).limit(50000);
+  let contacts = await s.from("contacts").select("id, name, company, email, phone, category").eq("org_id", orgId).limit(50000);
+  if (contacts.error) contacts = (await s.from("contacts").select("id, name, company, email, phone").eq("org_id", orgId).limit(50000)) as typeof contacts;
 
   const matters = (mQ.data ?? []) as MatterRow[];
   const clients = new Map(((cQ.data ?? []) as ClientRow[]).map((c) => [c.id, c]));
@@ -155,6 +156,11 @@ async function firmParties(orgId: string, excludeClientId: string | null) {
       if (!c) continue;
       for (const n of [c.name, c.company].filter((x) => x && x.trim())) parties.push({ matterId: r.matter_id, name: n, role, side, emails: c.email ? [c.email] : [], phones: c.phone ? [c.phone] : [], source: "matter_contact" });
     }
+  }
+  // Contacts marked Client (e.g. imported from the firm's card list) are clients on file too.
+  for (const c of (contacts.data ?? []) as { id: string; name: string; company: string; email: string | null; phone: string | null; category?: string }[]) {
+    if (c.category !== "client") continue;
+    parties.push({ matterId: null, name: c.name, role: "Client on file (Contacts)", side: "client", emails: c.email ? [c.email] : [], phones: c.phone ? [c.phone] : [], source: "client_record" });
   }
   // Clients with no matter yet: worth knowing they're already on file.
   for (const c of clients.values()) if (!linkedClients.has(c.id) && c.id !== excludeClientId) clientParties(c, null, "Client record (no matter)", "client", "client_record");

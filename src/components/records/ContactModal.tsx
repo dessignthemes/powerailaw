@@ -2,9 +2,9 @@
 
 import MatterLinks from "@/components/matters/MatterLinks";
 import { useEffect, useState } from "react";
-import { X, Loader2, Trash2, User, Building2 } from "lucide-react";
+import { X, Loader2, Trash2, User, Building2, Landmark, ScrollText, Users } from "lucide-react";
 import SelectBox from "@/components/SelectBox";
-import { COMPANY_ROLES, PERSON_ROLES, type Contact, type ContactInput, type ContactKind } from "@/lib/records/contactTypes";
+import { COMPANY_ROLES, PERSON_ROLES, VENDOR_TYPES, KIND_NAMES, type Contact, type ContactCategory, type ContactInput, type ContactKind } from "@/lib/records/contactTypes";
 
 const field =
   "w-full border border-line rounded-xl px-3.5 py-2.5 text-[14px] bg-white outline-none focus:border-ink placeholder:text-muted";
@@ -21,8 +21,14 @@ export default function ContactModal({
   onClose,
   onSave,
   onDelete,
+  companies = [],
+  allContacts = [],
+  onOpenContact,
 }: {
   contact?: Contact;
+  companies?: { id: string; name: string; category?: ContactCategory }[]; // for "Works at"
+  allContacts?: Contact[]; // to list a company's people
+  onOpenContact?: (c: Contact) => void;
   initialKind: ContactKind;
   clients: { id: string; name: string }[];
   matters: { id: string; title: string; matterNumber?: string | null; status: string; clientId?: string | null }[];
@@ -40,12 +46,22 @@ export default function ContactModal({
   const [notes, setNotes] = useState(contact?.notes ?? "");
   const [clientId, setClientId] = useState(contact?.clientId ?? "");
   const [matterId, setMatterId] = useState(contact?.matterId ?? "");
+  const [category, setCategory] = useState<ContactCategory>(contact?.category ?? "");
+  const [vendorType, setVendorType] = useState(contact?.vendorType ?? "");
+  const [employerId, setEmployerId] = useState<string | null>(contact?.employerId ?? null);
+  const [employerQuery, setEmployerQuery] = useState("");
+  const [mobile, setMobile] = useState(contact?.mobile ?? "");
+  const employer = companies.find((c) => c.id === employerId) ?? null;
+  const employerMatches = employerQuery.trim()
+    ? companies.filter((c) => c.id !== contact?.id && c.name.toLowerCase().includes(employerQuery.trim().toLowerCase())).slice(0, 8)
+    : [];
+  const people = contact && kind === "company" ? allContacts.filter((c) => c.employerId === contact.id) : [];
   const [saving, setSaving] = useState<"save" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const roles = kind === "person" ? PERSON_ROLES : COMPANY_ROLES;
   const isEdit = !!contact;
-  const noun = kind === "person" ? "person" : "company";
+  const noun = KIND_NAMES[kind].toLowerCase();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !saving && onClose();
@@ -72,6 +88,10 @@ export default function ContactModal({
         notes,
         clientId: clientId || null,
         matterId: matterId || null,
+        category,
+        vendorType: category === "vendor" ? vendorType : "",
+        employerId: kind === "person" ? employerId : null,
+        mobile: mobile.trim() || null,
       });
     } catch (e) {
       setError((e as Error).message);
@@ -104,25 +124,64 @@ export default function ContactModal({
           </button>
         </div>
 
-        {!isEdit && (
-          <div className="flex gap-2 mb-5">
-            {(["person", "company"] as const).map((k) => (
+        {/* Type */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {(["person", "company", "trust", "estate"] as const).map((k) => (
+            <button
+              key={k}
+              onClick={() => {
+                setKind(k);
+                if (!(k === "person" ? PERSON_ROLES : COMPANY_ROLES).includes(role)) setRole("");
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium border border-btn transition-colors ${
+                kind === k ? "bg-btn text-ink" : "bg-chip hover:bg-btn text-ink"
+              }`}
+            >
+              {k === "person" ? <User size={14} strokeWidth={1.75} /> : k === "company" ? <Building2 size={14} strokeWidth={1.75} /> : k === "trust" ? <Landmark size={14} strokeWidth={1.75} /> : <ScrollText size={14} strokeWidth={1.75} />}
+              {KIND_NAMES[k]}
+            </button>
+          ))}
+        </div>
+
+        {/* Client (checked for conflicts) or vendor */}
+        <div className="mb-5 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[13px] font-medium mr-1">Group</span>
+            {([
+              ["client", "Client"],
+              ["vendor", "Vendor / supplier"],
+              ["other", "Other"],
+            ] as const).map(([k, l]) => (
               <button
                 key={k}
-                onClick={() => {
-                  setKind(k);
-                  if (!(k === "person" ? PERSON_ROLES : COMPANY_ROLES).includes(role)) setRole("");
-                }}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                  kind === k ? "bg-btn text-ink" : "bg-chip hover:bg-btn text-ink"
+                onClick={() => setCategory(category === k ? "" : k)}
+                className={`px-3 py-1 rounded-full text-[12.5px] font-medium border transition-colors ${
+                  category === k ? "bg-btn border-btn text-ink" : "bg-white border-[#D9DFEA] text-ink hover:bg-chip"
                 }`}
               >
-                {k === "person" ? <User size={14} strokeWidth={1.75} /> : <Building2 size={14} strokeWidth={1.75} />}
-                {k === "person" ? "Person" : "Company"}
+                {l}
               </button>
             ))}
           </div>
-        )}
+          <div className="text-[12px] text-muted mt-1.5">
+            {category === "client"
+              ? "Clients are included in conflict-of-interest checks."
+              : category === "vendor"
+                ? "Vendors are companies (and their people) the firm works with: title companies, law firms, lenders…"
+                : "Pick Client for anyone the firm represents (they're checked for conflicts), or Vendor for title companies, law firms, lenders and the like."}
+          </div>
+          {category === "vendor" && (
+            <div className="mt-2.5 max-w-[280px]">
+              <SelectBox label="Vendor type" value={vendorType} onChange={setVendorType}>
+                <option value="">Vendor type</option>
+                {VENDOR_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+                {vendorType && !VENDOR_TYPES.includes(vendorType) && <option value={vendorType}>{vendorType}</option>}
+              </SelectBox>
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
@@ -148,9 +207,44 @@ export default function ContactModal({
             </SelectBox>
           </div>
           {kind === "person" ? (
-            <div>
-              <Label>Company</Label>
-              <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Where they work" className={field} />
+            <div className="relative">
+              <Label>Works at</Label>
+              {employer ? (
+                <div className={`${field} flex items-center justify-between gap-2`}>
+                  <span className="flex items-center gap-1.5 truncate"><Building2 size={14} className="text-muted flex-shrink-0" /> {employer.name}</span>
+                  <button onClick={() => setEmployerId(null)} className="text-muted hover:text-ink flex-shrink-0" aria-label="Remove company"><X size={14} /></button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    value={employerQuery || company}
+                    onChange={(e) => {
+                      setEmployerQuery(e.target.value);
+                      setCompany(e.target.value);
+                    }}
+                    placeholder="Company in Contacts, or type a name"
+                    className={field}
+                  />
+                  {employerMatches.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white rounded-xl border border-[#E3E7EF] shadow-lg p-1 max-h-[220px] overflow-y-auto">
+                      {employerMatches.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => {
+                            setEmployerId(c.id);
+                            setCompany(c.name);
+                            setEmployerQuery("");
+                            if (!category && c.category) setCategory(c.category);
+                          }}
+                          className="w-full text-left px-3 py-1.5 rounded-lg text-[13px] hover:bg-[#F4F6FA] flex items-center gap-1.5"
+                        >
+                          <Building2 size={13} className="text-muted" /> {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           ) : (
             <div />
@@ -163,6 +257,17 @@ export default function ContactModal({
             <Label>Phone</Label>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" className={field} />
           </div>
+          <div>
+            <Label>Mobile</Label>
+            <input value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="Mobile number" className={field} />
+          </div>
+          {contact && (contact.workPhone || contact.homePhone || contact.fax || contact.shortName) ? (
+            <div className="text-[12.5px] text-muted self-end pb-1">
+              {[contact.shortName && `Short name: ${contact.shortName}`, contact.workPhone && `Work: ${contact.workPhone}`, contact.homePhone && `Home: ${contact.homePhone}`, contact.fax && `Fax: ${contact.fax}`].filter(Boolean).join(" · ")}
+            </div>
+          ) : (
+            <div />
+          )}
           <div className="sm:col-span-2">
             <Label>Address</Label>
             <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city" className={field} />
@@ -202,6 +307,31 @@ export default function ContactModal({
             />
           </div>
         </div>
+
+        {/* A company's people (e.g. everyone at a title company or law firm). */}
+        {isEdit && kind === "company" && (
+          <div className="mt-5 pt-4 border-t border-line">
+            <div className="text-[13px] font-medium mb-2 flex items-center gap-1.5">
+              <Users size={14} /> People at {name || "this company"} · {people.length}
+            </div>
+            {people.length === 0 ? (
+              <div className="text-[12.5px] text-muted">No one yet. Open a person and pick this company under “Works at”.</div>
+            ) : (
+              <div className="flex flex-col gap-1 max-h-[220px] overflow-y-auto">
+                {people.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => onOpenContact?.(p)}
+                    className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] text-left text-[13px]"
+                  >
+                    <span className="truncate">{p.name}</span>
+                    <span className="text-[12px] text-muted truncate">{[p.role, p.email, p.phone].filter(Boolean).join(" · ")}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* A saved contact can be on many matters, each with its own role. */}
         {isEdit && contact && (
