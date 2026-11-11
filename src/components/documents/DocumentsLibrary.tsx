@@ -339,7 +339,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
         </div>
       )}
       {notice && (
-        <div className="mb-5 flex items-start justify-between gap-3 rounded-xl border border-[#EEEBE4] bg-[#F7F6F2] px-4 py-3 text-[13.5px]">
+        <div className="mb-5 flex items-start justify-between gap-3 rounded-xl border border-[#EEEBE4] bg-[#F3F2F0] px-4 py-3 text-[13.5px]">
           <span>{notice}</span>
           <button onClick={() => setNotice(null)} className="text-muted hover:text-ink flex-shrink-0" aria-label="Dismiss">
             <X size={15} strokeWidth={1.75} />
@@ -410,7 +410,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
               const open = expanded === d.id;
               const working = busy === d.id;
               return (
-                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F3F1EC] border-[#EAE6DC]" : "bg-[#F7F6F2] border-[#EEEBE4] hover:bg-[#F3F1EC]"}`}>
+                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F3F1EC] border-[#EAE6DC]" : "bg-[#F3F2F0] border-[#EEEBE4] hover:bg-[#F3F1EC]"}`}>
                   <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
                     <button
                       onClick={() => setExpanded(open ? null : d.id)}

@@ -221,7 +221,7 @@ function FileToMatter({
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Matter number or name"
-              className="w-full bg-[#F7F6F2] border border-[#ECE9E1] rounded-lg px-3 py-2 text-[13px] outline-none mb-1 focus:border-[#D7D1C0]"
+              className="w-full bg-[#F3F2F0] border border-[#ECE9E1] rounded-lg px-3 py-2 text-[13px] outline-none mb-1 focus:border-[#D7D1C0]"
             />
             <div className="max-h-[300px] overflow-y-auto">
               {list.length === 0 ? (
@@ -232,7 +232,7 @@ function FileToMatter({
                     key={m.id}
                     onClick={() => void pick(m.id)}
                     disabled={busy}
-                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] hover:bg-[#F7F6F2] disabled:opacity-50"
+                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] hover:bg-[#F3F2F0] disabled:opacity-50"
                   >
                     {m.matterNumber && <span className="font-semibold flex-shrink-0">{m.matterNumber}</span>}
                     <span className="truncate text-muted">{m.title}</span>
@@ -748,7 +748,7 @@ export default function InboxPage() {
         />
       )}
       {actionNote && (
-        <div className="mb-2 flex items-center gap-2 rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] px-4 py-2 text-[13px]">
+        <div className="mb-2 flex items-center gap-2 rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] px-4 py-2 text-[13px]">
           {actionNote}
           <button onClick={() => setActionNote(null)} aria-label="Dismiss" className="ml-auto text-muted hover:text-ink">
             <X size={13} />
@@ -842,7 +842,7 @@ export default function InboxPage() {
 
         <div className={`${frameInner} flex flex-col flex-1 min-h-0 overflow-hidden`}>
         {!needsReconnect && provider && conn?.status === "ok" && conn.canSend === false && !syncNoteHidden && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F7F6F2] border-b border-[#EEEBE4] text-[13px] flex-wrap">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F3F2F0] border-b border-[#EEEBE4] text-[13px] flex-wrap">
             <span>
               <b>Send email from LawPower, free:</b> reconnect {providerLabel[provider]} once and keep <b>Send email</b> ticked. Emails then go from your own address and appear in your Sent folder.
             </span>
@@ -858,7 +858,7 @@ export default function InboxPage() {
         )}
 
         {!needsReconnect && provider && conn?.status === "ok" && conn.canSend !== false && conn.syncsRead === false && !syncNoteHidden && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F7F6F2] border-b border-[#EEEBE4] text-[13px] flex-wrap">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F3F2F0] border-b border-[#EEEBE4] text-[13px] flex-wrap">
             <span>Read / unread only changes in LawPower for now. Reconnect {providerLabel[provider]} once so it stays in step with {providerLabel[provider]} both ways.</span>
             <span className="flex items-center gap-2">
               <Link href={connectHref(provider)} className={smallBtnB}>
@@ -911,7 +911,7 @@ export default function InboxPage() {
           )}
           {/* List */}
           <div className={`w-full md:w-[380px] md:flex-shrink-0 border-r border-[#EEEBE4] overflow-y-auto ${selectedId ? "hidden md:block" : ""}`}>
-            <div className="sticky top-0 z-10 bg-[#F7F6F2]/95 backdrop-blur border-b border-[#EEEBE4] px-4 py-2 flex items-center justify-between">
+            <div className="sticky top-0 z-10 bg-[#F3F2F0]/95 backdrop-blur border-b border-[#EEEBE4] px-4 py-2 flex items-center justify-between">
               <button
                 role="switch"
                 aria-checked={threaded}
@@ -937,7 +937,7 @@ export default function InboxPage() {
               </button>
             </div>
             {moveNotice && (
-              <div className="m-3 mb-0 flex items-center gap-2 rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] px-3.5 py-2 text-[13px]">
+              <div className="m-3 mb-0 flex items-center gap-2 rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] px-3.5 py-2 text-[13px]">
                 <span className="flex-1">{moveNotice}</span>
                 <button onClick={() => setMoveNotice(null)} aria-label="Dismiss" className="text-muted hover:text-ink">
                   <X size={13} />
@@ -985,7 +985,7 @@ export default function InboxPage() {
                         }}
                         onKeyDown={(e) => e.key === "Enter" && open(m)}
                         className={`relative w-full text-left pr-4 py-3 cursor-pointer transition-colors ${convo ? "pl-8" : "pl-4"} ${
-                          inGroup(m, selectedId) ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"
+                          inGroup(m, selectedId) ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"
                         } ${isOpen ? "border-l-[3px] border-[#2B6CB0]" : ""}`}
                       >
                         {convo && (
@@ -1233,7 +1233,7 @@ export default function InboxPage() {
                                       setAttMenu(null);
                                       fn();
                                     }}
-                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#F7F6F2]"
+                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#F3F2F0]"
                                   >
                                     {label}
                                   </button>

@@ -252,7 +252,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
             >
               {isDragged ? (
                 // Where it will land.
-                <div className="h-full rounded-[22px] border border-dashed border-btn bg-[#F7F6F2] shadow-[0_6px_18px_-8px_rgba(27,25,26,0.18)]" />
+                <div className="h-full rounded-[22px] border border-dashed border-btn bg-[#F3F2F0] shadow-[0_6px_18px_-8px_rgba(27,25,26,0.18)]" />
               ) : (
                 <div className={`h-full ${editing ? "pointer-events-none select-none rounded-[22px] ring-1 ring-line shadow-[0_8px_24px_-12px_rgba(27,25,26,0.25)]" : ""} ${editing && !drag ? "animate-[lpWiggle_0.35s_ease-in-out]" : ""}`}>
                   <WidgetShell def={def} size={size} d={d} />

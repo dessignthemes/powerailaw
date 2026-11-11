@@ -364,7 +364,7 @@ function FieldRow({
                   setHits([]);
                   onPick?.(c, current);
                 }}
-                className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F7F6F2]"
+                className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F3F2F0]"
               >
                 <span className="block text-[13px] font-medium truncate">{c.name}</span>
                 <span className="block text-[11.5px] text-muted truncate">

@@ -959,7 +959,7 @@ function TaskBoard({
                         if (e.key === "Escape") setAddingColumn(false);
                       }}
                       placeholder="Column name, e.g. Clients"
-                      className="w-full bg-[#F7F6F2] border border-[#ECE9E1] rounded-xl px-3 py-2 text-[13.5px] outline-none placeholder:text-muted mb-2 focus:border-[#D7D1C0]"
+                      className="w-full bg-[#F3F2F0] border border-[#ECE9E1] rounded-xl px-3 py-2 text-[13.5px] outline-none placeholder:text-muted mb-2 focus:border-[#D7D1C0]"
                     />
                     <div className="flex justify-end gap-2">
                       <button onClick={() => setAddingColumn(false)} className="px-3 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink">
@@ -1026,7 +1026,7 @@ function TaskBoard({
         <div className="relative">
           <button
             onClick={() => setAddFilterOpen((o) => !o)}
-            className="flex items-center gap-1 px-2.5 py-[5px] rounded-full text-[11.5px] leading-4 font-medium bg-white border border-dashed border-[#D7D1C0] text-muted hover:text-ink hover:bg-[#F7F6F2] transition-colors"
+            className="flex items-center gap-1 px-2.5 py-[5px] rounded-full text-[11.5px] leading-4 font-medium bg-white border border-dashed border-[#D7D1C0] text-muted hover:text-ink hover:bg-[#F3F2F0] transition-colors"
           >
             <Plus size={11} /> Add more
           </button>
@@ -1146,7 +1146,7 @@ function TaskBoard({
                   <div
                     key={t.id}
                     onClick={() => setSelectedTask(t)}
-                    className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#F7F6F2] transition-colors"
+                    className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#F3F2F0] transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={15} strokeWidth={2} className={statusMeta[t.status].color} />

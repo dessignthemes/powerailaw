@@ -19,9 +19,9 @@ import type { DashData, WidgetDef, WidgetSize } from "./types";
 export const WidgetSizeContext = createContext<WidgetSize>("m");
 const useSmall = () => useContext(WidgetSizeContext) === "s";
 const nowMs = () => Date.now(); // read at render time on purpose (widgets refresh with the page)
-const ROW = "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[14.5px] font-medium bg-[#F7F6F2] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors";
-const ROW_S = "flex-shrink-0 flex items-center gap-2 px-2.5 py-1 rounded-lg text-[13px] font-medium bg-[#F7F6F2] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors";
-const PILL = "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium text-ink bg-white border border-[#E9E5DB] hover:bg-[#F7F6F2] shadow-[0_1px_2px_rgba(27,25,26,0.05)] transition-colors";
+const ROW = "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[14.5px] font-medium bg-[#F3F2F0] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors";
+const ROW_S = "flex-shrink-0 flex items-center gap-2 px-2.5 py-1 rounded-lg text-[13px] font-medium bg-[#F3F2F0] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors";
+const PILL = "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium text-ink bg-white border border-[#E9E5DB] hover:bg-[#F3F2F0] shadow-[0_1px_2px_rgba(27,25,26,0.05)] transition-colors";
 const fmtDay = (ymdStr: string) => {
   const [y, m, d] = ymdStr.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -167,7 +167,7 @@ function PriorityCard({ d, small }: { d: DashData; small?: boolean }) {
               disabled={!count && !active}
               style={{ borderLeftColor: p === "Overdue" ? OVERDUE_RED : priorityMeta[p].bg }}
               title={count ? (p === "Overdue" ? "Show only overdue tasks in the Tasks widget" : `Show only ${p.toLowerCase()} priority in the Tasks widget`) : undefined}
-              className={`group/row flex items-center gap-2 pl-2.5 pr-3 ${small ? "py-1 text-[13px] border-l-[6px]" : "py-2 text-[14.5px] border-l-[8px]"} rounded-xl font-medium text-ink bg-[#F7F6F2] hover:bg-[#F1EFE9] transition-colors disabled:opacity-45 ${active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""}`}
+              className={`group/row flex items-center gap-2 pl-2.5 pr-3 ${small ? "py-1 text-[13px] border-l-[6px]" : "py-2 text-[14.5px] border-l-[8px]"} rounded-xl font-medium text-ink bg-[#F3F2F0] hover:bg-[#F1EFE9] transition-colors disabled:opacity-45 ${active ? "ring-2 ring-offset-1 ring-[#1b191a]/40" : ""}`}
             >
               <span className="font-semibold tabular-nums w-5 text-right">{d.tasksLoaded ? count : "–"}</span>
               <span className="truncate flex-1 text-left">{p}</span>
@@ -317,7 +317,7 @@ function MyOpenTasks({ d }: { d: DashData }) {
   return (
     <div className="flex flex-col gap-1 min-h-0 flex-1 scroll-on-hover -mx-1">
       {mine.map((t) => (
-        <div key={t.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#F7F6F2] cursor-pointer" onClick={() => d.openTask(t)}>
+        <div key={t.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#F3F2F0] cursor-pointer" onClick={() => d.openTask(t)}>
           <button onClick={(e) => (e.stopPropagation(), d.toggleDone(t))} aria-label="Mark as done" className="text-muted hover:text-green-600 flex-shrink-0">
             <Circle size={16} strokeWidth={1.75} />
           </button>
@@ -350,7 +350,7 @@ function ScopedTasks({ d, team }: { d: DashData; team?: boolean }) {
   if (!d.tasksLoaded) return <div className="text-[14px] text-muted m-auto">Loading tasks…</div>;
   const memberId = (email?: string | null) => d.teamMembers.find((m) => m.email.toLowerCase() === (email ?? "").toLowerCase())?.id ?? null;
   const row = (t: (typeof pool)[number]) => (
-    <div key={t.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#F7F6F2] cursor-pointer" onClick={() => d.openTask(t)}>
+    <div key={t.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#F3F2F0] cursor-pointer" onClick={() => d.openTask(t)}>
       <button onClick={(e) => (e.stopPropagation(), d.toggleDone(t))} aria-label="Mark as done" className="text-muted hover:text-green-600 flex-shrink-0">
         <Circle size={16} strokeWidth={1.75} />
       </button>
@@ -492,7 +492,7 @@ function MatterRows({ d, list, right, empty, compact = false }: { d: DashData; l
             key={m.id}
             href={`/dashboard/matters/${m.id}`}
             title={[m.title, m.matterNumber, m.status, m.category].filter(Boolean).join(" · ")}
-            className="flex-shrink-0 flex items-center gap-2 px-3 py-[5px] rounded-lg text-[13px] bg-[#F7F6F2] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors"
+            className="flex-shrink-0 flex items-center gap-2 px-3 py-[5px] rounded-lg text-[13px] bg-[#F3F2F0] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors"
           >
             <span className="min-w-0 flex-1 truncate">
               <span className="font-medium">{m.title}</span>
@@ -616,7 +616,7 @@ function AskAi() {
   const [q, setQ] = useState("");
   const go = () => q.trim() && router.push(`/dashboard/agent?q=${encodeURIComponent(q.trim())}`);
   return (
-    <div className="mt-auto flex items-center gap-2 bg-[#F7F6F2] rounded-full pl-4 pr-1.5 py-1.5 border border-[#ECE9E1]">
+    <div className="mt-auto flex items-center gap-2 bg-[#F3F2F0] rounded-full pl-4 pr-1.5 py-1.5 border border-[#ECE9E1]">
       <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="A question about a matter, a client or the law" aria-label="Ask the AI Agent" className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] placeholder:text-muted" />
       <button onClick={go} disabled={!q.trim()} aria-label="Ask" className="w-8 h-8 rounded-full bg-btn hover:bg-btn-hover flex items-center justify-center disabled:opacity-50">
         <ArrowUp size={15} />
@@ -803,7 +803,7 @@ export const WIDGETS: WidgetDef[] = [
 
   // AI and tools
   { id: "askAi", name: "Ask the AI Agent", desc: "Ask a question from the Dashboard; the AI Agent opens with it.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Sparkles, tone: "bg-[#EDE6D8]", body: () => <AskAi /> },
-  { id: "search", name: "Search", desc: "Search matters, contacts, documents, tasks and more.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Search, body: () => <button onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, metaKey: true }))} className="mt-auto flex items-center gap-2 bg-[#F7F6F2] border border-[#ECE9E1] rounded-full px-4 py-2.5 text-[13.5px] text-muted text-left hover:bg-[#F1EFE9]"><Search size={14} /> Search everything… <kbd className="ml-auto text-[11px] bg-card-alt rounded px-1.5">Ctrl K</kbd></button> },
+  { id: "search", name: "Search", desc: "Search matters, contacts, documents, tasks and more.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Search, body: () => <button onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, metaKey: true }))} className="mt-auto flex items-center gap-2 bg-[#F3F2F0] border border-[#ECE9E1] rounded-full px-4 py-2.5 text-[13.5px] text-muted text-left hover:bg-[#F1EFE9]"><Search size={14} /> Search everything… <kbd className="ml-auto text-[11px] bg-card-alt rounded px-1.5">Ctrl K</kbd></button> },
   { id: "shortcuts", name: "Shortcuts", desc: "One click to the things you start most.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Zap, body: () => <Shortcuts /> },
   { id: "clock", name: "Clock", desc: "The time, with a face you can read at a glance.", category: "AI and tools", sizes: ["s"], size: "s", icon: Clock3, title: () => <LiveTime />, body: () => <ClockFace /> },
   { id: "note", name: "Note", desc: "A sticky note that stays on this computer.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: StickyNote, tone: "bg-[#F4F1EA]", body: () => <Note /> },

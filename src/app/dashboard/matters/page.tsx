@@ -68,7 +68,7 @@ function RowStatusPicker({
                     onChange(s);
                     setOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F7F6F2] transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F3F2F0] transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <OptIcon size={15} strokeWidth={2} className={matterStatusMeta[s].color} />
@@ -326,7 +326,7 @@ export default function MattersPage() {
                         <div
                           key={m.id}
                           onClick={() => router.push(`/dashboard/matters/${m.id}`)}
-                          className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors cursor-pointer"
+                          className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <button

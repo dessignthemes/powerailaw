@@ -159,7 +159,7 @@ export default function TimeTrackingPage() {
         key={e.id}
         onClick={mine ? () => setEditing(e) : undefined}
         title={mine ? "Click to edit" : undefined}
-        className={`flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] ${mine ? "cursor-pointer hover:bg-[#F1EFE9] transition-colors" : ""}`}
+        className={`flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] ${mine ? "cursor-pointer hover:bg-[#F1EFE9] transition-colors" : ""}`}
       >
         <div className="min-w-0">
           <div className="text-[14.5px] font-medium truncate">{e.description || tn || "Untitled entry"}</div>
@@ -250,7 +250,7 @@ export default function TimeTrackingPage() {
                         setView(v);
                         setViewMenuOpen(false);
                       }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F7F6F2]"
+                      className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F3F2F0]"
                     >
                       <span className="flex items-center gap-2.5">
                         {v === "timesheet" ? <Calendar size={15} strokeWidth={1.75} /> : <List size={15} strokeWidth={1.75} />}
@@ -331,7 +331,7 @@ export default function TimeTrackingPage() {
                               setEntries(null);
                               setWho(o.key);
                             }}
-                            className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left ${who === o.key ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"}`}
+                            className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left ${who === o.key ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"}`}
                           >
                             <span className="truncate">{o.label}</span>
                             {who === o.key && <Check size={14} />}

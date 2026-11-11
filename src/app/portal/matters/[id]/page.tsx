@@ -99,7 +99,7 @@ export default function PortalMatterPage() {
             <TrendingUp size={18} strokeWidth={1.75} /> Closing status
           </h2>
           <div className="relative mx-2 mb-2">
-            <div className="h-2.5 rounded-full bg-[#F7F6F2]" />
+            <div className="h-2.5 rounded-full bg-[#F3F2F0]" />
             <div className="absolute left-0 top-0 h-2.5 rounded-full bg-ink" style={{ width: `${Math.max(0, progress)}%` }} />
             {stages.map((s, i) => (
               <span

@@ -115,12 +115,12 @@ export default function AiMatterPage() {
         <Frame title={`Matters · ${shown.length}`} icon={Briefcase} pad="p-3" className="lg:sticky lg:top-6">
           <div className="relative mb-2.5">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search matters or clients" aria-label="Search matters" className="w-full border border-[#ECE9E1] bg-[#F7F6F2] rounded-full pl-9 pr-8 py-2 text-[13.5px] outline-none focus:border-[#D7D1C0] focus:bg-white placeholder:text-muted" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search matters or clients" aria-label="Search matters" className="w-full border border-[#ECE9E1] bg-[#F3F2F0] rounded-full pl-9 pr-8 py-2 text-[13.5px] outline-none focus:border-[#D7D1C0] focus:bg-white placeholder:text-muted" />
             {q && <button onClick={() => setQ("")} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"><X size={14} /></button>}
           </div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {STATUSES.map((s) => (
-              <button key={s} onClick={() => setStatus(s)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${status === s ? "bg-btn-hover border border-[#D7D1C0]" : "bg-white border border-[#E7E2D7] hover:bg-[#F7F6F2] hover:border-[#D7D1C0]"}`}>{s}</button>
+              <button key={s} onClick={() => setStatus(s)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${status === s ? "bg-btn-hover border border-[#D7D1C0]" : "bg-white border border-[#E7E2D7] hover:bg-[#F3F2F0] hover:border-[#D7D1C0]"}`}>{s}</button>
             ))}
           </div>
           <div className="flex flex-col gap-1.5 max-h-[65vh] overflow-y-auto">
@@ -136,7 +136,7 @@ export default function AiMatterPage() {
                   aria-current={selected === m.id ? "true" : undefined}
                   title={[clientName(m.clientId), m.status].filter(Boolean).join(" · ")}
                   className={`group/row w-full flex items-center gap-2.5 text-left px-3 py-1.5 rounded-lg border transition-colors ${
-                    selected === m.id ? "bg-[#EFEDE6] border-[#E4E0D4]" : "bg-[#F7F6F2] border-[#EEEBE4] hover:bg-[#F1EFE9]"
+                    selected === m.id ? "bg-[#EFEDE6] border-[#E4E0D4]" : "bg-[#F3F2F0] border-[#EEEBE4] hover:bg-[#F1EFE9]"
                   }`}
                 >
                   <span className="min-w-0 flex-1 text-[13px] font-medium truncate">{m.title}</span>

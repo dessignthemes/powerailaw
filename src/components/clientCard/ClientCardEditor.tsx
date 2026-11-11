@@ -461,7 +461,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
               </div>
               <div className="grid gap-1">
                 {profile.people.map((p, i) => (
-                  <div key={p.id} className={`flex items-center rounded-lg ${section === "person" && p.id === person.id ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"}`}>
+                  <div key={p.id} className={`flex items-center rounded-lg ${section === "person" && p.id === person.id ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"}`}>
                     <button onClick={() => { setPersonId(p.id); setSection("person"); }} className="flex-1 text-left px-3 py-2 text-[13.5px] font-medium truncate">
                       {personFullTitle(p) || `Person ${i + 1}`}
                     </button>
@@ -478,7 +478,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
               </div>
             </div>
           ) : (
-            <button onClick={() => setSection("person")} className={`text-left rounded-lg px-3 py-2 text-[13.5px] font-medium ${section === "person" ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"}`}>
+            <button onClick={() => setSection("person")} className={`text-left rounded-lg px-3 py-2 text-[13.5px] font-medium ${section === "person" ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"}`}>
               {profile.company.name || "Company details"}
             </button>
           )}
@@ -486,7 +486,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
             <div className="text-[13px] font-semibold mb-1.5">Card details</div>
             <div className="grid gap-0.5">
               {nav.map(([k, l]) => (
-                <button key={k} onClick={() => setSection(k)} className={`flex items-center justify-between rounded-lg px-3 py-2 text-[13.5px] ${section === k ? "bg-[#F3F1EC] font-medium" : "hover:bg-[#F7F6F2]"}`}>
+                <button key={k} onClick={() => setSection(k)} className={`flex items-center justify-between rounded-lg px-3 py-2 text-[13.5px] ${section === k ? "bg-[#F3F1EC] font-medium" : "hover:bg-[#F3F2F0]"}`}>
                   {l} <ChevronRight size={14} className="text-muted" />
                 </button>
               ))}

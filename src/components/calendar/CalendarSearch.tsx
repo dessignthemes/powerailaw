@@ -138,7 +138,7 @@ export default function CalendarSearch({
           setShowResults(false);
           onPick(e);
         }}
-        className="w-full text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl hover:bg-[#F7F6F2] transition-colors"
+        className="w-full text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl hover:bg-[#F3F2F0] transition-colors"
       >
         <span className="w-2.5 h-2.5 rounded-full mt-[5px] flex-shrink-0" style={{ backgroundColor: c.tx }} />
         <span className="min-w-0 flex-1">
@@ -216,7 +216,7 @@ export default function CalendarSearch({
                       setOwnerOpen(false);
                     }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left transition-colors ${
-                      owner === o.id ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"
+                      owner === o.id ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"
                     }`}
                   >
                     {o.dot ? (

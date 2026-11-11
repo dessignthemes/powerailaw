@@ -311,7 +311,7 @@ export default function RecordsPage() {
                     key={k}
                     role="menuitem"
                     onClick={() => startAdd(k)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F7F6F2] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F3F2F0] transition-colors"
                   >
                     <KindIcon kind={k} />
                     {KIND_LABEL[k]}
@@ -336,7 +336,7 @@ export default function RecordsPage() {
                       if (k === "cards") setCardsImport(true);
                       else setImporting(k);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F7F6F2] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F3F2F0] transition-colors"
                   >
                     <Download size={14} className="text-muted" />
                     {label}
@@ -451,7 +451,7 @@ export default function RecordsPage() {
         </div>
       )}
       {setupRequired && (tab === "person" || tab === "company") && (
-        <div className="mb-5 rounded-xl border border-[#EEEBE4] bg-[#F7F6F2] px-4 py-3 text-[13.5px]">
+        <div className="mb-5 rounded-xl border border-[#EEEBE4] bg-[#F3F2F0] px-4 py-3 text-[13.5px]">
           People and companies need a database update. Run <span className="font-medium">supabase/migrations/0014_contacts.sql</span> in the
           Supabase SQL editor, then refresh.
         </div>
@@ -500,7 +500,7 @@ export default function RecordsPage() {
               <button
                 key={r.key}
                 onClick={() => open(r)}
-                className="w-full flex items-center gap-3.5 px-4 py-3 text-left rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors"
+                className="w-full flex items-center gap-3.5 px-4 py-3 text-left rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors"
               >
                 <Avatar kind={r.kind} name={r.name} />
                 <div className="flex-1 min-w-0">

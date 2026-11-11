@@ -116,7 +116,7 @@ export default function PortalHome() {
                 </h2>
                 <div className="flex flex-col gap-2">
                   {home.matters.map((m) => (
-                    <Link key={m.id} href={`/portal/matters/${m.id}`} className="flex items-center gap-3 bg-[#F7F6F2] border border-[#EEEBE4] hover:bg-[#F1EFE9] rounded-xl px-4 py-3 transition-colors">
+                    <Link key={m.id} href={`/portal/matters/${m.id}`} className="flex items-center gap-3 bg-[#F3F2F0] border border-[#EEEBE4] hover:bg-[#F1EFE9] rounded-xl px-4 py-3 transition-colors">
                       <Folder size={16} className="text-muted flex-shrink-0" />
                       <span className="flex-1 min-w-0 text-[14px] font-medium truncate">{m.title}</span>
                       {m.status && <span className="text-[12px] text-muted bg-white rounded-md px-1.5 py-0.5">{m.status}</span>}
@@ -167,11 +167,11 @@ export default function PortalHome() {
                       <div className="flex items-center gap-2 mb-2.5">
                         <Folder size={15} className="text-muted" />
                         <h2 className="text-[15px] font-semibold" style={{ letterSpacing: 0 }}>{m.title}</h2>
-                        {m.status && <span className="text-[12px] text-muted bg-[#F7F6F2] border border-[#EEEBE4] rounded-md px-1.5 py-0.5">{m.status}</span>}
+                        {m.status && <span className="text-[12px] text-muted bg-[#F3F2F0] border border-[#EEEBE4] rounded-md px-1.5 py-0.5">{m.status}</span>}
                       </div>
                       <div className="flex flex-col gap-2">
                         {docs.map((d) => (
-                          <div key={d.id} className="flex items-center gap-3 bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-4 py-3">
+                          <div key={d.id} className="flex items-center gap-3 bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-4 py-3">
                             <FileText size={17} strokeWidth={1.75} className="text-muted flex-shrink-0" />
                             <span className="min-w-0 flex-1">
                               <span className="block text-[14px] font-medium truncate">{d.title}</span>

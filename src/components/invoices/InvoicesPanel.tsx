@@ -165,7 +165,7 @@ export default function InvoicesPanel({
       )}
       {active === "outstanding" && !matterId && balances.length > 0 && (
         <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] overflow-x-auto mb-5">
-          <div className="px-3 py-2 bg-[#F7F6F2] font-mono text-[11px] uppercase tracking-[0.12em] text-muted">Outstanding balances by client</div>
+          <div className="px-3 py-2 bg-[#F3F2F0] font-mono text-[11px] uppercase tracking-[0.12em] text-muted">Outstanding balances by client</div>
           <table className="w-full text-[13px] min-w-[560px]">
             <thead>
               <tr className="text-left text-[12px] text-muted border-t border-[#EEEBE4]">
@@ -228,7 +228,7 @@ export default function InvoicesPanel({
         <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] overflow-x-auto">
           <table className="w-full text-[13px] min-w-[640px]">
             <thead>
-              <tr className="text-left text-[12px] text-muted bg-[#F7F6F2]">
+              <tr className="text-left text-[12px] text-muted bg-[#F3F2F0]">
                 <th className="font-medium px-3 py-2">Invoice</th>
                 {!matterId && <th className="font-medium px-2 py-2">Matter · client</th>}
                 <th className="font-medium px-2 py-2">Date</th>

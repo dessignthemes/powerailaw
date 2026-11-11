@@ -72,7 +72,7 @@ export default function PortalInvite({ params }: { params: Promise<{ token: stri
               <form onSubmit={submit} className="flex flex-col gap-3">
                 <label className="grid gap-1">
                   <span className="text-[13px] text-muted">Your sign-in email</span>
-                  <input value={info.email} readOnly className={`${input} bg-[#F7F6F2] text-muted`} />
+                  <input value={info.email} readOnly className={`${input} bg-[#F3F2F0] text-muted`} />
                 </label>
                 <label className="grid gap-1">
                   <span className="text-[13px] text-muted">Password (at least 8 characters)</span>

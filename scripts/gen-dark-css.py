@@ -6,7 +6,7 @@ txt='\n'.join(src)
 # light hex -> dark hex, by kind
 BG={
  # surfaces
- 'FFFFFF':'#1a1d23','FFF':'#1a1d23','FAFAF7':'#20242b','F9F8F6':'#20242b','F7F9FC':'#20242b','F7F6F2':'#22262e','F6F5F2':'#22262e',
+ 'FFFFFF':'#1a1d23','FFF':'#1a1d23','FAFAF7':'#20242b','F9F8F6':'#20242b','F7F9FC':'#20242b','F3F2F0':'#22262e','F6F5F2':'#22262e',
  'F3F1EC':'#2a2f39','F1EFE9':'#2a2f39','EFEDE6':'#2d3340','EFECE4':'#2a2f39','F3F2F0':'#262a32','EEF0F6':'#262a32','F3F1EC':'#16181d',
  'E6ECF8':'#232a39','F4F1EA':'#2c2922','E1E7F4':'#2f3646','E7E2D7':'#36405a','E1E7F5':'#2f3646','FFFFFF':'#2c313c','E9EEF7':'#262a32','EEF3FB':'#1f2a3a','E8F0FE':'#1f2a3a','EAE7DE':'#2a2f39',
  # red

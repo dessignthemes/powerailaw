@@ -511,7 +511,7 @@ export default function CommunicationsPage() {
                     { icon: Mic, label: "Meeting", sub: "Add it in the Calendar", href: "/dashboard/calendar" },
                   ].map((o) =>
                     o.href ? (
-                      <Link key={o.label} href={o.href} className="flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F7F6F2]">
+                      <Link key={o.label} href={o.href} className="flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F3F2F0]">
                         <o.icon size={15} className="mt-0.5 text-muted" />
                         <span>
                           <span className="block text-[13.5px] font-medium">{o.label}</span>
@@ -519,7 +519,7 @@ export default function CommunicationsPage() {
                         </span>
                       </Link>
                     ) : (
-                      <button key={o.label} onClick={() => (setNewOpen(false), o.go?.())} className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F7F6F2]">
+                      <button key={o.label} onClick={() => (setNewOpen(false), o.go?.())} className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F3F2F0]">
                         <o.icon size={15} className="mt-0.5 text-muted" />
                         <span>
                           <span className="block text-[13.5px] font-medium">{o.label}</span>
@@ -538,7 +538,7 @@ export default function CommunicationsPage() {
           </div>
           <nav className={`${frameInner} p-2 flex flex-col gap-1`}>
             {SECTIONS.map((s) => (
-              <button key={s.key} onClick={() => setView(s.key)} className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left border transition-colors ${view === s.key ? "bg-[#EFEDE6] border-[#E4E0D4] text-ink" : "bg-[#F7F6F2] border-[#EEEBE4] text-muted hover:bg-[#F1EFE9] hover:text-ink"}`}>
+              <button key={s.key} onClick={() => setView(s.key)} className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left border transition-colors ${view === s.key ? "bg-[#EFEDE6] border-[#E4E0D4] text-ink" : "bg-[#F3F2F0] border-[#EEEBE4] text-muted hover:bg-[#F1EFE9] hover:text-ink"}`}>
                 <s.icon size={16} strokeWidth={1.75} />
                 <span className="flex-1">{s.label}</span>
                 {s.key === "calls" && waitingCount > 0 && <span className="text-[11px] font-semibold bg-[#FB5D67] text-white rounded-full px-1.5 py-px">{waitingCount}</span>}
@@ -579,7 +579,7 @@ export default function CommunicationsPage() {
                     {l}
                   </button>
                 ))}
-                <div className="flex items-center gap-2 bg-[#F7F6F2] border border-[#ECE9E1] rounded-full px-3 py-2 ml-auto w-[260px] focus-within:bg-white focus-within:border-[#D7D1C0]">
+                <div className="flex items-center gap-2 bg-[#F3F2F0] border border-[#ECE9E1] rounded-full px-3 py-2 ml-auto w-[260px] focus-within:bg-white focus-within:border-[#D7D1C0]">
                   <Search size={13} className="text-muted" />
                   <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, phone or matter number" aria-label="Search calls" className="flex-1 min-w-0 bg-transparent outline-none text-[13px]" />
                 </div>
@@ -598,7 +598,7 @@ export default function CommunicationsPage() {
                   {calls.map((c) => {
                     const waiting = c.callbackNeeded && !c.callbackDoneAt;
                     return (
-                      <div key={c.id} className={`group bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-4 py-3 flex items-start gap-3 min-w-0 overflow-hidden ${waiting ? "border-l-[6px] border-l-[#FB5D67]" : ""}`}>
+                      <div key={c.id} className={`group bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-4 py-3 flex items-start gap-3 min-w-0 overflow-hidden ${waiting ? "border-l-[6px] border-l-[#FB5D67]" : ""}`}>
                         <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${c.direction === "in" ? "bg-white border border-[#DCE6F5] text-[#2B6CB0]" : "bg-white border border-[#EBE8DF] text-muted"}`} title={c.direction === "in" ? "Incoming" : "Outgoing"}>
                           {c.direction === "in" ? <PhoneIncoming size={15} /> : <PhoneOutgoing size={15} />}
                         </span>
@@ -654,7 +654,7 @@ export default function CommunicationsPage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {(items as { id: string; from: string; clientId: string; matterId: string | null; matter: string | null; preview: string; unread: boolean; at: string }[]).map((m) => (
-                  <Link key={m.id} href={m.matterId ? `/dashboard/matters/${m.matterId}?tab=emails` : `/dashboard/client-intake?card=${m.clientId}`} className="bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-4 py-3 hover:bg-[#F1EFE9] transition-colors block min-w-0 overflow-hidden">
+                  <Link key={m.id} href={m.matterId ? `/dashboard/matters/${m.matterId}?tab=emails` : `/dashboard/client-intake?card=${m.clientId}`} className="bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-4 py-3 hover:bg-[#F1EFE9] transition-colors block min-w-0 overflow-hidden">
                     <div className="flex items-center gap-2 min-w-0">
                       {m.unread && <span className="w-2 h-2 rounded-full bg-[#3B82F6]" />}
                       <span className="font-semibold text-[14px]">{m.from}</span>
@@ -677,7 +677,7 @@ export default function CommunicationsPage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {(items as { id: string; direction: "in" | "out"; subject: string; from: string; to: string; at: string; snippet: string; matter: MatterRef }[]).map((m) => (
-                  <div key={m.id} className="bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-4 py-3 min-w-0 overflow-hidden">
+                  <div key={m.id} className="bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-4 py-3 min-w-0 overflow-hidden">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[14px] truncate min-w-0">{m.direction === "out" ? `To ${m.to}` : m.from}</span>
                       <MatterBadge m={m.matter} />
@@ -703,7 +703,7 @@ export default function CommunicationsPage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {(items as { id: string; title: string; start: string; allDay: boolean; location: string | null; link: string | null }[]).map((e) => (
-                  <div key={e.id} className="bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-4 py-3 flex items-center gap-3 min-w-0 overflow-hidden">
+                  <div key={e.id} className="bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-4 py-3 flex items-center gap-3 min-w-0 overflow-hidden">
                     <div className="w-[120px] flex-shrink-0 text-[13px] font-semibold">
                       {e.allDay ? new Date(`${e.start.slice(0, 10)}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : when(e.start)}
                     </div>
@@ -735,7 +735,7 @@ export default function CommunicationsPage() {
               ) : (
                 <div className="flex flex-col gap-2">
                   {(items as Comm[]).map((m) => (
-                    <div key={m.id} className="bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-4 py-3 min-w-0 overflow-hidden">
+                    <div key={m.id} className="bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-4 py-3 min-w-0 overflow-hidden">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-[14px]">{m.createdBy?.name ?? "Someone"}</span>
                         <span className="text-[12.5px] text-muted">to {m.recipients.map((r) => r.name).join(", ")}</span>

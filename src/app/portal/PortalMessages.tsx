@@ -162,7 +162,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
           const mine = x.mine ?? !fromFirm;
           return (
             <div key={x.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${mine ? "bg-[#E1E7F4] border border-[#E7E2D7]" : "bg-[#F7F6F2] border border-[#EEEBE4]"}`}>
+              <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${mine ? "bg-[#E1E7F4] border border-[#E7E2D7]" : "bg-[#F3F2F0] border border-[#EEEBE4]"}`}>
                 <div className="text-[11.5px] text-muted mb-0.5 flex items-center gap-1.5 flex-wrap">
                   {x.thread === "shared" && <span className="bg-[#FFF1DE] text-[#8A4B14] font-semibold rounded px-1.5 py-px">Shared</span>}
                   {mine ? "You" : fromFirm ? `${x.senderName}, ${firm}` : x.senderName} · {when(x.createdAt)}
@@ -171,7 +171,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
                 {x.attachments.length > 0 && (
                   <div className="flex flex-col gap-1.5 mt-2">
                     {x.attachments.map((a) => (
-                      <div key={a.id} className="flex items-center gap-2 bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-3 py-2">
+                      <div key={a.id} className="flex items-center gap-2 bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-3 py-2">
                         <FileText size={15} className="text-muted flex-shrink-0" />
                         <span className="text-[13px] font-medium truncate flex-1">{a.title}</span>
                         {a.versionId && (

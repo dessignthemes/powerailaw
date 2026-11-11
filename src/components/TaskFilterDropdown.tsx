@@ -46,7 +46,7 @@ export default function TaskFilterDropdown({
   const item = (key: TaskScope, label: string) => {
     const isPinned = (pinned ?? "me") === key;
     return (
-      <div key={key} className={`group flex items-center rounded-xl transition-colors ${value === key ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"}`}>
+      <div key={key} className={`group flex items-center rounded-xl transition-colors ${value === key ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"}`}>
         <button
           onClick={() => {
             onChange(key);

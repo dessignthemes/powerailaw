@@ -168,7 +168,7 @@ export default function FolderPanel({
       <div key={`${inFavorites ? "fav" : "all"}-${f.id}`}>
         <div
           className={`group flex items-center gap-1.5 pr-2 rounded-lg transition-colors ${
-            dropOn === `${inFavorites ? "fav" : "all"}-${f.id}` ? "bg-[#EFEDE6] ring-2 ring-[#C8BEA6]" : active ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"
+            dropOn === `${inFavorites ? "fav" : "all"}-${f.id}` ? "bg-[#EFEDE6] ring-2 ring-[#C8BEA6]" : active ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"
           }`}
           style={{ paddingLeft: 6 + depth * 14 }}
           onDragOver={(e) => {

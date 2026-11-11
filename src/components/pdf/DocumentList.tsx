@@ -245,7 +245,7 @@ export default function DocumentList({
               const latest = versions[0];
               const open = expanded === d.id;
               return (
-                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F3F1EC] border-[#EAE6DC]" : "bg-[#F7F6F2] border-[#EEEBE4] hover:bg-[#F3F1EC]"}`}>
+                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F3F1EC] border-[#EAE6DC]" : "bg-[#F3F2F0] border-[#EEEBE4] hover:bg-[#F3F1EC]"}`}>
                   <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
                     <button
                       onClick={() => setExpanded(open ? null : d.id)}
@@ -385,7 +385,7 @@ export function MatterPicker({
         key={id || "all"}
         onClick={() => pick(id)}
         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left transition-colors ${
-          active ? "bg-[#F3F1EC] font-medium" : "hover:bg-[#F7F6F2]"
+          active ? "bg-[#F3F1EC] font-medium" : "hover:bg-[#F3F2F0]"
         }`}
       >
         <span className="text-muted flex-shrink-0">{icon}</span>

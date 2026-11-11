@@ -28,7 +28,7 @@ export default function PracticeAreaList({
       key={o}
       type="button"
       onClick={() => onPick(o)}
-      className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left transition-colors whitespace-nowrap ${value === o ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"}`}
+      className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left transition-colors whitespace-nowrap ${value === o ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"}`}
     >
       <span className="truncate">{o}</span>
       {value === o && <Check size={14} strokeWidth={2} className="flex-shrink-0" />}
@@ -36,7 +36,7 @@ export default function PracticeAreaList({
   );
   return (
     <div className="min-w-[260px]">
-      <div className="flex items-center gap-2 bg-[#F7F6F2] border border-[#ECE9E1] rounded-full px-3 py-1.5 mb-1.5 focus-within:bg-white focus-within:border-[#D7D1C0]">
+      <div className="flex items-center gap-2 bg-[#F3F2F0] border border-[#ECE9E1] rounded-full px-3 py-1.5 mb-1.5 focus-within:bg-white focus-within:border-[#D7D1C0]">
         <Search size={14} className="text-muted flex-shrink-0" />
         <input
           autoFocus
@@ -49,7 +49,7 @@ export default function PracticeAreaList({
       </div>
       <div className="max-h-[min(340px,50vh)] overflow-y-auto">
         {noneLabel && !term && (
-          <button type="button" onClick={() => onPick(null)} className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] text-muted text-left transition-colors ${!value ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"}`}>
+          <button type="button" onClick={() => onPick(null)} className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] text-muted text-left transition-colors ${!value ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"}`}>
             {noneLabel}
             {!value && <Check size={14} strokeWidth={2} />}
           </button>

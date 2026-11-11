@@ -164,7 +164,7 @@ export default function PortalUploads({
           add(e.dataTransfer.files);
         }}
         disabled={busy}
-        className={`w-full border-2 border-dashed rounded-2xl py-7 flex flex-col items-center gap-1.5 transition-colors ${over ? "border-ink bg-[#F7F6F2]" : "border-btn hover:bg-[#F7F6F2]"}`}
+        className={`w-full border-2 border-dashed rounded-2xl py-7 flex flex-col items-center gap-1.5 transition-colors ${over ? "border-ink bg-[#F3F2F0]" : "border-btn hover:bg-[#F3F2F0]"}`}
       >
         <Upload size={18} className="text-muted" />
         <span className="text-[14px] font-medium">Choose files or drop them here</span>

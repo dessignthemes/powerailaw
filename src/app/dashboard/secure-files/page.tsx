@@ -124,7 +124,7 @@ export default function SecureFilesPage() {
           ) : (
             <div className="flex flex-col gap-1.5">
               {ended.map((s) => (
-                <div key={s.id} className="flex items-center gap-3 bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-4 py-2.5 text-[13px]">
+                <div key={s.id} className="flex items-center gap-3 bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-4 py-2.5 text-[13px]">
                   {s.kind === "send" ? <Send size={13} className="text-muted" /> : <Inbox size={13} className="text-muted" />}
                   <span className="flex-1 truncate">{s.title}</span>
                   <span className="text-muted">{s.status === "cancelled" ? "Cancelled" : "Expired"} · files deleted</span>
@@ -206,7 +206,7 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
   const downloads = s.files.reduce((n, f) => n + f.downloadCount, 0);
 
   return (
-    <div className={`rounded-xl border transition-colors ${open ? "bg-[#F3F1EC] border-[#EAE6DC]" : "bg-[#F7F6F2] border-[#EEEBE4] hover:bg-[#F3F1EC]"}`}>
+    <div className={`rounded-xl border transition-colors ${open ? "bg-[#F3F1EC] border-[#EAE6DC]" : "bg-[#F3F2F0] border-[#EEEBE4] hover:bg-[#F3F1EC]"}`}>
       <button onClick={onToggle} className="w-full flex items-center gap-3.5 px-4 py-3 text-left">
         <span className="w-9 h-9 rounded-xl bg-white border border-[#EBE8DF] flex items-center justify-center flex-shrink-0">
           {send ? <Send size={15} strokeWidth={1.75} /> : <Inbox size={15} strokeWidth={1.75} />}

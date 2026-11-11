@@ -65,7 +65,7 @@ export function ContactSupportForm({ email, onClose, inline = false }: { email: 
 
   if (sent)
     return (
-      <div className={`flex flex-col items-center justify-center text-center ${inline ? "py-10 rounded-2xl bg-[#F7F6F2] border border-[#EEEBE4]" : "py-14"}`}>
+      <div className={`flex flex-col items-center justify-center text-center ${inline ? "py-10 rounded-2xl bg-[#F3F2F0] border border-[#EEEBE4]" : "py-14"}`}>
         <span className="w-11 h-11 rounded-full bg-[#E8F6EE] text-[#1F7A4D] flex items-center justify-center mb-3">
           <Check size={20} />
         </span>
@@ -131,7 +131,7 @@ export function ContactSupportForm({ email, onClose, inline = false }: { email: 
         {files.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2.5">
             {files.map((f, i) => (
-              <span key={i} className="flex items-center gap-1 bg-[#F7F6F2] border border-[#EEEBE4] pl-2.5 pr-1 py-0.5 rounded-full text-[12px] text-muted">
+              <span key={i} className="flex items-center gap-1 bg-[#F3F2F0] border border-[#EEEBE4] pl-2.5 pr-1 py-0.5 rounded-full text-[12px] text-muted">
                 <span className="max-w-[180px] truncate">{f.name}</span>
                 <button onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} aria-label={`Remove ${f.name}`} className="w-5 h-5 rounded-full hover:bg-white flex items-center justify-center hover:text-ink">
                   <X size={11} />

@@ -239,7 +239,7 @@ function AiAccountant() {
                     { icon: Receipt, label: "Add a receipt", hint: "PDF receipts are read by AI", go: () => setModal({ kind: "txn" }) },
                     { icon: PenLine, label: "Add manually", hint: "A payment, fee or expense", go: () => setModal({ kind: "txn" }) },
                   ].map((o) => (
-                    <button key={o.label} role="menuitem" onClick={() => { setAddOpen(false); o.go(); }} className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-[#F7F6F2] transition-colors">
+                    <button key={o.label} role="menuitem" onClick={() => { setAddOpen(false); o.go(); }} className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-[#F3F2F0] transition-colors">
                       <o.icon size={14} strokeWidth={1.75} className="mt-1 text-muted flex-shrink-0" />
                       <span>
                         <span className="block text-[13.5px] font-medium">{o.label}</span>
@@ -412,7 +412,7 @@ function AiAccountant() {
 }
 
 // ── Widget frame (same style as the dashboard widgets) ──
-const ROW = "bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl";
+const ROW = "bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl";
 function Frame({ title, icon: Icon, right, children, className = "", pad = "p-5" }: {
   title?: string; icon?: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; right?: React.ReactNode;
   children: React.ReactNode; className?: string; pad?: string;
@@ -634,13 +634,13 @@ function TxnTable(p: { txns: Txn[]; clientName: (id: string | null) => string; m
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {[["all", "All"], ["income", "Income"], ["expense", "Expenses"], ["no_receipt", "Missing receipt"], ["trust", "Trust"], ["excluded", "Excluded"]].map(([k, l]) => (
-            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${filter === k ? "bg-btn-hover border border-[#D7D1C0]" : "bg-white border border-[#E7E2D7] hover:bg-[#F7F6F2] hover:border-[#D7D1C0]"}`}>{l}</button>
+            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${filter === k ? "bg-btn-hover border border-[#D7D1C0]" : "bg-white border border-[#E7E2D7] hover:bg-[#F3F2F0] hover:border-[#D7D1C0]"}`}>{l}</button>
           ))}
         </div>
       </div>
       <Frame title={`Transactions · ${shown.length}`} icon={Receipt} pad="p-0 overflow-x-auto">
         <div className="min-w-[860px]">
-          <div className="grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 text-[12px] font-medium text-muted border-b border-[#EEEBE4] bg-[#F7F6F2]">
+          <div className="grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 text-[12px] font-medium text-muted border-b border-[#EEEBE4] bg-[#F3F2F0]">
             <span>Date</span><span>Payee / description</span><span>Category</span><span>Account</span><span className="text-right">Amount</span><span />
           </div>
           {shown.length === 0 ? (

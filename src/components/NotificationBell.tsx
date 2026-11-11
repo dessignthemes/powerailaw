@@ -108,8 +108,8 @@ export default function NotificationBell() {
               {items.map((n) => {
                 const Icon = n.kind === "invoice_approval" ? Receipt : n.kind === "new_lead" ? UserPlus : n.kind === "portal_message" || n.kind === "internal_message" ? MessageSquare : n.kind === "matter_assigned" ? Folder : ListChecks;
                 return (
-                  <Link key={n.id} href={hrefOf(n)} onClick={() => setOpen(false)} className={`flex gap-3 px-4 py-3 border-b border-[#EEEBE4] last:border-b-0 transition-colors ${n.read ? "hover:bg-[#F7F6F2]" : "bg-[#FFF6F6] hover:bg-[#FDEEEE]"}`}>
-                    <span className="w-8 h-8 rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] flex items-center justify-center flex-shrink-0"><Icon size={15} strokeWidth={1.75} className="text-muted" /></span>
+                  <Link key={n.id} href={hrefOf(n)} onClick={() => setOpen(false)} className={`flex gap-3 px-4 py-3 border-b border-[#EEEBE4] last:border-b-0 transition-colors ${n.read ? "hover:bg-[#F3F2F0]" : "bg-[#FFF6F6] hover:bg-[#FDEEEE]"}`}>
+                    <span className="w-8 h-8 rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] flex items-center justify-center flex-shrink-0"><Icon size={15} strokeWidth={1.75} className="text-muted" /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-[13px] text-muted">
                         {n.kind === "invoice_approval"

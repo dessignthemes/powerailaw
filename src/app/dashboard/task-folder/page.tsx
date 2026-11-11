@@ -281,7 +281,7 @@ export default function TaskFolderPage() {
           {/* Watched folder */}
           <div className={`${framedPanel} px-6 py-5 flex items-center justify-between gap-4 flex-wrap mb-7 relative`}>
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-full bg-[#F7F6F2] border border-[#EBE8DF] flex items-center justify-center flex-shrink-0">
+              <span className="w-10 h-10 rounded-full bg-[#F3F2F0] border border-[#EBE8DF] flex items-center justify-center flex-shrink-0">
                 <FolderInput size={17} strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
@@ -348,7 +348,7 @@ export default function TaskFolderPage() {
                         <button
                           key={f.id}
                           onClick={() => chooseFolder(f)}
-                          className="w-full flex items-center gap-2 py-2 pr-3 rounded-xl text-[13.5px] hover:bg-[#F7F6F2] text-left"
+                          className="w-full flex items-center gap-2 py-2 pr-3 rounded-xl text-[13.5px] hover:bg-[#F3F2F0] text-left"
                           style={{ paddingLeft: 12 + depth * 16 }}
                         >
                           <span className="flex-1 truncate">{f.name}</span>
@@ -407,7 +407,7 @@ export default function TaskFolderPage() {
                   </div>
                 ) : visible.length === 0 ? (
                   <div className="text-center px-6 py-14">
-                    <span className="w-12 h-12 rounded-full bg-[#F7F6F2] border border-[#EEEBE4] mx-auto mb-3 flex items-center justify-center">
+                    <span className="w-12 h-12 rounded-full bg-[#F3F2F0] border border-[#EEEBE4] mx-auto mb-3 flex items-center justify-center">
                       <Mail size={18} strokeWidth={1.5} className="text-muted" />
                     </span>
                     <div className="text-[16px] font-semibold mb-1">Nothing waiting</div>
@@ -524,7 +524,7 @@ function TaskTable({
   if (!tasks.length)
     return (
       <div className={`${framedPanel} text-center px-6 py-14`}>
-        <span className="w-12 h-12 rounded-full bg-[#F7F6F2] border border-[#EEEBE4] mx-auto mb-3 flex items-center justify-center">
+        <span className="w-12 h-12 rounded-full bg-[#F3F2F0] border border-[#EEEBE4] mx-auto mb-3 flex items-center justify-center">
           {kind === "assigned" ? <UserCheck size={18} strokeWidth={1.5} className="text-muted" /> : <CheckCircle2 size={18} strokeWidth={1.5} className="text-muted" />}
         </span>
         <div className="text-[16px] font-semibold mb-1">{kind === "assigned" ? "No open tasks from the Task Folder" : "Nothing completed yet"}</div>
@@ -547,7 +547,7 @@ function TaskTable({
   return (
     <div className={`${framedPanel} overflow-x-auto`}>
       <table className="w-full min-w-[860px] text-[13.5px]">
-        <thead className="border-b border-[#EEEBE4] bg-[#F7F6F2]">
+        <thead className="border-b border-[#EEEBE4] bg-[#F3F2F0]">
           <tr>
             <th className={`${th} pl-5 w-[150px]`}>Action</th>
             <th className={`${th} w-[120px]`}>{kind === "assigned" ? "Due date" : "Completed"}</th>

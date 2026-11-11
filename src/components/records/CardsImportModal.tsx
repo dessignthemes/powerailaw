@@ -155,7 +155,7 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
               <b className="text-ink">vendor</b> (title companies, law firms, lenders, realtors…). People are put under their company when they share its email
               domain or the file has a Company column. You review everything before it&apos;s saved.
             </p>
-            <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-btn bg-[#F7F6F2] hover:bg-[#F3F1EC] transition-colors py-12 cursor-pointer">
+            <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-btn bg-[#F3F2F0] hover:bg-[#F3F1EC] transition-colors py-12 cursor-pointer">
               {reading ? <Loader2 size={22} className="animate-spin text-muted" /> : <FileSpreadsheet size={24} strokeWidth={1.5} className="text-muted" />}
               <span className="text-[14px] font-medium">{reading ? `Reading ${fileName}…` : "Choose a file"}</span>
               <span className="text-[12.5px] text-muted">.xlsx or .csv · columns like Short Name, Card Name, Card Type, Supplier, Email, Town/City, State, Zip Code, Phone</span>
@@ -173,7 +173,7 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
               {(["person", "company", "trust", "estate"] as const).map((k) => {
                 const Icon = KIND_ICON[k];
                 return (
-                  <div key={k} className="rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] px-3 py-2">
+                  <div key={k} className="rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] px-3 py-2">
                     <div className="text-[11px] font-mono uppercase tracking-[0.12em] text-muted flex items-center gap-1.5">
                       <Icon size={12} /> {k === "person" ? "People" : k === "company" ? "Companies" : k === "trust" ? "Trusts" : "Estates"}
                     </div>
@@ -202,7 +202,7 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
               {chip("trust", "Trusts")}
               {chip("estate", "Estates")}
               {chip("linked", "Under a company")}
-              <div className="ml-auto flex items-center gap-2 bg-[#F7F6F2] border border-[#ECE9E1] rounded-full px-3 py-1.5 w-[220px] focus-within:bg-white focus-within:border-[#D7D1C0]">
+              <div className="ml-auto flex items-center gap-2 bg-[#F3F2F0] border border-[#ECE9E1] rounded-full px-3 py-1.5 w-[220px] focus-within:bg-white focus-within:border-[#D7D1C0]">
                 <Search size={13} className="text-muted" />
                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a card" className="flex-1 min-w-0 bg-transparent outline-none text-[13px]" />
               </div>
@@ -210,7 +210,7 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
 
             {/* Rows */}
             <div className="flex-1 min-h-[200px] overflow-y-auto rounded-xl border border-[#ECE9E1]">
-              <div className="grid grid-cols-[1fr_120px_120px_170px] gap-2 px-3 py-2 bg-[#F7F6F2] border-b border-[#EEEBE4] font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted sticky top-0">
+              <div className="grid grid-cols-[1fr_120px_120px_170px] gap-2 px-3 py-2 bg-[#F3F2F0] border-b border-[#EEEBE4] font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted sticky top-0">
                 <span>Name</span>
                 <span>Type</span>
                 <span>Group</span>

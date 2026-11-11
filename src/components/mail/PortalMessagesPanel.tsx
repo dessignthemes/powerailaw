@@ -37,7 +37,7 @@ export default function PortalMessagesPanel() {
   return (
     <div className="mb-4 bg-[#F3F2F0] border border-[#EBE8DF] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
       <div className="bg-white border border-[#ECE9E1] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(27,25,26,0.06)]">
-      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F7F6F2]">
+      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F3F2F0]">
         <span className="flex items-center gap-2 text-[13.5px] font-semibold">
           <MessageSquare size={15} strokeWidth={1.75} />
           Client portal messages
@@ -51,7 +51,7 @@ export default function PortalMessagesPanel() {
             <Link
               key={m.id}
               href={m.matterId ? `/dashboard/matters/${m.matterId}?tab=emails` : `/dashboard/client-intake?card=${m.clientId}`}
-              className={`flex items-center gap-3 px-4 py-2.5 border-b border-[#EEEBE4] last:border-b-0 hover:bg-[#F7F6F2] ${m.unread ? "bg-[#F3F7FD]" : ""}`}
+              className={`flex items-center gap-3 px-4 py-2.5 border-b border-[#EEEBE4] last:border-b-0 hover:bg-[#F3F2F0] ${m.unread ? "bg-[#F3F7FD]" : ""}`}
             >
               {m.unread ? <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0" aria-label="New" /> : <span className="w-2 flex-shrink-0" />}
               <span className={`text-[13.5px] w-[180px] flex-shrink-0 truncate ${m.unread ? "font-semibold" : ""}`}>{m.from}</span>

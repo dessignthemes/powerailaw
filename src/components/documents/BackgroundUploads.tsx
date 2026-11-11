@@ -57,11 +57,11 @@ export default function BackgroundUploads() {
               {active ? "You can keep working. Don't close this tab." : matters.length === 1 ? matters[0][1] : `${matters.length} matters`}
             </div>
           </div>
-          <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Hide list" : "Show list"} className="w-7 h-7 rounded-full hover:bg-[#F7F6F2] flex items-center justify-center text-muted">
+          <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Hide list" : "Show list"} className="w-7 h-7 rounded-full hover:bg-[#F3F2F0] flex items-center justify-center text-muted">
             {open ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
           </button>
           {!active && (
-            <button onClick={clearFinished} aria-label="Close" className="w-7 h-7 rounded-full hover:bg-[#F7F6F2] flex items-center justify-center text-muted">
+            <button onClick={clearFinished} aria-label="Close" className="w-7 h-7 rounded-full hover:bg-[#F3F2F0] flex items-center justify-center text-muted">
               <X size={15} />
             </button>
           )}
