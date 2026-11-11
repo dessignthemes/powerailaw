@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "./warm.css";
 import "./dark.css";
 import ScrollLock from "@/components/ScrollLock";
 
@@ -24,11 +25,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
-        {/* Dark mode before the first paint (dashboard pages only), so there's no white flash. */}
+        {/* Colour scheme (warm beige unless "cool" was chosen) and dark mode (dashboard pages only) before the first paint, so nothing flashes. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{if(location.pathname.indexOf('/dashboard')===0&&localStorage.getItem('lp-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}",
+              "try{var d=document.documentElement;d.dataset.palette=localStorage.getItem('lp-palette')==='cool'?'cool':'warm';if(location.pathname.indexOf('/dashboard')===0&&localStorage.getItem('lp-theme')==='dark')d.dataset.theme='dark'}catch(e){document.documentElement.dataset.palette='warm'}",
           }}
         />
       </head>

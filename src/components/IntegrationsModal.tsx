@@ -1,5 +1,6 @@
 "use client";
 
+import PaletteChoice from "@/components/PaletteChoice";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -638,6 +639,12 @@ export default function IntegrationsModal({
               <>
                 <h2 className="text-[26px] font-semibold mt-3 mb-1.5">General</h2>
                 <p className="text-[14px] text-muted mb-8">Manage your organization details</p>
+
+                <div className="mb-7">
+                  <div className="text-[14.5px] font-semibold mb-1">Colour scheme</div>
+                  <div className="text-[13px] text-muted mb-3">How LawPower looks on this computer. Dark mode (the moon button at the top) works with either.</div>
+                  <PaletteChoice />
+                </div>
 
                 <div className="mb-7">
                   <div className="text-[14.5px] font-semibold mb-3">Workspace logo</div>
