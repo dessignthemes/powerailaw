@@ -25,11 +25,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
-        {/* Colour scheme (warm beige unless "cool" was chosen) and dark mode (dashboard pages only) before the first paint, so nothing flashes. */}
+        {/* The warm colour scheme, and dark mode (dashboard pages only), before the first paint so nothing flashes. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var d=document.documentElement;d.dataset.palette=localStorage.getItem('lp-palette')==='cool'?'cool':'warm';if(location.pathname.indexOf('/dashboard')===0&&localStorage.getItem('lp-theme')==='dark')d.dataset.theme='dark'}catch(e){document.documentElement.dataset.palette='warm'}",
+              "document.documentElement.dataset.palette='warm';try{if(location.pathname.indexOf('/dashboard')===0&&localStorage.getItem('lp-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}",
           }}
         />
       </head>
