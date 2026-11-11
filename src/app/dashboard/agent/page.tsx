@@ -530,7 +530,7 @@ function Agent() {
                 <div className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-bold font-display flex-shrink-0">
                   L
                 </div>
-                <div className="max-w-[390px] bg-[#F2F0EA] border border-[#EBE8DF] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[16px] p-[3px]">
+                <div className="max-w-[390px] bg-[#F3F2F0] border border-[#EBE8DF] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[16px] p-[3px]">
                   <div className="bg-white border border-[#ECE9E1] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-[13px] px-3 py-1.5 text-[12px] leading-snug text-muted">
                     <span className="font-semibold text-ink">Hi, I&apos;m LawPower, your AI legal assistant.</span> Tell me what you&apos;re working on
                     and I&apos;ll help you get started: summarizing documents, organizing matters, or drafting for your review.
@@ -577,7 +577,7 @@ function Agent() {
                           })}
                         </div>
                       )}
-                      <div className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-2xl rounded-br-md px-4 py-2.5 text-[14.5px] whitespace-pre-wrap break-words">{m.content}</div>
+                      <div className="bg-[#F3F2F0] border border-[#EBE8DF] rounded-2xl rounded-br-md px-4 py-2.5 text-[14.5px] whitespace-pre-wrap break-words">{m.content}</div>
                     </div>
                   </div>
                 ) : (
@@ -670,7 +670,7 @@ type ComposerProps = {
 function Composer({ textRef, fileInput, ...p }: ComposerProps) {
   const shown = p.files.filter((f) => p.pendingFileIds.includes(f.id) || f.status === "uploading" || f.status === "processing" || (f.status === "failed" && f.id.startsWith("tmp-")));
   return (
-    <div className={`bg-[#F2F0EA] border border-[#EBE8DF] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[22px] p-1.5 ${p.disabled ? "opacity-60" : ""}`}>
+    <div className={`bg-[#F3F2F0] border border-[#EBE8DF] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[22px] p-1.5 ${p.disabled ? "opacity-60" : ""}`}>
     <div className="bg-white border border-[#ECE9E1] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-2xl px-5 pt-4 pb-3.5">
       {shown.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">

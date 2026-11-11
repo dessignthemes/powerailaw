@@ -44,7 +44,7 @@ export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize
   const small = size === "s";
   return (
     <WidgetSizeContext.Provider value={size}>
-      <div className={`h-full ${def.tone ?? "bg-[#F2F0EA]"} rounded-[22px] border border-[#EBE8DF] p-1.5 flex flex-col overflow-hidden relative shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200`}>
+      <div className={`h-full ${def.tone ?? "bg-[#F3F2F0]"} rounded-[22px] border border-[#EBE8DF] p-1.5 flex flex-col overflow-hidden relative shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200`}>
         {!def.plain && (
           <div className={`flex items-center justify-between gap-2 ${small ? "px-2.5 pt-2 pb-2" : "px-3 pt-2.5 pb-2.5"}`}>
             <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2 min-w-0">

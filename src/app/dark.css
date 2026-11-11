@@ -22,8 +22,8 @@ html[data-theme="dark"] {
   --beige: #2a2f39;
 }
 /* Frames drawn with a ring shadow (widget frames, dropdown menus). */
-html[data-theme="dark"] [class*="0_0_0_6px_#F2F0EA"],
-html[data-theme="dark"] [class*="0_0_0_7px_#F2F0EA"] {
+html[data-theme="dark"] [class*="0_0_0_6px_#F3F2F0"],
+html[data-theme="dark"] [class*="0_0_0_7px_#F3F2F0"] {
   box-shadow: 0 0 0 6px #262a32, 0 0 0 7px #30353f, 0 18px 40px -18px rgba(0, 0, 0, 0.6) !important;
 }
 /* Pop-up windows. */
@@ -56,7 +56,7 @@ html[data-theme="dark"] .bg-\[\#E7F6EE\]{background-color:#1c2f22}
 html[data-theme="dark"] .bg-\[\#E8F0FE\]\/60{background-color:#1f2a3a}
 html[data-theme="dark"] .bg-\[\#E8F0FE\]{background-color:#1f2a3a}
 html[data-theme="dark"] .bg-\[\#E8F6EE\]{background-color:#1c2f22}
-html[data-theme="dark"] .bg-\[\#F2F0EA\]{background-color:#262a32}
+html[data-theme="dark"] .bg-\[\#F3F2F0\]{background-color:#262a32}
 html[data-theme="dark"] .bg-\[\#F3F1EC\]{background-color:#16181d}
 html[data-theme="dark"] .bg-\[\#F3F1EC\]{background-color:#2a2f39}
 html[data-theme="dark"] .bg-\[\#EEF3FB\]{background-color:#1f2a3a}

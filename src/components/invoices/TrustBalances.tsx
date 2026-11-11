@@ -47,11 +47,11 @@ export default function TrustBalances({ matters, clientName, reloadKey = 0 }: { 
         </div>
       )}
       {rows.length === 0 ? (
-        <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] py-8 text-center text-[13.5px] text-muted">
+        <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] py-8 text-center text-[13.5px] text-muted">
           No trust activity yet. Trust deposits and payments imported or added with the account set to <b>Trust (IOLTA)</b> and linked to a matter show here.
         </div>
       ) : (
-        <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] overflow-x-auto">
+        <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] overflow-x-auto">
           <table className="w-full text-[13px] min-w-[560px]">
             <thead>
               <tr className="text-left text-[12px] text-muted bg-[#F7F6F2]">

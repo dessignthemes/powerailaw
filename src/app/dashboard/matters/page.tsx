@@ -215,7 +215,7 @@ export default function MattersPage() {
       </div>
       {mattersLoaded && matters.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap -mt-3 mb-6">
-        <div className="relative flex-1 min-w-[260px] max-w-[520px] bg-[#F2F0EA] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="relative flex-1 min-w-[260px] max-w-[520px] bg-[#F3F2F0] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
@@ -234,7 +234,7 @@ export default function MattersPage() {
             </span>
           )}
         </div>
-        <div className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="bg-[#F3F2F0] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <GenericDropdown
             open={sortOpen}
             setOpen={setSortOpen}

@@ -188,7 +188,7 @@ html.lp-scroll-locked body { overflow: hidden; }
 .fixed.inset-0[class*="bg-black/"][class*="justify-center"]:not([class*="bg-black/80"]) > *:not(.fixed):not(script) {
   background-color: #fff !important;
   box-shadow:
-    0 0 0 7px #F2F0EA,
+    0 0 0 7px #F3F2F0,
     0 0 0 8px #EBE8DF,
     0 30px 80px -24px rgba(18, 17, 16, 0.32) !important;
 }

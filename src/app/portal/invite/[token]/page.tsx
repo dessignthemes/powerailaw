@@ -54,7 +54,7 @@ export default function PortalInvite({ params }: { params: Promise<{ token: stri
     <>
       <PortalHeader firm={info?.firm} />
       <main className="flex-1 flex items-start justify-center px-5 py-14">
-        <div className="w-full max-w-[420px] bg-white border border-[#ECE9E1] rounded-3xl m-[7px] shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-8">
+        <div className="w-full max-w-[420px] bg-white border border-[#ECE9E1] rounded-3xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-8">
           {fatal ? (
             <div className="text-center py-6">
               <div className="text-[16px] font-medium mb-2">{fatal}</div>

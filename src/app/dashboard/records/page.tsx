@@ -375,7 +375,7 @@ export default function RecordsPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
         {loaded && (typeCounts.length > 0 || typeFilter) && (
-          <div className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+          <div className="bg-[#F3F2F0] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
             <GenericDropdown
               open={typeOpen}
               setOpen={setTypeOpen}
@@ -420,7 +420,7 @@ export default function RecordsPage() {
             </GenericDropdown>
           </div>
         )}
-        <div className="relative w-full sm:w-80 bg-[#F2F0EA] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="relative w-full sm:w-80 bg-[#F3F2F0] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}

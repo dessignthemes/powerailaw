@@ -339,11 +339,11 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
   const conflict = useConflictCheck(cardId, cardType === "company" ? [profile.company.name] : profile.people.map((p) => [p.first, p.middle, p.last].filter(Boolean).join(" ")));
   const conflictReady = !dirty && !autoSaving && (cardType === "company" ? profile.company.name.trim().length > 1 : profile.people.some((p) => p.first.trim() && p.last.trim()));
 
-  if (!loaded) return <div className="bg-white rounded-[22px] m-2 py-16 text-center text-[14px] text-muted shadow-[0_0_0_7px_#F2F0EA,0_0_0_8px_#EBE8DF]">Loading the client card…</div>;
+  if (!loaded) return <div className="bg-white rounded-[22px] m-2 py-16 text-center text-[14px] text-muted shadow-[0_0_0_7px_#F3F2F0,0_0_0_8px_#EBE8DF]">Loading the client card…</div>;
 
   return (
     // Widget / pop-up style: white inside, a soft grey-blue frame around it.
-    <div className="bg-white rounded-[22px] overflow-hidden m-2 shadow-[0_0_0_7px_#F2F0EA,0_0_0_8px_#EBE8DF,0_14px_40px_-20px_rgba(18,17,16,0.25)]">
+    <div className="bg-white rounded-[22px] overflow-hidden m-2 shadow-[0_0_0_7px_#F3F2F0,0_0_0_8px_#EBE8DF,0_14px_40px_-20px_rgba(18,17,16,0.25)]">
       {/* Header */}
       <div className="flex items-center gap-4 px-6 py-5 border-b border-[#F3F1EB] bg-white flex-wrap">
         <button onClick={cancel} className="w-9 h-9 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink" aria-label="Back to clients">

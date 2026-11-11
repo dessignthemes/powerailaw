@@ -140,7 +140,7 @@ export default function GlobalSearch() {
       {/* Same look as the widgets: a soft tinted frame around a white field. */}
       <button
         onClick={() => setOpen(true)}
-        className="group block bg-[#F2F0EA] border border-[#EBE8DF] rounded-full p-1 min-w-0 w-[380px] max-w-full shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_6px_16px_-6px_rgba(27,25,26,0.14)] transition-shadow"
+        className="group block bg-[#F3F2F0] border border-[#EBE8DF] rounded-full p-1 min-w-0 w-[380px] max-w-full shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_6px_16px_-6px_rgba(27,25,26,0.14)] transition-shadow"
         aria-label="Search"
       >
         <span className="flex items-center gap-2 bg-white border border-[#ECE9E1] rounded-full pl-3.5 pr-1.5 py-1.5 text-[13.5px] text-muted shadow-[0_1px_2px_rgba(27,25,26,0.05)]">

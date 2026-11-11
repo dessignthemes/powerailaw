@@ -164,7 +164,7 @@ export default function AiTemplatesPage() {
   const sampleList = useMemo(() => samples.filter(filterFn), [samples, q, cat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const newMenu = (
-    <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
+    <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
       {(
         [
           ["ai", <Sparkles key="a" size={14} />, "Create with AI", "Describe it; the AI drafts it"],
@@ -271,7 +271,7 @@ export default function AiTemplatesPage() {
       {error && <div className="mb-5 rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-4 py-3 text-[13.5px]">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5 items-start">
-        <aside className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <aside className="bg-[#F3F2F0] border border-[#EBE8DF] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <div className="bg-white border border-[#ECE9E1] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 h-full">
           <div className="flex items-center gap-2 bg-[#F7F6F2] border border-[#ECE9E1] rounded-full px-3 py-2 mb-3">
             <Search size={14} className="text-muted" />
@@ -346,7 +346,7 @@ export default function AiTemplatesPage() {
           </div>
         </aside>
 
-        <section className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] min-h-[560px]">
+        <section className="bg-[#F3F2F0] border border-[#EBE8DF] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] min-h-[560px]">
           <div className="bg-white border border-[#ECE9E1] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-6 h-full">
           {workflowModal ? (
             <TemplatesModal
@@ -387,14 +387,14 @@ export default function AiTemplatesPage() {
                     [<FileText key="b" size={18} />, "Start blank", "Write it yourself and insert fields.", () => fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" })],
                   ] as [React.ReactNode, string, string, () => void][]
                 ).map(([icon, title, sub, fn]) => (
-                  <button key={title} onClick={fn} className="group bg-[#F2F0EA] border border-[#EBE8DF] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
+                  <button key={title} onClick={fn} className="group bg-[#F3F2F0] border border-[#EBE8DF] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
                     <div className="px-3 pt-1.5 pb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2">
                       <span className="[&_svg]:w-[15px] [&_svg]:h-[15px]">{icon}</span> {title}
                     </div>
                     <div className="bg-white border border-[#ECE9E1] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 flex-1 text-[13px] text-muted leading-relaxed group-hover:bg-[#FBFCFE]">{sub}</div>
                   </button>
                 ))}
-                <div className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
+                <div className="bg-[#F3F2F0] border border-[#EBE8DF] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
                   <div className="px-3 pt-1.5 pb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2">
                     <FileText size={15} /> Upload Word or PDF
                   </div>

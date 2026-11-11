@@ -99,7 +99,7 @@ export default function NewTemplateMenu({ label = "Add template" }: { label?: st
       {workflow && <TemplatesModal onClose={() => setWorkflow(false)} />}
 
       {notice && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-white rounded-full pl-4 pr-2 py-2 text-[13px] shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_18px_40px_-14px_rgba(18,17,16,0.3)]">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-white rounded-full pl-4 pr-2 py-2 text-[13px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_18px_40px_-14px_rgba(18,17,16,0.3)]">
           <Check size={14} className="text-[#2F5E2A]" /> {notice}
           <Link href="/dashboard/ai-templates" className="font-medium underline underline-offset-2">Open AI Templates</Link>
           <button onClick={() => setNotice(null)} aria-label="Dismiss" className="w-6 h-6 rounded-full hover:bg-[#F7F6F2] flex items-center justify-center text-muted">

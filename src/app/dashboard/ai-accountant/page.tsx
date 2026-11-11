@@ -232,7 +232,7 @@ function AiAccountant() {
             {addOpen && (
               <>
                 <ClickAway onClose={() => setAddOpen(false)} />
-                <div role="menu" className="absolute right-0 top-[calc(100%+14px)] z-50 w-[280px] bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
+                <div role="menu" className="absolute right-0 top-[calc(100%+14px)] z-50 w-[280px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
                   {[
                     { icon: Upload, label: "Import bank or card CSV", hint: "AI categorizes every line", go: () => setModal({ kind: "import" }) },
                     { icon: CreditCard, label: "Import from LawPay", hint: "Payments matched to invoices", go: () => setModal({ kind: "lawpay" }) },
@@ -418,7 +418,7 @@ function Frame({ title, icon: Icon, right, children, className = "", pad = "p-5"
   children: React.ReactNode; className?: string; pad?: string;
 }) {
   return (
-    <div className={`bg-[#F2F0EA] rounded-[22px] border border-[#EBE8DF] p-1.5 flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200 ${className}`}>
+    <div className={`bg-[#F3F2F0] rounded-[22px] border border-[#EBE8DF] p-1.5 flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200 ${className}`}>
       {title && (
         <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5">
           <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2 min-w-0">
