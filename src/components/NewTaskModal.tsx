@@ -258,7 +258,7 @@ export default function NewTaskModal({
             <span>›</span>
             <span className="text-ink font-semibold">New task</span>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-ink">
+          <button aria-label="Close" onClick={onClose} className="text-muted hover:text-ink">
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>

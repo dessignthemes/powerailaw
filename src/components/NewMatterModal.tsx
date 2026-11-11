@@ -657,7 +657,7 @@ export default function NewMatterModal({
             <span>›</span>
             <span className="text-ink font-semibold">{isEdit ? "Edit matter" : "New matter"}</span>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-ink">
+          <button aria-label="Close" onClick={onClose} className="text-muted hover:text-ink">
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>

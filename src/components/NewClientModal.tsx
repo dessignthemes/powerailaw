@@ -178,7 +178,7 @@ export default function NewClientModal({
             <span>›</span>
             <span className="text-ink font-semibold">{isEdit ? "Edit client" : "New client"}</span>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-ink">
+          <button onClick={onClose} aria-label="Close" className="text-muted hover:text-ink">
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>

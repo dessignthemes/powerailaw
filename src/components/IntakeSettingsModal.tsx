@@ -76,7 +76,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
               Your public intake form, its languages and appearance, with the live widget beside it.
             </p>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-ink mt-1">
+          <button aria-label="Close" onClick={onClose} className="text-muted hover:text-ink mt-1">
             <X size={20} strokeWidth={1.75} />
           </button>
         </div>

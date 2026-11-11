@@ -252,7 +252,7 @@ export default function NewEventModal({
             <span className="text-muted">›</span>
             <span className="text-ink font-semibold">New event</span>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-ink">
+          <button onClick={onClose} aria-label="Close" className="text-muted hover:text-ink">
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>

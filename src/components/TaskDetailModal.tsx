@@ -301,7 +301,7 @@ export default function TaskDetailModal({
             >
               <Maximize2 size={16} strokeWidth={1.75} />
             </button>
-            <button onClick={onClose} className="hover:text-ink transition-colors">
+            <button onClick={onClose} aria-label="Close" className="hover:text-ink transition-colors">
               <X size={18} strokeWidth={1.75} />
             </button>
           </div>

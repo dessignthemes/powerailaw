@@ -130,7 +130,7 @@ export default function AdminModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-cream rounded-3xl w-full max-w-[980px] max-h-[88vh] overflow-hidden flex relative"
       >
-        <button
+        <button aria-label="Close"
           onClick={onClose}
           className="absolute top-5 right-5 z-10 w-8 h-8 rounded-full bg-cream/80 hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors"
         >

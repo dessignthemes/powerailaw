@@ -601,7 +601,7 @@ function ReferModal({
             <h2 className="text-[20px] font-semibold">Refer a client to {lawyer.name}</h2>
             <p className="text-[13.5px] text-muted mt-0.5">{lawyer.firm}</p>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-ink transition-colors mt-1">
+          <button aria-label="Close" onClick={onClose} className="text-muted hover:text-ink transition-colors mt-1">
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>

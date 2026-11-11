@@ -198,3 +198,20 @@ html.lp-scroll-locked body { overflow: hidden; }
 
 /* While a Dashboard widget is being dragged. */
 body.lp-dragging, body.lp-dragging * { cursor: grabbing !important; user-select: none !important; }
+
+/* Close (X) buttons everywhere: a round light background so they're easy to see and click. */
+button[aria-label^="Close"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 9999px;
+  background-color: #F3F2F0;
+  color: #1b191a;
+  transition: background-color 0.15s;
+}
+button[aria-label^="Close"]:hover { background-color: #E4E4E2; }
+html[data-theme="dark"] button[aria-label^="Close"] { background-color: #262a32; color: #e8e9ec; }
+html[data-theme="dark"] button[aria-label^="Close"]:hover { background-color: #30353f; }

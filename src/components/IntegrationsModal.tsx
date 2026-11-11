@@ -628,7 +628,7 @@ export default function IntegrationsModal({
                 })()
               )}
             </div>
-            <button onClick={onClose} className="text-muted hover:text-ink">
+            <button aria-label="Close" onClick={onClose} className="text-muted hover:text-ink">
               <X size={20} strokeWidth={1.75} />
             </button>
           </div>
