@@ -410,7 +410,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
               const open = expanded === d.id;
               const working = busy === d.id;
               return (
-                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F1F0EE] border-[#E6E4E0]" : "bg-[#F3F2F0] border-[#EBEAE7] hover:bg-[#F1F0EE]"}`}>
+                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F1F0EE] border-[#E6E4E0]" : "bg-[#FCFCFC] border-[#EBEAE7] hover:bg-[#F1F0EE]"}`}>
                   <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
                     <button
                       onClick={() => setExpanded(open ? null : d.id)}

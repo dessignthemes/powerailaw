@@ -500,7 +500,7 @@ export default function RecordsPage() {
               <button
                 key={r.key}
                 onClick={() => open(r)}
-                className="w-full flex items-center gap-3.5 px-4 py-3 text-left rounded-xl bg-[#F3F2F0] border border-[#EBEAE7] hover:bg-[#EFEEEB] transition-colors"
+                className="w-full flex items-center gap-3.5 px-4 py-3 text-left rounded-xl bg-[#FCFCFC] border border-[#EBEAE7] hover:bg-[#EFEEEB] transition-colors"
               >
                 <Avatar kind={r.kind} name={r.name} />
                 <div className="flex-1 min-w-0">

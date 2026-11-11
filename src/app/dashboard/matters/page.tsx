@@ -326,7 +326,7 @@ export default function MattersPage() {
                         <div
                           key={m.id}
                           onClick={() => router.push(`/dashboard/matters/${m.id}`)}
-                          className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[#F3F2F0] border border-[#EBEAE7] hover:bg-[#EFEEEB] transition-colors cursor-pointer"
+                          className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[#FCFCFC] border border-[#EBEAE7] hover:bg-[#EFEEEB] transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <button
