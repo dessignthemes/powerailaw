@@ -64,7 +64,7 @@ export function LinkToMatterModal({
   const input = "bg-white border border-line rounded-lg px-3 py-2 text-[13.5px] outline-none focus:border-btn-ring";
   return (
     <div className="fixed inset-0 z-[70] bg-black/30 flex items-center justify-center px-4 py-8" onClick={() => !busy && onClose()}>
-      <div className="bg-white rounded-2xl w-full max-w-[540px] max-h-full overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Link to a matter">
+      <div className="bg-white rounded-2xl w-full max-w-[540px] max-h-full overflow-y-auto " onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Link to a matter">
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <h2 className="text-[17px] font-semibold">Link {who.name} to a matter</h2>
           <button onClick={onClose} disabled={busy} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">

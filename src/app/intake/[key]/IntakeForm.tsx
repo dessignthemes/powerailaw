@@ -50,7 +50,7 @@ export default function IntakeForm({ firmKey, firmName, logoUrl, invite, prefill
   const shell = embed ? "px-4 py-6" : "min-h-screen bg-[#F5F4F2] px-4 py-10";
   return (
     <div className={shell} style={{ fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif", color: "#1B191A" }}>
-      <div className={`max-w-[680px] mx-auto ${embed ? "" : "bg-white rounded-3xl shadow-[0_20px_60px_-30px_rgba(18,17,16,0.25)] px-6 sm:px-10 py-9"}`}>
+      <div className={`max-w-[680px] mx-auto ${embed ? "" : "bg-white rounded-3xl px-6 sm:px-10 py-9"}`}>
         <div className="flex items-center gap-3 mb-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {logoUrl && <img src={logoUrl} alt="" className="h-11 w-auto" />}

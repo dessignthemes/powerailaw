@@ -164,7 +164,7 @@ export default function AiTemplatesPage() {
   const sampleList = useMemo(() => samples.filter(filterFn), [samples, q, cat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const newMenu = (
-    <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
+    <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-1.5">
       {(
         [
           ["ai", <Sparkles key="a" size={14} />, "Create with AI", "Describe it; the AI drafts it"],
@@ -271,8 +271,8 @@ export default function AiTemplatesPage() {
       {error && <div className="mb-5 rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-4 py-3 text-[13.5px]">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5 items-start">
-        <aside className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
-          <div className="bg-white border border-[#E9E7E4] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 h-full">
+        <aside className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 ">
+          <div className="bg-white border border-[#E9E7E4] rounded-2xl p-4 h-full">
           <div className="flex items-center gap-2 bg-[#F3F2F0] border border-[#E9E7E4] rounded-full px-3 py-2 mb-3">
             <Search size={14} className="text-muted" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search templates" aria-label="Search templates" className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px]" />
@@ -346,8 +346,8 @@ export default function AiTemplatesPage() {
           </div>
         </aside>
 
-        <section className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] min-h-[560px]">
-          <div className="bg-white border border-[#E9E7E4] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-6 h-full">
+        <section className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 min-h-[560px]">
+          <div className="bg-white border border-[#E9E7E4] rounded-2xl p-6 h-full">
           {workflowModal ? (
             <TemplatesModal
               key={workflowModal.id ?? "new"}
@@ -387,20 +387,20 @@ export default function AiTemplatesPage() {
                     [<FileText key="b" size={18} />, "Start blank", "Write it yourself and insert fields.", () => fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" })],
                   ] as [React.ReactNode, string, string, () => void][]
                 ).map(([icon, title, sub, fn]) => (
-                  <button key={title} onClick={fn} className="group bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
+                  <button key={title} onClick={fn} className="group bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 text-left flex flex-col transition-shadow">
                     <div className="px-3 pt-1.5 pb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2">
                       <span className="[&_svg]:w-[15px] [&_svg]:h-[15px]">{icon}</span> {title}
                     </div>
-                    <div className="bg-white border border-[#E9E7E4] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 flex-1 text-[13px] text-muted leading-relaxed group-hover:bg-[#FBFCFE]">{sub}</div>
+                    <div className="bg-white border border-[#E9E7E4] rounded-2xl p-4 flex-1 text-[13px] text-muted leading-relaxed group-hover:bg-[#FBFCFE]">{sub}</div>
                   </button>
                 ))}
-                <div className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
+                <div className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 text-left flex flex-col transition-shadow">
                   <div className="px-3 pt-1.5 pb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2">
                     <FileText size={15} /> Upload Word or PDF
                   </div>
-                  <div className="bg-white border border-[#E9E7E4] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 flex-1">
+                  <div className="bg-white border border-[#E9E7E4] rounded-2xl p-4 flex-1">
                     <div className="text-[13px] text-muted leading-relaxed mb-3">A document you already use; the AI turns it into a template.</div>
-                    <UploadButton className="bg-white border border-[#E5E3DF] hover:bg-[#F3F2F0] shadow-[0_1px_2px_rgba(27,25,26,0.05)] px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5" onText={(text, name) => setModal({ kind: "text", source: "upload", text, name })} />
+                    <UploadButton className="bg-white border border-[#E5E3DF] hover:bg-[#F3F2F0] px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5" onText={(text, name) => setModal({ kind: "text", source: "upload", text, name })} />
                   </div>
                 </div>
               </div>
@@ -427,7 +427,7 @@ export default function AiTemplatesPage() {
       )}
       {newDraft && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4 py-6">
-          <div role="dialog" aria-label="New template" className="bg-card-alt rounded-3xl w-full max-w-[1180px] max-h-full overflow-y-auto p-6 shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)]">
+          <div role="dialog" aria-label="New template" className="bg-card-alt rounded-3xl w-full max-w-[1180px] max-h-full overflow-y-auto p-6 ">
             {editor}
           </div>
         </div>

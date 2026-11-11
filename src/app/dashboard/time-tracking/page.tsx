@@ -285,7 +285,7 @@ export default function TimeTrackingPage() {
                         <button
                           key={b}
                           onClick={() => setBillable(b)}
-                          className={`px-2.5 py-1 rounded-full text-[12.5px] font-medium ${billable === b ? "bg-white shadow-sm" : "text-muted"}`}
+                          className={`px-2.5 py-1 rounded-full text-[12.5px] font-medium ${billable === b ? "bg-white " : "text-muted"}`}
                         >
                           {b === "all" ? "All" : b === "billable" ? "Billable" : "Non-billable"}
                         </button>

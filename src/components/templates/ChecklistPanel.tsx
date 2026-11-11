@@ -47,7 +47,7 @@ export function ChecklistPicker({
       {open && (
         <>
           <ClickAway onClose={close} />
-          <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[320px] bg-white border border-line rounded-2xl shadow-[0_12px_32px_rgba(27,25,26,0.12)] p-1.5">
+          <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[320px] bg-white border border-line rounded-2xl p-1.5">
             {added.length > 0 && (
               <div className="mb-1 pb-1 border-b border-line">
                 <div className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Added to this task</div>
@@ -225,7 +225,7 @@ export default function ChecklistPanel({
               <button
                 key={String(cash)}
                 onClick={() => onChange(setMortgageNa(checklist, cash))}
-                className={`px-3 py-1 rounded-full font-medium transition-colors ${mortgageNa(checklist) === cash ? "bg-white shadow-sm text-ink" : "text-muted hover:text-ink"}`}
+                className={`px-3 py-1 rounded-full font-medium transition-colors ${mortgageNa(checklist) === cash ? "bg-white text-ink" : "text-muted hover:text-ink"}`}
               >
                 {cash ? "Cash deal (mortgage N/A)" : "Mortgage"}
               </button>

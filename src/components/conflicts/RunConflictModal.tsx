@@ -45,7 +45,7 @@ export default function RunConflictModal({
   }
   return (
     <div className="fixed inset-0 z-[80] bg-black/30 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
-      <div role="dialog" aria-label="Run conflict check" className="bg-page rounded-2xl w-full max-w-[520px] p-6 shadow-xl">
+      <div role="dialog" aria-label="Run conflict check" className="bg-page rounded-2xl w-full max-w-[520px] p-6 ">
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-[18px] font-semibold">Run conflict check</h2>
           <button onClick={onClose} disabled={busy} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">

@@ -36,7 +36,7 @@ export default function ImportContactsModal({ source, onClose, onImported }: { s
 
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center px-4" onClick={() => !busy && onClose()}>
-      <div className="bg-white rounded-2xl w-full max-w-[620px] shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={TITLE[source]}>
+      <div className="bg-white rounded-2xl w-full max-w-[620px] " onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={TITLE[source]}>
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <h2 className="text-[17px] font-semibold">{TITLE[source]}</h2>
           <button onClick={onClose} disabled={busy} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">

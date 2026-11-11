@@ -33,7 +33,7 @@ export default function LeadPicker({ onClose, onPick }: { onClose: () => void; o
   const shown = (leads ?? []).filter((l) => words.every((w) => `${leadName(l)} ${l.email} ${l.phone} ${l.matterType}`.toLowerCase().includes(w)));
   return (
     <div className="fixed inset-0 z-[60] bg-black/25 flex items-center justify-center px-4 py-6" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-label="Import from leads" className="bg-page rounded-2xl w-full max-w-[560px] max-h-full flex flex-col shadow-xl">
+      <div role="dialog" aria-label="Import from leads" className="bg-page rounded-2xl w-full max-w-[560px] max-h-full flex flex-col ">
         <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <h2 className="text-[18px] font-semibold flex items-center gap-2">
             <UserSearch size={18} /> Import from leads

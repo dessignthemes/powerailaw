@@ -87,7 +87,7 @@ export default function LawPayImportModal({ onClose, onImported }: { onClose: ()
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/20 flex items-center justify-center px-4 py-6" onClick={() => !busy && onClose()}>
-      <div className="bg-white rounded-2xl w-full max-w-[920px] max-h-full overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Import from LawPay">
+      <div className="bg-white rounded-2xl w-full max-w-[920px] max-h-full overflow-y-auto " onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Import from LawPay">
         <div className="flex items-center justify-between px-6 pt-5 pb-3 sticky top-0 bg-white border-b border-line">
           <h2 className="text-[17px] font-semibold">Import from LawPay</h2>
           <button onClick={onClose} disabled={busy} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">

@@ -120,7 +120,7 @@ export default function SendForSignature({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex">
-      <div className="m-auto w-[min(1280px,96vw)] h-[94vh] bg-cream rounded-2xl shadow-xl flex flex-col overflow-hidden">
+      <div className="m-auto w-[min(1280px,96vw)] h-[94vh] bg-cream rounded-2xl flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-line">
           <div className="min-w-0">
             <div className="text-[18px] font-semibold">Send for signature</div>

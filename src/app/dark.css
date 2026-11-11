@@ -24,12 +24,12 @@ html[data-theme="dark"] {
 /* Frames drawn with a ring shadow (widget frames, dropdown menus). */
 html[data-theme="dark"] [class*="0_0_0_6px_#F3F2F0"],
 html[data-theme="dark"] [class*="0_0_0_7px_#F3F2F0"] {
-  box-shadow: 0 0 0 6px #262a32, 0 0 0 7px #30353f, 0 18px 40px -18px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 0 0 6px #262a32, 0 0 0 7px #30353f !important;
 }
 /* Pop-up windows. */
 html[data-theme="dark"] .fixed.inset-0[class*="bg-black/"][class*="justify-center"]:not([class*="bg-black/80"]) > *:not(.fixed):not(script) {
   background-color: #1a1d23 !important;
-  box-shadow: 0 0 0 7px #262a32, 0 0 0 8px #30353f, 0 30px 80px -24px rgba(0, 0, 0, 0.7) !important;
+  box-shadow: 0 0 0 7px #262a32, 0 0 0 8px #30353f !important;
 }
 /* Dark text on light buttons/badges stays readable. */
 html[data-theme="dark"] .bg-ink { color: #111318; }

@@ -81,7 +81,7 @@ export default function UseForMatterModal({
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/20 flex items-center justify-center px-4 py-6" onClick={() => !busy && onClose()}>
-      <div className="bg-white rounded-2xl w-full max-w-[1000px] max-h-full overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Use template for a matter">
+      <div className="bg-white rounded-2xl w-full max-w-[1000px] max-h-full overflow-y-auto " onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Use template for a matter">
         <div className="flex items-center justify-between px-6 pt-5 pb-3 sticky top-0 bg-white z-10 border-b border-line">
           <h2 className="text-[17px] font-semibold flex items-center gap-2">
             <FileText size={17} /> Use “{template.name}”

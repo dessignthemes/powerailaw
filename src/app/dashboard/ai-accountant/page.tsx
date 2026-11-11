@@ -232,7 +232,7 @@ function AiAccountant() {
             {addOpen && (
               <>
                 <ClickAway onClose={() => setAddOpen(false)} />
-                <div role="menu" className="absolute right-0 top-[calc(100%+14px)] z-50 w-[280px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
+                <div role="menu" className="absolute right-0 top-[calc(100%+14px)] z-50 w-[280px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-1.5">
                   {[
                     { icon: Upload, label: "Import bank or card CSV", hint: "AI categorizes every line", go: () => setModal({ kind: "import" }) },
                     { icon: CreditCard, label: "Import from LawPay", hint: "Payments matched to invoices", go: () => setModal({ kind: "lawpay" }) },
@@ -269,7 +269,7 @@ function AiAccountant() {
             aria-selected={book === k}
             title={hint}
             onClick={() => setBook(k)}
-            className={`px-5 py-2 rounded-full text-[14px] font-semibold transition-colors ${book === k ? "bg-white shadow-sm text-ink" : "text-muted hover:text-ink"}`}
+            className={`px-5 py-2 rounded-full text-[14px] font-semibold transition-colors ${book === k ? "bg-white text-ink" : "text-muted hover:text-ink"}`}
           >
             {label}
           </button>
@@ -418,7 +418,7 @@ function Frame({ title, icon: Icon, right, children, className = "", pad = "p-5"
   children: React.ReactNode; className?: string; pad?: string;
 }) {
   return (
-    <div className={`bg-[#F3F2F0] rounded-[22px] border border-[#E8E6E2] p-1.5 flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200 ${className}`}>
+    <div className={`bg-[#F3F2F0] rounded-[22px] border border-[#E8E6E2] p-1.5 flex flex-col transition-shadow duration-200 ${className}`}>
       {title && (
         <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5">
           <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2 min-w-0">
@@ -428,7 +428,7 @@ function Frame({ title, icon: Icon, right, children, className = "", pad = "p-5"
           {right && <div className="flex-shrink-0">{right}</div>}
         </div>
       )}
-      <div className={`flex-1 min-w-0 bg-white rounded-2xl border border-[#E9E7E4] shadow-[0_1px_3px_rgba(27,25,26,0.06)] ${pad}`}>{children}</div>
+      <div className={`flex-1 min-w-0 bg-white rounded-2xl border border-[#E9E7E4] ${pad}`}>{children}</div>
     </div>
   );
 }

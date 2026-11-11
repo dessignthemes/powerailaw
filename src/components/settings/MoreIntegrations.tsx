@@ -17,7 +17,7 @@ type Status = {
 
 function Row({ icon, name, desc, right, children, open, onToggle }: { icon: React.ReactNode; name: string; desc: string; right: React.ReactNode; children?: React.ReactNode; open?: boolean; onToggle?: () => void }) {
   return (
-    <div className="rounded-2xl bg-chip shadow-[0_1px_1px_rgba(27,25,26,0.08)]">
+    <div className="rounded-2xl bg-chip ">
       <div className={`flex items-center justify-between gap-4 px-4 py-3.5 ${onToggle ? "cursor-pointer" : ""}`} onClick={onToggle}>
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-lg bg-white/70 flex items-center justify-center flex-shrink-0">{icon}</div>

@@ -215,7 +215,7 @@ export default function MattersPage() {
       </div>
       {mattersLoaded && matters.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap -mt-3 mb-6">
-        <div className="relative flex-1 min-w-[260px] max-w-[520px] bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="relative flex-1 min-w-[260px] max-w-[520px] bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
@@ -223,7 +223,7 @@ export default function MattersPage() {
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Search matters: number, client, title, other side…"
             aria-label="Search matters"
-            className="w-full bg-white border border-[#E9E7E4] rounded-full pl-10 pr-24 py-2 text-[14px] outline-none focus:border-[#D1CDC6] shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
+            className="w-full bg-white border border-[#E9E7E4] rounded-full pl-10 pr-24 py-2 text-[14px] outline-none focus:border-[#D1CDC6] "
           />
           {query && (
             <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[12.5px] text-muted">
@@ -234,7 +234,7 @@ export default function MattersPage() {
             </span>
           )}
         </div>
-        <div className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
           <GenericDropdown
             open={sortOpen}
             setOpen={setSortOpen}
@@ -302,7 +302,7 @@ export default function MattersPage() {
             const GroupIcon = matterStatusMeta[group.status].icon;
             const isCollapsed = collapsed.has(group.status);
             return (
-              <div key={group.status} className={`${frameOuter} hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200`}>
+              <div key={group.status} className={`${frameOuter} transition-shadow duration-200`}>
                 <button
                   onClick={() => toggleCollapsed(group.status)}
                   className="w-full flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5 text-left"
@@ -433,7 +433,7 @@ export default function MattersPage() {
       )}
 
       {selected.size > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-white border border-line rounded-full shadow-[0_20px_50px_-15px_rgba(18,17,16,0.35)] px-2 py-2">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-white border border-line rounded-full px-2 py-2">
           <span className="px-3 text-[13.5px] font-medium">{selected.size} selected</span>
           <GenericDropdown
             open={bulkStatusOpen}

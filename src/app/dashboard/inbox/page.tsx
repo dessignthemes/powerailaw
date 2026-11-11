@@ -205,7 +205,7 @@ function FileToMatter({
       )}
       {error && <div className="absolute left-0 top-full mt-1 text-[12px] text-[#B42318] whitespace-nowrap">{error}</div>}
       {notice && !error && (
-        <div className="absolute left-0 top-full mt-1 z-30 w-[360px] bg-white border border-line rounded-xl shadow-sm px-3 py-2 text-[12.5px] flex gap-2">
+        <div className="absolute left-0 top-full mt-1 z-30 w-[360px] bg-white border border-line rounded-xl px-3 py-2 text-[12.5px] flex gap-2">
           <span className="flex-1">{notice}</span>
           <button onClick={() => setNotice(null)} aria-label="Dismiss" className="text-muted hover:text-ink flex-shrink-0">
             <X size={12} />
@@ -775,7 +775,7 @@ export default function InboxPage() {
                   key={c.provider}
                   onClick={() => switchProvider(c.provider)}
                   className={`px-3 py-1 rounded-full text-[13px] font-medium transition-colors ${
-                    provider === c.provider ? "bg-white shadow-sm" : "text-muted hover:text-ink"
+                    provider === c.provider ? "bg-white " : "text-muted hover:text-ink"
                   }`}
                 >
                   {providerLabel[c.provider]}
@@ -794,7 +794,7 @@ export default function InboxPage() {
             return f ? <span className="text-[13px] font-semibold truncate">· {f.name}</span> : null;
           })()}
 
-          <form onSubmit={submitSearch} className="flex items-center gap-2 bg-white border border-[#E9E7E4] rounded-full px-3.5 py-2 ml-auto w-full sm:w-[320px] shadow-[0_1px_3px_rgba(27,25,26,0.06)] focus-within:border-[#D1CDC6]">
+          <form onSubmit={submitSearch} className="flex items-center gap-2 bg-white border border-[#E9E7E4] rounded-full px-3.5 py-2 ml-auto w-full sm:w-[320px] focus-within:border-[#D1CDC6]">
             <Search size={14} strokeWidth={1.75} className="text-muted" />
             <input
               value={query}
@@ -891,7 +891,7 @@ export default function InboxPage() {
           {!panelHidden && (
             <>
               <div className="fixed inset-0 bg-black/20 z-30 min-[900px]:hidden" onClick={() => togglePanel(true)} />
-              <div className="absolute min-[900px]:static inset-y-0 left-0 z-40 w-[250px] flex-shrink-0 border-r border-[#EBEAE7] bg-white shadow-lg min-[900px]:shadow-none">
+              <div className="absolute min-[900px]:static inset-y-0 left-0 z-40 w-[250px] flex-shrink-0 border-r border-[#EBEAE7] bg-white min-[900px]:shadow-none">
                 <FolderPanel
                   folders={shownFolders}
                   loading={foldersLoading}
@@ -920,7 +920,7 @@ export default function InboxPage() {
                 className="flex items-center gap-2 text-[13px] font-medium"
               >
                 <span className={`relative w-9 h-5 rounded-full transition-colors ${threaded ? "bg-ink" : "bg-btn"}`}>
-                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-[left] ${threaded ? "left-[18px]" : "left-0.5"}`} />
+                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-[left] ${threaded ? "left-[18px]" : "left-0.5"}`} />
                 </span>
                 Conversations
               </button>
@@ -932,7 +932,7 @@ export default function InboxPage() {
               >
                 Unread only
                 <span className={`relative w-9 h-5 rounded-full transition-colors ${unreadOnly ? "bg-ink" : "bg-btn"}`}>
-                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-[left] ${unreadOnly ? "left-[18px]" : "left-0.5"}`} />
+                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-[left] ${unreadOnly ? "left-[18px]" : "left-0.5"}`} />
                 </span>
               </button>
             </div>

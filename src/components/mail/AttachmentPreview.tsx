@@ -84,7 +84,7 @@ export default function AttachmentPreview({
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={`Preview of ${attachment.name}`}>
-      <div className="bg-white rounded-2xl w-full max-w-[1000px] h-[88vh] flex flex-col overflow-hidden shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl w-full max-w-[1000px] h-[88vh] flex flex-col overflow-hidden " onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 px-5 py-3 border-b border-line">
           <FileText size={16} className="text-muted flex-shrink-0" />
           <div className="min-w-0 flex-1">

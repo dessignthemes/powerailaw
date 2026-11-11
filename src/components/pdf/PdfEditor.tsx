@@ -695,7 +695,7 @@ export default function PdfEditor({
           )}
           <div className="p-8 flex justify-center min-w-fit">
             <div
-              className="relative bg-white shadow-[0_2px_16px_rgba(18,17,16,0.12)]"
+              className="relative bg-white "
               style={{ width: geo.width * zoom, height: geo.height * zoom }}
             >
               <canvas

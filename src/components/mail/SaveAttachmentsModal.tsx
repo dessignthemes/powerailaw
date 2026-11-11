@@ -87,7 +87,7 @@ export default function SaveAttachmentsModal({
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/30 flex items-center justify-center px-4 py-8" onClick={() => !busy && onClose()}>
-      <div className="bg-white rounded-2xl w-full max-w-[620px] max-h-full overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
+      <div className="bg-white rounded-2xl w-full max-w-[620px] max-h-full overflow-y-auto " onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <h2 className="text-[17px] font-semibold">{title}</h2>
           <button onClick={onClose} disabled={busy} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">

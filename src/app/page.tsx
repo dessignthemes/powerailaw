@@ -174,7 +174,7 @@ export default function Home() {
           </div>
 
           {/* Product window */}
-          <div className="relative lg:absolute lg:left-[52%] lg:top-[60px] lg:w-[1120px] mx-4 lg:mx-0 mb-6 lg:mb-0 rounded-t-[12px] lg:rounded-tr-none overflow-hidden border border-[#3a3a3a] bg-[#1c1c1c] shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
+          <div className="relative lg:absolute lg:left-[52%] lg:top-[60px] lg:w-[1120px] mx-4 lg:mx-0 mb-6 lg:mb-0 rounded-t-[12px] lg:rounded-tr-none overflow-hidden border border-[#3a3a3a] bg-[#1c1c1c] ">
             <div className="h-9 flex items-center gap-4 px-4 text-[#8c8c8c]" aria-hidden>
               <span className="flex gap-2">
                 <span className="w-3 h-3 rounded-full bg-[#5a5a5a]" />

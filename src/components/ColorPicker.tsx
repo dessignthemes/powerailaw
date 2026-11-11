@@ -31,7 +31,7 @@ export default function ColorPicker({
       {open && (
         <>
           <ClickAway onClose={() => setOpen(false)} />
-          <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-full shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-2 flex flex-col items-center gap-2">
+          <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-full p-2 flex flex-col items-center gap-2">
             {colors.map((c) => (
               <button
                 key={c}

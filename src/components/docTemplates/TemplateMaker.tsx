@@ -167,7 +167,7 @@ export default function TemplateMaker({ draft, onClose, onSaved }: { draft: Make
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/25 px-4 py-6" onMouseDown={(e) => e.target === e.currentTarget && !saving && onClose()}>
-      <div role="dialog" aria-label="Template maker" className="bg-cream rounded-3xl w-full max-w-[1280px] h-full max-h-[94vh] flex flex-col overflow-hidden shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)]">
+      <div role="dialog" aria-label="Template maker" className="bg-cream rounded-3xl w-full max-w-[1280px] h-full max-h-[94vh] flex flex-col overflow-hidden ">
         {/* Header */}
         <div className="flex items-center gap-3 px-6 py-3.5 border-b border-line">
           <Wand2 size={18} className="text-muted" />
@@ -379,7 +379,7 @@ function FieldPopover({
   return (
     <>
       <div className="fixed inset-0 z-[70]" onMouseDown={onClose} />
-      <div className="fixed z-[71] w-[360px] bg-white border border-line rounded-2xl shadow-xl p-4" style={{ left: Math.max(12, pop.x), top: Math.min(pop.y, window.innerHeight - 330) }}>
+      <div className="fixed z-[71] w-[360px] bg-white border border-line rounded-2xl p-4" style={{ left: Math.max(12, pop.x), top: Math.min(pop.y, window.innerHeight - 330) }}>
         <div className="flex items-center justify-between mb-2">
           <div className="text-[13.5px] font-semibold">{multi ? "Optional clause" : "Make a field"}</div>
           <button onClick={onClose} aria-label="Close" className="text-muted hover:text-ink">

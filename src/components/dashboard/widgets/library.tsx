@@ -21,7 +21,7 @@ const useSmall = () => useContext(WidgetSizeContext) === "s";
 const nowMs = () => Date.now(); // read at render time on purpose (widgets refresh with the page)
 const ROW = "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[14.5px] font-medium bg-[#F3F2F0] border border-[#EBEAE7] hover:bg-[#EFEEEB] transition-colors";
 const ROW_S = "flex-shrink-0 flex items-center gap-2 px-2.5 py-1 rounded-lg text-[13px] font-medium bg-[#F3F2F0] border border-[#EBEAE7] hover:bg-[#EFEEEB] transition-colors";
-const PILL = "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium text-ink bg-white border border-[#E5E3DF] hover:bg-[#F3F2F0] shadow-[0_1px_2px_rgba(27,25,26,0.05)] transition-colors";
+const PILL = "flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-medium text-ink bg-white border border-[#E5E3DF] hover:bg-[#F3F2F0] transition-colors";
 const fmtDay = (ymdStr: string) => {
   const [y, m, d] = ymdStr.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -812,9 +812,9 @@ export const WIDGETS: WidgetDef[] = [
 export const WIDGET = (id: string) => WIDGETS.find((w) => w.id === id);
 
 // The standard Dashboard for everyone (Nov 1). Five across on a wide screen:
-//   Due today · Due by priority · Due today (count) · Calendar · Note
-//   Tasks (2) · Recent activity (2) · Clock
-//   Team progress (2) · Events (2)
+// Due today · Due by priority · Due today (count) · Calendar · Note
+// Tasks (2) · Recent activity (2) · Clock
+// Team progress (2) · Events (2)
 export const DEFAULT_LAYOUT: { id: string; size: WidgetSize }[] = [
   { id: "due", size: "s" },
   { id: "priority", size: "s" },

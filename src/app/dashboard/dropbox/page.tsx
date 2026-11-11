@@ -533,7 +533,7 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4" onClick={() => !saving && onClose()}>
-      <div className="bg-cream rounded-2xl w-full max-w-[1100px] h-[90vh] flex flex-col shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-cream rounded-2xl w-full max-w-[1100px] h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 px-5 py-3.5 border-b border-line flex-wrap">
           <div className="flex-1 min-w-[200px]">
             <div className="text-[15px] font-semibold truncate">{entry.name}</div>
@@ -619,7 +619,7 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
           ) : loaded.kind === "image" ? (
             <div className="h-full overflow-auto flex items-start justify-center p-6 bg-card-alt/40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={loaded.url} alt={entry.name} className="max-w-full h-auto shadow-sm" />
+              <img src={loaded.url} alt={entry.name} className="max-w-full h-auto " />
             </div>
           ) : loaded.kind === "html" ? (
             // Sandboxed with no scripts: Word content can't run code here.

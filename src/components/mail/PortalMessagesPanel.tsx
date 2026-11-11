@@ -35,8 +35,8 @@ export default function PortalMessagesPanel() {
   const list = all ? data.messages : data.messages.slice(0, 4);
 
   return (
-    <div className="mb-4 bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
-      <div className="bg-white border border-[#E9E7E4] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(27,25,26,0.06)]">
+    <div className="mb-4 bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 ">
+      <div className="bg-white border border-[#E9E7E4] rounded-2xl overflow-hidden ">
       <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F3F2F0]">
         <span className="flex items-center gap-2 text-[13.5px] font-semibold">
           <MessageSquare size={15} strokeWidth={1.75} />

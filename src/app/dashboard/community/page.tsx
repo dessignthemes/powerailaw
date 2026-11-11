@@ -436,7 +436,7 @@ export default function CommunityPage() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-btn text-ink text-[13.5px] font-medium px-4 py-2.5 rounded-full flex items-center gap-2 shadow-lg">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-btn text-ink text-[13.5px] font-medium px-4 py-2.5 rounded-full flex items-center gap-2 ">
           <Check size={14} strokeWidth={2} /> {toast}
         </div>
       )}

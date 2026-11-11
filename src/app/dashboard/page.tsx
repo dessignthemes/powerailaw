@@ -331,7 +331,7 @@ export default function DashboardHome() {
                     role="tab"
                     aria-selected={range === r.key}
                     onClick={() => setRange(r.key)}
-                    className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${range === r.key ? "bg-white shadow-sm text-ink" : "text-muted hover:text-ink"}`}
+                    className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${range === r.key ? "bg-white text-ink" : "text-muted hover:text-ink"}`}
                   >
                     {r.label}
                   </button>
@@ -371,7 +371,7 @@ export default function DashboardHome() {
       )}
 
       {editing && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-white border border-line rounded-full pl-5 pr-2 py-2 shadow-[0_12px_32px_-12px_rgba(27,25,26,0.35)]">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-white border border-line rounded-full pl-5 pr-2 py-2 ">
           <span className="text-[13px] text-muted">Drag to move. Pick a size under each widget. − removes it.</span>
           <button onClick={() => setAdding(true)} className="text-[13px] font-medium hover:underline underline-offset-2">
             Add widget

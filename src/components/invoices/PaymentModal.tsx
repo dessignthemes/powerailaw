@@ -53,7 +53,7 @@ export default function PaymentModal({ invoice, onClose, onPaid }: { invoice: In
   const input = "bg-white border border-line rounded-lg px-3 py-2 text-[13.5px] outline-none focus:border-btn-ring";
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center px-4" onClick={() => !busy && onClose()}>
-      <div className="bg-white rounded-2xl w-full max-w-[460px] shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Record payment">
+      <div className="bg-white rounded-2xl w-full max-w-[460px] " onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Record payment">
         <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <h2 className="text-[17px] font-semibold">Record payment · {invoice.number}</h2>
           <button onClick={onClose} disabled={busy} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">

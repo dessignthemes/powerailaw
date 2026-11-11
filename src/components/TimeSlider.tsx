@@ -8,7 +8,7 @@ export default function TimeSlider() {
     <div>
       <div className="relative h-[3px] bg-line rounded-full mt-8 mb-3">
         <div
-          className="absolute -top-[5px] w-[13px] h-[13px] rounded-full bg-muted border-2 border-white shadow-sm"
+          className="absolute -top-[5px] w-[13px] h-[13px] rounded-full bg-muted border-2 border-white "
           style={{ left: `calc(${pct}% - 6.5px)` }}
         />
       </div>

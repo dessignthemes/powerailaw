@@ -55,7 +55,7 @@ function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-[60] bg-black/25 flex items-center justify-center px-4 py-6" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-label={title} className="bg-page rounded-2xl w-full max-w-[600px] max-h-full overflow-y-auto shadow-xl p-6">
+      <div role="dialog" aria-label={title} className="bg-page rounded-2xl w-full max-w-[600px] max-h-full overflow-y-auto p-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-[18px] font-semibold">{title}</h2>
           <button onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">

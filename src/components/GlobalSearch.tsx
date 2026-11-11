@@ -140,10 +140,10 @@ export default function GlobalSearch() {
       {/* Same look as the widgets: a soft tinted frame around a white field. */}
       <button
         onClick={() => setOpen(true)}
-        className="group block bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 min-w-0 w-[380px] max-w-full shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_6px_16px_-6px_rgba(27,25,26,0.14)] transition-shadow"
+        className="group block bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 min-w-0 w-[380px] max-w-full transition-shadow"
         aria-label="Search"
       >
-        <span className="flex items-center gap-2 bg-white border border-[#E9E7E4] rounded-full pl-3.5 pr-1.5 py-1.5 text-[13.5px] text-muted shadow-[0_1px_2px_rgba(27,25,26,0.05)]">
+        <span className="flex items-center gap-2 bg-white border border-[#E9E7E4] rounded-full pl-3.5 pr-1.5 py-1.5 text-[13.5px] text-muted ">
           <Search size={15} strokeWidth={1.75} className="flex-shrink-0" />
           <span className="flex-1 text-left truncate">Search matters, contacts, documents…</span>
           <kbd className="hidden sm:inline text-[11px] font-medium bg-[#F3F2F0] border border-[#E9E7E4] rounded-md px-1.5 py-0.5 text-muted">Ctrl K</kbd>
@@ -152,7 +152,7 @@ export default function GlobalSearch() {
 
       {open && !conflictFor && (
         <div className="fixed inset-0 z-[70] bg-black/25 flex items-start justify-center px-4 pt-[8vh]" onMouseDown={(e) => e.target === e.currentTarget && close()}>
-          <div role="dialog" aria-label="Search" className="bg-page rounded-2xl w-full max-w-[760px] shadow-xl flex flex-col max-h-[80vh]">
+          <div role="dialog" aria-label="Search" className="bg-page rounded-2xl w-full max-w-[760px] flex flex-col max-h-[80vh]">
             <div className="flex items-center gap-3 px-5 pt-4 pb-3">
               <Search size={17} className="text-muted flex-shrink-0" />
               <input

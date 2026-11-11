@@ -103,7 +103,7 @@ export default function MatterTasks({
               <button
                 key={t.id}
                 onClick={() => setFromTemplate(t)}
-                className="text-left rounded-2xl bg-[#E1E7F4] hover:bg-[#E3E0DB] transition-colors px-4 py-3.5 shadow-[0_1px_1px_rgba(27,25,26,0.08)]"
+                className="text-left rounded-2xl bg-[#E1E7F4] hover:bg-[#E3E0DB] transition-colors px-4 py-3.5 "
               >
                 <div className="flex items-center gap-2">
                   <ListChecks size={15} strokeWidth={1.75} />
@@ -411,7 +411,7 @@ function FromTemplateDialog({
                     key={String(c)}
                     type="button"
                     onClick={() => setCashDeal(c)}
-                    className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${cashDeal === c ? "bg-white shadow-sm" : "text-muted"}`}
+                    className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${cashDeal === c ? "bg-white " : "text-muted"}`}
                   >
                     {c ? "Cash deal: mortgage not applicable" : "Mortgage"}
                   </button>

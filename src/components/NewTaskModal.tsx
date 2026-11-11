@@ -171,7 +171,7 @@ export function GenericDropdown({
           <div
             ref={menu}
             style={{ position: "fixed", left: pos?.left ?? -9999, top: pos?.top ?? -9999, visibility: pos ? "visible" : "hidden" }}
-            className="z-[70] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 min-w-[180px] w-max max-w-[min(92vw,460px)] max-h-[min(70vh,520px)] overflow-y-auto overscroll-contain"
+            className="z-[70] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-1.5 min-w-[180px] w-max max-w-[min(92vw,460px)] max-h-[min(70vh,520px)] overflow-y-auto overscroll-contain"
           >
             {children}
           </div>

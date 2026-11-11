@@ -92,7 +92,7 @@ export default function MemberAvatar({
             onMouseEnter={show}
             onMouseLeave={hideSoon}
             style={{ left: pos.left, top: pos.top, transform: pos.above ? "translateY(-100%)" : undefined }}
-            className={`fixed z-[100] block whitespace-nowrap rounded-xl bg-white border border-line text-ink px-3 py-2 text-left shadow-[0_12px_32px_-12px_rgba(20,24,33,0.35)] ${
+            className={`fixed z-[100] block whitespace-nowrap rounded-xl bg-white border border-line text-ink px-3 py-2 text-left ${
               m ? "cursor-pointer hover:bg-chip" : ""
             }`}
           >

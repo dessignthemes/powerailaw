@@ -84,7 +84,7 @@ function Swatches({ label, icon, colors, current, onPick, onClear, clearLabel }:
         <span className="block w-4 h-[3px] rounded-full" style={{ background: current || "transparent", boxShadow: current ? undefined : "inset 0 0 0 1px #DAD7D1" }} />
       </button>
       {open && (
-        <div className="absolute z-20 left-0 top-9 bg-white border border-line rounded-xl shadow-lg p-2.5 w-[188px]" onMouseDown={(e) => e.preventDefault()}>
+        <div className="absolute z-20 left-0 top-9 bg-white border border-line rounded-xl p-2.5 w-[188px]" onMouseDown={(e) => e.preventDefault()}>
           <div className="grid grid-cols-5 gap-1.5">
             {colors.map((c) => (
               <button key={c} type="button" title={c} aria-label={`${label}: ${c}`} onClick={() => (onPick(c), setOpen(false))} className="w-7 h-7 rounded-md flex items-center justify-center border border-black/10" style={{ background: c }}>
@@ -331,7 +331,7 @@ export default function SignatureEditor({ value, onChange }: { value: string; on
   };
 
   const tab = (m: "visual" | "html", label: string) => (
-    <button type="button" onClick={() => switchTo(m)} aria-pressed={mode === m} className={`px-3 py-1 rounded-full text-[12.5px] font-medium transition-colors ${mode === m ? "bg-white text-ink shadow-sm" : "text-muted hover:text-ink"}`}>
+    <button type="button" onClick={() => switchTo(m)} aria-pressed={mode === m} className={`px-3 py-1 rounded-full text-[12.5px] font-medium transition-colors ${mode === m ? "bg-white text-ink " : "text-muted hover:text-ink"}`}>
       {label}
     </button>
   );

@@ -421,7 +421,7 @@ export function MatterPicker({
           <ClickAway onClose={() => setOpen(false)} />
           <div
             role="listbox"
-            className="absolute left-0 top-[calc(100%+14px)] z-50 w-[300px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5"
+            className="absolute left-0 top-[calc(100%+14px)] z-50 w-[300px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-1.5"
           >
             {matters.length > 6 && (
               <div className="flex items-center gap-2 px-3 py-2 mb-1 border-b border-line">

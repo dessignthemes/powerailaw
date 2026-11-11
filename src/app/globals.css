@@ -189,8 +189,7 @@ html.lp-scroll-locked body { overflow: hidden; }
   background-color: #fff !important;
   box-shadow:
     0 0 0 7px #F3F2F0,
-    0 0 0 8px #E8E6E2,
-    0 30px 80px -24px rgba(18, 17, 16, 0.32) !important;
+    0 0 0 8px #E8E6E2 !important;
 }
 
 /* Light/dark switch in the top bar (same colour as a selected button, e.g. "This week"). */

@@ -153,7 +153,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
   }
 
   return (
-    <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-4">
+    <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-4">
       <div className="text-[14px] font-semibold mb-3">{matter.title}</div>
       <div className="flex flex-col gap-2.5">
         {list.length === 0 && <div className="text-[13px] text-muted">No messages yet. You can send a message or files to {firm} here.</div>}

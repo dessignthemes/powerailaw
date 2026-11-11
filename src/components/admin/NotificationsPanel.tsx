@@ -11,7 +11,7 @@ const HOURS = [6, 7, 8, 9, 10, 11];
 function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} className={`relative w-10 h-[22px] rounded-full transition-colors flex-shrink-0 ${on ? "bg-ink" : "bg-btn"}`}>
-      <span className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow transition-[left] ${on ? "left-[21px]" : "left-[3px]"}`} />
+      <span className={`absolute top-[3px] w-4 h-4 rounded-full bg-white transition-[left] ${on ? "left-[21px]" : "left-[3px]"}`} />
     </button>
   );
 }

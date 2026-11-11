@@ -345,7 +345,7 @@ function TextComposer({ matter, client, onClose, onLogged }: { matter: Matter; c
       <div className="px-6 pb-5 flex flex-col gap-3">
         <div className="inline-flex self-start bg-chip rounded-full p-1">
           {(["out", "in"] as const).map((d) => (
-            <button key={d} onClick={() => setDirection(d)} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${direction === d ? "bg-white shadow-sm" : "text-muted"}`}>
+            <button key={d} onClick={() => setDirection(d)} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium ${direction === d ? "bg-white " : "text-muted"}`}>
               {d === "out" ? "Send a text" : "Log a text I received"}
             </button>
           ))}

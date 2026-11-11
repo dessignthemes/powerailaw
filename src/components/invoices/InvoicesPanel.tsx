@@ -164,7 +164,7 @@ export default function InvoicesPanel({
         <div className="rounded-xl bg-[#EDE7FB] text-[#4C2E91] px-4 py-2.5 text-[13px] mb-3">These are waiting for the managing attorney (the workspace owner or an admin) to approve.</div>
       )}
       {active === "outstanding" && !matterId && balances.length > 0 && (
-        <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] overflow-x-auto mb-5">
+        <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] overflow-x-auto mb-5">
           <div className="px-3 py-2 bg-[#F3F2F0] font-mono text-[11px] uppercase tracking-[0.12em] text-muted">Outstanding balances by client</div>
           <table className="w-full text-[13px] min-w-[560px]">
             <thead>
@@ -210,7 +210,7 @@ export default function InvoicesPanel({
           <Loader2 size={14} className="animate-spin" /> Loading invoices…
         </div>
       ) : list.length === 0 ? (
-        <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] py-8 text-center text-[13.5px] text-muted">
+        <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] py-8 text-center text-[13.5px] text-muted">
           <Receipt size={18} className="mx-auto mb-2" />
           {invoices.length
             ? active === "pending"
@@ -225,7 +225,7 @@ export default function InvoicesPanel({
               : "No invoices yet. Create one for a matter with New invoice."}
         </div>
       ) : (
-        <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] overflow-x-auto">
+        <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] overflow-x-auto">
           <table className="w-full text-[13px] min-w-[640px]">
             <thead>
               <tr className="text-left text-[12px] text-muted bg-[#F3F2F0]">

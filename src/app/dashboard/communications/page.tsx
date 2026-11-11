@@ -72,7 +72,7 @@ function MatterPicker({ value, onChange }: { value: string; onChange: (id: strin
       {open && list.length > 0 && (
         <>
           <ClickAway onClose={() => setOpen(false)} />
-          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-xl shadow-lg max-h-[220px] overflow-y-auto">
+          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-xl max-h-[220px] overflow-y-auto">
             {list.map((m) => (
               <button key={m.id} type="button" onClick={() => (onChange(m.id), setOpen(false), setQ(""))} className="w-full text-left flex gap-2 px-3 py-2 hover:bg-chip text-[13px]">
                 {m.matterNumber && <span className="font-semibold flex-shrink-0">{m.matterNumber}</span>}
@@ -94,7 +94,7 @@ function Modal({ title, onClose, busy, children }: { title: string; onClose: () 
   }, [busy, onClose]);
   return (
     <div className="fixed inset-0 z-[60] bg-black/20 flex items-center justify-center px-4 py-6" onClick={() => !busy && onClose()}>
-      <div className="bg-white rounded-2xl w-full max-w-[640px] max-h-full overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
+      <div className="bg-white rounded-2xl w-full max-w-[640px] max-h-full overflow-y-auto " onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <h2 className="text-[17px] font-semibold">{title}</h2>
           <button onClick={onClose} disabled={busy} aria-label="Close" className="w-8 h-8 rounded-full hover:bg-chip flex items-center justify-center">
@@ -165,7 +165,7 @@ function ClientNameInput({ value, onChange, onPick, placeholder }: { value: stri
       {open && list.length > 0 && !exact && (
         <>
           <ClickAway onClose={() => setOpen(false)} />
-          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-xl shadow-lg max-h-[260px] overflow-y-auto py-1" role="listbox">
+          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-xl max-h-[260px] overflow-y-auto py-1" role="listbox">
             <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Clients</div>
             {list.map((c, i) => {
               const n = openCount(c.id);

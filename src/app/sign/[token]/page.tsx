@@ -196,7 +196,7 @@ export default function SignPage({ params }: { params: Promise<{ token: string }
         )}
       </div>
 
-      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-line shadow-[0_-8px_24px_rgba(20,24,33,0.08)]">
+      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-line ">
         <div className="max-w-[900px] mx-auto px-5 py-3.5 flex items-center gap-3 flex-wrap">
           <div className="text-[13px] text-muted">{completed} of {required.length} required fields done</div>
           {!allDone && <button onClick={nextField} className="bg-chip hover:bg-btn px-3.5 py-1.5 rounded-full text-[13px] font-medium">Next field</button>}
@@ -298,7 +298,7 @@ function SignaturePad({ kind, defaultText, onClose, onAdopt }: { kind: "signatur
   const ready = mode === "type" ? !!text.trim() : drawn;
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-[620px] p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl w-full max-w-[620px] p-6 " onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="text-[17px] font-semibold">{kind === "initials" ? "Your initials" : "Your signature"}</div>
           <button onClick={onClose} className="text-muted hover:text-ink" aria-label="Close"><X size={18} /></button>

@@ -86,7 +86,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
             <button
               onClick={() => setTab("setup")}
               className={`px-4 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                tab === "setup" ? "bg-white shadow-sm" : "text-muted"
+                tab === "setup" ? "bg-white " : "text-muted"
               }`}
             >
               Form setup
@@ -94,7 +94,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
             <button
               onClick={() => setTab("performance")}
               className={`px-4 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-                tab === "performance" ? "bg-white shadow-sm" : "text-muted"
+                tab === "performance" ? "bg-white " : "text-muted"
               }`}
             >
               Performance
@@ -147,7 +147,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                       {langMenuOpen && (
                         <>
                           <ClickAway onClose={() => setLangMenuOpen(false)} />
-                          <div className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[180px]">
+                          <div className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white border border-line rounded-2xl p-1.5 w-[180px]">
                             {availableLanguages
                               .filter((l) => !languages.includes(l))
                               .map((l) => (
@@ -420,7 +420,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                         key={t}
                         onClick={() => setAppearanceTab(t)}
                         className={`px-4 py-1.5 rounded-full text-[13.5px] font-medium capitalize transition-colors ${
-                          appearanceTab === t ? "bg-white shadow-sm" : "text-muted"
+                          appearanceTab === t ? "bg-white " : "text-muted"
                         }`}
                       >
                         {t}

@@ -149,7 +149,7 @@ export default function ContactModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-8" onClick={() => !saving && onClose()}>
       <div
-        className="bg-cream rounded-2xl w-full max-w-[560px] max-h-full overflow-y-auto p-7 shadow-xl"
+        className="bg-cream rounded-2xl w-full max-w-[560px] max-h-full overflow-y-auto p-7 "
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-5">
@@ -271,7 +271,7 @@ export default function ContactModal({
                     className={field}
                   />
                   {employerMatches.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white rounded-xl border border-[#E9E7E4] shadow-lg p-1 max-h-[220px] overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white rounded-xl border border-[#E9E7E4] p-1 max-h-[220px] overflow-y-auto">
                       {employerMatches.map((c) => (
                         <button
                           key={c.id}

@@ -233,7 +233,7 @@ export default function MatterCreateWindow({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4 py-6" onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
-      <div role="dialog" aria-label="New matter" className="bg-cream rounded-3xl w-full max-w-[1120px] h-full max-h-[92vh] flex flex-col shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)] overflow-hidden">
+      <div role="dialog" aria-label="New matter" className="bg-cream rounded-3xl w-full max-w-[1120px] h-full max-h-[92vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-line">
           <h2 className="text-[18px] font-semibold flex-1">New matter</h2>
@@ -389,7 +389,7 @@ export default function MatterCreateWindow({
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
                   <input value={pickQ} onChange={(e) => setPickQ(e.target.value)} placeholder="Search clients and contacts to add" aria-label="Find a contact" className={`${input} pl-8`} />
                   {pickResults.length > 0 && (
-                    <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-10 bg-white border border-line rounded-xl shadow-lg p-1 max-h-[240px] overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-10 bg-white border border-line rounded-xl p-1 max-h-[240px] overflow-y-auto">
                       {pickResults.map((p) => (
                         <button
                           key={p.key}

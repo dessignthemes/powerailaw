@@ -14,7 +14,7 @@ export default async function BookPage({ params, searchParams }: { params: Promi
   if (!firm || !t) notFound();
   return (
     <div className="min-h-screen bg-[#F5F4F2] px-4 py-10" style={{ fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif", color: "#1B191A" }}>
-      <div className="max-w-[680px] mx-auto bg-white rounded-3xl shadow-[0_20px_60px_-30px_rgba(18,17,16,0.25)] px-6 sm:px-10 py-9">
+      <div className="max-w-[680px] mx-auto bg-white rounded-3xl px-6 sm:px-10 py-9">
         <div className="text-[13px] font-medium text-[#6B7280]">{firm.name}</div>
         <h1 className="text-[24px] font-semibold leading-tight mb-6">Book a consultation</h1>
         <BookingPicker firmKey={key} token={t} firmName={firm.name} />

@@ -249,7 +249,7 @@ function SettingsToggle({
         checked ? "bg-dark justify-end" : "bg-line justify-start"
       }`}
     >
-      <span className="w-5 h-5 rounded-full bg-white shadow-sm" />
+      <span className="w-5 h-5 rounded-full bg-white " />
     </button>
   );
 }
@@ -1469,7 +1469,7 @@ export default function IntegrationsModal({
                       <button
                         key={c.key}
                         onClick={() => setDrilled(c.key)}
-                        className="group/row flex items-center justify-between px-4 py-3.5 rounded-2xl bg-chip hover:bg-[#E8E6E2] shadow-[0_1px_1px_rgba(27,25,26,0.08)] transition-colors text-left"
+                        className="group/row flex items-center justify-between px-4 py-3.5 rounded-2xl bg-chip hover:bg-[#E8E6E2] transition-colors text-left"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-white/70 flex items-center justify-center text-[15px]">

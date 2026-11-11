@@ -176,7 +176,7 @@ export default function TxnModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-6" onClick={() => !busy && onClose()}>
-      <div className="bg-cream rounded-2xl w-full max-w-[620px] max-h-full overflow-y-auto p-7 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-cream rounded-2xl w-full max-w-[620px] max-h-full overflow-y-auto p-7 " onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-5">
           <h2 className="text-[20px] font-semibold">{txn ? "Edit transaction" : "Add transaction"}</h2>
           <button onClick={onClose} disabled={!!busy} className="text-muted hover:text-ink" aria-label="Close">

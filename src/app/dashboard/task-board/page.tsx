@@ -650,7 +650,7 @@ function TaskBoard({
               {boardMenu && (
                 <>
                   <ClickAway onClose={() => setBoardMenu(false)} />
-                  <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[230px] whitespace-nowrap">
+                  <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-1.5 w-[230px] whitespace-nowrap">
                     <button
                       onClick={() => {
                         setBoardMenu(false);
@@ -779,7 +779,7 @@ function TaskBoard({
           <button
             onClick={() => setView("board")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-              view === "board" ? "bg-white shadow-sm" : "text-muted"
+              view === "board" ? "bg-white " : "text-muted"
             }`}
           >
             <Kanban size={14} strokeWidth={1.75} /> Board
@@ -787,7 +787,7 @@ function TaskBoard({
           <button
             onClick={() => setView("list")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] font-medium transition-colors ${
-              view === "list" ? "bg-white shadow-sm" : "text-muted"
+              view === "list" ? "bg-white " : "text-muted"
             }`}
           >
             <List size={14} strokeWidth={1.75} /> List
@@ -814,7 +814,7 @@ function TaskBoard({
                 <ClickAway onClose={() => setJumpOpen(false)} />
                 <div
                   role="menu"
-                  className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[260px] max-h-[60vh] overflow-y-auto"
+                  className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-1.5 w-[260px] max-h-[60vh] overflow-y-auto"
                 >
                   <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Jump to column</div>
                   {shownColumns.map((c) => (
@@ -948,7 +948,7 @@ function TaskBoard({
               {addingColumn && (
                 <>
                   <ClickAway onClose={() => setAddingColumn(false)} />
-                  <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-3">
+                  <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-3">
                     <input
                       autoFocus
                       value={newColumnName}
@@ -1052,7 +1052,7 @@ function TaskBoard({
           {matterMenuOpen && (
             <>
               <ClickAway onClose={() => setMatterMenuOpen(false)} />
-              <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[300px] max-h-[360px] overflow-y-auto">
+              <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-1.5 w-[300px] max-h-[360px] overflow-y-auto">
                 {matterFilter && (
                   <button
                     onClick={() => {
@@ -1192,7 +1192,7 @@ function TaskBoard({
               <button
                 onClick={() => scrollByColumn(-1)}
                 aria-label="Show columns on the left"
-                className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white shadow-md flex items-center justify-center hover:bg-chip transition-colors"
+                className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white flex items-center justify-center hover:bg-chip transition-colors"
               >
                 <ChevronLeft size={21} strokeWidth={2} />
               </button>
@@ -1204,7 +1204,7 @@ function TaskBoard({
               <button
                 onClick={() => scrollByColumn(1)}
                 aria-label="Show columns on the right"
-                className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white shadow-md flex items-center justify-center hover:bg-chip transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-[44px] h-[44px] rounded-full bg-white flex items-center justify-center hover:bg-chip transition-colors"
               >
                 <ChevronRight size={21} strokeWidth={2} />
               </button>
@@ -1230,7 +1230,7 @@ function TaskBoard({
                   onClick={() => toggleCollapsed(col.id, false)}
                   title={`Expand ${col.title}`}
                   {...dropProps(col)}
-                  className={`snap-start flex-shrink-0 w-[52px] border rounded-[22px] flex flex-col items-center gap-3 py-4 transition-colors shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] ${
+                  className={`snap-start flex-shrink-0 w-[52px] border rounded-[22px] flex flex-col items-center gap-3 py-4 transition-colors ${
                     dropCol === col.id ? "border-btn-ring bg-chip" : "border-[#E8E6E2] bg-[#F3F2F0] hover:bg-[#ECEAE7]"
                   }`}
                 >
@@ -1255,7 +1255,7 @@ function TaskBoard({
                     : { alignSelf: "flex-start", maxHeight: "100%", minHeight: 220 }),
                 }}
                 {...dropProps(col)}
-                className={`snap-start border rounded-[22px] flex flex-col min-h-0 transition-colors shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] ${
+                className={`snap-start border rounded-[22px] flex flex-col min-h-0 transition-colors ${
                   dropCol === col.id ? "border-btn-ring bg-chip" : "border-[#E8E6E2] bg-[#F3F2F0]"
                 }`}
               >
@@ -1306,7 +1306,7 @@ function TaskBoard({
                     {menuOpenFor === col.id && (
                       <>
                         <ClickAway onClose={() => setMenuOpenFor(null)} />
-                        <div className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[170px]">
+                        <div className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-1.5 w-[170px]">
                           <button
                             onClick={() => {
                               setRenamingId(col.id);
@@ -1435,7 +1435,7 @@ function TaskBoard({
                             const target = upper ? t.id : (colTasks[i + 1]?.id ?? null);
                             if (dropBefore !== target) setDropBefore(target);
                           }}
-                          className={`${dragId === t.id ? "opacity-40" : ""} relative bg-white border border-[#E9E7E4] rounded-2xl px-3 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.06)] hover:shadow-[0_6px_16px_-6px_rgba(27,25,26,0.16)] transition-shadow`}
+                          className={`${dragId === t.id ? "opacity-40" : ""} relative bg-white border border-[#E9E7E4] rounded-2xl px-3 py-3 cursor-pointer transition-shadow`}
                         >
                           {dragId && dragId !== t.id && dropCol === col.id && dropBefore === t.id && (
                             <span className="absolute left-1 right-1 -top-[5.5px] h-[3px] rounded-full bg-[#3B82F6] pointer-events-none" aria-hidden />
@@ -1476,7 +1476,7 @@ function TaskBoard({
                                   />
                                   <div
                                     onClick={(e) => e.stopPropagation()}
-                                    className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[160px]"
+                                    className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-1.5 w-[160px]"
                                   >
                                     <button
                                       onClick={() => {
@@ -1581,7 +1581,7 @@ function TaskBoard({
                           }}
                           className={`sticky bottom-0 z-[1] flex items-center justify-center gap-1.5 py-3 bg-[#F3F2F0] text-muted hover:text-ink transition-colors ${
                             // Long column: a solid bar across the full width, so cards scrolling under it never show through.
-                            colTasks.length > 5 ? "-ml-2.5 -mr-1 mt-1 border-t border-[#E8E6E2] rounded-b-[21px] shadow-[0_-6px_12px_-8px_rgba(27,25,26,0.18)]" : ""
+                            colTasks.length > 5 ? "-ml-2.5 -mr-1 mt-1 border-t border-[#E8E6E2] rounded-b-[21px] " : ""
                           }`}
                         >
                           <Plus size={15} strokeWidth={1.75} />

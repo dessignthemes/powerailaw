@@ -173,7 +173,7 @@ export default function TemplateEditor({
               {insertOpen && (
                 <>
                   <ClickAway onClose={() => setInsertOpen(false)} />
-                  <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[280px] bg-white border border-line rounded-2xl shadow-[0_12px_32px_rgba(27,25,26,0.12)] p-1.5 max-h-[360px] overflow-y-auto">
+                  <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[280px] bg-white border border-line rounded-2xl p-1.5 max-h-[360px] overflow-y-auto">
                     <div className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Filled from the matter</div>
                     {COMMON_FIELDS.map((f) => (
                       <button key={f.key} onClick={() => (insertField(f.key), setInsertOpen(false))} className="w-full text-left px-3 py-1.5 rounded-xl text-[13px] hover:bg-chip">

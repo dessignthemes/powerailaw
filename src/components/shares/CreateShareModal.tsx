@@ -75,7 +75,7 @@ export default function CreateShareModal({ kind, onClose, onCreated }: { kind: S
 
   return (
     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4" onClick={busy ? undefined : onClose}>
-      <div className="bg-page rounded-3xl w-full max-w-[600px] max-h-[92vh] overflow-y-auto p-7 shadow-[0_20px_60px_rgba(27,25,26,0.18)]" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={send ? "Send files" : "Request files"}>
+      <div className="bg-page rounded-3xl w-full max-w-[600px] max-h-[92vh] overflow-y-auto p-7 " onClick={(e) => e.stopPropagation()} role="dialog" aria-label={send ? "Send files" : "Request files"}>
         <div className="flex items-start justify-between mb-1">
           <div className="flex items-center gap-2.5">
             <span className="w-9 h-9 rounded-xl bg-chip flex items-center justify-center">{send ? <Send size={16} strokeWidth={1.75} /> : <Inbox size={16} strokeWidth={1.75} />}</span>

@@ -351,7 +351,7 @@ function FieldRow({
           </span>
         )}
         {showHits && (
-          <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl border border-[#E8E6E2] shadow-[0_12px_30px_-12px_rgba(18,17,16,0.25)] p-1 max-h-[260px] overflow-y-auto">
+          <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl border border-[#E8E6E2] p-1 max-h-[260px] overflow-y-auto">
             <div className="px-2.5 pt-1 pb-0.5 text-[10.5px] font-mono uppercase tracking-[0.1em] text-muted">In Contacts</div>
             {hits.map((c) => (
               <button

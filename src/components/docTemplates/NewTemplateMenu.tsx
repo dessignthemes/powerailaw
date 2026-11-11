@@ -76,7 +76,7 @@ export default function NewTemplateMenu({ label = "Add template" }: { label?: st
 
       {draft && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4 py-6">
-          <div role="dialog" aria-label="New template" className="bg-card-alt rounded-3xl w-full max-w-[1180px] max-h-full overflow-y-auto p-6 shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)] text-left">
+          <div role="dialog" aria-label="New template" className="bg-card-alt rounded-3xl w-full max-w-[1180px] max-h-full overflow-y-auto p-6 text-left">
             <TemplateEditor
               key={editorKey}
               value={draft}
@@ -99,7 +99,7 @@ export default function NewTemplateMenu({ label = "Add template" }: { label?: st
       {workflow && <TemplatesModal onClose={() => setWorkflow(false)} />}
 
       {notice && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-white rounded-full pl-4 pr-2 py-2 text-[13px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_18px_40px_-14px_rgba(18,17,16,0.3)]">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-white rounded-full pl-4 pr-2 py-2 text-[13px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2]">
           <Check size={14} className="text-[#2F5E2A]" /> {notice}
           <Link href="/dashboard/ai-templates" className="font-medium underline underline-offset-2">Open AI Templates</Link>
           <button onClick={() => setNotice(null)} aria-label="Dismiss" className="w-6 h-6 rounded-full hover:bg-[#F3F2F0] flex items-center justify-center text-muted">

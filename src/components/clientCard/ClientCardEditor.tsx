@@ -343,7 +343,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
 
   return (
     // Widget / pop-up style: white inside, a soft grey-blue frame around it.
-    <div className="bg-white rounded-[22px] overflow-hidden m-2 shadow-[0_0_0_7px_#F3F2F0,0_0_0_8px_#E8E6E2,0_14px_40px_-20px_rgba(18,17,16,0.25)]">
+    <div className="bg-white rounded-[22px] overflow-hidden m-2 shadow-[0_0_0_7px_#F3F2F0,0_0_0_8px_#E8E6E2]">
       {/* Header */}
       <div className="flex items-center gap-4 px-6 py-5 border-b border-[#F1F0ED] bg-white flex-wrap">
         <button onClick={cancel} className="w-9 h-9 rounded-full hover:bg-chip flex items-center justify-center text-muted hover:text-ink" aria-label="Back to clients">
@@ -414,7 +414,7 @@ export default function ClientCardEditor({ id, onClose, onSaved, importLeadId = 
               {moreOpen && (
                 <>
                   <ClickAway onClose={() => setMoreOpen(false)} />
-                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[200px]">
+                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl p-1.5 w-[200px]">
                     <button
                       onClick={() => {
                         setMoreOpen(false);
@@ -577,7 +577,7 @@ function PhotoBox({ photo, setPhoto }: { photo: string | null; setPhoto: (p: str
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {photo ? <img src={photo} alt="" className="w-full h-full object-cover" /> : <User size={56} strokeWidth={1.25} className="text-muted/60" />}
       <input ref={ref} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) setPhoto(await shrinkPhoto(f)); }} />
-      <button type="button" onClick={() => ref.current?.click()} className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-btn hover:bg-btn-hover flex items-center justify-center shadow" aria-label="Add photo">
+      <button type="button" onClick={() => ref.current?.click()} className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-btn hover:bg-btn-hover flex items-center justify-center " aria-label="Add photo">
         <Camera size={16} />
       </button>
       {photo && (
@@ -1249,7 +1249,7 @@ function EngagementModal({ cardType, profile, dear, matters, onClose, onCreate }
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-6" onClick={() => !busy && onClose()}>
-      <div className="bg-cream rounded-2xl w-full max-w-[600px] max-h-full overflow-y-auto p-7 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-cream rounded-2xl w-full max-w-[600px] max-h-full overflow-y-auto p-7 " onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-1">
           <h2 className="text-[20px] font-semibold">Engagement agreement</h2>
           <button onClick={onClose} disabled={busy} className="text-muted hover:text-ink" aria-label="Close"><X size={18} /></button>

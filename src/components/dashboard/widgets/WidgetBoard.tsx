@@ -19,7 +19,7 @@ function SizeIcon({ size, on }: { size: WidgetSize; on: boolean }) {
 export function SizePicker({ sizes, value, onPick, dark = false }: { sizes: WidgetSize[]; value: WidgetSize; onPick: (s: WidgetSize) => void; dark?: boolean }) {
   if (sizes.length < 2) return dark ? null : <span className="text-[12.5px] text-muted">{SIZE_LABEL[sizes[0]]}</span>;
   return (
-    <div className={`inline-flex items-center gap-0.5 rounded-full p-1 ${dark ? "bg-[#1B191A]/85 shadow-lg" : "bg-card-alt"}`}>
+    <div className={`inline-flex items-center gap-0.5 rounded-full p-1 ${dark ? "bg-[#1B191A]/85 " : "bg-card-alt"}`}>
       {sizes.map((s) => (
         <button
           key={s}
@@ -28,7 +28,7 @@ export function SizePicker({ sizes, value, onPick, dark = false }: { sizes: Widg
           title={SIZE_LABEL[s]}
           aria-label={SIZE_LABEL[s]}
           aria-pressed={value === s}
-          className={`h-7 min-w-[34px] px-2 rounded-full flex items-center justify-center transition-colors ${value === s ? (dark ? "bg-white" : "bg-white shadow-sm") : dark ? "hover:bg-white/15" : "hover:bg-white/70"}`}
+          className={`h-7 min-w-[34px] px-2 rounded-full flex items-center justify-center transition-colors ${value === s ? (dark ? "bg-white" : "bg-white ") : dark ? "hover:bg-white/15" : "hover:bg-white/70"}`}
         >
           <SizeIcon size={s} on={value === s || !dark} />
         </button>
@@ -44,7 +44,7 @@ export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize
   const small = size === "s";
   return (
     <WidgetSizeContext.Provider value={size}>
-      <div className={`h-full ${def.tone ?? "bg-[#F3F2F0]"} rounded-[22px] border border-[#E8E6E2] p-1.5 flex flex-col overflow-hidden relative shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200`}>
+      <div className={`h-full ${def.tone ?? "bg-[#F3F2F0]"} rounded-[22px] border border-[#E8E6E2] p-1.5 flex flex-col overflow-hidden relative transition-shadow duration-200`}>
         {!def.plain && (
           <div className={`flex items-center justify-between gap-2 ${small ? "px-2.5 pt-2 pb-2" : "px-3 pt-2.5 pb-2.5"}`}>
             <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2 min-w-0">
@@ -54,7 +54,7 @@ export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize
             {def.action && size !== "s" && <div className="flex-shrink-0">{def.action(d)}</div>}
           </div>
         )}
-        <div className={`flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#E9E7E4] shadow-[0_1px_3px_rgba(27,25,26,0.06)] ${small ? "p-3.5" : "p-4"}`}>{def.body(d, size)}</div>
+        <div className={`flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#E9E7E4] ${small ? "p-3.5" : "p-4"}`}>{def.body(d, size)}</div>
       </div>
     </WidgetSizeContext.Provider>
   );
@@ -252,9 +252,9 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
             >
               {isDragged ? (
                 // Where it will land.
-                <div className="h-full rounded-[22px] border border-dashed border-btn bg-[#F3F2F0] shadow-[0_6px_18px_-8px_rgba(27,25,26,0.18)]" />
+                <div className="h-full rounded-[22px] border border-dashed border-btn bg-[#F3F2F0] " />
               ) : (
-                <div className={`h-full ${editing ? "pointer-events-none select-none rounded-[22px] ring-1 ring-line shadow-[0_8px_24px_-12px_rgba(27,25,26,0.25)]" : ""} ${editing && !drag ? "animate-[lpWiggle_0.35s_ease-in-out]" : ""}`}>
+                <div className={`h-full ${editing ? "pointer-events-none select-none rounded-[22px] ring-1 ring-line " : ""} ${editing && !drag ? "animate-[lpWiggle_0.35s_ease-in-out]" : ""}`}>
                   <WidgetShell def={def} size={size} d={d} />
                 </div>
               )}
@@ -264,7 +264,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
                     onClick={() => onChange(saved.filter((x) => x.id !== it.id))}
                     aria-label={`Remove ${def.name}`}
                     title="Remove from the Dashboard"
-                    className="absolute -top-2.5 -left-2.5 z-10 w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center shadow hover:scale-105 transition-transform"
+                    className="absolute -top-2.5 -left-2.5 z-10 w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center hover:scale-105 transition-transform"
                   >
                     <Minus size={14} strokeWidth={2.5} />
                   </button>
@@ -290,7 +290,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
         createPortal(
           <div
             style={{ position: "fixed", left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.w, height: drag.h, zIndex: 80, pointerEvents: "none" }}
-            className="rotate-[1.2deg] scale-[1.03] shadow-[0_30px_60px_-20px_rgba(27,25,26,0.45)] rounded-[22px] transition-transform"
+            className="rotate-[1.2deg] scale-[1.03] rounded-[22px] transition-transform"
           >
             <WidgetShell def={dragDef} size={dragDef.sizes.includes(dragItem.size) ? dragItem.size : dragDef.size} d={d} />
           </div>,
@@ -311,7 +311,7 @@ function Preview({ def, size, d }: { def: WidgetDef; size: WidgetSize; d: DashDa
   return (
     <div className="h-[200px] bg-[#F1F0EE] flex items-center justify-center overflow-hidden" aria-hidden>
       <div style={{ width: w * k, height: h * k }} className="relative">
-        <div style={{ width: w, height: h, transform: `scale(${k})`, transformOrigin: "top left" }} className="absolute left-0 top-0 pointer-events-none shadow-[0_10px_30px_-12px_rgba(27,25,26,0.3)] rounded-[22px]">
+        <div style={{ width: w, height: h, transform: `scale(${k})`, transformOrigin: "top left" }} className="absolute left-0 top-0 pointer-events-none rounded-[22px]">
           <WidgetShell def={def} size={size} d={d} />
         </div>
       </div>
@@ -330,7 +330,7 @@ export function AddWidgetModal({ layout, onAdd, onRemove, onClose, d }: { layout
   }, [q, cat]);
   return (
     <div className="fixed inset-0 z-[60] bg-black/25 flex items-center justify-center p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-label="Widgets" className="bg-cream rounded-3xl w-full max-w-[1180px] h-full max-h-[90vh] flex overflow-hidden shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)]">
+      <div role="dialog" aria-label="Widgets" className="bg-cream rounded-3xl w-full max-w-[1180px] h-full max-h-[90vh] flex overflow-hidden ">
         <aside className="w-[250px] flex-shrink-0 border-r border-line p-5 hidden md:flex flex-col gap-1">
           <h2 className="text-[22px] font-semibold mb-3">Widgets</h2>
           <div className="relative mb-3">

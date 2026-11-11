@@ -66,7 +66,7 @@ export default function PdfPages({
   return (
     <div className="flex flex-col items-center gap-5">
       {pages.map(({ n, ratio }) => (
-        <div key={n} className="relative bg-white shadow-[0_2px_12px_rgba(20,24,33,0.12)]" style={{ width, height: width * ratio }}>
+        <div key={n} className="relative bg-white " style={{ width, height: width * ratio }}>
           <canvas
             ref={(el) => {
               if (el) canvases.current.set(n, el);

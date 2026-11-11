@@ -530,8 +530,8 @@ function Agent() {
                 <div className="w-6 h-6 rounded-full bg-dark text-white flex items-center justify-center text-[11px] font-bold font-display flex-shrink-0">
                   L
                 </div>
-                <div className="max-w-[390px] bg-[#F3F2F0] border border-[#E8E6E2] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[16px] p-[3px]">
-                  <div className="bg-white border border-[#E9E7E4] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-[13px] px-3 py-1.5 text-[12px] leading-snug text-muted">
+                <div className="max-w-[390px] bg-[#F3F2F0] border border-[#E8E6E2] rounded-[16px] p-[3px]">
+                  <div className="bg-white border border-[#E9E7E4] rounded-[13px] px-3 py-1.5 text-[12px] leading-snug text-muted">
                     <span className="font-semibold text-ink">Hi, I&apos;m LawPower, your AI legal assistant.</span> Tell me what you&apos;re working on
                     and I&apos;ll help you get started: summarizing documents, organizing matters, or drafting for your review.
                   </div>
@@ -670,8 +670,8 @@ type ComposerProps = {
 function Composer({ textRef, fileInput, ...p }: ComposerProps) {
   const shown = p.files.filter((f) => p.pendingFileIds.includes(f.id) || f.status === "uploading" || f.status === "processing" || (f.status === "failed" && f.id.startsWith("tmp-")));
   return (
-    <div className={`bg-[#F3F2F0] border border-[#E8E6E2] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] rounded-[22px] p-1.5 ${p.disabled ? "opacity-60" : ""}`}>
-    <div className="bg-white border border-[#E9E7E4] shadow-[0_1px_3px_rgba(27,25,26,0.06)] rounded-2xl px-5 pt-4 pb-3.5">
+    <div className={`bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 ${p.disabled ? "opacity-60" : ""}`}>
+    <div className="bg-white border border-[#E9E7E4] rounded-2xl px-5 pt-4 pb-3.5">
       {shown.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {shown.map((f) => (
@@ -825,7 +825,7 @@ function MatterPicker({
       {open && (
         <>
           <ClickAway onClose={() => setOpen(false)} />
-          <div className={`absolute left-0 ${place.down ? "top-[calc(100%+6px)]" : "bottom-[calc(100%+6px)]"} z-50 w-[300px] bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5`}>
+          <div className={`absolute left-0 ${place.down ? "top-[calc(100%+6px)]" : "bottom-[calc(100%+6px)]"} z-50 w-[300px] bg-white border border-line rounded-2xl p-1.5`}>
             {matters.length > 6 && (
               <div className="flex items-center gap-2 px-3 py-2 mb-1 border-b border-line">
                 <Search size={13} className="text-muted" />

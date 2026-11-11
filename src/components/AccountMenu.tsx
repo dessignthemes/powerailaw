@@ -59,7 +59,7 @@ export default function AccountMenu({
       {open && (
         <>
           <ClickAway onClose={() => setOpen(false)} />
-          <div className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-[280px] bg-cream border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.35)] overflow-hidden">
+          <div className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-[280px] bg-cream border border-line rounded-2xl overflow-hidden">
             <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-line">
               <LogoMark size={28} />
               <span className="text-[14.5px] font-semibold flex-1 truncate">{orgName}</span>
@@ -123,7 +123,7 @@ export default function AccountMenu({
                 <Sunrise size={16} strokeWidth={1.75} />
                 <span className="flex-1">Morning check-in email</span>
                 <span className={`relative w-8 h-[18px] rounded-full transition-colors ${digest ?? true ? "bg-ink" : "bg-btn"}`}>
-                  <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow transition-[left] ${digest ?? true ? "left-[16px]" : "left-[2px]"}`} />
+                  <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-[left] ${digest ?? true ? "left-[16px]" : "left-[2px]"}`} />
                 </span>
               </button>
             </div>

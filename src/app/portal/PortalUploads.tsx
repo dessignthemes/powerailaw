@@ -127,7 +127,7 @@ export default function PortalUploads({
 
   const pending = items.filter((x) => x.state !== "done").length;
   return (
-    <section className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5 mb-8">
+    <section className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-5 mb-8">
       <div className="flex items-center gap-2 mb-1">
         <Upload size={16} className="text-muted" />
         <h2 className="text-[15px] font-semibold" style={{ letterSpacing: 0 }}>

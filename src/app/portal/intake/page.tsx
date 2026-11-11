@@ -29,7 +29,7 @@ function Field({ label, children, wide = false }: { label: string; children: Rea
 
 function Section({ icon: Icon, title, hint, children }: { icon: typeof UserRound; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5 sm:p-6">
+    <section className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2] p-5 sm:p-6">
       <div className="flex items-center gap-2 mb-1">
         <Icon size={16} className="text-muted" />
         <h2 className="text-[16px] font-semibold">{title}</h2>

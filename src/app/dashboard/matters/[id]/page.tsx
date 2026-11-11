@@ -172,7 +172,7 @@ export default function MatterDetailPage() {
             {menuOpen && (
               <>
                 <ClickAway onClose={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[170px]">
+                <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl p-1.5 w-[170px]">
                   <button
                     onClick={() => {
                       deleteMatters([matter.id]);
@@ -453,7 +453,7 @@ export default function MatterDetailPage() {
                         key={b}
                         onClick={() => patch({ billingType: b })}
                         className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                          matter.billingType === b ? "bg-white shadow-sm" : "text-muted"
+                          matter.billingType === b ? "bg-white " : "text-muted"
                         }`}
                       >
                         {b}

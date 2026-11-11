@@ -375,7 +375,7 @@ export default function RecordsPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
         {loaded && (typeCounts.length > 0 || typeFilter) && (
-          <div className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+          <div className="bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
             <GenericDropdown
               open={typeOpen}
               setOpen={setTypeOpen}
@@ -420,7 +420,7 @@ export default function RecordsPage() {
             </GenericDropdown>
           </div>
         )}
-        <div className="relative w-full sm:w-80 bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="relative w-full sm:w-80 bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
@@ -431,7 +431,7 @@ export default function RecordsPage() {
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Find a contact..."
             aria-label="Find a contact"
-            className="w-full border border-[#E9E7E4] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#D1CDC6] placeholder:text-muted shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
+            className="w-full border border-[#E9E7E4] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#D1CDC6] placeholder:text-muted "
           />
           {query && (
             <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-ink">
@@ -633,7 +633,7 @@ function Avatar({ kind, name }: { kind: Kind; name: string }) {
 function SetupModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div className="bg-cream rounded-2xl w-full max-w-[460px] p-7 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-cream rounded-2xl w-full max-w-[460px] p-7 " onClick={(e) => e.stopPropagation()}>
         <h2 className="text-[20px] font-semibold mb-2">One setup step first</h2>
         <p className="text-[14px] text-muted mb-5">
           People and companies need a database update. Run <span className="text-ink font-medium">supabase/migrations/0014_contacts.sql</span> in

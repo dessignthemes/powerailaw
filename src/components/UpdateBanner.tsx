@@ -36,7 +36,7 @@ export default function UpdateBanner() {
 
   if (!outdated || hidden) return null;
   return (
-    <div role="status" className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-dark text-white rounded-full pl-5 pr-2 py-2 shadow-lg text-[13.5px]">
+    <div role="status" className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-dark text-white rounded-full pl-5 pr-2 py-2 text-[13.5px]">
       LawPower has been updated.
       <button onClick={() => window.location.reload()} className="flex items-center gap-1.5 bg-white text-ink rounded-full px-3.5 py-1.5 font-medium hover:bg-chip">
         <RefreshCw size={13} /> Reload

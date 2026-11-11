@@ -54,7 +54,7 @@ function RowStatusPicker({
       {open && (
         <>
           <ClickAway onClose={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[160px]">
+          <div className="absolute left-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl p-1.5 w-[160px]">
             {statusOrder.map((s) => {
               const OptIcon = statusMeta[s].icon;
               return (
@@ -274,7 +274,7 @@ function ClientsPageInner() {
                             {rowMenuFor === c.id && (
                               <>
                                 <ClickAway onClose={() => setRowMenuFor(null)} />
-                                <div className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl shadow-[0_20px_50px_-15px_rgba(18,17,16,0.25)] p-1.5 w-[180px]">
+                                <div className="absolute right-0 top-[calc(100%+4px)] z-50 bg-white border border-line rounded-2xl p-1.5 w-[180px]">
                                   <button
                                     onClick={() => {
                                       setEditingClient(c);
@@ -327,7 +327,7 @@ function ClientsPageInner() {
       )}
 
       {selected.size > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-white border border-line rounded-full shadow-[0_20px_50px_-15px_rgba(18,17,16,0.35)] px-2 py-2">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-white border border-line rounded-full px-2 py-2">
           <span className="px-3 text-[13.5px] font-medium">{selected.size} selected</span>
           <GenericDropdown
             open={bulkStatusOpen}

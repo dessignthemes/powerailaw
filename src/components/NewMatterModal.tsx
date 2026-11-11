@@ -647,7 +647,7 @@ export default function NewMatterModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-cream rounded-3xl w-full max-w-[864px] max-h-[90vh] overflow-y-auto shadow-[0_30px_80px_-20px_rgba(18,17,16,0.35)]"
+        className="bg-cream rounded-3xl w-full max-w-[864px] max-h-[90vh] overflow-y-auto "
       >
         <div className="flex items-center justify-between px-7 pt-6 pb-2">
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">

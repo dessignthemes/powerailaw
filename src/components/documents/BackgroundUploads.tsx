@@ -39,7 +39,7 @@ export default function BackgroundUploads() {
   const matters = [...new Map(items.map((x) => [x.matterId, x.matterTitle])).entries()];
 
   return (
-    <div className="fixed bottom-5 right-5 z-[45] w-[360px] max-w-[calc(100vw-40px)] bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 shadow-[0_8px_24px_-6px_rgba(27,25,26,0.18)]">
+    <div className="fixed bottom-5 right-5 z-[45] w-[360px] max-w-[calc(100vw-40px)] bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 ">
       <div className="bg-white border border-[#E9E7E4] rounded-2xl overflow-hidden">
         <div className="flex items-center gap-2.5 px-4 py-3">
           {active ? (

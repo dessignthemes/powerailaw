@@ -128,7 +128,7 @@ export default function TemplatesModal({ onClose, initialId, inline = false }: {
         className={
           inline
             ? "bg-page rounded-2xl w-full min-h-[600px] max-h-[82vh] flex overflow-hidden border border-line"
-            : "bg-page rounded-3xl w-full max-w-[1060px] h-[min(760px,92vh)] flex overflow-hidden shadow-[0_20px_60px_rgba(27,25,26,0.18)]"
+            : "bg-page rounded-3xl w-full max-w-[1060px] h-[min(760px,92vh)] flex overflow-hidden "
         }
         onClick={(e) => e.stopPropagation()}
         role={inline ? undefined : "dialog"}
