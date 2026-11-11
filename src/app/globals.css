@@ -5,7 +5,7 @@
   --font-display: var(--font-body);
   --font-mono: var(--font-body);
   /* Warm beige theme. */
-  --sidebar: #f3f1ec; /* left navigation */
+  --sidebar: #fafafa; /* left navigation */
   --cream: #fcfbf8; /* raised surfaces: cards on panels, modals */
   --page: #fdfcfa; /* main content area (right of the sidebar) */
   --dark: #1b191a; /* logo, avatars, "on" toggles */
