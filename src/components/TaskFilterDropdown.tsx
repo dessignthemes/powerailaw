@@ -52,7 +52,7 @@ export default function TaskFilterDropdown({
             onChange(key);
             setOpen(false);
           }}
-          className="flex-1 min-w-0 flex items-center justify-between gap-2 pl-3 pr-1 py-2.5 text-[14px] font-medium text-left"
+          className="flex-1 min-w-0 flex items-center justify-between gap-2 pl-3 pr-1 py-1.5 text-[14px] font-medium text-left"
         >
           <span className="truncate">{label}</span>
           {value === key && <Check size={14} strokeWidth={2} className="flex-shrink-0" />}
@@ -63,7 +63,7 @@ export default function TaskFilterDropdown({
             title={isPinned ? "The Dashboard opens with this view" : "Pin: open the Dashboard with this view"}
             aria-label={isPinned ? `${label} is pinned` : `Pin ${label}`}
             aria-pressed={isPinned}
-            className={`w-8 h-8 mr-1 rounded-lg flex items-center justify-center flex-shrink-0 transition-opacity ${isPinned ? "text-ink" : "text-muted opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-ink"}`}
+            className={`w-7 h-7 mr-1 rounded-lg flex items-center justify-center flex-shrink-0 transition-opacity ${isPinned ? "text-ink" : "text-muted opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-ink"}`}
           >
             <Pin size={14} strokeWidth={1.75} fill={isPinned ? "currentColor" : "none"} />
           </button>
