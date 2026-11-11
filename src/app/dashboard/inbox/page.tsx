@@ -188,10 +188,10 @@ function FileToMatter({
           <a href={`/dashboard/matters/${current.id}`} title={current.title} className="font-semibold hover:underline">
             {current.number ?? current.title}
           </a>
-          <button onClick={() => setOpen((o) => !o)} className="px-1.5 py-0.5 rounded-full hover:bg-[#D5DDEE] text-muted" title="Change matter">
+          <button onClick={() => setOpen((o) => !o)} className="px-1.5 py-0.5 rounded-full hover:bg-[#E7E2D7] text-muted" title="Change matter">
             Change
           </button>
-          <button onClick={() => void pick(null)} disabled={busy} aria-label="Take off matter" className="w-5 h-5 rounded-full hover:bg-[#D5DDEE] flex items-center justify-center">
+          <button onClick={() => void pick(null)} disabled={busy} aria-label="Take off matter" className="w-5 h-5 rounded-full hover:bg-[#E7E2D7] flex items-center justify-center">
             {busy ? <Loader2 size={11} className="animate-spin" /> : <X size={11} />}
           </button>
         </span>
@@ -221,7 +221,7 @@ function FileToMatter({
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Matter number or name"
-              className="w-full bg-[#F4F6FA] border border-[#E3E7EF] rounded-lg px-3 py-2 text-[13px] outline-none mb-1 focus:border-[#C3CBDA]"
+              className="w-full bg-[#F7F6F2] border border-[#ECE9E1] rounded-lg px-3 py-2 text-[13px] outline-none mb-1 focus:border-[#D7D1C0]"
             />
             <div className="max-h-[300px] overflow-y-auto">
               {list.length === 0 ? (
@@ -232,7 +232,7 @@ function FileToMatter({
                     key={m.id}
                     onClick={() => void pick(m.id)}
                     disabled={busy}
-                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] hover:bg-[#F4F6FA] disabled:opacity-50"
+                    className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] hover:bg-[#F7F6F2] disabled:opacity-50"
                   >
                     {m.matterNumber && <span className="font-semibold flex-shrink-0">{m.matterNumber}</span>}
                     <span className="truncate text-muted">{m.title}</span>
@@ -748,7 +748,7 @@ export default function InboxPage() {
         />
       )}
       {actionNote && (
-        <div className="mb-2 flex items-center gap-2 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] px-4 py-2 text-[13px]">
+        <div className="mb-2 flex items-center gap-2 rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] px-4 py-2 text-[13px]">
           {actionNote}
           <button onClick={() => setActionNote(null)} aria-label="Dismiss" className="ml-auto text-muted hover:text-ink">
             <X size={13} />
@@ -794,7 +794,7 @@ export default function InboxPage() {
             return f ? <span className="text-[13px] font-semibold truncate">· {f.name}</span> : null;
           })()}
 
-          <form onSubmit={submitSearch} className="flex items-center gap-2 bg-white border border-[#E3E7EF] rounded-full px-3.5 py-2 ml-auto w-full sm:w-[320px] shadow-[0_1px_3px_rgba(27,25,26,0.06)] focus-within:border-[#C3CBDA]">
+          <form onSubmit={submitSearch} className="flex items-center gap-2 bg-white border border-[#ECE9E1] rounded-full px-3.5 py-2 ml-auto w-full sm:w-[320px] shadow-[0_1px_3px_rgba(27,25,26,0.06)] focus-within:border-[#D7D1C0]">
             <Search size={14} strokeWidth={1.75} className="text-muted" />
             <input
               value={query}
@@ -825,7 +825,7 @@ export default function InboxPage() {
           </form>
           <button
             onClick={() => setComposing("new")}
-            className={`text-ink px-3.5 py-2 rounded-full text-[13px] font-semibold flex items-center gap-1.5 whitespace-nowrap border border-[#AEB9D0] transition-colors ${composing === "new" ? "bg-[#B3BDD4]" : "bg-btn-hover hover:bg-[#B3BDD4]"}`}
+            className={`text-ink px-3.5 py-2 rounded-full text-[13px] font-semibold flex items-center gap-1.5 whitespace-nowrap border border-[#CCC3AD] transition-colors ${composing === "new" ? "bg-[#D0C7B2]" : "bg-btn-hover hover:bg-[#D0C7B2]"}`}
           >
             <PenSquare size={14} /> New email
           </button>
@@ -842,7 +842,7 @@ export default function InboxPage() {
 
         <div className={`${frameInner} flex flex-col flex-1 min-h-0 overflow-hidden`}>
         {!needsReconnect && provider && conn?.status === "ok" && conn.canSend === false && !syncNoteHidden && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F4F6FA] border-b border-[#E6EAF1] text-[13px] flex-wrap">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F7F6F2] border-b border-[#EEEBE4] text-[13px] flex-wrap">
             <span>
               <b>Send email from LawPower, free:</b> reconnect {providerLabel[provider]} once and keep <b>Send email</b> ticked. Emails then go from your own address and appear in your Sent folder.
             </span>
@@ -858,7 +858,7 @@ export default function InboxPage() {
         )}
 
         {!needsReconnect && provider && conn?.status === "ok" && conn.canSend !== false && conn.syncsRead === false && !syncNoteHidden && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F4F6FA] border-b border-[#E6EAF1] text-[13px] flex-wrap">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#F7F6F2] border-b border-[#EEEBE4] text-[13px] flex-wrap">
             <span>Read / unread only changes in LawPower for now. Reconnect {providerLabel[provider]} once so it stays in step with {providerLabel[provider]} both ways.</span>
             <span className="flex items-center gap-2">
               <Link href={connectHref(provider)} className={smallBtnB}>
@@ -872,7 +872,7 @@ export default function InboxPage() {
         )}
 
         {needsReconnect && provider && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#F5E3B3]/60 border-b border-[#E6EAF1] text-[13px] flex-wrap">
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#F5E3B3]/60 border-b border-[#EEEBE4] text-[13px] flex-wrap">
             <span className="flex items-center gap-2">
               <AlertTriangle size={14} className="flex-shrink-0" />
               {listError?.message ??
@@ -891,7 +891,7 @@ export default function InboxPage() {
           {!panelHidden && (
             <>
               <div className="fixed inset-0 bg-black/20 z-30 min-[900px]:hidden" onClick={() => togglePanel(true)} />
-              <div className="absolute min-[900px]:static inset-y-0 left-0 z-40 w-[250px] flex-shrink-0 border-r border-[#E6EAF1] bg-white shadow-lg min-[900px]:shadow-none">
+              <div className="absolute min-[900px]:static inset-y-0 left-0 z-40 w-[250px] flex-shrink-0 border-r border-[#EEEBE4] bg-white shadow-lg min-[900px]:shadow-none">
                 <FolderPanel
                   folders={shownFolders}
                   loading={foldersLoading}
@@ -910,8 +910,8 @@ export default function InboxPage() {
             </>
           )}
           {/* List */}
-          <div className={`w-full md:w-[380px] md:flex-shrink-0 border-r border-[#E6EAF1] overflow-y-auto ${selectedId ? "hidden md:block" : ""}`}>
-            <div className="sticky top-0 z-10 bg-[#F4F6FA]/95 backdrop-blur border-b border-[#E6EAF1] px-4 py-2 flex items-center justify-between">
+          <div className={`w-full md:w-[380px] md:flex-shrink-0 border-r border-[#EEEBE4] overflow-y-auto ${selectedId ? "hidden md:block" : ""}`}>
+            <div className="sticky top-0 z-10 bg-[#F7F6F2]/95 backdrop-blur border-b border-[#EEEBE4] px-4 py-2 flex items-center justify-between">
               <button
                 role="switch"
                 aria-checked={threaded}
@@ -937,7 +937,7 @@ export default function InboxPage() {
               </button>
             </div>
             {moveNotice && (
-              <div className="m-3 mb-0 flex items-center gap-2 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] px-3.5 py-2 text-[13px]">
+              <div className="m-3 mb-0 flex items-center gap-2 rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] px-3.5 py-2 text-[13px]">
                 <span className="flex-1">{moveNotice}</span>
                 <button onClick={() => setMoveNotice(null)} aria-label="Dismiss" className="text-muted hover:text-ink">
                   <X size={13} />
@@ -968,7 +968,7 @@ export default function InboxPage() {
                   const isOpen = convo && expanded.has(m.threadId!);
                   const kids = m.threadId ? threadRows[m.threadId] : undefined;
                   return (
-                    <div key={m.id} className="border-b border-[#E6EAF1]">
+                    <div key={m.id} className="border-b border-[#EEEBE4]">
                       <div
                         role="button"
                         tabIndex={0}
@@ -985,7 +985,7 @@ export default function InboxPage() {
                         }}
                         onKeyDown={(e) => e.key === "Enter" && open(m)}
                         className={`relative w-full text-left pr-4 py-3 cursor-pointer transition-colors ${convo ? "pl-8" : "pl-4"} ${
-                          inGroup(m, selectedId) ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"
+                          inGroup(m, selectedId) ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"
                         } ${isOpen ? "border-l-[3px] border-[#2B6CB0]" : ""}`}
                       >
                         {convo && (
@@ -1086,7 +1086,7 @@ export default function InboxPage() {
               <div className="m-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{msgError}</div>
             ) : message ? (
               <>
-                <div className="px-6 pt-5 pb-4 border-b border-[#E6EAF1]">
+                <div className="px-6 pt-5 pb-4 border-b border-[#EEEBE4]">
                   <button onClick={() => setSelectedId(null)} className="md:hidden text-[13px] text-muted mb-3">
                     ← Back to inbox
                   </button>
@@ -1233,7 +1233,7 @@ export default function InboxPage() {
                                       setAttMenu(null);
                                       fn();
                                     }}
-                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#F4F6FA]"
+                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#F7F6F2]"
                                   >
                                     {label}
                                   </button>
@@ -1275,7 +1275,7 @@ export default function InboxPage() {
                     aria-label="Email content"
                     sandbox="allow-popups allow-popups-to-escape-sandbox"
                     srcDoc={withDarkMode(srcDoc, dark)}
-                    style={dark ? { filter: DARK_FRAME_FILTER, backgroundColor: "#E2E2E4" } : undefined}
+                    style={dark ? { filter: DARK_FRAME_FILTER, backgroundColor: "#E5E2DC" } : undefined}
                     className="flex-1 w-full bg-white"
                   />
                 )}

@@ -43,7 +43,7 @@ const AREA_COLORS: Record<string, string> = {
   "Personal Injury": "#3E8A8A",
   "Criminal Defense": "#5A5A5A",
   "Business / Corporate": "#6F7FA6",
-  "Other / not set": "#AEB8C6",
+  "Other / not set": "#C6BEA9",
 };
 const colorOf = (c: string) => AREA_COLORS[c] ?? "#8A94A6";
 
@@ -85,7 +85,7 @@ function Donut({ parts, total, label }: { parts: { name: string; value: number }
   let offset = 0;
   return (
     <svg viewBox="0 0 180 180" className="w-[180px] h-[180px] flex-shrink-0" role="img" aria-label={`${label}: ${parts.map((p) => `${p.name} ${p.value}`).join(", ")}`}>
-      <circle cx="90" cy="90" r={r} fill="none" stroke="#EEF1F6" strokeWidth="22" />
+      <circle cx="90" cy="90" r={r} fill="none" stroke="#F3F1EC" strokeWidth="22" />
       {total > 0 &&
         parts
           .filter((p) => p.value > 0)
@@ -145,7 +145,7 @@ function Bars({ rows, format = (n: number) => String(n), colorBy = true }: { row
           <span className="truncate" title={r.name}>
             {r.name}
           </span>
-          <div className="h-3.5 rounded-full bg-[#EEF1F6] overflow-hidden">
+          <div className="h-3.5 rounded-full bg-[#F3F1EC] overflow-hidden">
             <div className="h-full rounded-full" style={{ width: `${(r.value / max) * 100}%`, backgroundColor: colorBy ? colorOf(r.name) : "#5E6E8C" }} />
           </div>
           <span className="tabular-nums font-medium min-w-[44px] text-right">{format(r.value)}</span>
@@ -161,7 +161,7 @@ function MonthColumns({ months, areas }: { months: PracticeReport["intakeByMonth
   const yearChanges = new Set(months.filter((m, i) => i === 0 || m.month.slice(0, 4) !== months[i - 1].month.slice(0, 4)).map((m) => m.month));
   return (
     <div>
-      <div className="flex items-end gap-1.5 h-[170px] border-b border-[#E6EAF1] pb-px">
+      <div className="flex items-end gap-1.5 h-[170px] border-b border-[#EEEBE4] pb-px">
         {months.map((m) => (
           <div key={m.month} className="flex-1 min-w-0 h-full flex flex-col justify-end items-center gap-1" title={`${monthLabel(m.month, true)}: ${m.count} new`}>
             {m.count > 0 && <span className="text-[11px] tabular-nums text-muted">{m.count}</span>}
@@ -191,7 +191,7 @@ function MoneyColumns({ months }: { months: PracticeReport["finance"]["byMonth"]
   const max = Math.max(1, ...months.flatMap((m) => [m.income, m.expenses]));
   return (
     <div>
-      <div className="flex items-end gap-2 h-[170px] border-b border-[#E6EAF1] pb-px">
+      <div className="flex items-end gap-2 h-[170px] border-b border-[#EEEBE4] pb-px">
         {months.map((m) => (
           <div key={m.month} className="flex-1 min-w-0 h-full flex items-end justify-center gap-[3px]" title={`${monthLabel(m.month, true)}: income ${money(m.income)}, expenses ${money(m.expenses)}`}>
             <div className="w-[45%] max-w-[16px] rounded-t-sm bg-[#3F7A5A]" style={{ height: `${(m.income / max) * 160}px` }} />
@@ -254,7 +254,7 @@ function RelTable({ rows, empty, person }: { rows: RelRow[]; empty: string; pers
         </thead>
         <tbody>
           {shown.map((r) => (
-            <tr key={r.id} className="border-t border-[#E6EAF1]">
+            <tr key={r.id} className="border-t border-[#EEEBE4]">
               <td className="py-2 pr-3 min-w-0">
                 <Link href={`/dashboard/records?contact=${r.id}`} className="hover:underline font-medium">
                   {r.name}
@@ -538,7 +538,7 @@ export default function ReportsPage() {
                     </thead>
                     <tbody>
                       {r.categories.map((c) => (
-                        <tr key={c.category} className="border-t border-[#E6EAF1]">
+                        <tr key={c.category} className="border-t border-[#EEEBE4]">
                           <td className="py-2 pr-3">
                             <span className="flex items-center gap-2">
                               <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: colorOf(c.category) }} />

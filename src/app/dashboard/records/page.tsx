@@ -311,13 +311,13 @@ export default function RecordsPage() {
                     key={k}
                     role="menuitem"
                     onClick={() => startAdd(k)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F4F6FA] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F7F6F2] transition-colors"
                   >
                     <KindIcon kind={k} />
                     {KIND_LABEL[k]}
                   </button>
                 ))}
-                <div className="border-t border-[#E6EAF1] my-1.5" />
+                <div className="border-t border-[#EEEBE4] my-1.5" />
                 <div className="px-3 pt-1 pb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted">Import contacts</div>
                 {(
                   [
@@ -336,7 +336,7 @@ export default function RecordsPage() {
                       if (k === "cards") setCardsImport(true);
                       else setImporting(k);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F4F6FA] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left hover:bg-[#F7F6F2] transition-colors"
                   >
                     <Download size={14} className="text-muted" />
                     {label}
@@ -375,7 +375,7 @@ export default function RecordsPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
         {loaded && (typeCounts.length > 0 || typeFilter) && (
-          <div className="bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+          <div className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
             <GenericDropdown
               open={typeOpen}
               setOpen={setTypeOpen}
@@ -420,7 +420,7 @@ export default function RecordsPage() {
             </GenericDropdown>
           </div>
         )}
-        <div className="relative w-full sm:w-80 bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="relative w-full sm:w-80 bg-[#F2F0EA] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
@@ -431,7 +431,7 @@ export default function RecordsPage() {
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Find a contact..."
             aria-label="Find a contact"
-            className="w-full border border-[#E3E7EF] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#C3CBDA] placeholder:text-muted shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
+            className="w-full border border-[#ECE9E1] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#D7D1C0] placeholder:text-muted shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
           />
           {query && (
             <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-ink">
@@ -451,7 +451,7 @@ export default function RecordsPage() {
         </div>
       )}
       {setupRequired && (tab === "person" || tab === "company") && (
-        <div className="mb-5 rounded-xl border border-[#E6EAF1] bg-[#F4F6FA] px-4 py-3 text-[13.5px]">
+        <div className="mb-5 rounded-xl border border-[#EEEBE4] bg-[#F7F6F2] px-4 py-3 text-[13.5px]">
           People and companies need a database update. Run <span className="font-medium">supabase/migrations/0014_contacts.sql</span> in the
           Supabase SQL editor, then refresh.
         </div>
@@ -500,13 +500,13 @@ export default function RecordsPage() {
               <button
                 key={r.key}
                 onClick={() => open(r)}
-                className="w-full flex items-center gap-3.5 px-4 py-3 text-left rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] transition-colors"
+                className="w-full flex items-center gap-3.5 px-4 py-3 text-left rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors"
               >
                 <Avatar kind={r.kind} name={r.name} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-[14.5px] font-medium truncate">{r.name}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white border border-[#E1E5EE] text-[11.5px] font-medium text-ink flex-shrink-0">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white border border-[#EBE8DF] text-[11.5px] font-medium text-ink flex-shrink-0">
                       {KIND_LABEL[r.kind]}
                     </span>
                     {r.tag && (

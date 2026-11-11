@@ -281,7 +281,7 @@ export default function TaskFolderPage() {
           {/* Watched folder */}
           <div className={`${framedPanel} px-6 py-5 flex items-center justify-between gap-4 flex-wrap mb-7 relative`}>
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-full bg-[#F4F6FA] border border-[#E1E5EE] flex items-center justify-center flex-shrink-0">
+              <span className="w-10 h-10 rounded-full bg-[#F7F6F2] border border-[#EBE8DF] flex items-center justify-center flex-shrink-0">
                 <FolderInput size={17} strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
@@ -348,7 +348,7 @@ export default function TaskFolderPage() {
                         <button
                           key={f.id}
                           onClick={() => chooseFolder(f)}
-                          className="w-full flex items-center gap-2 py-2 pr-3 rounded-xl text-[13.5px] hover:bg-[#F4F6FA] text-left"
+                          className="w-full flex items-center gap-2 py-2 pr-3 rounded-xl text-[13.5px] hover:bg-[#F7F6F2] text-left"
                           style={{ paddingLeft: 12 + depth * 16 }}
                         >
                           <span className="flex-1 truncate">{f.name}</span>
@@ -400,14 +400,14 @@ export default function TaskFolderPage() {
 
               {listError && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{listError}</div>}
 
-              <div className={`${framedPanel} divide-y divide-[#E6EAF1] overflow-hidden`}>
+              <div className={`${framedPanel} divide-y divide-[#EEEBE4] overflow-hidden`}>
                 {listLoading && messages.length === 0 ? (
                   <div className="flex items-center gap-2 text-[14px] text-muted px-5 py-8">
                     <Loader2 size={15} className="animate-spin" /> Loading emails…
                   </div>
                 ) : visible.length === 0 ? (
                   <div className="text-center px-6 py-14">
-                    <span className="w-12 h-12 rounded-full bg-[#F4F6FA] border border-[#E6EAF1] mx-auto mb-3 flex items-center justify-center">
+                    <span className="w-12 h-12 rounded-full bg-[#F7F6F2] border border-[#EEEBE4] mx-auto mb-3 flex items-center justify-center">
                       <Mail size={18} strokeWidth={1.5} className="text-muted" />
                     </span>
                     <div className="text-[16px] font-semibold mb-1">Nothing waiting</div>
@@ -419,7 +419,7 @@ export default function TaskFolderPage() {
                   visible.map((m) => {
                     const it = itemFor(m);
                     return (
-                      <div key={m.id} className={`px-5 py-4 flex items-start gap-4 transition-colors ${it ? "bg-[#F8F9FC]" : "hover:bg-[#F8F9FC]"}`}>
+                      <div key={m.id} className={`px-5 py-4 flex items-start gap-4 transition-colors ${it ? "bg-[#F9F8F6]" : "hover:bg-[#F9F8F6]"}`}>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className={`text-[14px] truncate ${m.unread && !it ? "font-semibold" : "font-medium"}`}>{m.from || m.fromEmail}</span>
@@ -440,7 +440,7 @@ export default function TaskFolderPage() {
                                   View
                                 </Link>
                               )}
-                              <button onClick={() => putBack(m)} title="Show in Task Folder again" className="w-8 h-8 rounded-full bg-white border border-[#E1E5EE] hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors">
+                              <button onClick={() => putBack(m)} title="Show in Task Folder again" className="w-8 h-8 rounded-full bg-white border border-[#EBE8DF] hover:bg-chip flex items-center justify-center text-muted hover:text-ink transition-colors">
                                 <Undo2 size={14} />
                               </button>
                             </>
@@ -524,7 +524,7 @@ function TaskTable({
   if (!tasks.length)
     return (
       <div className={`${framedPanel} text-center px-6 py-14`}>
-        <span className="w-12 h-12 rounded-full bg-[#F4F6FA] border border-[#E6EAF1] mx-auto mb-3 flex items-center justify-center">
+        <span className="w-12 h-12 rounded-full bg-[#F7F6F2] border border-[#EEEBE4] mx-auto mb-3 flex items-center justify-center">
           {kind === "assigned" ? <UserCheck size={18} strokeWidth={1.5} className="text-muted" /> : <CheckCircle2 size={18} strokeWidth={1.5} className="text-muted" />}
         </span>
         <div className="text-[16px] font-semibold mb-1">{kind === "assigned" ? "No open tasks from the Task Folder" : "Nothing completed yet"}</div>
@@ -547,7 +547,7 @@ function TaskTable({
   return (
     <div className={`${framedPanel} overflow-x-auto`}>
       <table className="w-full min-w-[860px] text-[13.5px]">
-        <thead className="border-b border-[#E6EAF1] bg-[#F4F6FA]">
+        <thead className="border-b border-[#EEEBE4] bg-[#F7F6F2]">
           <tr>
             <th className={`${th} pl-5 w-[150px]`}>Action</th>
             <th className={`${th} w-[120px]`}>{kind === "assigned" ? "Due date" : "Completed"}</th>
@@ -557,7 +557,7 @@ function TaskTable({
             <th className={`${th} w-[130px] pr-5`}>{kind === "assigned" ? "Status" : "Board"}</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#E6EAF1]">
+        <tbody className="divide-y divide-[#EEEBE4]">
           {tasks.map((t) => {
             const overdue = kind === "assigned" && !!t.dueDate && t.dueDate < today;
             const who = person(t.assignee);

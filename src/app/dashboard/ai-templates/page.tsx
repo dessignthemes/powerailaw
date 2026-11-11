@@ -164,7 +164,7 @@ export default function AiTemplatesPage() {
   const sampleList = useMemo(() => samples.filter(filterFn), [samples, q, cat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const newMenu = (
-    <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
+    <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
       {(
         [
           ["ai", <Sparkles key="a" size={14} />, "Create with AI", "Describe it; the AI drafts it"],
@@ -186,7 +186,7 @@ export default function AiTemplatesPage() {
             }
             else fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" });
           }}
-          className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F4F6FA]"
+          className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F7F6F2]"
         >
           <span className="mt-0.5 text-muted">{icon}</span>
           <span>
@@ -196,7 +196,7 @@ export default function AiTemplatesPage() {
         </button>
       ))}
       <div className="px-1.5 pb-1 pt-1">
-        <UploadButton className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F4F6FA] text-[13.5px] font-medium" onText={(text, name) => (setNewOpen(false), setModal({ kind: "text", source: "upload", text, name }))} />
+        <UploadButton className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F7F6F2] text-[13.5px] font-medium" onText={(text, name) => (setNewOpen(false), setModal({ kind: "text", source: "upload", text, name }))} />
       </div>
     </div>
   );
@@ -205,7 +205,7 @@ export default function AiTemplatesPage() {
     <button
       key={t.id}
       onClick={() => show(t)}
-      className={`w-full text-left px-3.5 py-2.5 rounded-xl border transition-colors ${open && (open.id === t.id || (t.sample && open.sample && open.name === t.name)) ? "bg-[#E6EBF4] border-[#D5DCE8]" : "bg-[#F4F6FA] border-[#E6EAF1] hover:bg-[#EAEEF5]"}`}
+      className={`w-full text-left px-3.5 py-2.5 rounded-xl border transition-colors ${open && (open.id === t.id || (t.sample && open.sample && open.name === t.name)) ? "bg-[#EFEDE6] border-[#E4E0D4]" : "bg-[#F7F6F2] border-[#EEEBE4] hover:bg-[#F1EFE9]"}`}
     >
       <div className="text-[13.5px] font-medium truncate">{t.name}</div>
       <div className="text-[12px] text-muted truncate">{[t.category, t.description].filter(Boolean).join(" · ") || "No description"}</div>
@@ -271,18 +271,18 @@ export default function AiTemplatesPage() {
       {error && <div className="mb-5 rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-4 py-3 text-[13.5px]">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5 items-start">
-        <aside className="bg-[#ECEFF6] border border-[#E1E5EE] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
-          <div className="bg-white border border-[#E3E7EF] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 h-full">
-          <div className="flex items-center gap-2 bg-[#F4F6FA] border border-[#E3E7EF] rounded-full px-3 py-2 mb-3">
+        <aside className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+          <div className="bg-white border border-[#ECE9E1] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 h-full">
+          <div className="flex items-center gap-2 bg-[#F7F6F2] border border-[#ECE9E1] rounded-full px-3 py-2 mb-3">
             <Search size={14} className="text-muted" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search templates" aria-label="Search templates" className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px]" />
           </div>
           <div className="flex flex-wrap gap-1.5 mb-4">
-            <button onClick={() => setCat("")} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${!cat ? "bg-btn-hover border border-[#C3CBDA]" : "bg-white border border-[#D9DFEA] hover:bg-[#F4F6FA] hover:border-[#C3CBDA]"}`}>
+            <button onClick={() => setCat("")} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${!cat ? "bg-btn-hover border border-[#D7D1C0]" : "bg-white border border-[#E7E2D7] hover:bg-[#F7F6F2] hover:border-[#D7D1C0]"}`}>
               All
             </button>
             {allCategories.map((c) => (
-              <button key={c} onClick={() => setCat(c === cat ? "" : c)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${cat === c ? "bg-btn-hover border border-[#C3CBDA]" : "bg-white border border-[#D9DFEA] hover:bg-[#F4F6FA] hover:border-[#C3CBDA]"}`}>
+              <button key={c} onClick={() => setCat(c === cat ? "" : c)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${cat === c ? "bg-btn-hover border border-[#D7D1C0]" : "bg-white border border-[#E7E2D7] hover:bg-[#F7F6F2] hover:border-[#D7D1C0]"}`}>
                 {c}
               </button>
             ))}
@@ -322,7 +322,7 @@ export default function AiTemplatesPage() {
               className={`flex flex-col gap-1.5 ${wfMaxH ? "overflow-y-auto pr-1 -mr-1 [scrollbar-width:thin]" : ""}`}
             >
               {wfList.map((t) => (
-                <button key={t.id} onClick={() => (setOpen(null), setWorkflowModal({ id: t.id }))} className={`w-full text-left px-3.5 py-2.5 rounded-xl transition-colors ${workflowModal?.id === t.id ? "bg-[#E6EBF4] border-[#D5DCE8]" : "bg-[#F4F6FA] border-[#E6EAF1] hover:bg-[#EAEEF5]"}`}>
+                <button key={t.id} onClick={() => (setOpen(null), setWorkflowModal({ id: t.id }))} className={`w-full text-left px-3.5 py-2.5 rounded-xl transition-colors ${workflowModal?.id === t.id ? "bg-[#EFEDE6] border-[#E4E0D4]" : "bg-[#F7F6F2] border-[#EEEBE4] hover:bg-[#F1EFE9]"}`}>
                   <div className="text-[13.5px] font-medium truncate flex items-center gap-1.5">
                     <span className="truncate">{t.name}</span>
                     {t.example && <span className="text-[10px] font-semibold bg-white rounded px-1 flex-shrink-0">SAMPLE</span>}
@@ -346,8 +346,8 @@ export default function AiTemplatesPage() {
           </div>
         </aside>
 
-        <section className="bg-[#ECEFF6] border border-[#E1E5EE] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] min-h-[560px]">
-          <div className="bg-white border border-[#E3E7EF] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-6 h-full">
+        <section className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-[22px] p-1.5 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] min-h-[560px]">
+          <div className="bg-white border border-[#ECE9E1] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-6 h-full">
           {workflowModal ? (
             <TemplatesModal
               key={workflowModal.id ?? "new"}
@@ -387,20 +387,20 @@ export default function AiTemplatesPage() {
                     [<FileText key="b" size={18} />, "Start blank", "Write it yourself and insert fields.", () => fromDraft({ name: "", category: "", description: "", body: "", fields: [], source: "blank" })],
                   ] as [React.ReactNode, string, string, () => void][]
                 ).map(([icon, title, sub, fn]) => (
-                  <button key={title} onClick={fn} className="group bg-[#ECEFF6] border border-[#E1E5EE] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
+                  <button key={title} onClick={fn} className="group bg-[#F2F0EA] border border-[#EBE8DF] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
                     <div className="px-3 pt-1.5 pb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2">
                       <span className="[&_svg]:w-[15px] [&_svg]:h-[15px]">{icon}</span> {title}
                     </div>
-                    <div className="bg-white border border-[#E3E7EF] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 flex-1 text-[13px] text-muted leading-relaxed group-hover:bg-[#FBFCFE]">{sub}</div>
+                    <div className="bg-white border border-[#ECE9E1] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 flex-1 text-[13px] text-muted leading-relaxed group-hover:bg-[#FBFCFE]">{sub}</div>
                   </button>
                 ))}
-                <div className="bg-[#ECEFF6] border border-[#E1E5EE] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
+                <div className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-[22px] p-1.5 text-left flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow">
                   <div className="px-3 pt-1.5 pb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2">
                     <FileText size={15} /> Upload Word or PDF
                   </div>
-                  <div className="bg-white border border-[#E3E7EF] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 flex-1">
+                  <div className="bg-white border border-[#ECE9E1] rounded-2xl shadow-[0_1px_3px_rgba(27,25,26,0.06)] p-4 flex-1">
                     <div className="text-[13px] text-muted leading-relaxed mb-3">A document you already use; the AI turns it into a template.</div>
-                    <UploadButton className="bg-white border border-[#DDE2EC] hover:bg-[#F4F6FA] shadow-[0_1px_2px_rgba(27,25,26,0.05)] px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5" onText={(text, name) => setModal({ kind: "text", source: "upload", text, name })} />
+                    <UploadButton className="bg-white border border-[#E9E5DB] hover:bg-[#F7F6F2] shadow-[0_1px_2px_rgba(27,25,26,0.05)] px-3.5 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5" onText={(text, name) => setModal({ kind: "text", source: "upload", text, name })} />
                   </div>
                 </div>
               </div>

@@ -46,7 +46,7 @@ export default function TaskFilterDropdown({
   const item = (key: TaskScope, label: string) => {
     const isPinned = (pinned ?? "me") === key;
     return (
-      <div key={key} className={`group flex items-center rounded-xl transition-colors ${value === key ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"}`}>
+      <div key={key} className={`group flex items-center rounded-xl transition-colors ${value === key ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"}`}>
         <button
           onClick={() => {
             onChange(key);
@@ -84,7 +84,7 @@ export default function TaskFilterDropdown({
         <ChevronDown size={13} strokeWidth={1.75} />
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+18px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[260px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]">
+        <div className="absolute right-0 top-[calc(100%+18px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[260px] max-h-[420px] overflow-y-auto flex flex-col gap-[3px]">
           {item("me", "My tasks")}
           {item("all", "View all tasks")}
           {others.length > 0 && <div className="px-3 pt-2.5 pb-1 text-[11.5px] font-semibold text-muted border-t border-line mt-1">Team members</div>}

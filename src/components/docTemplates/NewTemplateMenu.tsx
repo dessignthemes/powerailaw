@@ -53,7 +53,7 @@ export default function NewTemplateMenu({ label = "Add template" }: { label?: st
                 ["workflow", <ListChecks key="w" size={14} />, "Workflow checklist", "Steps for a task (Task Board)"],
               ] as [string, React.ReactNode, string, string][]
             ).map(([k, icon, l, sub]) => (
-              <button key={k} role="menuitem" onClick={() => choose(k)} className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F4F6FA]">
+              <button key={k} role="menuitem" onClick={() => choose(k)} className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F7F6F2]">
                 <span className="mt-0.5 text-muted">{icon}</span>
                 <span>
                   <span className="block text-[13.5px] font-medium">{l}</span>
@@ -63,7 +63,7 @@ export default function NewTemplateMenu({ label = "Add template" }: { label?: st
             ))}
             <div className="px-1.5 pb-1 pt-1">
               <UploadButton
-                className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F4F6FA] text-[13.5px] font-medium"
+                className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F7F6F2] text-[13.5px] font-medium"
                 onText={(text, name) => (setOpen(false), setModal({ kind: "text", source: "upload", text, name }))}
               />
             </div>
@@ -99,10 +99,10 @@ export default function NewTemplateMenu({ label = "Add template" }: { label?: st
       {workflow && <TemplatesModal onClose={() => setWorkflow(false)} />}
 
       {notice && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-white rounded-full pl-4 pr-2 py-2 text-[13px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_18px_40px_-14px_rgba(18,17,16,0.3)]">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-white rounded-full pl-4 pr-2 py-2 text-[13px] shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_18px_40px_-14px_rgba(18,17,16,0.3)]">
           <Check size={14} className="text-[#2F5E2A]" /> {notice}
           <Link href="/dashboard/ai-templates" className="font-medium underline underline-offset-2">Open AI Templates</Link>
-          <button onClick={() => setNotice(null)} aria-label="Dismiss" className="w-6 h-6 rounded-full hover:bg-[#F4F6FA] flex items-center justify-center text-muted">
+          <button onClick={() => setNotice(null)} aria-label="Dismiss" className="w-6 h-6 rounded-full hover:bg-[#F7F6F2] flex items-center justify-center text-muted">
             <X size={13} />
           </button>
         </div>

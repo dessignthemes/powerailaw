@@ -125,7 +125,7 @@ export default function Home() {
             <a href="/portal/login" className="border border-ink text-ink px-3.5 sm:px-4 py-[7px] rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-ink hover:text-white transition-colors">
               Client login
             </a>
-            <Link href="/" className="hidden sm:inline bg-[#ECECEC] text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-[#DEDEDE] transition-colors">
+            <Link href="/" className="hidden sm:inline bg-[#ECEBE7] text-ink px-4 py-2 rounded-full text-[13.5px] font-medium hover:bg-[#E0DDD7] transition-colors">
               Sign in
             </Link>
             <Link href="/" className="bg-dark text-white px-3.5 sm:px-4 py-2 rounded-full text-[13px] sm:text-[13.5px] font-medium hover:bg-dark2 transition-colors">
@@ -156,7 +156,7 @@ export default function Home() {
               move faster and give every client better service &ndash; built by lawyers, for lawyers.
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
-              <Link href="/" className="bg-white text-ink px-6 py-3.5 rounded-lg text-[15.5px] font-medium hover:bg-[#ECEDEF] transition-colors">
+              <Link href="/" className="bg-white text-ink px-6 py-3.5 rounded-lg text-[15.5px] font-medium hover:bg-[#EEECE8] transition-colors">
                 Start Free Trial
               </Link>
               <a href="#features" className="border border-white/80 text-white px-6 py-3.5 rounded-lg text-[15.5px] font-medium hover:bg-white/10 transition-colors">
@@ -182,7 +182,7 @@ export default function Home() {
                 <span className="w-3 h-3 rounded-full bg-[#5a5a5a]" />
               </span>
               <span className="flex-1 flex justify-center">
-                <span className="flex items-center gap-1.5 text-[12px] text-[#bdbdbd]"><Lock size={11} /> lawpower.ai</span>
+                <span className="flex items-center gap-1.5 text-[12px] text-[#C3BEB2]"><Lock size={11} /> lawpower.ai</span>
               </span>
             </div>
             <Image
@@ -429,7 +429,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-3">
                 {pricingMonthly.map((item) => (
-                  <div key={item} className="flex items-center gap-2.5 text-[#D9D9D9] text-[14.5px]">
+                  <div key={item} className="flex items-center gap-2.5 text-[#DCD9D1] text-[14.5px]">
                     <span className="w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center flex-shrink-0 text-[11px] text-dark">
                       ✓
                     </span>

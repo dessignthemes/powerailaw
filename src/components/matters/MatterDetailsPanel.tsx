@@ -334,7 +334,7 @@ function FieldRow({
           list={field.key === "referralType" ? "lp-referral-types" : undefined}
           data-1p-ignore
           data-lpignore="true"
-          className={`w-full min-w-0 bg-white border border-line hover:border-[#C2C9D4] focus:border-[#AEB8C6] rounded-lg px-2.5 py-1.5 text-[13px] outline-none placeholder:text-muted-light transition-colors ${
+          className={`w-full min-w-0 bg-white border border-line hover:border-[#D3CDBE] focus:border-[#C6BEA9] rounded-lg px-2.5 py-1.5 text-[13px] outline-none placeholder:text-muted-light transition-colors ${
             fromDocs ? "pr-6" : ""
           }`}
         />
@@ -351,7 +351,7 @@ function FieldRow({
           </span>
         )}
         {showHits && (
-          <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl border border-[#E1E5EE] shadow-[0_12px_30px_-12px_rgba(18,17,16,0.25)] p-1 max-h-[260px] overflow-y-auto">
+          <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl border border-[#EBE8DF] shadow-[0_12px_30px_-12px_rgba(18,17,16,0.25)] p-1 max-h-[260px] overflow-y-auto">
             <div className="px-2.5 pt-1 pb-0.5 text-[10.5px] font-mono uppercase tracking-[0.1em] text-muted">In Contacts</div>
             {hits.map((c) => (
               <button
@@ -364,7 +364,7 @@ function FieldRow({
                   setHits([]);
                   onPick?.(c, current);
                 }}
-                className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F4F6FA]"
+                className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[#F7F6F2]"
               >
                 <span className="block text-[13px] font-medium truncate">{c.name}</span>
                 <span className="block text-[11.5px] text-muted truncate">

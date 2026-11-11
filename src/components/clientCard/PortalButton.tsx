@@ -39,7 +39,7 @@ export default function PortalButton({
   }, [clientId, open]);
 
   const status = !clientId ? null : access === undefined ? "…" : access?.status === "active" ? "Active" : access?.status === "invited" ? "Invited" : "Off";
-  const dot = status === "Active" ? "bg-[#00C271]" : status === "Invited" ? "bg-[#FFB341]" : "bg-[#AEB8C6]";
+  const dot = status === "Active" ? "bg-[#00C271]" : status === "Invited" ? "bg-[#FFB341]" : "bg-[#C6BEA9]";
   const cls =
     size === "chip"
       ? "flex items-center gap-1.5 bg-chip hover:bg-btn px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap flex-shrink-0"

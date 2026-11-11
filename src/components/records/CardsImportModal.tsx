@@ -113,7 +113,7 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
       key={k}
       onClick={() => setFilter(k)}
       className={`px-2.5 py-1 rounded-full text-[12.5px] font-medium border transition-colors ${
-        filter === k ? "bg-btn border-btn text-ink" : "bg-white border-[#D9DFEA] text-ink hover:bg-chip"
+        filter === k ? "bg-btn border-btn text-ink" : "bg-white border-[#E7E2D7] text-ink hover:bg-chip"
       }`}
     >
       {label} <span className="text-muted font-normal">{counts.c[k].toLocaleString()}</span>
@@ -155,7 +155,7 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
               <b className="text-ink">vendor</b> (title companies, law firms, lenders, realtors…). People are put under their company when they share its email
               domain or the file has a Company column. You review everything before it&apos;s saved.
             </p>
-            <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-btn bg-[#F4F6FA] hover:bg-[#EEF1F6] transition-colors py-12 cursor-pointer">
+            <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-btn bg-[#F7F6F2] hover:bg-[#F3F1EC] transition-colors py-12 cursor-pointer">
               {reading ? <Loader2 size={22} className="animate-spin text-muted" /> : <FileSpreadsheet size={24} strokeWidth={1.5} className="text-muted" />}
               <span className="text-[14px] font-medium">{reading ? `Reading ${fileName}…` : "Choose a file"}</span>
               <span className="text-[12.5px] text-muted">.xlsx or .csv · columns like Short Name, Card Name, Card Type, Supplier, Email, Town/City, State, Zip Code, Phone</span>
@@ -173,7 +173,7 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
               {(["person", "company", "trust", "estate"] as const).map((k) => {
                 const Icon = KIND_ICON[k];
                 return (
-                  <div key={k} className="rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] px-3 py-2">
+                  <div key={k} className="rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] px-3 py-2">
                     <div className="text-[11px] font-mono uppercase tracking-[0.12em] text-muted flex items-center gap-1.5">
                       <Icon size={12} /> {k === "person" ? "People" : k === "company" ? "Companies" : k === "trust" ? "Trusts" : "Estates"}
                     </div>
@@ -202,27 +202,27 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
               {chip("trust", "Trusts")}
               {chip("estate", "Estates")}
               {chip("linked", "Under a company")}
-              <div className="ml-auto flex items-center gap-2 bg-[#F4F6FA] border border-[#E3E7EF] rounded-full px-3 py-1.5 w-[220px] focus-within:bg-white focus-within:border-[#C3CBDA]">
+              <div className="ml-auto flex items-center gap-2 bg-[#F7F6F2] border border-[#ECE9E1] rounded-full px-3 py-1.5 w-[220px] focus-within:bg-white focus-within:border-[#D7D1C0]">
                 <Search size={13} className="text-muted" />
                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a card" className="flex-1 min-w-0 bg-transparent outline-none text-[13px]" />
               </div>
             </div>
 
             {/* Rows */}
-            <div className="flex-1 min-h-[200px] overflow-y-auto rounded-xl border border-[#E3E7EF]">
-              <div className="grid grid-cols-[1fr_120px_120px_170px] gap-2 px-3 py-2 bg-[#F4F6FA] border-b border-[#E6EAF1] font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted sticky top-0">
+            <div className="flex-1 min-h-[200px] overflow-y-auto rounded-xl border border-[#ECE9E1]">
+              <div className="grid grid-cols-[1fr_120px_120px_170px] gap-2 px-3 py-2 bg-[#F7F6F2] border-b border-[#EEEBE4] font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted sticky top-0">
                 <span>Name</span>
                 <span>Type</span>
                 <span>Group</span>
                 <span>Vendor type / works at</span>
               </div>
               {shown.slice(0, SHOW).map((x) => (
-                <div key={x.key} className="grid grid-cols-[1fr_120px_120px_170px] gap-2 items-center px-3 py-1.5 border-b border-[#EEF1F5] text-[13px]">
+                <div key={x.key} className="grid grid-cols-[1fr_120px_120px_170px] gap-2 items-center px-3 py-1.5 border-b border-[#F3F1EB] text-[13px]">
                   <div className="min-w-0">
                     <div className="truncate font-medium">{x.name}</div>
                     <div className="truncate text-[11.5px] text-muted">{[x.email, x.phone, [x.city, x.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}</div>
                   </div>
-                  <select value={x.kind} onChange={(e) => change(x.key, { kind: e.target.value as ContactKind })} className="bg-white border border-[#D9DFEA] rounded-lg px-2 py-1 text-[12.5px]">
+                  <select value={x.kind} onChange={(e) => change(x.key, { kind: e.target.value as ContactKind })} className="bg-white border border-[#E7E2D7] rounded-lg px-2 py-1 text-[12.5px]">
                     {(["person", "company", "trust", "estate"] as const).map((k) => (
                       <option key={k} value={k}>{KIND_NAMES[k]}</option>
                     ))}
@@ -230,7 +230,7 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
                   <select
                     value={x.category}
                     onChange={(e) => change(x.key, { category: e.target.value as CardRow["category"] })}
-                    className={`border rounded-lg px-2 py-1 text-[12.5px] ${x.category === "vendor" ? "bg-[#FFF4E5] border-[#F6D4A6]" : x.category === "government" ? "bg-[#EAF0FB] border-[#C5D3EE]" : x.category === "client" ? "bg-[#E8F6EE] border-[#B9D6B2]" : "bg-white border-[#D9DFEA]"}`}
+                    className={`border rounded-lg px-2 py-1 text-[12.5px] ${x.category === "vendor" ? "bg-[#FFF4E5] border-[#F6D4A6]" : x.category === "government" ? "bg-[#EAF0FB] border-[#C5D3EE]" : x.category === "client" ? "bg-[#E8F6EE] border-[#B9D6B2]" : "bg-white border-[#E7E2D7]"}`}
                   >
                     <option value="client">Client</option>
                     <option value="vendor">Vendor</option>
@@ -238,7 +238,7 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
                     <option value="other">Other</option>
                   </select>
                   {(x.category === "vendor" || x.category === "government") && x.kind !== "person" ? (
-                    <select value={x.vendorType} onChange={(e) => change(x.key, { vendorType: e.target.value })} className="bg-white border border-[#D9DFEA] rounded-lg px-2 py-1 text-[12.5px] min-w-0">
+                    <select value={x.vendorType} onChange={(e) => change(x.key, { vendorType: e.target.value })} className="bg-white border border-[#E7E2D7] rounded-lg px-2 py-1 text-[12.5px] min-w-0">
                       <option value="">{x.category === "government" ? "Office type" : "Vendor type"}</option>
                       {(x.category === "government" ? GOVERNMENT_TYPES : VENDOR_TYPES).map((t) => (
                         <option key={t} value={t}>{t}</option>
@@ -264,8 +264,8 @@ export default function CardsImportModal({ onClose, onImported }: { onClose: () 
             <div className="flex items-center gap-3 mt-4">
               {progress ? (
                 <div className="flex-1">
-                  <div className="h-2 rounded-full bg-[#EEF1F6] overflow-hidden">
-                    <div className="h-full bg-[#9DB0D6] transition-all" style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }} />
+                  <div className="h-2 rounded-full bg-[#F3F1EC] overflow-hidden">
+                    <div className="h-full bg-[#C8BEA6] transition-all" style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }} />
                   </div>
                   <div className="text-[12px] text-muted mt-1">
                     Importing {progress.done.toLocaleString()} of {progress.total.toLocaleString()}… Keep this window open.

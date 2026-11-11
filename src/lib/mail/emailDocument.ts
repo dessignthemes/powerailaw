@@ -22,7 +22,7 @@ export const DARK_FRAME_FILTER = "invert(1) hue-rotate(180deg)";
 export function withDarkMode(doc: string, dark: boolean) {
   if (!dark || !doc) return doc;
   const css =
-    "<style>html,body{background:#E2E2E4!important}" +
+    "<style>html,body{background:#E5E2DC!important}" +
     "img,video,picture,svg,canvas,[style*='background-image'],[background]{filter:invert(1) hue-rotate(180deg)}</style>";
   return doc.includes("</head>") ? doc.replace("</head>", `${css}</head>`) : css + doc;
 }

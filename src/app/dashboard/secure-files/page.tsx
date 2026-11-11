@@ -124,7 +124,7 @@ export default function SecureFilesPage() {
           ) : (
             <div className="flex flex-col gap-1.5">
               {ended.map((s) => (
-                <div key={s.id} className="flex items-center gap-3 bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-4 py-2.5 text-[13px]">
+                <div key={s.id} className="flex items-center gap-3 bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-4 py-2.5 text-[13px]">
                   {s.kind === "send" ? <Send size={13} className="text-muted" /> : <Inbox size={13} className="text-muted" />}
                   <span className="flex-1 truncate">{s.title}</span>
                   <span className="text-muted">{s.status === "cancelled" ? "Cancelled" : "Expired"} · files deleted</span>
@@ -206,9 +206,9 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
   const downloads = s.files.reduce((n, f) => n + f.downloadCount, 0);
 
   return (
-    <div className={`rounded-xl border transition-colors ${open ? "bg-[#EEF1F6] border-[#DDE3EE]" : "bg-[#F4F6FA] border-[#E6EAF1] hover:bg-[#EEF1F6]"}`}>
+    <div className={`rounded-xl border transition-colors ${open ? "bg-[#F3F1EC] border-[#EAE6DC]" : "bg-[#F7F6F2] border-[#EEEBE4] hover:bg-[#F3F1EC]"}`}>
       <button onClick={onToggle} className="w-full flex items-center gap-3.5 px-4 py-3 text-left">
-        <span className="w-9 h-9 rounded-xl bg-white border border-[#E1E5EE] flex items-center justify-center flex-shrink-0">
+        <span className="w-9 h-9 rounded-xl bg-white border border-[#EBE8DF] flex items-center justify-center flex-shrink-0">
           {send ? <Send size={15} strokeWidth={1.75} /> : <Inbox size={15} strokeWidth={1.75} />}
         </span>
         <span className="min-w-0 flex-1">
@@ -230,9 +230,9 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
 
       {open && (
         <div className="px-4 pb-4">
-          {s.message && <div className="text-[13px] text-muted bg-white border border-[#E3E7EF] rounded-xl px-3.5 py-2.5 mb-3 whitespace-pre-wrap">{s.message}</div>}
+          {s.message && <div className="text-[13px] text-muted bg-white border border-[#ECE9E1] rounded-xl px-3.5 py-2.5 mb-3 whitespace-pre-wrap">{s.message}</div>}
 
-          <div className="bg-white border border-[#E3E7EF] rounded-xl p-3 mb-3">
+          <div className="bg-white border border-[#ECE9E1] rounded-xl p-3 mb-3">
             <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-2">{send ? "Files shared" : "Files received"}</div>
             {s.files.length === 0 && <div className="text-[13px] text-muted">{send ? "No files yet." : "Nothing uploaded yet."}</div>}
             <div className="flex flex-col gap-1">
@@ -262,7 +262,7 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
 
           {link && (
             <div className="flex items-center gap-2 mb-3">
-              <input readOnly value={link} onFocus={(e) => e.target.select()} className="flex-1 bg-white border border-[#E3E7EF] rounded-xl px-3 py-2 text-[12.5px] font-mono outline-none focus:border-[#C3CBDA]" />
+              <input readOnly value={link} onFocus={(e) => e.target.select()} className="flex-1 bg-white border border-[#ECE9E1] rounded-xl px-3 py-2 text-[12.5px] font-mono outline-none focus:border-[#D7D1C0]" />
               <button
                 onClick={async () => {
                   await navigator.clipboard.writeText(link);
@@ -290,7 +290,7 @@ function ShareRow({ share: s, open, onToggle, onChanged }: { share: Share; open:
           </div>
           {err && <div className="mt-2 text-[12.5px] text-[#B42318]">{err}</div>}
 
-          <div className="mt-4 bg-white border border-[#E3E7EF] rounded-xl p-3">
+          <div className="mt-4 bg-white border border-[#ECE9E1] rounded-xl p-3">
             <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-1.5 flex items-center gap-1.5"><Eye size={12} /> Activity</div>
             {events === null ? (
               <div className="text-[12.5px] text-muted">Loading…</div>

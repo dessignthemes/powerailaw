@@ -69,8 +69,8 @@ function toggle<T>(list: T[], v: T) {
 
 function Option({ on, label, onClick }: { on: boolean; label: React.ReactNode; onClick: () => void }) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] text-left transition-colors ${on ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"}`}>
-      <span className={`w-4 h-4 rounded-[5px] border flex items-center justify-center flex-shrink-0 ${on ? "bg-dark border-dark text-white" : "bg-white border-[#C9D1DE]"}`}>
+    <button onClick={onClick} className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] text-left transition-colors ${on ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"}`}>
+      <span className={`w-4 h-4 rounded-[5px] border flex items-center justify-center flex-shrink-0 ${on ? "bg-dark border-dark text-white" : "bg-white border-[#DBD5C7]"}`}>
         {on && <Check size={11} strokeWidth={3} />}
       </span>
       <span className="truncate">{label}</span>
@@ -100,7 +100,7 @@ export function FilterMenu({
         <div className={popTitle}>
           <span className="flex items-center gap-2"><Filter size={14} strokeWidth={1.75} /> Filter tasks</span>
           {countFilters(value) > 0 && (
-            <button onClick={() => onChange(NO_FILTERS)} className="font-sans normal-case tracking-normal text-[12px] font-medium text-ink bg-white border border-[#E1E5EE] hover:bg-[#F4F6FA] rounded-full px-2.5 py-0.5">
+            <button onClick={() => onChange(NO_FILTERS)} className="font-sans normal-case tracking-normal text-[12px] font-medium text-ink bg-white border border-[#EBE8DF] hover:bg-[#F7F6F2] rounded-full px-2.5 py-0.5">
               Clear
             </button>
           )}
@@ -157,9 +157,9 @@ export function DisplayMenu({ value, onChange, onClose }: { value: DisplayOption
           <button
             key={k}
             onClick={() => onChange({ ...value, sort: k })}
-            className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] text-left transition-colors ${value.sort === k ? "bg-[#EEF1F6]" : "hover:bg-[#F4F6FA]"}`}
+            className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13.5px] text-left transition-colors ${value.sort === k ? "bg-[#F3F1EC]" : "hover:bg-[#F7F6F2]"}`}
           >
-            <span className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 bg-white ${value.sort === k ? "border-dark" : "border-[#C9D1DE]"}`}>
+            <span className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 bg-white ${value.sort === k ? "border-dark" : "border-[#DBD5C7]"}`}>
               {value.sort === k && <span className="w-2 h-2 rounded-full bg-dark" />}
             </span>
             {l}

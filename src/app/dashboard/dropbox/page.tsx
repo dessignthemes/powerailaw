@@ -528,7 +528,7 @@ function PreviewModal({ entry, onClose }: { entry: DropboxEntry; onClose: () => 
 
   const docHtml =
     loaded?.kind === "html"
-      ? `<!doctype html><html><head><meta charset="utf-8"><style>body{font:15px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1a1918;max-width:760px;margin:32px auto;padding:0 28px}img{max-width:100%}table{border-collapse:collapse}td,th{border:1px solid #D1D7E0;padding:4px 8px}</style></head><body>${loaded.html}</body></html>`
+      ? `<!doctype html><html><head><meta charset="utf-8"><style>body{font:15px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1a1918;max-width:760px;margin:32px auto;padding:0 28px}img{max-width:100%}table{border-collapse:collapse}td,th{border:1px solid #DEDACD;padding:4px 8px}</style></head><body>${loaded.html}</body></html>`
       : "";
 
   return (

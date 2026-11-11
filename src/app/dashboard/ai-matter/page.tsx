@@ -31,7 +31,7 @@ const money = (n: number) => n.toLocaleString("en-US", { style: "currency", curr
 const sevStyle: Record<Issue["severity"], { icon: typeof AlertTriangle; cls: string; label: string }> = {
   high: { icon: AlertTriangle, cls: "bg-[#F9B2B3]", label: "Needs attention" },
   medium: { icon: AlertCircle, cls: "bg-[#F9E1C0]", label: "Should fix" },
-  low: { icon: Info, cls: "bg-white border border-[#E1E5EE]", label: "Worth a look" },
+  low: { icon: Info, cls: "bg-white border border-[#EBE8DF]", label: "Worth a look" },
 };
 
 export default function AiMatterPage() {
@@ -115,12 +115,12 @@ export default function AiMatterPage() {
         <Frame title={`Matters · ${shown.length}`} icon={Briefcase} pad="p-3" className="lg:sticky lg:top-6">
           <div className="relative mb-2.5">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search matters or clients" aria-label="Search matters" className="w-full border border-[#E3E7EF] bg-[#F4F6FA] rounded-full pl-9 pr-8 py-2 text-[13.5px] outline-none focus:border-[#C3CBDA] focus:bg-white placeholder:text-muted" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search matters or clients" aria-label="Search matters" className="w-full border border-[#ECE9E1] bg-[#F7F6F2] rounded-full pl-9 pr-8 py-2 text-[13.5px] outline-none focus:border-[#D7D1C0] focus:bg-white placeholder:text-muted" />
             {q && <button onClick={() => setQ("")} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"><X size={14} /></button>}
           </div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {STATUSES.map((s) => (
-              <button key={s} onClick={() => setStatus(s)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${status === s ? "bg-btn-hover border border-[#C3CBDA]" : "bg-white border border-[#D9DFEA] hover:bg-[#F4F6FA] hover:border-[#C3CBDA]"}`}>{s}</button>
+              <button key={s} onClick={() => setStatus(s)} className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-colors ${status === s ? "bg-btn-hover border border-[#D7D1C0]" : "bg-white border border-[#E7E2D7] hover:bg-[#F7F6F2] hover:border-[#D7D1C0]"}`}>{s}</button>
             ))}
           </div>
           <div className="flex flex-col gap-1.5 max-h-[65vh] overflow-y-auto">
@@ -136,7 +136,7 @@ export default function AiMatterPage() {
                   aria-current={selected === m.id ? "true" : undefined}
                   title={[clientName(m.clientId), m.status].filter(Boolean).join(" · ")}
                   className={`group/row w-full flex items-center gap-2.5 text-left px-3 py-1.5 rounded-lg border transition-colors ${
-                    selected === m.id ? "bg-[#E6EBF4] border-[#D5DCE8]" : "bg-[#F4F6FA] border-[#E6EAF1] hover:bg-[#EAEEF5]"
+                    selected === m.id ? "bg-[#EFEDE6] border-[#E4E0D4]" : "bg-[#F7F6F2] border-[#EEEBE4] hover:bg-[#F1EFE9]"
                   }`}
                 >
                   <span className="min-w-0 flex-1 text-[13px] font-medium truncate">{m.title}</span>
@@ -237,7 +237,7 @@ export default function AiMatterPage() {
                         })}
                         {review.ai?.missing.map((m, k) => (
                           <div key={`m${k}`} className={`${rowLight} px-4 py-3 flex items-start gap-3 flex-wrap`}>
-                            <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-[#E1E5EE]" title="Spotted by AI"><Sparkles size={13} /></span>
+                            <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-[#EBE8DF]" title="Spotted by AI"><Sparkles size={13} /></span>
                             <div className="flex-1 min-w-[220px] text-[13.5px]">{m}</div>
                             <button
                               disabled={created.has(`miss-${k}`)}

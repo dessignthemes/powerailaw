@@ -19,7 +19,7 @@ export function signatureForEmail(html: string): string {
     .replace(/<p(\s[^>]*)?>\s*<\/p>/gi, (_m, a = "") => `<p${addStyle(a, "margin:0")}><br></p>`)
     .replace(/<p(\s[^>]*)?>/gi, (m, a = "") => (/margin\s*:\s*0/.test(m) ? m : `<p${addStyle(a, "margin:0")}>`))
     .replace(/<img(\s[^>]*?)\/?>/gi, (_m, a = "") => `<img${addStyle(a, "border:0;max-width:100%;height:auto")}>`)
-    .replace(/<hr(\s[^>]*?)?\/?>/gi, (_m, a = "") => `<hr${addStyle(a, "border:0;border-top:1px solid #C9CED6;margin:8px 0")}>`)
+    .replace(/<hr(\s[^>]*?)?\/?>/gi, (_m, a = "") => `<hr${addStyle(a, "border:0;border-top:1px solid #D6D1C4;margin:8px 0")}>`)
     .replace(/<ul(\s[^>]*)?>/gi, (_m, a = "") => `<ul${addStyle(a, "margin:0;padding-left:1.4em")}>`);
   return `<div class="lp-signature" style="margin-top:18px;font-family:${SIGNATURE_FONT};font-size:${SIGNATURE_SIZE};line-height:1.4;color:#222222">${out}</div>`;
 }

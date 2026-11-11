@@ -179,7 +179,7 @@ export default function ContactModal({
         </div>
 
         {/* Client (checked for conflicts) or vendor */}
-        <div className="mb-5 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] p-3">
+        <div className="mb-5 rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] p-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[13px] font-medium mr-1">Group</span>
             {([
@@ -195,7 +195,7 @@ export default function ContactModal({
                   if (category !== k && (category === "vendor" || category === "government")) setVendorType(""); // types differ per group
                 }}
                 className={`px-3 py-1 rounded-full text-[12.5px] font-medium border transition-colors ${
-                  category === k ? "bg-btn border-btn text-ink" : "bg-white border-[#D9DFEA] text-ink hover:bg-chip"
+                  category === k ? "bg-btn border-btn text-ink" : "bg-white border-[#E7E2D7] text-ink hover:bg-chip"
                 }`}
               >
                 {l}
@@ -271,7 +271,7 @@ export default function ContactModal({
                     className={field}
                   />
                   {employerMatches.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white rounded-xl border border-[#E3E7EF] shadow-lg p-1 max-h-[220px] overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white rounded-xl border border-[#ECE9E1] shadow-lg p-1 max-h-[220px] overflow-y-auto">
                       {employerMatches.map((c) => (
                         <button
                           key={c.id}
@@ -281,7 +281,7 @@ export default function ContactModal({
                             setEmployerQuery("");
                             if (!category && c.category) setCategory(c.category);
                           }}
-                          className="w-full text-left px-3 py-1.5 rounded-lg text-[13px] hover:bg-[#F4F6FA] flex items-center gap-1.5"
+                          className="w-full text-left px-3 py-1.5 rounded-lg text-[13px] hover:bg-[#F7F6F2] flex items-center gap-1.5"
                         >
                           <Building2 size={13} className="text-muted" /> {c.name}
                         </button>
@@ -364,7 +364,7 @@ export default function ContactModal({
             ) : (
               <div className="flex flex-col gap-1 max-h-[220px] overflow-y-auto">
                 {people.map((p) => (
-                  <div key={p.id} className="flex items-center gap-1 rounded-lg bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5]">
+                  <div key={p.id} className="flex items-center gap-1 rounded-lg bg-[#F7F6F2] border border-[#EEEBE4] hover:bg-[#F1EFE9]">
                     <button onClick={() => onOpenContact?.(p)} className="flex-1 min-w-0 flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[13px]">
                       <span className="truncate">{p.name}</span>
                       <span className="text-[12px] text-muted truncate">{[p.role, p.email, p.phone].filter(Boolean).join(" · ")}</span>
@@ -394,7 +394,7 @@ export default function ContactModal({
                     <UserPlus size={13} /> Add person
                   </button>
                 ) : (
-                  <div className="rounded-xl border border-[#E6EAF1] bg-white p-2">
+                  <div className="rounded-xl border border-[#EEEBE4] bg-white p-2">
                     <div className="flex items-center gap-2 bg-chip rounded-full px-3 py-1.5">
                       <Search size={13} className="text-muted flex-shrink-0" />
                       <input
@@ -419,7 +419,7 @@ export default function ContactModal({
                               key={c.id}
                               onClick={() => void link(c, contact.id)}
                               disabled={!!linking}
-                              className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg hover:bg-[#F4F6FA] text-left text-[13px] disabled:opacity-50"
+                              className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg hover:bg-[#F7F6F2] text-left text-[13px] disabled:opacity-50"
                             >
                               <span className="min-w-0">
                                 <span className="block truncate font-medium">{c.name}</span>
@@ -435,7 +435,7 @@ export default function ContactModal({
                         <button
                           onClick={() => void link({ name: personQuery.trim() }, contact.id)}
                           disabled={!!linking || personQuery.trim().length < 2}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-[#F4F6FA] text-left text-[12.5px] text-muted hover:text-ink disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-[#F7F6F2] text-left text-[12.5px] text-muted hover:text-ink disabled:opacity-50"
                         >
                           {linking === "new" ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />} Add “{personQuery.trim()}” as a new person here
                         </button>

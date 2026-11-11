@@ -650,7 +650,7 @@ function TaskBoard({
               {boardMenu && (
                 <>
                   <ClickAway onClose={() => setBoardMenu(false)} />
-                  <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[230px] whitespace-nowrap">
+                  <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[230px] whitespace-nowrap">
                     <button
                       onClick={() => {
                         setBoardMenu(false);
@@ -814,7 +814,7 @@ function TaskBoard({
                 <ClickAway onClose={() => setJumpOpen(false)} />
                 <div
                   role="menu"
-                  className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[260px] max-h-[60vh] overflow-y-auto"
+                  className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[260px] max-h-[60vh] overflow-y-auto"
                 >
                   <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Jump to column</div>
                   {shownColumns.map((c) => (
@@ -856,7 +856,7 @@ function TaskBoard({
 
         <div className="flex items-center gap-3">
           {searchOpen ? (
-            <div className="flex items-center gap-2 bg-white border border-btn rounded-full pl-3 pr-1.5 h-[38px] w-[240px] focus-within:border-[#AEB9D0]">
+            <div className="flex items-center gap-2 bg-white border border-btn rounded-full pl-3 pr-1.5 h-[38px] w-[240px] focus-within:border-[#CCC3AD]">
               <Search size={14} strokeWidth={1.75} className="text-muted flex-shrink-0" />
               <input
                 autoFocus
@@ -948,7 +948,7 @@ function TaskBoard({
               {addingColumn && (
                 <>
                   <ClickAway onClose={() => setAddingColumn(false)} />
-                  <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-3">
+                  <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[260px] bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-3">
                     <input
                       autoFocus
                       value={newColumnName}
@@ -959,7 +959,7 @@ function TaskBoard({
                         if (e.key === "Escape") setAddingColumn(false);
                       }}
                       placeholder="Column name, e.g. Clients"
-                      className="w-full bg-[#F4F6FA] border border-[#E3E7EF] rounded-xl px-3 py-2 text-[13.5px] outline-none placeholder:text-muted mb-2 focus:border-[#C3CBDA]"
+                      className="w-full bg-[#F7F6F2] border border-[#ECE9E1] rounded-xl px-3 py-2 text-[13.5px] outline-none placeholder:text-muted mb-2 focus:border-[#D7D1C0]"
                     />
                     <div className="flex justify-end gap-2">
                       <button onClick={() => setAddingColumn(false)} className="px-3 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink">
@@ -1026,7 +1026,7 @@ function TaskBoard({
         <div className="relative">
           <button
             onClick={() => setAddFilterOpen((o) => !o)}
-            className="flex items-center gap-1 px-2.5 py-[5px] rounded-full text-[11.5px] leading-4 font-medium bg-white border border-dashed border-[#C3CBDA] text-muted hover:text-ink hover:bg-[#F4F6FA] transition-colors"
+            className="flex items-center gap-1 px-2.5 py-[5px] rounded-full text-[11.5px] leading-4 font-medium bg-white border border-dashed border-[#D7D1C0] text-muted hover:text-ink hover:bg-[#F7F6F2] transition-colors"
           >
             <Plus size={11} /> Add more
           </button>
@@ -1052,7 +1052,7 @@ function TaskBoard({
           {matterMenuOpen && (
             <>
               <ClickAway onClose={() => setMatterMenuOpen(false)} />
-              <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[300px] max-h-[360px] overflow-y-auto">
+              <div className="absolute left-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[300px] max-h-[360px] overflow-y-auto">
                 {matterFilter && (
                   <button
                     onClick={() => {
@@ -1139,14 +1139,14 @@ function TaskBoard({
               </button>
             </>
           ) : (
-            <div className="w-full divide-y divide-[#E6EAF1]">
+            <div className="w-full divide-y divide-[#EEEBE4]">
               {tasks.map((t) => {
                 const Icon = statusMeta[t.status].icon;
                 return (
                   <div
                     key={t.id}
                     onClick={() => setSelectedTask(t)}
-                    className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#F4F6FA] transition-colors"
+                    className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#F7F6F2] transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={15} strokeWidth={2} className={statusMeta[t.status].color} />
@@ -1164,7 +1164,7 @@ function TaskBoard({
                             href={`/dashboard/matters/${m.id}`}
                             onClick={(e) => e.stopPropagation()}
                             title={`Open matter: ${m.title}`}
-                            className="text-[11.5px] font-semibold tracking-wide bg-[#E1E7F4] hover:bg-[#D5DDEE] hover:underline underline-offset-2 rounded-md px-1.5 py-0.5 truncate max-w-[160px]"
+                            className="text-[11.5px] font-semibold tracking-wide bg-[#E1E7F4] hover:bg-[#E7E2D7] hover:underline underline-offset-2 rounded-md px-1.5 py-0.5 truncate max-w-[160px]"
                           >
                             {m.matterNumber ?? m.title}
                           </Link>
@@ -1231,7 +1231,7 @@ function TaskBoard({
                   title={`Expand ${col.title}`}
                   {...dropProps(col)}
                   className={`snap-start flex-shrink-0 w-[52px] border rounded-[22px] flex flex-col items-center gap-3 py-4 transition-colors shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] ${
-                    dropCol === col.id ? "border-btn-ring bg-chip" : "border-[#E1E5EE] bg-[#ECEFF6] hover:bg-[#E6EAF2]"
+                    dropCol === col.id ? "border-btn-ring bg-chip" : "border-[#EBE8DF] bg-[#F2F0EA] hover:bg-[#EFECE4]"
                   }`}
                 >
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
@@ -1256,7 +1256,7 @@ function TaskBoard({
                 }}
                 {...dropProps(col)}
                 className={`snap-start border rounded-[22px] flex flex-col min-h-0 transition-colors shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] ${
-                  dropCol === col.id ? "border-btn-ring bg-chip" : "border-[#E1E5EE] bg-[#ECEFF6]"
+                  dropCol === col.id ? "border-btn-ring bg-chip" : "border-[#EBE8DF] bg-[#F2F0EA]"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 px-4 py-3">
@@ -1282,7 +1282,7 @@ function TaskBoard({
                         {col.title}
                       </span>
                     )}
-                    <span className="text-[12px] text-muted bg-white border border-[#E1E5EE] rounded-full px-1.5 flex-shrink-0">
+                    <span className="text-[12px] text-muted bg-white border border-[#EBE8DF] rounded-full px-1.5 flex-shrink-0">
                       {colTasks.length}
                     </span>
                   </div>
@@ -1306,7 +1306,7 @@ function TaskBoard({
                     {menuOpenFor === col.id && (
                       <>
                         <ClickAway onClose={() => setMenuOpenFor(null)} />
-                        <div className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[170px]">
+                        <div className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[170px]">
                           <button
                             onClick={() => {
                               setRenamingId(col.id);
@@ -1373,13 +1373,13 @@ function TaskBoard({
                         setInlineAddFor(col.id);
                         setInlineValue("");
                       }}
-                      className="flex-1 bg-white/70 border border-dashed border-[#D2D9E6] rounded-2xl flex flex-col items-center justify-center gap-1.5 text-muted hover:text-ink hover:bg-white transition-colors"
+                      className="flex-1 bg-white/70 border border-dashed border-[#E2DDD0] rounded-2xl flex flex-col items-center justify-center gap-1.5 text-muted hover:text-ink hover:bg-white transition-colors"
                     >
                       <Plus size={16} strokeWidth={1.75} />
                       <span className="text-[13px]">Add a task</span>
                     </button>
                   ) : colTasks.length === 0 && inlineAddFor === col.id ? (
-                    <div className="flex-1 bg-white border border-[#E3E7EF] rounded-2xl px-4 pt-3">
+                    <div className="flex-1 bg-white border border-[#ECE9E1] rounded-2xl px-4 pt-3">
                       <input
                         autoFocus
                         value={inlineValue}
@@ -1390,7 +1390,7 @@ function TaskBoard({
                           if (e.key === "Escape") setInlineAddFor(null);
                         }}
                         placeholder="Task title"
-                        className="w-full bg-white border border-[#E3E7EF] rounded-lg px-3 py-[5px] text-[13px] leading-5 outline-none placeholder:text-muted focus:border-[#C3CBDA]"
+                        className="w-full bg-white border border-[#ECE9E1] rounded-lg px-3 py-[5px] text-[13px] leading-5 outline-none placeholder:text-muted focus:border-[#D7D1C0]"
                       />
                       <div className="px-1 pt-1.5 text-[11.5px] text-muted">Enter to add · Esc to cancel</div>
                     </div>
@@ -1408,7 +1408,7 @@ function TaskBoard({
                             if (e.key === "Escape") setInlineAddFor(null);
                           }}
                           placeholder="Task title"
-                          className="w-full bg-white border border-[#E3E7EF] rounded-lg px-3 py-[5px] text-[13px] leading-5 outline-none placeholder:text-muted focus:border-[#C3CBDA]"
+                          className="w-full bg-white border border-[#ECE9E1] rounded-lg px-3 py-[5px] text-[13px] leading-5 outline-none placeholder:text-muted focus:border-[#D7D1C0]"
                         />
                         <div className="px-1 pt-1.5 text-[11.5px] text-muted">Enter to add · Esc to cancel</div>
                         </div>
@@ -1435,7 +1435,7 @@ function TaskBoard({
                             const target = upper ? t.id : (colTasks[i + 1]?.id ?? null);
                             if (dropBefore !== target) setDropBefore(target);
                           }}
-                          className={`${dragId === t.id ? "opacity-40" : ""} relative bg-white border border-[#E3E7EF] rounded-2xl px-3 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.06)] hover:shadow-[0_6px_16px_-6px_rgba(27,25,26,0.16)] transition-shadow`}
+                          className={`${dragId === t.id ? "opacity-40" : ""} relative bg-white border border-[#ECE9E1] rounded-2xl px-3 py-3 cursor-pointer shadow-[0_1px_3px_rgba(27,25,26,0.06)] hover:shadow-[0_6px_16px_-6px_rgba(27,25,26,0.16)] transition-shadow`}
                         >
                           {dragId && dragId !== t.id && dropCol === col.id && dropBefore === t.id && (
                             <span className="absolute left-1 right-1 -top-[5.5px] h-[3px] rounded-full bg-[#3B82F6] pointer-events-none" aria-hidden />
@@ -1476,7 +1476,7 @@ function TaskBoard({
                                   />
                                   <div
                                     onClick={(e) => e.stopPropagation()}
-                                    className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[160px]"
+                                    className="absolute right-0 top-[calc(100%+12px)] z-50 bg-white rounded-2xl shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5 w-[160px]"
                                   >
                                     <button
                                       onClick={() => {
@@ -1557,7 +1557,7 @@ function TaskBoard({
                                   onMouseDown={(e) => e.stopPropagation()}
                                   draggable={false}
                                   title={`Open matter: ${m.title}`}
-                                  className="text-[11.5px] font-semibold tracking-wide bg-[#E1E7F4] hover:bg-[#D5DDEE] hover:underline underline-offset-2 cursor-pointer rounded-md px-1.5 py-0.5 truncate max-w-[140px]"
+                                  className="text-[11.5px] font-semibold tracking-wide bg-[#E1E7F4] hover:bg-[#E7E2D7] hover:underline underline-offset-2 cursor-pointer rounded-md px-1.5 py-0.5 truncate max-w-[140px]"
                                 >
                                   {m.matterNumber ?? m.title}
                                 </Link>
@@ -1579,9 +1579,9 @@ function TaskBoard({
                             setInlineAddFor(col.id);
                             setInlineValue("");
                           }}
-                          className={`sticky bottom-0 z-[1] flex items-center justify-center gap-1.5 py-3 bg-[#ECEFF6] text-muted hover:text-ink transition-colors ${
+                          className={`sticky bottom-0 z-[1] flex items-center justify-center gap-1.5 py-3 bg-[#F2F0EA] text-muted hover:text-ink transition-colors ${
                             // Long column: a solid bar across the full width, so cards scrolling under it never show through.
-                            colTasks.length > 5 ? "-ml-2.5 -mr-1 mt-1 border-t border-[#E1E5EE] rounded-b-[21px] shadow-[0_-6px_12px_-8px_rgba(27,25,26,0.18)]" : ""
+                            colTasks.length > 5 ? "-ml-2.5 -mr-1 mt-1 border-t border-[#EBE8DF] rounded-b-[21px] shadow-[0_-6px_12px_-8px_rgba(27,25,26,0.18)]" : ""
                           }`}
                         >
                           <Plus size={15} strokeWidth={1.75} />

@@ -42,14 +42,14 @@ type Member = { id: string; name: string; email: string; connected: boolean; me:
 
 // Each person's events in their own colour (by their place in the team list; you first).
 const MEMBER_COLORS = [
-  { bg: "#E3F2F3", bd: "#BFDCDF", tx: "#155E63" }, // teal
+  { bg: "#E3F2F3", bd: "#D9D2C0", tx: "#155E63" }, // teal
   { bg: "#E8F0FE", bd: "#C5D6F6", tx: "#1F3A93" }, // blue
   { bg: "#FDECEE", bd: "#F5C6CC", tx: "#9B1C2C" }, // red
   { bg: "#FFF1DE", bd: "#F6D4A6", tx: "#8A4B14" }, // orange
   { bg: "#EAF6EC", bd: "#BFE3C6", tx: "#1F6B33" }, // green
   { bg: "#F1EAFB", bd: "#D8C7F2", tx: "#5B2B9A" }, // purple
   { bg: "#FCE9F5", bd: "#F2C3E2", tx: "#8E1F6A" }, // pink
-  { bg: "#EEF0F2", bd: "#D3D8DE", tx: "#3D4652" }, // grey
+  { bg: "#F1EFEA", bd: "#DED9CE", tx: "#3D4652" }, // grey
 ];
 
 // One shape for synced and locally added events, in local time.
@@ -58,7 +58,7 @@ type Shown = { id: string; title: string; allDay: boolean; start: Date; end: Dat
 const providerName: Record<Provider, string> = { google: "Google Calendar", microsoft: "Outlook" };
 const chipClass: Record<Shown["source"], string> = {
   google: "bg-[#E8F0FE] border-[#C5D6F6] text-[#1F3A93]",
-  microsoft: "bg-[#E3F2F3] border-[#BFDCDF] text-[#155E63]",
+  microsoft: "bg-[#E3F2F3] border-[#D9D2C0] text-[#155E63]",
   local: "bg-white border-line text-ink",
 };
 
@@ -468,7 +468,7 @@ export default function CalendarPage() {
                           setView(v);
                           setViewMenuOpen(false);
                         }}
-                        className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F4F6FA] transition-colors"
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F7F6F2] transition-colors"
                       >
                         <span className="flex items-center gap-2">
                           <Icon size={15} strokeWidth={1.75} /> {v}
@@ -507,14 +507,14 @@ export default function CalendarPage() {
           );
         if (sources === null)
           return (
-            <div className="bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-5 py-3 mb-6 text-[13.5px] text-muted flex items-center gap-2">
+            <div className="bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-5 py-3 mb-6 text-[13.5px] text-muted flex items-center gap-2">
               <Loader2 size={14} className="animate-spin" /> Loading your calendar…
             </div>
           );
         return (
           <div className="flex flex-col gap-2 mb-6">
             {sources.length === 0 && (
-              <div className="bg-[#F4F6FA] border border-[#E6EAF1] rounded-xl px-5 py-3 flex items-center justify-between flex-wrap gap-3">
+              <div className="bg-[#F7F6F2] border border-[#EEEBE4] rounded-xl px-5 py-3 flex items-center justify-between flex-wrap gap-3">
                 <span className="text-[13.5px] text-muted">Sync from Google or Outlook Calendar to see your events here.</span>
                 <span className="flex items-center gap-2">
                   <Link href={connect("google")} className={smallBtnB}>Connect Google Calendar</Link>
@@ -584,7 +584,7 @@ export default function CalendarPage() {
       {saveNotice && (
         <div
           className={`mb-5 -mt-2 rounded-xl px-4 py-3 text-[13.5px] flex items-center justify-between gap-3 border ${
-            saveNotice.kind === "error" ? "border-red-200 bg-red-50 text-red-700" : saveNotice.kind === "ok" ? "border-[#B9D6B2] bg-[#F1F7EF]" : "border-[#E6EAF1] bg-[#F4F6FA]"
+            saveNotice.kind === "error" ? "border-red-200 bg-red-50 text-red-700" : saveNotice.kind === "ok" ? "border-[#B9D6B2] bg-[#F1F7EF]" : "border-[#EEEBE4] bg-[#F7F6F2]"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -612,7 +612,7 @@ export default function CalendarPage() {
             <ViewIcon size={15} strokeWidth={1.75} /> {view} · {headerLabel}
           </div>
           <div className={`${frameInner} overflow-hidden`}>
-          <div className="grid grid-cols-7 bg-[#F4F6FA] border-b border-[#E6EAF1]">
+          <div className="grid grid-cols-7 bg-[#F7F6F2] border-b border-[#EEEBE4]">
             {weekDayShort.map((d) => (
               <div key={d} className="text-[12.5px] font-medium text-muted px-3 py-2.5 text-center">
                 {d}
@@ -629,7 +629,7 @@ export default function CalendarPage() {
                 <button
                   key={i}
                   onClick={() => setModalDate(iso)}
-                  className={`min-h-[140px] border-r border-b border-line px-2.5 py-2 text-left hover:bg-[#F4F6FA] transition-colors ${
+                  className={`min-h-[140px] border-r border-b border-line px-2.5 py-2 text-left hover:bg-[#F7F6F2] transition-colors ${
                     !inMonth ? "text-muted/40" : ""
                   } ${(i + 1) % 7 === 0 ? "border-r-0" : ""}`}
                 >
@@ -681,7 +681,7 @@ export default function CalendarPage() {
             <ViewIcon size={15} strokeWidth={1.75} /> {view} · {headerLabel}
           </div>
           <div className={`${frameInner} overflow-hidden`}>
-          <div className="grid grid-cols-[60px_repeat(7,1fr)] bg-[#F4F6FA] border-b border-[#E6EAF1]">
+          <div className="grid grid-cols-[60px_repeat(7,1fr)] bg-[#F7F6F2] border-b border-[#EEEBE4]">
             <div />
             {weekDays.map((d) => {
               const iso = toISODate(d);
@@ -700,7 +700,7 @@ export default function CalendarPage() {
             })}
           </div>
           {weekDays.some((d) => eventsOnDay(shown, d).some((e) => e.allDay)) && (
-            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-[#E6EAF1] bg-[#FAFBFD]">
+            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-[#EEEBE4] bg-[#FAFAF7]">
               <div className="text-[10.5px] text-muted text-right pr-2 py-1.5">all-day</div>
               {weekDays.map((d) => (
                 <div key={toISODate(d)} className="border-l border-line p-1 flex flex-col gap-1 min-w-0">
@@ -731,7 +731,7 @@ export default function CalendarPage() {
                       <button
                         key={`${iso}-${h}`}
                         onClick={() => setModalDate(iso)}
-                        className="border-t border-l border-line hover:bg-[#F4F6FA] transition-colors"
+                        className="border-t border-l border-line hover:bg-[#F7F6F2] transition-colors"
                         style={{ height: HOUR_PX }}
                       />
                     );
@@ -781,11 +781,11 @@ export default function CalendarPage() {
             <ViewIcon size={15} strokeWidth={1.75} /> {view} · {headerLabel}
           </div>
           <div className={`${frameInner} overflow-hidden`}>
-          <div className="bg-[#F4F6FA] border-b border-[#E6EAF1] px-4 py-2.5 text-[13px] font-semibold text-center">
+          <div className="bg-[#F7F6F2] border-b border-[#EEEBE4] px-4 py-2.5 text-[13px] font-semibold text-center">
             {cursor.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </div>
           {eventsOnDay(shown, cursor).some((e) => e.allDay) && (
-            <div className="border-b border-[#E6EAF1] bg-[#FAFBFD] px-3 py-1.5 flex flex-wrap gap-1.5 items-center">
+            <div className="border-b border-[#EEEBE4] bg-[#FAFAF7] px-3 py-1.5 flex flex-wrap gap-1.5 items-center">
               <span className="text-[10.5px] text-muted mr-1">all-day</span>
               {eventsOnDay(shown, cursor)
                 .filter((e) => e.allDay)
@@ -801,7 +801,7 @@ export default function CalendarPage() {
               <button
                 key={h}
                 onClick={() => setModalDate(toISODate(cursor))}
-                className="w-full flex border-t border-line hover:bg-[#F4F6FA] transition-colors text-left"
+                className="w-full flex border-t border-line hover:bg-[#F7F6F2] transition-colors text-left"
                 style={{ height: HOUR_PX }}
               >
                 <span className="text-[11px] text-muted w-14 text-right pr-2 -translate-y-2 flex-shrink-0">

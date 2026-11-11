@@ -37,7 +37,7 @@ function NavItem({
       title={compact ? label : undefined}
       aria-label={compact ? label : undefined}
       className={`flex items-center gap-2 py-[6px] rounded-lg border text-[13px] font-medium transition-[background-color,border-color,box-shadow] ${compact ? "justify-center px-0 h-8" : "px-3"} ${
-        active ? "bg-[#CED0DB] border-transparent text-ink" : "border-transparent text-ink hover:bg-[#CED0DB]"
+        active ? "bg-[#FFFFFF] border-transparent text-ink" : "border-transparent text-ink hover:bg-[#FFFFFF]"
       }`}
     >
       <Icon size={compact ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
@@ -95,12 +95,12 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`${collapsed ? "w-[68px] px-2.5 py-4" : "w-[260px] px-4 py-6"} flex-shrink-0 bg-[#EEF0F7] border-r border-[#E1E5EE] h-screen sticky top-0 flex flex-col transition-[width] duration-200`}
+      className={`${collapsed ? "w-[68px] px-2.5 py-4" : "w-[260px] px-4 py-6"} flex-shrink-0 bg-[#F3F1EC] border-r border-[#EBE8DF] h-screen sticky top-0 flex flex-col transition-[width] duration-200`}
     >
       {collapsed ? (
         <div className="flex flex-col items-center gap-2 mb-4">
           <LogoMark size={28} />
-          <button onClick={toggleCollapsed} title="Expand menu" aria-label="Expand menu" className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:bg-[#CED0DB] hover:text-ink transition-colors">
+          <button onClick={toggleCollapsed} title="Expand menu" aria-label="Expand menu" className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:bg-[#FFFFFF] hover:text-ink transition-colors">
             <PanelLeftOpen size={17} strokeWidth={1.75} />
           </button>
         </div>
@@ -108,7 +108,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-2.5 px-2 mb-8">
           <LogoMark size={28} />
           <span className="font-display font-semibold text-[16px] flex-1">LawPower AI</span>
-          <button onClick={toggleCollapsed} title="Collapse menu" aria-label="Collapse menu" className="w-8 h-8 -mr-1 rounded-lg flex items-center justify-center text-muted hover:bg-[#CED0DB] hover:text-ink transition-colors">
+          <button onClick={toggleCollapsed} title="Collapse menu" aria-label="Collapse menu" className="w-8 h-8 -mr-1 rounded-lg flex items-center justify-center text-muted hover:bg-[#FFFFFF] hover:text-ink transition-colors">
             <PanelLeftClose size={16} strokeWidth={1.75} />
           </button>
         </div>
@@ -129,7 +129,7 @@ export default function Sidebar() {
 
         <div className={`${collapsed ? "mt-2" : "mt-5"} mb-1 flex flex-col gap-[2px]`}>
           {collapsed ? (
-            <div className="mx-2 mb-2 border-t border-[#DDE2EC]" />
+            <div className="mx-2 mb-2 border-t border-[#E9E5DB]" />
           ) : (
             <div className="px-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted mb-1">Tools</div>
           )}
@@ -140,7 +140,7 @@ export default function Sidebar() {
 
         <div className={`${collapsed ? "mt-2" : "mt-5"} mb-1 flex flex-col gap-[2px]`}>
           {collapsed ? (
-            <div className="mx-2 mb-2 border-t border-[#DDE2EC]" />
+            <div className="mx-2 mb-2 border-t border-[#E9E5DB]" />
           ) : (
             <div className="px-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted mb-1">Workspace</div>
           )}
@@ -157,12 +157,12 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      <div className={`border-t border-[#DDE2EC] ${collapsed ? "pt-2 mt-2" : "pt-4 mt-4"}`}>
+      <div className={`border-t border-[#E9E5DB] ${collapsed ? "pt-2 mt-2" : "pt-4 mt-4"}`}>
         <button
           onClick={() => openIntegrations("general")}
           title={collapsed ? "Settings" : undefined}
           aria-label={collapsed ? "Settings" : undefined}
-          className={`w-full flex items-center gap-2 py-[6px] rounded-lg border border-transparent text-[13px] font-medium text-ink hover:bg-[#CED0DB] transition-[background-color,border-color,box-shadow] mb-2 text-left ${collapsed ? "justify-center h-9" : "px-3"}`}
+          className={`w-full flex items-center gap-2 py-[6px] rounded-lg border border-transparent text-[13px] font-medium text-ink hover:bg-[#FFFFFF] transition-[background-color,border-color,box-shadow] mb-2 text-left ${collapsed ? "justify-center h-9" : "px-3"}`}
         >
           <Settings size={collapsed ? 17 : 15} strokeWidth={1.75} className="flex-shrink-0" />
           {!collapsed && (

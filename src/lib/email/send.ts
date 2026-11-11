@@ -61,12 +61,12 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 // Plain, readable layout that works in Outlook and Gmail.
 export function layout(title: string, bodyHtml: string, footer = "Sent by LawPower AI. You get this because you're a member of your firm's LawPower workspace.") {
-  return `<!doctype html><html><body style="margin:0;padding:24px;background:#F3F4F8;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#1B191A">
-<div style="max-width:620px;margin:0 auto;background:#fff;border-radius:16px;padding:28px 32px;border:1px solid #E1E5EC">
+  return `<!doctype html><html><body style="margin:0;padding:24px;background:#F6F4F0;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#1B191A">
+<div style="max-width:620px;margin:0 auto;background:#fff;border-radius:16px;padding:28px 32px;border:1px solid #EAE7DE">
 <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6B7280;margin-bottom:8px">LawPower AI</div>
 <h1 style="font-size:20px;margin:0 0 16px">${esc(title)}</h1>
 ${bodyHtml}
-<p style="font-size:12px;color:#6B7280;margin-top:28px;border-top:1px solid #E1E5EC;padding-top:14px">${esc(footer)}</p>
+<p style="font-size:12px;color:#6B7280;margin-top:28px;border-top:1px solid #EAE7DE;padding-top:14px">${esc(footer)}</p>
 </div></body></html>`;
 }
 

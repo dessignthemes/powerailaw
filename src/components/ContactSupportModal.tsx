@@ -14,7 +14,7 @@ const topics = [
 ];
 
 const field =
-  "w-full bg-white border border-[#D9DFEA] rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-[#9AA8C4] transition-colors placeholder:text-muted";
+  "w-full bg-white border border-[#E7E2D7] rounded-xl px-3.5 py-2.5 text-[14px] outline-none focus:border-[#C0B599] transition-colors placeholder:text-muted";
 const MAX_FILES = 5;
 const MAX_FILE = 5 * 1024 * 1024;
 
@@ -65,7 +65,7 @@ export function ContactSupportForm({ email, onClose, inline = false }: { email: 
 
   if (sent)
     return (
-      <div className={`flex flex-col items-center justify-center text-center ${inline ? "py-10 rounded-2xl bg-[#F4F6FA] border border-[#E6EAF1]" : "py-14"}`}>
+      <div className={`flex flex-col items-center justify-center text-center ${inline ? "py-10 rounded-2xl bg-[#F7F6F2] border border-[#EEEBE4]" : "py-14"}`}>
         <span className="w-11 h-11 rounded-full bg-[#E8F6EE] text-[#1F7A4D] flex items-center justify-center mb-3">
           <Check size={20} />
         </span>
@@ -131,7 +131,7 @@ export function ContactSupportForm({ email, onClose, inline = false }: { email: 
         {files.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2.5">
             {files.map((f, i) => (
-              <span key={i} className="flex items-center gap-1 bg-[#F4F6FA] border border-[#E6EAF1] pl-2.5 pr-1 py-0.5 rounded-full text-[12px] text-muted">
+              <span key={i} className="flex items-center gap-1 bg-[#F7F6F2] border border-[#EEEBE4] pl-2.5 pr-1 py-0.5 rounded-full text-[12px] text-muted">
                 <span className="max-w-[180px] truncate">{f.name}</span>
                 <button onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} aria-label={`Remove ${f.name}`} className="w-5 h-5 rounded-full hover:bg-white flex items-center justify-center hover:text-ink">
                   <X size={11} />

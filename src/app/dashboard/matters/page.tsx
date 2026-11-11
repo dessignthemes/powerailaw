@@ -68,7 +68,7 @@ function RowStatusPicker({
                     onChange(s);
                     setOpen(false);
                   }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F4F6FA] transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-[#F7F6F2] transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     <OptIcon size={15} strokeWidth={2} className={matterStatusMeta[s].color} />
@@ -215,7 +215,7 @@ export default function MattersPage() {
       </div>
       {mattersLoaded && matters.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap -mt-3 mb-6">
-        <div className="relative flex-1 min-w-[260px] max-w-[520px] bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="relative flex-1 min-w-[260px] max-w-[520px] bg-[#F2F0EA] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
@@ -223,7 +223,7 @@ export default function MattersPage() {
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Search matters: number, client, title, other side…"
             aria-label="Search matters"
-            className="w-full bg-white border border-[#E3E7EF] rounded-full pl-10 pr-24 py-2 text-[14px] outline-none focus:border-[#C3CBDA] shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
+            className="w-full bg-white border border-[#ECE9E1] rounded-full pl-10 pr-24 py-2 text-[14px] outline-none focus:border-[#D7D1C0] shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
           />
           {query && (
             <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[12.5px] text-muted">
@@ -234,7 +234,7 @@ export default function MattersPage() {
             </span>
           )}
         </div>
-        <div className="bg-[#ECEFF6] border border-[#E1E5EE] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="bg-[#F2F0EA] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <GenericDropdown
             open={sortOpen}
             setOpen={setSortOpen}
@@ -326,7 +326,7 @@ export default function MattersPage() {
                         <div
                           key={m.id}
                           onClick={() => router.push(`/dashboard/matters/${m.id}`)}
-                          className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[#F4F6FA] border border-[#E6EAF1] hover:bg-[#EAEEF5] transition-colors cursor-pointer"
+                          className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[#F7F6F2] border border-[#EEEBE4] hover:bg-[#F1EFE9] transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <button
@@ -337,7 +337,7 @@ export default function MattersPage() {
                               className={`w-[18px] h-[18px] rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${
                                 selected.has(m.id)
                                   ? "bg-dark border-dark"
-                                  : "bg-white border-[#D9DFEA] hover:border-muted"
+                                  : "bg-white border-[#E7E2D7] hover:border-muted"
                               }`}
                             >
                               {selected.has(m.id) && <Check size={12} strokeWidth={2.5} className="text-white" />}
@@ -363,7 +363,7 @@ export default function MattersPage() {
                               </>
                             )}
                             {m.matterNumber && (
-                              <span className="text-[12px] font-semibold tracking-wide bg-white border border-[#E1E5EE] rounded-md px-1.5 py-0.5 flex-shrink-0">{m.matterNumber}</span>
+                              <span className="text-[12px] font-semibold tracking-wide bg-white border border-[#EBE8DF] rounded-md px-1.5 py-0.5 flex-shrink-0">{m.matterNumber}</span>
                             )}
                             <span className="text-[14.5px] font-semibold truncate">{m.title}</span>
                           </div>
@@ -406,7 +406,7 @@ export default function MattersPage() {
                                         </>
                                       )}
                                     </button>
-                                    <div className="border-t border-[#E6EAF1] my-1" />
+                                    <div className="border-t border-[#EEEBE4] my-1" />
                                     <button
                                       onClick={() => {
                                         handleDelete([m.id]);

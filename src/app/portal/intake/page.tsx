@@ -16,7 +16,7 @@ const blankPerson = (): PortalPerson => ({
   email: "", phone: "", cell: "",
 });
 
-const input = "w-full bg-white border border-[#E3E7EF] rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#AEB8C6]";
+const input = "w-full bg-white border border-[#ECE9E1] rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-[#C6BEA9]";
 
 function Field({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
   return (
@@ -29,7 +29,7 @@ function Field({ label, children, wide = false }: { label: string; children: Rea
 
 function Section({ icon: Icon, title, hint, children }: { icon: typeof UserRound; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white border border-[#E3E7EF] rounded-2xl m-[7px] shadow-[0_0_0_6px_#ECEFF6,0_0_0_7px_#E1E5EE,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5 sm:p-6">
+    <section className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F2F0EA,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5 sm:p-6">
       <div className="flex items-center gap-2 mb-1">
         <Icon size={16} className="text-muted" />
         <h2 className="text-[16px] font-semibold">{title}</h2>

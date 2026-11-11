@@ -39,8 +39,8 @@ export default function BackgroundUploads() {
   const matters = [...new Map(items.map((x) => [x.matterId, x.matterTitle])).entries()];
 
   return (
-    <div className="fixed bottom-5 right-5 z-[45] w-[360px] max-w-[calc(100vw-40px)] bg-[#ECEFF6] border border-[#E1E5EE] rounded-[22px] p-1.5 shadow-[0_8px_24px_-6px_rgba(27,25,26,0.18)]">
-      <div className="bg-white border border-[#E3E7EF] rounded-2xl overflow-hidden">
+    <div className="fixed bottom-5 right-5 z-[45] w-[360px] max-w-[calc(100vw-40px)] bg-[#F2F0EA] border border-[#EBE8DF] rounded-[22px] p-1.5 shadow-[0_8px_24px_-6px_rgba(27,25,26,0.18)]">
+      <div className="bg-white border border-[#ECE9E1] rounded-2xl overflow-hidden">
         <div className="flex items-center gap-2.5 px-4 py-3">
           {active ? (
             <Loader2 size={16} className="animate-spin text-muted flex-shrink-0" />
@@ -57,22 +57,22 @@ export default function BackgroundUploads() {
               {active ? "You can keep working. Don't close this tab." : matters.length === 1 ? matters[0][1] : `${matters.length} matters`}
             </div>
           </div>
-          <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Hide list" : "Show list"} className="w-7 h-7 rounded-full hover:bg-[#F4F6FA] flex items-center justify-center text-muted">
+          <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Hide list" : "Show list"} className="w-7 h-7 rounded-full hover:bg-[#F7F6F2] flex items-center justify-center text-muted">
             {open ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
           </button>
           {!active && (
-            <button onClick={clearFinished} aria-label="Close" className="w-7 h-7 rounded-full hover:bg-[#F4F6FA] flex items-center justify-center text-muted">
+            <button onClick={clearFinished} aria-label="Close" className="w-7 h-7 rounded-full hover:bg-[#F7F6F2] flex items-center justify-center text-muted">
               <X size={15} />
             </button>
           )}
         </div>
         {active > 0 && (
-          <div className="h-1 bg-[#EEF1F6]">
+          <div className="h-1 bg-[#F3F1EC]">
             <div className="h-full bg-[#5E7BA6] transition-all" style={{ width: `${Math.round(((done + failed) / total) * 100)}%` }} />
           </div>
         )}
         {open && (
-          <div className="max-h-[260px] overflow-y-auto border-t border-[#E6EAF1] divide-y divide-[#EEF1F5]">
+          <div className="max-h-[260px] overflow-y-auto border-t border-[#EEEBE4] divide-y divide-[#F3F1EB]">
             {items.map((x) => (
               <div key={x.id} className="px-4 py-2 text-[12.5px]">
                 <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function BackgroundUploads() {
           </div>
         )}
         {!active && matters.length === 1 && (
-          <div className="px-4 py-2 border-t border-[#E6EAF1]">
+          <div className="px-4 py-2 border-t border-[#EEEBE4]">
             <Link href={`/dashboard/matters/${matters[0][0]}?tab=documents`} className="text-[12.5px] font-medium underline underline-offset-2 text-muted hover:text-ink">
               Open the matter&apos;s documents
             </Link>
