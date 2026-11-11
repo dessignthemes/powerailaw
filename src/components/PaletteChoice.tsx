@@ -25,7 +25,7 @@ export function setPalette(p: Palette) {
 }
 
 const OPTIONS: { key: Palette; label: string; note: string; swatch: string[] }[] = [
-  { key: "warm", label: "Warm beige", note: "The original look, softer on the eyes", swatch: ["#FAF6EF", "#F2EBE1", "#E4D8C2"] },
+  { key: "warm", label: "Warm beige", note: "Light and warm, easy on the eyes", swatch: ["#FAFAF9", "#F4F3F1", "#E8E5DF"] },
   { key: "cool", label: "Cool grey", note: "Blue-grey", swatch: ["#FCFCFC", "#ECEFF6", "#CFD7E8"] },
 ];
 
