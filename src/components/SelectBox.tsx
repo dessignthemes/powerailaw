@@ -24,7 +24,7 @@ export default function SelectBox({
           aria-label={label}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none bg-chip hover:bg-btn border border-btn text-ink rounded-full pl-3.5 pr-8 py-2 text-[13px] font-medium leading-5 outline-none focus:border-[#CCC3AD] cursor-pointer transition-colors"
+          className="w-full appearance-none bg-chip hover:bg-btn border border-btn text-ink rounded-full pl-3.5 pr-8 py-2 text-[13px] font-medium leading-5 outline-none focus:border-[#C4BFB5] cursor-pointer transition-colors"
         >
           {children}
         </select>

@@ -77,7 +77,7 @@ export default function AddFilterMenu({
             onChange={(e) => setParty(e.target.value.slice(0, 60))}
             placeholder="Someone else, e.g. Surveyor"
             aria-label="Waiting on whom"
-            className="flex-1 min-w-0 bg-[#F3F2F0] border border-[#ECE9E1] rounded-full px-3 py-1.5 text-[13px] outline-none focus:bg-white focus:border-[#D7D1C0]"
+            className="flex-1 min-w-0 bg-[#F3F2F0] border border-[#E9E7E4] rounded-full px-3 py-1.5 text-[13px] outline-none focus:bg-white focus:border-[#D1CDC6]"
           />
           <button type="submit" disabled={!typed || has("waiting", typed)} className="flex items-center gap-1 bg-btn hover:bg-btn-hover border border-btn disabled:opacity-40 px-3 py-1.5 rounded-full text-[12.5px] font-medium transition-colors">
             <Plus size={12} /> Add

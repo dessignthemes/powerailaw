@@ -73,7 +73,7 @@ export default function PortalHome() {
       />
       <main className="flex-1 max-w-[960px] w-full mx-auto px-5 py-10">
         {error ? (
-          <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] px-6 py-10 text-center text-[14.5px]">{error}</div>
+          <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] px-6 py-10 text-center text-[14.5px]">{error}</div>
         ) : !home ? (
           <div className="flex items-center justify-center gap-2 text-muted text-[14px] py-20"><Loader2 size={16} className="animate-spin" /> Loading your documents…</div>
         ) : (
@@ -83,7 +83,7 @@ export default function PortalHome() {
             {missing && <div className="mb-5 rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13.5px]">That document isn’t available anymore. Your law firm may have stopped sharing it.</div>}
 
             {!home.isParty && (
-            <div className="mb-8 bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] px-5 py-4 flex flex-wrap items-center gap-3">
+            <div className="mb-8 bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] px-5 py-4 flex flex-wrap items-center gap-3">
               <ClipboardList size={20} className="text-muted flex-shrink-0" />
               <div className="flex-1 min-w-[220px]">
                 <div className="text-[15px] font-semibold">Your intake sheet</div>
@@ -97,7 +97,7 @@ export default function PortalHome() {
             {home.matters.length === 0 && (
               <section className="mb-8">
                 <h2 className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted mb-2.5 px-1">Your files</h2>
-                <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] px-6 py-8 flex gap-4 items-start">
+                <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] px-6 py-8 flex gap-4 items-start">
                   <Folder size={20} className="text-muted flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="text-[15px] font-medium">Your file isn&apos;t set up here yet</div>
@@ -116,7 +116,7 @@ export default function PortalHome() {
                 </h2>
                 <div className="flex flex-col gap-2">
                   {home.matters.map((m) => (
-                    <Link key={m.id} href={`/portal/matters/${m.id}`} className="flex items-center gap-3 bg-[#F3F2F0] border border-[#EEEBE4] hover:bg-[#F1EFE9] rounded-xl px-4 py-3 transition-colors">
+                    <Link key={m.id} href={`/portal/matters/${m.id}`} className="flex items-center gap-3 bg-[#F3F2F0] border border-[#EBEAE7] hover:bg-[#EFEEEB] rounded-xl px-4 py-3 transition-colors">
                       <Folder size={16} className="text-muted flex-shrink-0" />
                       <span className="flex-1 min-w-0 text-[14px] font-medium truncate">{m.title}</span>
                       {m.status && <span className="text-[12px] text-muted bg-white rounded-md px-1.5 py-0.5">{m.status}</span>}
@@ -127,7 +127,7 @@ export default function PortalHome() {
               </section>
             )}
             {!home.isParty && (home.payments?.lawpayOperatingUrl || home.payments?.lawpayTrustUrl) && (
-              <section className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5 mb-8 flex flex-wrap items-center gap-4">
+              <section className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5 mb-8 flex flex-wrap items-center gap-4">
                 <div className="flex-1 min-w-[240px]">
                   <h2 className="text-[15px] font-semibold" style={{ letterSpacing: 0 }}>
                     Make a payment
@@ -152,7 +152,7 @@ export default function PortalHome() {
             <PortalMessages firm={home.firm} matters={home.matters} />
 
             {home.documents.length === 0 ? (
-              <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] px-6 py-14 text-center">
+              <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] px-6 py-14 text-center">
                 <FileText size={22} className="mx-auto text-muted mb-3" />
                 <div className="text-[15px] font-medium">No documents yet</div>
                 <div className="text-[13.5px] text-muted mt-1">When {inSentence(home.firm)} shares a document with you, it will appear here.</div>
@@ -167,11 +167,11 @@ export default function PortalHome() {
                       <div className="flex items-center gap-2 mb-2.5">
                         <Folder size={15} className="text-muted" />
                         <h2 className="text-[15px] font-semibold" style={{ letterSpacing: 0 }}>{m.title}</h2>
-                        {m.status && <span className="text-[12px] text-muted bg-[#F3F2F0] border border-[#EEEBE4] rounded-md px-1.5 py-0.5">{m.status}</span>}
+                        {m.status && <span className="text-[12px] text-muted bg-[#F3F2F0] border border-[#EBEAE7] rounded-md px-1.5 py-0.5">{m.status}</span>}
                       </div>
                       <div className="flex flex-col gap-2">
                         {docs.map((d) => (
-                          <div key={d.id} className="flex items-center gap-3 bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-4 py-3">
+                          <div key={d.id} className="flex items-center gap-3 bg-[#F3F2F0] border border-[#EBEAE7] rounded-xl px-4 py-3">
                             <FileText size={17} strokeWidth={1.75} className="text-muted flex-shrink-0" />
                             <span className="min-w-0 flex-1">
                               <span className="block text-[14px] font-medium truncate">{d.title}</span>

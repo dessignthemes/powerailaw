@@ -129,7 +129,7 @@ export default function PdfPreview({
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>
-        <div ref={box} className="flex-1 overflow-auto bg-[#EDEBE5] py-6">
+        <div ref={box} className="flex-1 overflow-auto bg-[#EBEAE7] py-6">
           {error ? (
             <div className="text-center text-[14px] text-[#B42318] py-16">{error}</div>
           ) : !bytes ? (

@@ -39,8 +39,8 @@ export default function BackgroundUploads() {
   const matters = [...new Map(items.map((x) => [x.matterId, x.matterTitle])).entries()];
 
   return (
-    <div className="fixed bottom-5 right-5 z-[45] w-[360px] max-w-[calc(100vw-40px)] bg-[#F3F2F0] border border-[#EBE8DF] rounded-[22px] p-1.5 shadow-[0_8px_24px_-6px_rgba(27,25,26,0.18)]">
-      <div className="bg-white border border-[#ECE9E1] rounded-2xl overflow-hidden">
+    <div className="fixed bottom-5 right-5 z-[45] w-[360px] max-w-[calc(100vw-40px)] bg-[#F3F2F0] border border-[#E8E6E2] rounded-[22px] p-1.5 shadow-[0_8px_24px_-6px_rgba(27,25,26,0.18)]">
+      <div className="bg-white border border-[#E9E7E4] rounded-2xl overflow-hidden">
         <div className="flex items-center gap-2.5 px-4 py-3">
           {active ? (
             <Loader2 size={16} className="animate-spin text-muted flex-shrink-0" />
@@ -67,12 +67,12 @@ export default function BackgroundUploads() {
           )}
         </div>
         {active > 0 && (
-          <div className="h-1 bg-[#F3F1EC]">
+          <div className="h-1 bg-[#F1F0EE]">
             <div className="h-full bg-[#5E7BA6] transition-all" style={{ width: `${Math.round(((done + failed) / total) * 100)}%` }} />
           </div>
         )}
         {open && (
-          <div className="max-h-[260px] overflow-y-auto border-t border-[#EEEBE4] divide-y divide-[#F3F1EB]">
+          <div className="max-h-[260px] overflow-y-auto border-t border-[#EBEAE7] divide-y divide-[#F1F0ED]">
             {items.map((x) => (
               <div key={x.id} className="px-4 py-2 text-[12.5px]">
                 <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function BackgroundUploads() {
           </div>
         )}
         {!active && matters.length === 1 && (
-          <div className="px-4 py-2 border-t border-[#EEEBE4]">
+          <div className="px-4 py-2 border-t border-[#EBEAE7]">
             <Link href={`/dashboard/matters/${matters[0][0]}?tab=documents`} className="text-[12.5px] font-medium underline underline-offset-2 text-muted hover:text-ink">
               Open the matter&apos;s documents
             </Link>

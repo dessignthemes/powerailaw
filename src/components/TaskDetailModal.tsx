@@ -283,7 +283,7 @@ export default function TaskDetailModal({
                 <Link
                   href={`/dashboard/matters/${matter.id}`}
                   title={`Matter: ${matter.title}`}
-                  className="bg-[#E1E7F4] hover:bg-[#E7E2D7] text-ink px-2.5 py-1 rounded-full font-semibold truncate max-w-[200px] transition-colors"
+                  className="bg-[#E1E7F4] hover:bg-[#E3E0DB] text-ink px-2.5 py-1 rounded-full font-semibold truncate max-w-[200px] transition-colors"
                 >
                   {matter.matterNumber ?? matter.title}
                 </Link>

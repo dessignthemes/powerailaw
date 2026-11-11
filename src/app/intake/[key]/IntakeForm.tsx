@@ -10,7 +10,7 @@ const EMPTY: LeadForm = {
   matterType: "", description: "", otherParties: "", preferredContact: "", bestTime: "", referredBy: "",
 };
 
-const field = "w-full bg-white border border-[#DEDACD] rounded-xl px-3.5 py-2.5 text-[15px] outline-none focus:border-[#5E6E8C] focus:ring-2 focus:ring-[#5E6E8C]/15";
+const field = "w-full bg-white border border-[#DAD7D1] rounded-xl px-3.5 py-2.5 text-[15px] outline-none focus:border-[#5E6E8C] focus:ring-2 focus:ring-[#5E6E8C]/15";
 const label = "block text-[13.5px] font-medium text-[#3B3F47] mb-1.5";
 
 export default function IntakeForm({ firmKey, firmName, logoUrl, invite, prefill, embed }: { firmKey: string; firmName: string; logoUrl: string | null; invite: string | null; prefill: Partial<LeadForm>; embed: boolean }) {
@@ -47,7 +47,7 @@ export default function IntakeForm({ firmKey, firmName, logoUrl, invite, prefill
     }
   }
 
-  const shell = embed ? "px-4 py-6" : "min-h-screen bg-[#F6F5F1] px-4 py-10";
+  const shell = embed ? "px-4 py-6" : "min-h-screen bg-[#F5F4F2] px-4 py-10";
   return (
     <div className={shell} style={{ fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif", color: "#1B191A" }}>
       <div className={`max-w-[680px] mx-auto ${embed ? "" : "bg-white rounded-3xl shadow-[0_20px_60px_-30px_rgba(18,17,16,0.25)] px-6 sm:px-10 py-9"}`}>

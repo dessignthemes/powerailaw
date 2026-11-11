@@ -38,7 +38,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
   const [lightBg, setLightBg] = useState("#F9FAFE");
   const [lightAccent, setLightAccent] = useState("#121110");
   const [darkBg, setDarkBg] = useState("#1B1A18");
-  const [darkAccent, setDarkAccent] = useState("#EDEBE5");
+  const [darkAccent, setDarkAccent] = useState("#EBEAE7");
   const [showPoweredBy, setShowPoweredBy] = useState(true);
 
   const [domains, setDomains] = useState<string[]>([]);
@@ -706,7 +706,7 @@ export default function IntakeSettingsModal({ onClose }: { onClose: () => void }
                       <div
                         className="border rounded-xl px-3.5 py-2.5 text-[13px] mb-3"
                         style={{
-                          borderColor: appearanceTab === "dark" ? darkAccent + "40" : "#DEDACD",
+                          borderColor: appearanceTab === "dark" ? darkAccent + "40" : "#DAD7D1",
                           color: appearanceTab === "dark" ? darkAccent + "99" : "#63666f",
                         }}
                       >

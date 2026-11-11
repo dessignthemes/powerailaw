@@ -37,7 +37,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-page flex flex-col">
-      <header className="bg-white border-b border-[#EEEBE4]">
+      <header className="bg-white border-b border-[#EBEAE7]">
         <div className="max-w-[960px] mx-auto px-5 h-[64px] flex items-center gap-2.5">
           <LogoMark size={32} />
           <span className="font-display font-semibold text-[17px]">LawPower AI</span>
@@ -45,8 +45,8 @@ export default function LoginPage() {
       </header>
 
       <main className="flex-1 flex items-start justify-center px-5 py-14">
-        <div className="w-full max-w-[400px] bg-white border border-[#ECE9E1] rounded-3xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-8">
-          <div className="w-10 h-10 rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] flex items-center justify-center mb-4">
+        <div className="w-full max-w-[400px] bg-white border border-[#E9E7E4] rounded-3xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-8">
+          <div className="w-10 h-10 rounded-xl bg-[#F3F2F0] border border-[#EBEAE7] flex items-center justify-center mb-4">
             <Lock size={17} strokeWidth={1.75} />
           </div>
           <h1 className="text-[24px] font-semibold mb-1">Sign in</h1>
@@ -68,7 +68,7 @@ export default function LoginPage() {
           <div className="mt-6 text-[12.5px] text-muted leading-relaxed">
             <b className="text-ink">Your mailbox and calendar:</b> signing in also connects them, so LawPower AI can read matters and drafts from your inbox.
           </div>
-          <p className="text-[12px] text-muted mt-4 pt-4 border-t border-[#EEEBE4]">
+          <p className="text-[12px] text-muted mt-4 pt-4 border-t border-[#EBEAE7]">
             By signing in, you agree to the{" "}
             <a href="/terms" className="underline underline-offset-2 hover:text-ink">Terms of Service</a> and{" "}
             <a href="/privacy" className="underline underline-offset-2 hover:text-ink">Privacy Policy</a>.

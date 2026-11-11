@@ -179,7 +179,7 @@ export default function ContactModal({
         </div>
 
         {/* Client (checked for conflicts) or vendor */}
-        <div className="mb-5 rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] p-3">
+        <div className="mb-5 rounded-xl bg-[#F3F2F0] border border-[#EBEAE7] p-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[13px] font-medium mr-1">Group</span>
             {([
@@ -195,7 +195,7 @@ export default function ContactModal({
                   if (category !== k && (category === "vendor" || category === "government")) setVendorType(""); // types differ per group
                 }}
                 className={`px-3 py-1 rounded-full text-[12.5px] font-medium border transition-colors ${
-                  category === k ? "bg-btn border-btn text-ink" : "bg-white border-[#E7E2D7] text-ink hover:bg-chip"
+                  category === k ? "bg-btn border-btn text-ink" : "bg-white border-[#E3E0DB] text-ink hover:bg-chip"
                 }`}
               >
                 {l}
@@ -271,7 +271,7 @@ export default function ContactModal({
                     className={field}
                   />
                   {employerMatches.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white rounded-xl border border-[#ECE9E1] shadow-lg p-1 max-h-[220px] overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white rounded-xl border border-[#E9E7E4] shadow-lg p-1 max-h-[220px] overflow-y-auto">
                       {employerMatches.map((c) => (
                         <button
                           key={c.id}
@@ -364,7 +364,7 @@ export default function ContactModal({
             ) : (
               <div className="flex flex-col gap-1 max-h-[220px] overflow-y-auto">
                 {people.map((p) => (
-                  <div key={p.id} className="flex items-center gap-1 rounded-lg bg-[#F3F2F0] border border-[#EEEBE4] hover:bg-[#F1EFE9]">
+                  <div key={p.id} className="flex items-center gap-1 rounded-lg bg-[#F3F2F0] border border-[#EBEAE7] hover:bg-[#EFEEEB]">
                     <button onClick={() => onOpenContact?.(p)} className="flex-1 min-w-0 flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[13px]">
                       <span className="truncate">{p.name}</span>
                       <span className="text-[12px] text-muted truncate">{[p.role, p.email, p.phone].filter(Boolean).join(" · ")}</span>
@@ -394,7 +394,7 @@ export default function ContactModal({
                     <UserPlus size={13} /> Add person
                   </button>
                 ) : (
-                  <div className="rounded-xl border border-[#EEEBE4] bg-white p-2">
+                  <div className="rounded-xl border border-[#EBEAE7] bg-white p-2">
                     <div className="flex items-center gap-2 bg-chip rounded-full px-3 py-1.5">
                       <Search size={13} className="text-muted flex-shrink-0" />
                       <input

@@ -232,7 +232,7 @@ function AiAccountant() {
             {addOpen && (
               <>
                 <ClickAway onClose={() => setAddOpen(false)} />
-                <div role="menu" className="absolute right-0 top-[calc(100%+14px)] z-50 w-[280px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
+                <div role="menu" className="absolute right-0 top-[calc(100%+14px)] z-50 w-[280px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
                   {[
                     { icon: Upload, label: "Import bank or card CSV", hint: "AI categorizes every line", go: () => setModal({ kind: "import" }) },
                     { icon: CreditCard, label: "Import from LawPay", hint: "Payments matched to invoices", go: () => setModal({ kind: "lawpay" }) },
@@ -412,13 +412,13 @@ function AiAccountant() {
 }
 
 // ── Widget frame (same style as the dashboard widgets) ──
-const ROW = "bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl";
+const ROW = "bg-[#F3F2F0] border border-[#EBEAE7] rounded-xl";
 function Frame({ title, icon: Icon, right, children, className = "", pad = "p-5" }: {
   title?: string; icon?: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; right?: React.ReactNode;
   children: React.ReactNode; className?: string; pad?: string;
 }) {
   return (
-    <div className={`bg-[#F3F2F0] rounded-[22px] border border-[#EBE8DF] p-1.5 flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200 ${className}`}>
+    <div className={`bg-[#F3F2F0] rounded-[22px] border border-[#E8E6E2] p-1.5 flex flex-col shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200 ${className}`}>
       {title && (
         <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5">
           <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2 min-w-0">
@@ -428,7 +428,7 @@ function Frame({ title, icon: Icon, right, children, className = "", pad = "p-5"
           {right && <div className="flex-shrink-0">{right}</div>}
         </div>
       )}
-      <div className={`flex-1 min-w-0 bg-white rounded-2xl border border-[#ECE9E1] shadow-[0_1px_3px_rgba(27,25,26,0.06)] ${pad}`}>{children}</div>
+      <div className={`flex-1 min-w-0 bg-white rounded-2xl border border-[#E9E7E4] shadow-[0_1px_3px_rgba(27,25,26,0.06)] ${pad}`}>{children}</div>
     </div>
   );
 }
@@ -459,7 +459,7 @@ function Overview(p: {
             { n: 3, t: "Review and send", d: "Approve the suggestions, then download the accountant package: an Excel workbook and all receipts.", b: null, go: null },
           ].map((x) => (
             <div key={x.n} className={`${ROW} p-5 flex flex-col`}>
-              <div className="w-7 h-7 rounded-full bg-white border border-[#EBE8DF] flex items-center justify-center text-[13px] font-semibold mb-3">{x.n}</div>
+              <div className="w-7 h-7 rounded-full bg-white border border-[#E8E6E2] flex items-center justify-center text-[13px] font-semibold mb-3">{x.n}</div>
               <div className="text-[14.5px] font-semibold">{x.t}</div>
               <div className="text-[13px] text-muted mt-1 flex-1">{x.d}</div>
               {x.b && x.go && <button onClick={x.go} className={`${blackBtn} mt-4 self-start`}>{x.b}</button>}
@@ -481,7 +481,7 @@ function Overview(p: {
       <div className="grid lg:grid-cols-[1.2fr_1fr] gap-5">
         <Frame title="Accountant-ready" icon={CircleCheck} pad="p-5">
           <div className="text-[26px] font-semibold tabular-nums mb-3">{r.score}%</div>
-          <div className="h-2.5 rounded-full bg-[#F3F1EC] overflow-hidden mb-5">
+          <div className="h-2.5 rounded-full bg-[#F1F0EE] overflow-hidden mb-5">
             <div className="h-full rounded-full bg-[#00D178] transition-all" style={{ width: `${r.score}%` }} />
           </div>
           <div className="grid gap-3">
@@ -534,7 +534,7 @@ function CategoryBars({ rows }: { rows: { key: string; label: string; total: num
       {rows.map((c) => (
         <div key={c.key} className="grid grid-cols-[200px_1fr_110px] items-center gap-3 text-[13.5px]">
           <span className="truncate">{c.label}</span>
-          <div className="h-2 rounded-full bg-[#F3F1EC] overflow-hidden"><div className="h-full rounded-full bg-muted-light" style={{ width: `${(c.total / max) * 100}%` }} /></div>
+          <div className="h-2 rounded-full bg-[#F1F0EE] overflow-hidden"><div className="h-full rounded-full bg-muted-light" style={{ width: `${(c.total / max) * 100}%` }} /></div>
           <span className="text-right tabular-nums">{money(c.total)}</span>
         </div>
       ))}
@@ -575,7 +575,7 @@ function ReviewList(p: {
         )}
       </div>
       <Frame title={`AI suggestions · ${p.items.length}`} icon={Sparkles} pad="p-0 overflow-hidden">
-        <div className="divide-y divide-[#EEEBE4]">
+        <div className="divide-y divide-[#EBEAE7]">
           {p.items.map((t) => (
             <div key={t.id} className="flex items-center gap-3 px-4 py-3 flex-wrap">
               <div className="w-[88px] text-[12.5px] text-muted tabular-nums">{t.date}</div>
@@ -634,20 +634,20 @@ function TxnTable(p: { txns: Txn[]; clientName: (id: string | null) => string; m
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {[["all", "All"], ["income", "Income"], ["expense", "Expenses"], ["no_receipt", "Missing receipt"], ["trust", "Trust"], ["excluded", "Excluded"]].map(([k, l]) => (
-            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${filter === k ? "bg-btn-hover border border-[#D7D1C0]" : "bg-white border border-[#E7E2D7] hover:bg-[#F3F2F0] hover:border-[#D7D1C0]"}`}>{l}</button>
+            <button key={k} onClick={() => setFilter(k)} className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${filter === k ? "bg-btn-hover border border-[#D1CDC6]" : "bg-white border border-[#E3E0DB] hover:bg-[#F3F2F0] hover:border-[#D1CDC6]"}`}>{l}</button>
           ))}
         </div>
       </div>
       <Frame title={`Transactions · ${shown.length}`} icon={Receipt} pad="p-0 overflow-x-auto">
         <div className="min-w-[860px]">
-          <div className="grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 text-[12px] font-medium text-muted border-b border-[#EEEBE4] bg-[#F3F2F0]">
+          <div className="grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 text-[12px] font-medium text-muted border-b border-[#EBEAE7] bg-[#F3F2F0]">
             <span>Date</span><span>Payee / description</span><span>Category</span><span>Account</span><span className="text-right">Amount</span><span />
           </div>
           {shown.length === 0 ? (
             <div className="px-4 py-10 text-center text-[13.5px] text-muted">No transactions match.</div>
           ) : (
             shown.map((t) => (
-              <div key={t.id} className={`grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 items-center border-b border-[#EEEBE4] last:border-0 hover:bg-[#F9F8F6] ${t.status === "excluded" ? "opacity-50" : ""}`}>
+              <div key={t.id} className={`grid grid-cols-[90px_1fr_210px_140px_110px_28px] gap-3 px-4 py-2.5 items-center border-b border-[#EBEAE7] last:border-0 hover:bg-[#F8F8F7] ${t.status === "excluded" ? "opacity-50" : ""}`}>
                 <span className="text-[12.5px] text-muted tabular-nums">{t.date}</span>
                 <button onClick={() => p.onOpen(t)} className="text-left min-w-0">
                   <div className="text-[13.5px] font-medium truncate">{t.counterparty || t.description || "No description"}</div>
@@ -678,7 +678,7 @@ function Box({ title, children }: { title: string; children: React.ReactNode }) 
 }
 function Row({ a, b, c, bold }: { a: string; b?: string; c: string; bold?: boolean }) {
   return (
-    <div className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_260px_120px] gap-3 py-2 border-b border-[#EEEBE4] last:border-0 text-[13.5px] ${bold ? "font-semibold" : ""}`}>
+    <div className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_260px_120px] gap-3 py-2 border-b border-[#EBEAE7] last:border-0 text-[13.5px] ${bold ? "font-semibold" : ""}`}>
       <span>{a}</span><span className="hidden sm:block text-[12.5px] text-muted">{b}</span><span className="text-right tabular-nums">{c}</span>
     </div>
   );

@@ -159,7 +159,7 @@ export default function TimeTrackingPage() {
         key={e.id}
         onClick={mine ? () => setEditing(e) : undefined}
         title={mine ? "Click to edit" : undefined}
-        className={`flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-[#F3F2F0] border border-[#EEEBE4] ${mine ? "cursor-pointer hover:bg-[#F1EFE9] transition-colors" : ""}`}
+        className={`flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-[#F3F2F0] border border-[#EBEAE7] ${mine ? "cursor-pointer hover:bg-[#EFEEEB] transition-colors" : ""}`}
       >
         <div className="min-w-0">
           <div className="text-[14.5px] font-medium truncate">{e.description || tn || "Untitled entry"}</div>
@@ -178,11 +178,11 @@ export default function TimeTrackingPage() {
             </span>
           )}
           {e.billable ? (
-            <span className="text-[11.5px] bg-white border border-[#EBE8DF] px-2 py-1 rounded-full font-medium">
+            <span className="text-[11.5px] bg-white border border-[#E8E6E2] px-2 py-1 rounded-full font-medium">
               Billable{rate ? ` · ${money((rate * e.minutes) / 60)}` : ""}
             </span>
           ) : (
-            <span className="text-[11.5px] bg-white border border-[#EBE8DF] text-muted px-2 py-1 rounded-full font-medium">Non-billable</span>
+            <span className="text-[11.5px] bg-white border border-[#E8E6E2] text-muted px-2 py-1 rounded-full font-medium">Non-billable</span>
           )}
           <span className="mono text-[13.5px] font-medium w-[60px] text-right">{formatMinutes(e.minutes)}</span>
           {mine && (
@@ -194,7 +194,7 @@ export default function TimeTrackingPage() {
                 }}
                 aria-label="Edit entry"
                 title="Edit entry"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-white border border-[#EBE8DF] hover:text-ink hover:bg-chip transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-white border border-[#E8E6E2] hover:text-ink hover:bg-chip transition-colors"
               >
                 <Pencil size={13} strokeWidth={1.75} />
               </button>
@@ -205,7 +205,7 @@ export default function TimeTrackingPage() {
                 }}
                 aria-label="Delete entry"
                 title="Delete entry"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-white border border-[#EBE8DF] hover:text-red-600 hover:bg-red-50 transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted bg-white border border-[#E8E6E2] hover:text-red-600 hover:bg-red-50 transition-colors"
               >
                 <Trash2 size={13} strokeWidth={1.75} />
               </button>
@@ -323,7 +323,7 @@ export default function TimeTrackingPage() {
                       )
                       .map((o, i) => (
                         <Fragment key={o.key}>
-                          {i === 2 && <div className="px-3 pt-2 pb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted border-t border-[#EEEBE4] mt-1">Team members</div>}
+                          {i === 2 && <div className="px-3 pt-2 pb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted border-t border-[#EBEAE7] mt-1">Team members</div>}
                           <button
                             onClick={() => {
                               setWhoOpen(false);
@@ -331,7 +331,7 @@ export default function TimeTrackingPage() {
                               setEntries(null);
                               setWho(o.key);
                             }}
-                            className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left ${who === o.key ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"}`}
+                            className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left ${who === o.key ? "bg-[#F1F0EE]" : "hover:bg-[#F3F2F0]"}`}
                           >
                             <span className="truncate">{o.label}</span>
                             {who === o.key && <Check size={14} />}

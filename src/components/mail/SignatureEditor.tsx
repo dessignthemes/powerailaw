@@ -32,7 +32,7 @@ export const SIGNATURE_FONTS: { label: string; value: string }[] = [
 ];
 const SIZES = ["10", "11", "12", "13", "14", "16", "18", "20", "24", "28", "32"];
 const COLORS = ["#222222", "#595959", "#8C8C8C", "#1F3A93", "#0563C1", "#2E7D32", "#C62828", "#E65100", "#6A1B9A", "#B8860B"];
-const HIGHLIGHTS = ["#FFF59D", "#C8E6C9", "#BBDEFB", "#F8BBD0", "#FFE0B2", "#E2DFD9"];
+const HIGHLIGHTS = ["#FFF59D", "#C8E6C9", "#BBDEFB", "#F8BBD0", "#FFE0B2", "#E1DFDA"];
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] ?? c);
 // Layout the visual editor would flatten: keep such a signature as HTML.
@@ -81,7 +81,7 @@ function Swatches({ label, icon, colors, current, onPick, onClear, clearLabel }:
         className={`h-8 px-1.5 rounded-lg flex flex-col items-center justify-center gap-[2px] transition-colors ${open ? "bg-btn text-ink" : "text-muted hover:bg-chip hover:text-ink"}`}
       >
         {icon}
-        <span className="block w-4 h-[3px] rounded-full" style={{ background: current || "transparent", boxShadow: current ? undefined : "inset 0 0 0 1px #DEDACD" }} />
+        <span className="block w-4 h-[3px] rounded-full" style={{ background: current || "transparent", boxShadow: current ? undefined : "inset 0 0 0 1px #DAD7D1" }} />
       </button>
       {open && (
         <div className="absolute z-20 left-0 top-9 bg-white border border-line rounded-xl shadow-lg p-2.5 w-[188px]" onMouseDown={(e) => e.preventDefault()}>

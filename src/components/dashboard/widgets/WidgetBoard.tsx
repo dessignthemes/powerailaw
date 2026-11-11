@@ -44,7 +44,7 @@ export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize
   const small = size === "s";
   return (
     <WidgetSizeContext.Provider value={size}>
-      <div className={`h-full ${def.tone ?? "bg-[#F3F2F0]"} rounded-[22px] border border-[#EBE8DF] p-1.5 flex flex-col overflow-hidden relative shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200`}>
+      <div className={`h-full ${def.tone ?? "bg-[#F3F2F0]"} rounded-[22px] border border-[#E8E6E2] p-1.5 flex flex-col overflow-hidden relative shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] hover:shadow-[0_8px_22px_-6px_rgba(27,25,26,0.14)] transition-shadow duration-200`}>
         {!def.plain && (
           <div className={`flex items-center justify-between gap-2 ${small ? "px-2.5 pt-2 pb-2" : "px-3 pt-2.5 pb-2.5"}`}>
             <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted flex items-center gap-2 min-w-0">
@@ -54,7 +54,7 @@ export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize
             {def.action && size !== "s" && <div className="flex-shrink-0">{def.action(d)}</div>}
           </div>
         )}
-        <div className={`flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#ECE9E1] shadow-[0_1px_3px_rgba(27,25,26,0.06)] ${small ? "p-3.5" : "p-4"}`}>{def.body(d, size)}</div>
+        <div className={`flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#E9E7E4] shadow-[0_1px_3px_rgba(27,25,26,0.06)] ${small ? "p-3.5" : "p-4"}`}>{def.body(d, size)}</div>
       </div>
     </WidgetSizeContext.Provider>
   );
@@ -309,7 +309,7 @@ function Preview({ def, size, d }: { def: WidgetDef; size: WidgetSize; d: DashDa
   const box = { w: 210, h: 160 };
   const k = Math.min(box.w / w, box.h / h, 0.75);
   return (
-    <div className="h-[200px] bg-[#F3F1EC] flex items-center justify-center overflow-hidden" aria-hidden>
+    <div className="h-[200px] bg-[#F1F0EE] flex items-center justify-center overflow-hidden" aria-hidden>
       <div style={{ width: w * k, height: h * k }} className="relative">
         <div style={{ width: w, height: h, transform: `scale(${k})`, transformOrigin: "top left" }} className="absolute left-0 top-0 pointer-events-none shadow-[0_10px_30px_-12px_rgba(27,25,26,0.3)] rounded-[22px]">
           <WidgetShell def={def} size={size} d={d} />

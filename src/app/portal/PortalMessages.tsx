@@ -153,7 +153,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
   }
 
   return (
-    <div className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-4">
+    <div className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-4">
       <div className="text-[14px] font-semibold mb-3">{matter.title}</div>
       <div className="flex flex-col gap-2.5">
         {list.length === 0 && <div className="text-[13px] text-muted">No messages yet. You can send a message or files to {firm} here.</div>}
@@ -162,7 +162,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
           const mine = x.mine ?? !fromFirm;
           return (
             <div key={x.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${mine ? "bg-[#E1E7F4] border border-[#E7E2D7]" : "bg-[#F3F2F0] border border-[#EEEBE4]"}`}>
+              <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${mine ? "bg-[#E1E7F4] border border-[#E3E0DB]" : "bg-[#F3F2F0] border border-[#EBEAE7]"}`}>
                 <div className="text-[11.5px] text-muted mb-0.5 flex items-center gap-1.5 flex-wrap">
                   {x.thread === "shared" && <span className="bg-[#FFF1DE] text-[#8A4B14] font-semibold rounded px-1.5 py-px">Shared</span>}
                   {mine ? "You" : fromFirm ? `${x.senderName}, ${firm}` : x.senderName} · {when(x.createdAt)}
@@ -171,7 +171,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
                 {x.attachments.length > 0 && (
                   <div className="flex flex-col gap-1.5 mt-2">
                     {x.attachments.map((a) => (
-                      <div key={a.id} className="flex items-center gap-2 bg-[#F3F2F0] border border-[#EEEBE4] rounded-xl px-3 py-2">
+                      <div key={a.id} className="flex items-center gap-2 bg-[#F3F2F0] border border-[#EBEAE7] rounded-xl px-3 py-2">
                         <FileText size={15} className="text-muted flex-shrink-0" />
                         <span className="text-[13px] font-medium truncate flex-1">{a.title}</span>
                         {a.versionId && (
@@ -199,7 +199,7 @@ function Conversation({ matter, firm, initial }: { matter: Matter; firm: string;
           onChange={(e) => setReply(e.target.value)}
           rows={3}
           placeholder={`Reply securely to ${firm}…`}
-          className="bg-white border border-[#ECE9E1] rounded-xl px-3 py-2.5 text-[14px] outline-none resize-y"
+          className="bg-white border border-[#E9E7E4] rounded-xl px-3 py-2.5 text-[14px] outline-none resize-y"
         />
         {files.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

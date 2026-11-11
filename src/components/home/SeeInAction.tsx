@@ -66,7 +66,7 @@ export default function SeeInAction({ variant = "card" }: { variant?: "card" | "
                   <div className="text-white/70 text-[15px] mt-2 max-w-[440px]">
                     A short walkthrough of LawPower AI is on its way. In the meantime, start a free trial and see it for yourself.
                   </div>
-                  <Link href="/" onClick={() => setOpen(false)} className="mt-6 bg-white text-ink px-5 py-3 rounded-lg text-[15px] font-medium hover:bg-[#EEECE8] transition-colors">
+                  <Link href="/" onClick={() => setOpen(false)} className="mt-6 bg-white text-ink px-5 py-3 rounded-lg text-[15px] font-medium hover:bg-[#EDECE9] transition-colors">
                     Start Free Trial
                   </Link>
                 </div>

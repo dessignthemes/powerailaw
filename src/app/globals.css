@@ -4,25 +4,25 @@
   /* Inter for everything: headings and the small "mono" labels use it too. */
   --font-display: var(--font-body);
   --font-mono: var(--font-body);
-  /* Warm beige theme. */
+  /* Light warm-neutral theme (#F3F2F0 family). */
   --sidebar: #f3f2f0; /* left navigation */
-  --cream: #fcfbf8; /* raised surfaces: cards on panels, modals */
-  --page: #fdfcfa; /* main content area (right of the sidebar) */
+  --cream: #fafaf9; /* raised surfaces: cards on panels, modals */
+  --page: #fcfcfb; /* main content area (right of the sidebar) */
   --dark: #1b191a; /* logo, avatars, "on" toggles */
   --dark2: #2a2728;
-  --beige: #ebe7de;
+  --beige: #ecebe8;
   --card: #ffffff;
-  --card-alt: #f5f3ee; /* panels, columns */
-  --nav: #ece9e2; /* left navigation + page dropdown: current page and hover */
-  --chip: #f2efe9; /* secondary buttons, pills and hover states */
-  --line: #e8e4dc; /* 1px borders */
+  --card-alt: #f3f2f0; /* panels, columns */
+  --nav: #ededed; /* left navigation + page dropdown: current page and hover */
+  --chip: #f3f2f0; /* secondary buttons, pills and hover states */
+  --line: #e6e4e0; /* 1px borders */
   --line-dark: #2b2829;
-  --btn: #e9e5dc; /* primary buttons (dark text) */
-  --btn-hover: #dfd9cd;
-  --btn-ring: #cbc3b3; /* outline on selected pills */
+  --btn: #e7e5e1; /* primary buttons (dark text) */
+  --btn-hover: #dcdad5;
+  --btn-ring: #c4c0b8; /* outline on selected pills */
   --ink: #1b191a; /* text (never pure black) */
-  --muted: #77716a;
-  --muted-light: #a8a197;
+  --muted: #74716c;
+  --muted-light: #a6a39e;
 }
 
 @theme inline {
@@ -77,7 +77,7 @@ a {
 }
 
 .texture-cool {
-  background-color: #F4F2ED;
+  background-color: #F3F2F0;
   background-image:
     radial-gradient(circle at 20% 20%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 45%),
     radial-gradient(circle at 80% 75%, rgba(27,25,26,0.04) 0%, rgba(27,25,26,0) 50%),
@@ -106,7 +106,7 @@ a {
 .scroll-on-hover {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #C6BEA9 #EDEBE5;
+  scrollbar-color: #BFBAB0 #EBEAE7;
   scrollbar-gutter: stable;
   overscroll-behavior: contain;
 }
@@ -114,11 +114,11 @@ a {
   width: 6px;
 }
 .scroll-on-hover::-webkit-scrollbar-track {
-  background: #EDEBE5;
+  background: #EBEAE7;
   border-radius: 999px;
 }
 .scroll-on-hover::-webkit-scrollbar-thumb {
-  background: #C6BEA9;
+  background: #BFBAB0;
   border-radius: 999px;
 }
 .scroll-on-hover::-webkit-scrollbar-thumb:hover {
@@ -139,13 +139,13 @@ a {
 .lp-editor ul[data-type="taskList"] li > label { margin-top: 0.3em; flex-shrink: 0; }
 .lp-editor ul[data-type="taskList"] li > label input { width: 15px; height: 15px; accent-color: #5E6E8C; cursor: pointer; }
 .lp-editor ul[data-type="taskList"] li[data-checked="true"] > div { color: var(--color-muted, #6b7280); text-decoration: line-through; }
-.lp-editor blockquote { border-left: 3px solid #DEDACD; padding-left: 0.9em; color: #4b5563; }
-.lp-editor code { background: #F2F0EB; border-radius: 4px; padding: 0.1em 0.35em; font-size: 0.9em; font-family: ui-monospace, Menlo, monospace; }
-.lp-editor pre { background: #1B191A; color: #F4F3F0; border-radius: 10px; padding: 0.8em 1em; overflow-x: auto; }
+.lp-editor blockquote { border-left: 3px solid #DAD7D1; padding-left: 0.9em; color: #4b5563; }
+.lp-editor code { background: #F0EFED; border-radius: 4px; padding: 0.1em 0.35em; font-size: 0.9em; font-family: ui-monospace, Menlo, monospace; }
+.lp-editor pre { background: #1B191A; color: #F3F2F1; border-radius: 10px; padding: 0.8em 1em; overflow-x: auto; }
 .lp-editor pre code { background: transparent; padding: 0; color: inherit; }
 .lp-editor a { color: #2B6CB0; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .lp-editor img { max-width: 100%; height: auto; border-radius: 8px; }
-.lp-editor img.ProseMirror-selectednode { outline: 2px solid #C6BEA9; }
+.lp-editor img.ProseMirror-selectednode { outline: 2px solid #BFBAB0; }
 .lp-editor p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--color-muted, #9ca3af); float: left; height: 0; pointer-events: none; }
 
 /* Email signature editor: src/components/mail/SignatureEditor.tsx. Lines sit
@@ -156,13 +156,13 @@ a {
 .lp-sig ol { list-style: decimal; padding-left: 1.4em; margin: 0; }
 .lp-sig li > p { min-height: 0; }
 .lp-sig a { color: #0563C1; text-decoration: underline; }
-.lp-sig hr { border: 0; border-top: 1px solid #D6D1C4; margin: 8px 0; }
+.lp-sig hr { border: 0; border-top: 1px solid #D2CFC8; margin: 8px 0; }
 .lp-sig hr.ProseMirror-selectednode { border-top-color: #5E6E8C; }
 .lp-sig img { max-width: 100%; vertical-align: bottom; }
 .lp-sig [data-resize-container] { vertical-align: bottom; max-width: 100%; }
 .lp-sig [data-resize-wrapper] { max-width: 100%; }
 .lp-sig [data-resize-container].ProseMirror-selectednode [data-resize-wrapper],
-.lp-sig [data-resize-container][data-resize-state="true"] [data-resize-wrapper] { outline: 2px solid #C6BEA9; outline-offset: 1px; }
+.lp-sig [data-resize-container][data-resize-state="true"] [data-resize-wrapper] { outline: 2px solid #BFBAB0; outline-offset: 1px; }
 .lp-sig [data-resize-handle] { width: 10px; height: 10px; background: #fff; border: 1.5px solid #5E6E8C; border-radius: 3px; opacity: 0; z-index: 2; transition: opacity 0.12s; }
 .lp-sig [data-resize-handle="top-left"] { transform: translate(-50%, -50%); cursor: nwse-resize; }
 .lp-sig [data-resize-handle="top-right"] { transform: translate(50%, -50%); cursor: nesw-resize; }
@@ -189,13 +189,13 @@ html.lp-scroll-locked body { overflow: hidden; }
   background-color: #fff !important;
   box-shadow:
     0 0 0 7px #F3F2F0,
-    0 0 0 8px #EBE8DF,
+    0 0 0 8px #E8E6E2,
     0 30px 80px -24px rgba(18, 17, 16, 0.32) !important;
 }
 
 /* Light/dark switch in the top bar (same colour as a selected button, e.g. "This week"). */
-.lp-theme-btn { background-color: #e9e5dc; color: #1b191a; }
-.lp-theme-btn:hover { background-color: #dfd9cd; }
+.lp-theme-btn { background-color: #e7e5e1; color: #1b191a; }
+.lp-theme-btn:hover { background-color: #dcdad5; }
 
 /* While a Dashboard widget is being dragged. */
 body.lp-dragging, body.lp-dragging * { cursor: grabbing !important; user-select: none !important; }

@@ -245,7 +245,7 @@ export default function DocumentList({
               const latest = versions[0];
               const open = expanded === d.id;
               return (
-                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F3F1EC] border-[#EAE6DC]" : "bg-[#F3F2F0] border-[#EEEBE4] hover:bg-[#F3F1EC]"}`}>
+                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F1F0EE] border-[#E6E4E0]" : "bg-[#F3F2F0] border-[#EBEAE7] hover:bg-[#F1F0EE]"}`}>
                   <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
                     <button
                       onClick={() => setExpanded(open ? null : d.id)}
@@ -258,7 +258,7 @@ export default function DocumentList({
                     <div className="flex-1 min-w-[200px]">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-[14.5px] font-medium truncate">{d.title}</span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white border border-[#EBE8DF] text-[11.5px] font-medium text-ink flex-shrink-0">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white border border-[#E8E6E2] text-[11.5px] font-medium text-ink flex-shrink-0">
                           PDF
                         </span>
                       </div>
@@ -306,7 +306,7 @@ export default function DocumentList({
                   {open && (
                     <div className="px-4 pb-4 pl-[64px]">
                       <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-1.5">Versions</div>
-                      <div className="border border-[#ECE9E1] rounded-xl divide-y divide-[#EEEBE4] bg-white">
+                      <div className="border border-[#E9E7E4] rounded-xl divide-y divide-[#EBEAE7] bg-white">
                         {versions.map((v) => (
                           <div key={v.id} className="flex items-center gap-3 px-4 py-2.5 flex-wrap text-[13px]">
                             <span className="font-medium w-[34px]">v{v.versionNumber}</span>
@@ -385,7 +385,7 @@ export function MatterPicker({
         key={id || "all"}
         onClick={() => pick(id)}
         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] text-left transition-colors ${
-          active ? "bg-[#F3F1EC] font-medium" : "hover:bg-[#F3F2F0]"
+          active ? "bg-[#F1F0EE] font-medium" : "hover:bg-[#F3F2F0]"
         }`}
       >
         <span className="text-muted flex-shrink-0">{icon}</span>
@@ -421,7 +421,7 @@ export function MatterPicker({
           <ClickAway onClose={() => setOpen(false)} />
           <div
             role="listbox"
-            className="absolute left-0 top-[calc(100%+14px)] z-50 w-[300px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5"
+            className="absolute left-0 top-[calc(100%+14px)] z-50 w-[300px] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5"
           >
             {matters.length > 6 && (
               <div className="flex items-center gap-2 px-3 py-2 mb-1 border-b border-line">

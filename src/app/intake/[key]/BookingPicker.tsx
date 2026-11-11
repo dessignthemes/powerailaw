@@ -96,7 +96,7 @@ export default function BookingPicker({ firmKey, token, firmName }: { firmKey: s
             key={d}
             type="button"
             onClick={() => (setDay(d), setPick(null))}
-            className={`flex-shrink-0 px-3.5 py-2 rounded-xl border text-[13.5px] text-left ${activeDay === d ? "border-[#1B191A] bg-[#1B191A] text-white" : "border-[#DEDACD] bg-white hover:border-[#5E6E8C]"}`}
+            className={`flex-shrink-0 px-3.5 py-2 rounded-xl border text-[13.5px] text-left ${activeDay === d ? "border-[#1B191A] bg-[#1B191A] text-white" : "border-[#DAD7D1] bg-white hover:border-[#5E6E8C]"}`}
           >
             <div className="font-semibold">{fmtDay(d)}</div>
             <div className={`text-[12px] ${activeDay === d ? "text-white/80" : "text-[#6B7280]"}`}>{list.length} open</div>
@@ -109,7 +109,7 @@ export default function BookingPicker({ firmKey, token, firmName }: { firmKey: s
             key={s.start}
             type="button"
             onClick={() => setPick(s.start)}
-            className={`px-2 py-2.5 rounded-xl border text-[14px] font-medium ${pick === s.start ? "border-[#00A35F] bg-[#EFF8F2]" : "border-[#DEDACD] bg-white hover:border-[#5E6E8C]"}`}
+            className={`px-2 py-2.5 rounded-xl border text-[14px] font-medium ${pick === s.start ? "border-[#00A35F] bg-[#EFF8F2]" : "border-[#DAD7D1] bg-white hover:border-[#5E6E8C]"}`}
           >
             {fmtTime(s.start)}
           </button>

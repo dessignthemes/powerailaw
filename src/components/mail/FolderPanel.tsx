@@ -118,7 +118,7 @@ export default function FolderPanel({
           disabled={createBusy}
           placeholder="Folder name"
           aria-label="New folder name"
-          className="flex-1 min-w-0 bg-white border border-[#C0B599] rounded-lg px-2 py-1 text-[13px] outline-none focus:border-[#5E6E91] focus:ring-2 focus:ring-[#E7E2D7]"
+          className="flex-1 min-w-0 bg-white border border-[#B6B0A3] rounded-lg px-2 py-1 text-[13px] outline-none focus:border-[#5E6E91] focus:ring-2 focus:ring-[#E3E0DB]"
         />
         {createBusy && <Loader2 size={13} className="animate-spin text-muted flex-shrink-0" />}
       </div>
@@ -168,7 +168,7 @@ export default function FolderPanel({
       <div key={`${inFavorites ? "fav" : "all"}-${f.id}`}>
         <div
           className={`group flex items-center gap-1.5 pr-2 rounded-lg transition-colors ${
-            dropOn === `${inFavorites ? "fav" : "all"}-${f.id}` ? "bg-[#EFEDE6] ring-2 ring-[#C8BEA6]" : active ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"
+            dropOn === `${inFavorites ? "fav" : "all"}-${f.id}` ? "bg-[#EDEBE8] ring-2 ring-[#BFBAAF]" : active ? "bg-[#F1F0EE]" : "hover:bg-[#F3F2F0]"
           }`}
           style={{ paddingLeft: 6 + depth * 14 }}
           onDragOver={(e) => {

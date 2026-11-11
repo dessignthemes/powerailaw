@@ -46,7 +46,7 @@ export function AutoHeightFrame({ srcDoc, title, minHeight = 120 }: { srcDoc: st
       aria-label={title}
       sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
       srcDoc={doc}
-      style={{ height: h, ...(dark ? { filter: DARK_FRAME_FILTER, backgroundColor: "#E5E2DC" } : {}) }}
+      style={{ height: h, ...(dark ? { filter: DARK_FRAME_FILTER, backgroundColor: "#E4E2DD" } : {}) }}
       className="w-full bg-white block"
     />
   );

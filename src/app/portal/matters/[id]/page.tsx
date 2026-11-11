@@ -86,7 +86,7 @@ export default function PortalMatterPage() {
       </Link>
 
       {/* Header */}
-      <div className="rounded-3xl bg-[#F3F2F0] border border-[#EBE8DF] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] px-6 py-8 text-center mb-6">
+      <div className="rounded-3xl bg-[#F3F2F0] border border-[#E8E6E2] shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)] px-6 py-8 text-center mb-6">
         <span className="inline-block text-[12px] font-semibold bg-ink text-white rounded-md px-2 py-0.5 mb-3">{view.matter.kind}</span>
         <h1 className="text-[26px] font-semibold leading-tight">{address || view.matter.title}</h1>
         {view.matter.number && <div className="text-[13.5px] text-muted mt-1.5">File #{view.matter.number}</div>}
@@ -94,7 +94,7 @@ export default function PortalMatterPage() {
 
       {/* Closing status */}
       {view.closing && (
-        <section className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-6 mb-6">
+        <section className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-6 mb-6">
           <h2 className="flex items-center gap-2 text-[17px] font-semibold mb-6">
             <TrendingUp size={18} strokeWidth={1.75} /> Closing status
           </h2>
@@ -154,7 +154,7 @@ export default function PortalMatterPage() {
       )}
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        <section className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5">
+        <section className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5">
           <h2 className="flex items-center gap-2 text-[16px] font-semibold mb-3">
             <Building2 size={17} strokeWidth={1.75} /> {view.firm}
           </h2>
@@ -168,7 +168,7 @@ export default function PortalMatterPage() {
           </dl>
         </section>
 
-        <section className="bg-white border border-[#ECE9E1] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5">
+        <section className="bg-white border border-[#E9E7E4] rounded-2xl m-[7px] shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_3px_8px_-1px_rgba(27,25,26,0.08)] p-5">
           <h2 className="flex items-center gap-2 text-[16px] font-semibold mb-3">
             <Users size={17} strokeWidth={1.75} /> Parties
           </h2>

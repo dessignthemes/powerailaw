@@ -183,7 +183,7 @@ export default function CalendarSearch({
             aria-expanded={ownerOpen}
             aria-label="Whose calendar to search"
             className={`flex items-center gap-1.5 rounded-full pl-2.5 pr-2 py-1 text-[12.5px] font-medium max-w-[170px] border transition-colors ${
-              ownerOpen ? "bg-white border-[#D7D1C0]" : "bg-white/80 border-[#EBE8DF] hover:bg-white"
+              ownerOpen ? "bg-white border-[#D1CDC6]" : "bg-white/80 border-[#E8E6E2] hover:bg-white"
             }`}
           >
             {(() => {
@@ -202,7 +202,7 @@ export default function CalendarSearch({
               <ClickAway onClose={() => setOwnerOpen(false)} />
               <div
                 role="listbox"
-                className="absolute right-0 top-[calc(100%+14px)] z-[60] w-[220px] max-h-[320px] overflow-y-auto bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5"
+                className="absolute right-0 top-[calc(100%+14px)] z-[60] w-[220px] max-h-[320px] overflow-y-auto bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5"
               >
                 <div className="px-3 pt-1.5 pb-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted">Search in</div>
                 {[{ id: "", label: "All calendars", dot: null as string | null }, ...people.map((m) => ({ id: m.id, label: m.me ? "My calendar" : m.name, dot: colorOf(m.id).tx }))].map((o) => (
@@ -216,7 +216,7 @@ export default function CalendarSearch({
                       setOwnerOpen(false);
                     }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-medium text-left transition-colors ${
-                      owner === o.id ? "bg-[#F3F1EC]" : "hover:bg-[#F3F2F0]"
+                      owner === o.id ? "bg-[#F1F0EE]" : "hover:bg-[#F3F2F0]"
                     }`}
                   >
                     {o.dot ? (
@@ -238,7 +238,7 @@ export default function CalendarSearch({
       </div>
 
       {showResults && (error || hits) && (
-        <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[min(440px,90vw)] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#EBE8DF,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
+        <div className="absolute right-0 top-[calc(100%+14px)] z-50 w-[min(440px,90vw)] bg-white rounded-2xl shadow-[0_0_0_6px_#F3F2F0,0_0_0_7px_#E8E6E2,0_24px_50px_-18px_rgba(18,17,16,0.28)] p-1.5">
           {error ? (
             <div className="px-3 py-3 text-[13px] text-red-700">{error}</div>
           ) : hits && hits.length === 0 ? (

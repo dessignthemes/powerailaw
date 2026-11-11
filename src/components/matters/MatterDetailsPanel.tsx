@@ -334,7 +334,7 @@ function FieldRow({
           list={field.key === "referralType" ? "lp-referral-types" : undefined}
           data-1p-ignore
           data-lpignore="true"
-          className={`w-full min-w-0 bg-white border border-line hover:border-[#D3CDBE] focus:border-[#C6BEA9] rounded-lg px-2.5 py-1.5 text-[13px] outline-none placeholder:text-muted-light transition-colors ${
+          className={`w-full min-w-0 bg-white border border-line hover:border-[#CECAC3] focus:border-[#BFBAB0] rounded-lg px-2.5 py-1.5 text-[13px] outline-none placeholder:text-muted-light transition-colors ${
             fromDocs ? "pr-6" : ""
           }`}
         />
@@ -351,7 +351,7 @@ function FieldRow({
           </span>
         )}
         {showHits && (
-          <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl border border-[#EBE8DF] shadow-[0_12px_30px_-12px_rgba(18,17,16,0.25)] p-1 max-h-[260px] overflow-y-auto">
+          <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-xl border border-[#E8E6E2] shadow-[0_12px_30px_-12px_rgba(18,17,16,0.25)] p-1 max-h-[260px] overflow-y-auto">
             <div className="px-2.5 pt-1 pb-0.5 text-[10.5px] font-mono uppercase tracking-[0.1em] text-muted">In Contacts</div>
             {hits.map((c) => (
               <button

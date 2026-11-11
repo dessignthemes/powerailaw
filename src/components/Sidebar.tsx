@@ -95,7 +95,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`${collapsed ? "w-[68px] px-2.5 py-4" : "w-[260px] px-4 py-6"} flex-shrink-0 bg-[#f3f2f0] border-r border-[#EBE8DF] h-screen sticky top-0 flex flex-col transition-[width] duration-200`}
+      className={`${collapsed ? "w-[68px] px-2.5 py-4" : "w-[260px] px-4 py-6"} flex-shrink-0 bg-[#f3f2f0] border-r border-[#E8E6E2] h-screen sticky top-0 flex flex-col transition-[width] duration-200`}
     >
       {collapsed ? (
         <div className="flex flex-col items-center gap-2 mb-4">
@@ -129,7 +129,7 @@ export default function Sidebar() {
 
         <div className={`${collapsed ? "mt-2" : "mt-5"} mb-1 flex flex-col gap-[2px]`}>
           {collapsed ? (
-            <div className="mx-2 mb-2 border-t border-[#E9E5DB]" />
+            <div className="mx-2 mb-2 border-t border-[#E5E3DF]" />
           ) : (
             <div className="px-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted mb-1">Tools</div>
           )}
@@ -140,7 +140,7 @@ export default function Sidebar() {
 
         <div className={`${collapsed ? "mt-2" : "mt-5"} mb-1 flex flex-col gap-[2px]`}>
           {collapsed ? (
-            <div className="mx-2 mb-2 border-t border-[#E9E5DB]" />
+            <div className="mx-2 mb-2 border-t border-[#E5E3DF]" />
           ) : (
             <div className="px-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted mb-1">Workspace</div>
           )}
@@ -157,7 +157,7 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      <div className={`border-t border-[#E9E5DB] ${collapsed ? "pt-2 mt-2" : "pt-4 mt-4"}`}>
+      <div className={`border-t border-[#E5E3DF] ${collapsed ? "pt-2 mt-2" : "pt-4 mt-4"}`}>
         <button
           onClick={() => openIntegrations("general")}
           title={collapsed ? "Settings" : undefined}

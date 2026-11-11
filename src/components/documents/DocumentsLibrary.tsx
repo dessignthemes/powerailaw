@@ -296,7 +296,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
       ) : null}
 
       <div className="flex items-center gap-3 mb-5 flex-wrap">
-        <div className="relative flex-1 min-w-[240px] max-w-[420px] bg-[#F3F2F0] border border-[#EBE8DF] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
+        <div className="relative flex-1 min-w-[240px] max-w-[420px] bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 shadow-[0_2px_6px_-1px_rgba(27,25,26,0.07)]">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
@@ -304,7 +304,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder="Search by name, matter, type or person"
             aria-label="Search documents"
-            className="w-full border border-[#ECE9E1] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#D7D1C0] placeholder:text-muted shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
+            className="w-full border border-[#E9E7E4] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#D1CDC6] placeholder:text-muted shadow-[0_1px_3px_rgba(27,25,26,0.06)]"
           />
           {query && (
             <button
@@ -339,7 +339,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
         </div>
       )}
       {notice && (
-        <div className="mb-5 flex items-start justify-between gap-3 rounded-xl border border-[#EEEBE4] bg-[#F3F2F0] px-4 py-3 text-[13.5px]">
+        <div className="mb-5 flex items-start justify-between gap-3 rounded-xl border border-[#EBEAE7] bg-[#F3F2F0] px-4 py-3 text-[13.5px]">
           <span>{notice}</span>
           <button onClick={() => setNotice(null)} className="text-muted hover:text-ink flex-shrink-0" aria-label="Dismiss">
             <X size={15} strokeWidth={1.75} />
@@ -410,7 +410,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
               const open = expanded === d.id;
               const working = busy === d.id;
               return (
-                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F3F1EC] border-[#EAE6DC]" : "bg-[#F3F2F0] border-[#EEEBE4] hover:bg-[#F3F1EC]"}`}>
+                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F1F0EE] border-[#E6E4E0]" : "bg-[#F3F2F0] border-[#EBEAE7] hover:bg-[#F1F0EE]"}`}>
                   <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
                     <button
                       onClick={() => setExpanded(open ? null : d.id)}
@@ -477,7 +477,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                         <>
                           <span className="w-12 flex justify-center" title={tip || undefined}>
                             {by ? (
-                              <span className="w-8 h-8 rounded-full bg-white border border-[#EBE8DF] text-[11px] font-semibold text-muted flex items-center justify-center">{initialsFor(who, by)}</span>
+                              <span className="w-8 h-8 rounded-full bg-white border border-[#E8E6E2] text-[11px] font-semibold text-muted flex items-center justify-center">{initialsFor(who, by)}</span>
                             ) : (
                               <span className="text-muted">—</span>
                             )}
@@ -517,7 +517,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                   {open && reqsFor(d.id).length > 0 && (
                     <div className="px-4 pb-2 pl-[64px]">
                       <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-1.5">Signature requests</div>
-                      <div className="border border-[#ECE9E1] rounded-xl divide-y divide-[#EEEBE4] bg-white mb-2">
+                      <div className="border border-[#E9E7E4] rounded-xl divide-y divide-[#EBEAE7] bg-white mb-2">
                         {reqsFor(d.id).map((r) => (
                           <div key={r.id} className="flex items-center gap-3 px-4 py-2.5 flex-wrap text-[13px]">
                             <span className="font-medium">{r.signerName}</span>
@@ -542,7 +542,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                   {open && (
                     <div className="px-4 pb-4 pl-[64px]">
                       <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted mb-1.5">Versions</div>
-                      <div className="border border-[#ECE9E1] rounded-xl divide-y divide-[#EEEBE4] bg-white">
+                      <div className="border border-[#E9E7E4] rounded-xl divide-y divide-[#EBEAE7] bg-white">
                         {d.versions.map((v) => {
                           const vt = typeOf(v);
                           return (
