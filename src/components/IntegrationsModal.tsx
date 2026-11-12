@@ -244,6 +244,9 @@ function SettingsToggle({
 }) {
   return (
     <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`w-10 h-6 rounded-full flex items-center px-0.5 transition-colors flex-shrink-0 ${
         checked ? "bg-dark justify-end" : "bg-line justify-start"
