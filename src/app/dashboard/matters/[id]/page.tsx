@@ -26,7 +26,6 @@ import {
   Mail,
   Users,
   Activity,
-  BookOpen,
   StickyNote,
   Link2,
   ClipboardList,
@@ -408,18 +407,6 @@ export default function MatterDetailPage() {
                 setActiveTab("documents");
               }}
             />
-            <div className="rounded-2xl overflow-hidden border border-line">
-              <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
-                <BookOpen size={14} strokeWidth={1.75} className="text-muted" />
-                <span className="text-[14px] font-semibold">State of Play</span>
-              </div>
-              <div className="p-4">
-                <div className="bg-card-alt rounded-xl px-4 py-3.5 text-[13.5px] text-muted">
-                  State of Play hasn&apos;t been generated yet.
-                </div>
-              </div>
-            </div>
-
             <div className="rounded-2xl overflow-hidden border border-line">
               <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
                 <StickyNote size={14} strokeWidth={1.75} className="text-muted" />
