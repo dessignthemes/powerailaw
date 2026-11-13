@@ -175,5 +175,5 @@ html[data-theme="dark"] [role="switch"][aria-checked="true"] { background-color:
 html[data-theme="dark"] [role="switch"] > span { background-color: #e8e9ec !important; }
 
 /* Dashboard Note (yellow post-it). */
-html[data-theme="dark"] .bg-\[\#F6E9A6\]{background-color:#3a3422}
-html[data-theme="dark"] .bg-\[\#FFF7C7\]{background-color:#2c2818}
+html[data-theme="dark"] .bg-\[\#F4EDCF\]{background-color:#3a3422}
+html[data-theme="dark"] .bg-\[\#FFFAE6\]{background-color:#2c2818}

@@ -766,7 +766,7 @@ function Note() {
       }}
       placeholder="Jot something down. It stays on this computer."
       aria-label="Note"
-      className="lp-note-lines flex-1 min-h-0 w-full bg-transparent resize-none outline-none text-[14.5px] placeholder:text-[#9A8B4E]"
+      className="lp-note-lines flex-1 min-h-0 w-full bg-transparent resize-none outline-none text-[14.5px] placeholder:text-[#A99D73]"
     />
   );
 }
@@ -846,7 +846,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: "search", name: "Search", desc: "Search matters, contacts, documents, tasks and more.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Search, body: () => <button onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, metaKey: true }))} className="mt-auto flex items-center gap-2 bg-[#F3F2F0] border border-[#E9E7E4] rounded-full px-4 py-2.5 text-[13.5px] text-muted text-left hover:bg-[#EFEEEB]"><Search size={14} /> Search everything… <kbd className="ml-auto text-[11px] bg-card-alt rounded px-1.5">Ctrl K</kbd></button> },
   { id: "shortcuts", name: "Shortcuts", desc: "One click to the things you start most.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Zap, body: () => <Shortcuts /> },
   { id: "clock", name: "Clock", desc: "The time, with a face you can read at a glance. The face grows with the widget.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: Clock3, title: () => <LiveTime />, body: () => <ClockFace /> },
-  { id: "note", name: "Note", desc: "A sticky note that stays on this computer.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: StickyNote, tone: "bg-[#F6E9A6]", inner: "bg-[#FFF7C7]", body: () => <Note /> },
+  { id: "note", name: "Note", desc: "A sticky note that stays on this computer.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: StickyNote, tone: "bg-[#F4EDCF]", inner: "bg-[#FFFAE6]", body: () => <Note /> },
 ];
 
 export const WIDGET = (id: string) => WIDGETS.find((w) => w.id === id);

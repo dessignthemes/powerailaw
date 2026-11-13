@@ -219,7 +219,7 @@ html[data-theme="dark"] button[aria-label^="Close"]:hover { background-color: #3
 /* Dashboard Note: a yellow post-it with ruled lines that scroll with the text. */
 .lp-note-lines {
   line-height: 26px;
-  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #EADB8E 25px, #EADB8E 26px);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #EEE4BD 25px, #EEE4BD 26px);
   background-attachment: local;
   padding-top: 1px;
 }
