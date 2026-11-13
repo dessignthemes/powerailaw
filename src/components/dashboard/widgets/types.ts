@@ -65,5 +65,6 @@ export type WidgetDef = {
   action?: (d: DashData) => React.ReactNode; // a link on the right of the header
   plain?: boolean; // no header (the widget draws its own)
   tone?: string; // background class (defaults to bg-card-alt)
+  inner?: string; // inside panel's background class (defaults to bg-white)
   body: (d: DashData, size: WidgetSize) => React.ReactNode;
 };

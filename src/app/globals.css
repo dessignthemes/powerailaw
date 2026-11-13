@@ -215,3 +215,12 @@ button[aria-label^="Close"] {
 button[aria-label^="Close"]:hover { background-color: #E4E4E2; }
 html[data-theme="dark"] button[aria-label^="Close"] { background-color: #262a32; color: #e8e9ec; }
 html[data-theme="dark"] button[aria-label^="Close"]:hover { background-color: #30353f; }
+
+/* Dashboard Note: a yellow post-it with ruled lines that scroll with the text. */
+.lp-note-lines {
+  line-height: 26px;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #EADB8E 25px, #EADB8E 26px);
+  background-attachment: local;
+  padding-top: 1px;
+}
+html[data-theme="dark"] .lp-note-lines { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 25px, #4a4329 25px, #4a4329 26px); color: #efe6c0; }

@@ -654,13 +654,9 @@ function ClockFace() {
     return () => cancelAnimationFrame(raf);
   }, []);
   return (
-    <div className="m-auto flex flex-col items-center gap-1.5">
-      <svg viewBox="0 0 200 200" className="w-[132px] h-[132px]" aria-label={label ?? "Clock"}>
-        <defs>
-          <filter id="lpHandShadow" filterUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
-            <feDropShadow dx="1" dy="1.5" stdDeviation="1.2" floodColor="#000" floodOpacity="0.25" />
-          </filter>
-        </defs>
+    // The face fills the widget (whatever its size), staying round.
+    <div className="flex-1 min-h-0 w-full flex items-center justify-center">
+      <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" className="w-full h-full max-w-full max-h-full" aria-label={label ?? "Clock"}>
         <circle className="lp-clock-face" cx="100" cy="100" r="98" fill="#fff" />
         {[...Array(60)].map((_, i) => (
           <line key={i} x1="100" y1="5" x2="100" y2={i % 5 ? "12" : "17"} className="lp-clock-ink" stroke="#141414" strokeWidth={i % 5 ? 2.2 : 5} strokeLinecap="round" transform={`rotate(${i * 6} 100 100)`} />
@@ -674,13 +670,13 @@ function ClockFace() {
             </text>
           );
         })}
-        <g ref={hourRef} filter="url(#lpHandShadow)">
+        <g ref={hourRef}>
           <line className="lp-clock-ink" x1="100" y1="104" x2="100" y2="50" stroke="#141414" strokeWidth="9" strokeLinecap="round" />
         </g>
-        <g ref={minRef} filter="url(#lpHandShadow)">
+        <g ref={minRef}>
           <line className="lp-clock-ink" x1="100" y1="106" x2="100" y2="18" stroke="#141414" strokeWidth="5" strokeLinecap="round" />
         </g>
-        <g ref={secRef} filter="url(#lpHandShadow)">
+        <g ref={secRef}>
           <line x1="100" y1="114" x2="100" y2="20" stroke="#E2A43A" strokeWidth="1.6" strokeLinecap="round" />
           <circle cx="100" cy="100" r="7.5" fill="#E2A43A" />
         </g>
@@ -699,6 +695,50 @@ function LiveTime() {
     return () => (clearTimeout(t0), clearInterval(iv));
   }, []);
   return <span className="tabular-nums">{t ?? "Clock"}</span>;
+}
+
+// Due today (count): the number, plus the tasks themselves (yours first), and
+// what's overdue when nothing is due today.
+function DueTodayCount({ d }: { d: DashData }) {
+  const small = useSmall();
+  const me = (d.meEmail ?? "").toLowerCase();
+  const open = d.allTasks.filter((t) => t.status !== "done");
+  const due = open.filter((t) => t.dueDate === d.todayStr);
+  const late = open.filter((t) => isOverdue(t));
+  const mine = (t: (typeof open)[number]) => (t.assignee ?? "").toLowerCase() === me;
+  const myDue = due.filter(mine).length;
+  const list = (due.length ? due : late).slice().sort((a, b) => Number(mine(b)) - Number(mine(a)) || (PRI_RANK[a.priority] ?? 3) - (PRI_RANK[b.priority] ?? 3));
+  if (!d.tasksLoaded) return <div className="text-[14px] text-muted m-auto">Loading tasks…</div>;
+  return (
+    <div className="flex flex-col min-h-0 flex-1">
+      <div className="flex items-end gap-3">
+        <div className={`${small ? "text-[30px]" : "text-[38px]"} leading-none font-display font-semibold tabular-nums`}>{due.length}</div>
+        <div className={`${small ? "text-[12px]" : "text-[13px]"} text-muted pb-0.5 leading-snug`}>
+          {due.length ? `due today · ${myDue} yours` : "nothing due today"}
+          {late.length > 0 && (
+            <>
+              <br />
+              <span className="text-[#B42318] font-medium">{late.length} overdue</span>
+            </>
+          )}
+        </div>
+      </div>
+      {list.length > 0 ? (
+        <div className="mt-2.5 flex flex-col min-h-0 flex-1 overflow-y-auto -mx-1">
+          {!due.length && <div className="px-1 pb-1 font-mono text-[10.5px] uppercase tracking-wider text-[#B42318]">Overdue</div>}
+          {list.map((t) => (
+            <button key={t.id} onClick={() => d.openTask(t)} className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-[#F3F2F0] text-left min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: priorityMeta[t.priority]?.bg }} />
+              <span className={`flex-1 min-w-0 truncate ${small ? "text-[12.5px]" : "text-[13.5px]"} ${mine(t) ? "font-medium" : ""}`}>{t.title}</span>
+              {!small && <span className="text-[11.5px] text-muted flex-shrink-0">{t.assignee ? firstName(d, t.assignee) : "Unassigned"}</span>}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-auto text-[12.5px] text-muted">All caught up.</div>
+      )}
+    </div>
+  );
 }
 
 function Note() {
@@ -726,7 +766,7 @@ function Note() {
       }}
       placeholder="Jot something down. It stays on this computer."
       aria-label="Note"
-      className="flex-1 min-h-0 w-full bg-transparent resize-none outline-none text-[14.5px] leading-relaxed placeholder:text-muted"
+      className="lp-note-lines flex-1 min-h-0 w-full bg-transparent resize-none outline-none text-[14.5px] placeholder:text-[#9A8B4E]"
     />
   );
 }
@@ -772,7 +812,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: "teamTasks", name: "Team tasks", desc: "Always the whole team's open tasks, with who each one belongs to: overdue first, then due today / this week / month.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: Users, title: (d) => `Team tasks · ${d.rangeWord}`, body: (d) => <ScopedTasks d={d} team /> },
   { id: "myTasks", name: "My open tasks", desc: "Your open tasks, soonest first. Tick one off without leaving the Dashboard.", category: "Tasks", sizes: ["m", "l"], size: "l", icon: CheckCircle2, body: (d) => <MyOpenTasks d={d} /> },
   { id: "overdue", name: "Overdue", desc: "Open tasks past their due date across the firm.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: AlarmClock, body: (d) => { const n = d.allTasks.filter(isOverdue).length; return <Big n={n} label={n ? "past their due date" : "Nothing overdue"} />; } },
-  { id: "dueCount", name: "Due today (count)", desc: "How many tasks are due today across the firm, and how many are yours.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: CalendarClock, title: () => "Due today", body: (d) => { const due = d.allTasks.filter((t) => t.status !== "done" && t.dueDate === d.todayStr); const mine = due.filter((t) => (t.assignee ?? "").toLowerCase() === (d.meEmail ?? "").toLowerCase()).length; return <Big n={due.length} label={due.length ? `${mine} of them yours` : "Nothing due today"} />; } },
+  { id: "dueCount", name: "Due today (count)", desc: "Tasks due today across the firm: how many, how many are yours and overdue, and the tasks themselves.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: CalendarClock, title: () => "Due today", body: (d) => <DueTodayCount d={d} /> },
   { id: "doneWeek", name: "Done this week", desc: "Tasks the firm finished in the last seven days.", category: "Tasks", sizes: ["m"], size: "m", icon: CheckCircle2, body: (d) => <DoneThisWeek d={d} /> },
   { id: "unassigned", name: "Unassigned", desc: "Open tasks that still need an owner.", category: "Tasks", sizes: ["s", "m"], size: "s", icon: UserX, body: (d) => { const n = d.allTasks.filter((t) => t.status !== "done" && !t.assignee).length; return <Big n={n} label={n ? "need an owner" : "Every task has an owner"} />; } },
   { id: "workload", name: "Workload", desc: "Open tasks per person, and how many are late. Click a name to see their tasks.", category: "Tasks", sizes: ["m", "l"], size: "m", icon: Users, body: (d) => <Workload d={d} /> },
@@ -805,8 +845,8 @@ export const WIDGETS: WidgetDef[] = [
   { id: "askAi", name: "Ask the AI Agent", desc: "Ask a question from the Dashboard; the AI Agent opens with it.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Sparkles, tone: "bg-[#F3F2F0]", body: () => <AskAi /> },
   { id: "search", name: "Search", desc: "Search matters, contacts, documents, tasks and more.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Search, body: () => <button onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, metaKey: true }))} className="mt-auto flex items-center gap-2 bg-[#F3F2F0] border border-[#E9E7E4] rounded-full px-4 py-2.5 text-[13.5px] text-muted text-left hover:bg-[#EFEEEB]"><Search size={14} /> Search everything… <kbd className="ml-auto text-[11px] bg-card-alt rounded px-1.5">Ctrl K</kbd></button> },
   { id: "shortcuts", name: "Shortcuts", desc: "One click to the things you start most.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Zap, body: () => <Shortcuts /> },
-  { id: "clock", name: "Clock", desc: "The time, with a face you can read at a glance.", category: "AI and tools", sizes: ["s"], size: "s", icon: Clock3, title: () => <LiveTime />, body: () => <ClockFace /> },
-  { id: "note", name: "Note", desc: "A sticky note that stays on this computer.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: StickyNote, tone: "bg-[#F4F1EA]", body: () => <Note /> },
+  { id: "clock", name: "Clock", desc: "The time, with a face you can read at a glance. The face grows with the widget.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: Clock3, title: () => <LiveTime />, body: () => <ClockFace /> },
+  { id: "note", name: "Note", desc: "A sticky note that stays on this computer.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: StickyNote, tone: "bg-[#F6E9A6]", inner: "bg-[#FFF7C7]", body: () => <Note /> },
 ];
 
 export const WIDGET = (id: string) => WIDGETS.find((w) => w.id === id);

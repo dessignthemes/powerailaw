@@ -54,7 +54,7 @@ export function WidgetShell({ def, size, d }: { def: WidgetDef; size: WidgetSize
             {def.action && size !== "s" && <div className="flex-shrink-0">{def.action(d)}</div>}
           </div>
         )}
-        <div className={`flex-1 min-h-0 flex flex-col bg-white rounded-2xl border border-[#E9E7E4] ${small ? "p-3.5" : "p-4"}`}>{def.body(d, size)}</div>
+        <div className={`flex-1 min-h-0 flex flex-col ${def.inner ?? "bg-white"} rounded-2xl border border-[#E9E7E4] ${small ? "p-3.5" : "p-4"}`}>{def.body(d, size)}</div>
       </div>
     </WidgetSizeContext.Provider>
   );

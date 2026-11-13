@@ -173,3 +173,7 @@ html[data-theme="dark"] .lp-theme-btn:hover { background-color: #414c68; }
 html[data-theme="dark"] [role="switch"] { background-color: #3a404c !important; }
 html[data-theme="dark"] [role="switch"][aria-checked="true"] { background-color: #7f9bd6 !important; }
 html[data-theme="dark"] [role="switch"] > span { background-color: #e8e9ec !important; }
+
+/* Dashboard Note (yellow post-it). */
+html[data-theme="dark"] .bg-\[\#F6E9A6\]{background-color:#3a3422}
+html[data-theme="dark"] .bg-\[\#FFF7C7\]{background-color:#2c2818}
