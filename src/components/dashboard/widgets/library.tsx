@@ -654,9 +654,9 @@ function ClockFace() {
     return () => cancelAnimationFrame(raf);
   }, []);
   return (
-    // The face fills the widget (whatever its size), staying round.
+    // The face takes about 70% of the widget, so it grows and shrinks with it (and stays round).
     <div className="flex-1 min-h-0 w-full flex items-center justify-center">
-      <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" className="w-full h-full max-w-full max-h-full" aria-label={label ?? "Clock"}>
+      <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" className="w-[70%] h-[70%]" aria-label={label ?? "Clock"}>
         <circle className="lp-clock-face" cx="100" cy="100" r="98" fill="#fff" />
         {[...Array(60)].map((_, i) => (
           <line key={i} x1="100" y1="5" x2="100" y2={i % 5 ? "12" : "17"} className="lp-clock-ink" stroke="#141414" strokeWidth={i % 5 ? 2.2 : 5} strokeLinecap="round" transform={`rotate(${i * 6} 100 100)`} />
