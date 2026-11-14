@@ -110,7 +110,7 @@ export async function updatePracticeAreas(input: { practiceAreas?: unknown; scop
   if (!a.canEdit) throw new OrgError(403, "Only the workspace owner or an admin can change the practice areas.");
   const areas: Record<string, "handle" | "decline"> = {};
   if (input.practiceAreas && typeof input.practiceAreas === "object") {
-    for (const [k, v] of Object.entries(input.practiceAreas as Record<string, unknown>).slice(0, 60)) {
+    for (const [k, v] of Object.entries(input.practiceAreas as Record<string, unknown>).slice(0, 150)) {
       const name = k.trim().slice(0, 60);
       if (name && (v === "handle" || v === "decline")) areas[name] = v;
     }

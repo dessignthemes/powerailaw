@@ -129,17 +129,44 @@ const timezones = [
 
 const practiceAreas = [
   "Family Law",
+  "Divorce",
+  "Child Custody & Support",
+  "Adoption",
+  "Domestic Violence / Restraining Orders",
   "Immigration",
   "Personal Injury",
+  "Medical Malpractice",
+  "Workers' Compensation",
+  "Social Security Disability",
   "Criminal Defense",
+  "DWI / DUI",
+  "Municipal Court / Traffic",
+  "Expungement",
   "Estate Planning",
+  "Wills & Trusts",
   "Probate",
+  "Estate Administration",
+  "Guardianship",
+  "Elder Law",
+  "Medicaid Planning",
   "Real Estate",
+  "Residential Real Estate",
+  "Commercial Real Estate",
+  "Leasing",
+  "Condominium / HOA",
+  "Zoning & Land Use",
+  "Construction",
   "Business / Corporate",
+  "Business Formation",
+  "Mergers & Acquisitions",
+  "Bulk Sales",
+  "Nonprofit",
   "Contracts",
   "Employment",
   "Litigation",
   "Civil Disputes",
+  "Appeals",
+  "Mediation / Arbitration",
   "Bankruptcy",
   "Intellectual Property",
   "Tax",
@@ -147,6 +174,13 @@ const practiceAreas = [
   "Debt Collection",
   "Insurance",
   "Consumer Protection",
+  "Civil Rights",
+  "Education",
+  "Health Care",
+  "Environmental",
+  "Entertainment / Media",
+  "Government / Administrative",
+  "Notary / Apostille",
   "Other",
 ];
 
@@ -154,7 +188,7 @@ type PracticeAreaStatus = "We handle" | "Don't handle" | "Not set";
 
 // Saved choices ({ "Real Estate": "handle" }) → every area's button state.
 const fromSaved = (saved: Record<string, "handle" | "decline">): Record<string, PracticeAreaStatus> =>
-  Object.fromEntries(practiceAreas.map((a) => [a, saved[a] === "handle" ? "We handle" : saved[a] === "decline" ? "Don't handle" : "Not set"]));
+  Object.fromEntries([...new Set([...practiceAreas, ...Object.keys(saved)])].map((a) => [a, saved[a] === "handle" ? "We handle" : saved[a] === "decline" ? "Don't handle" : "Not set"]));
 
 function PracticeAreaRow({
   label,
@@ -385,7 +419,17 @@ export default function IntegrationsModal({
   }, []);
 
 
-  const allPracticeAreasUnset = practiceAreas.every((a) => practiceStatus[a] === "Not set");
+  const allPracticeAreasUnset = Object.values(practiceStatus).every((v) => v === "Not set");
+  // The built-in list plus the firm's own areas (added below, or saved before).
+  const shownAreas = [...practiceAreas.filter((a) => a !== "Other"), ...Object.keys(practiceStatus).filter((a) => !practiceAreas.includes(a)), "Other"];
+  const [newArea, setNewArea] = useState("");
+  function addArea() {
+    const name = newArea.replace(/\s+/g, " ").trim().slice(0, 60);
+    if (!name) return;
+    const existing = Object.keys(practiceStatus).find((a) => a.toLowerCase() === name.toLowerCase());
+    setPracticeStatus((prev) => ({ ...prev, [existing ?? name]: "We handle" }));
+    setNewArea("");
+  }
 
   // The logo is shrunk to 256px in the browser and saved with the workspace.
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -739,14 +783,29 @@ export default function IntegrationsModal({
                 </div>
 
                 <div className="mb-8">
-                  {practiceAreas.map((area) => (
+                  {shownAreas.map((area) => (
                     <PracticeAreaRow
                       key={area}
                       label={area}
-                      status={practiceStatus[area]}
+                      status={practiceStatus[area] ?? "Not set"}
                       onChange={(s) => setPracticeStatus((prev) => ({ ...prev, [area]: s }))}
                     />
                   ))}
+                  {/* The firm's own practice area, if it isn't in the list. */}
+                  <div className="flex items-center gap-2 pt-4">
+                    <input
+                      value={newArea}
+                      onChange={(e) => setNewArea(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addArea()}
+                      placeholder="Add another practice area (e.g. Cannabis Law)"
+                      aria-label="Add a practice area"
+                      className="flex-1 max-w-[420px] bg-white border border-line rounded-xl px-3.5 py-2 text-[14px] outline-none"
+                    />
+                    <button onClick={addArea} disabled={!newArea.trim()} className="bg-chip hover:bg-btn disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors">
+                      + Add
+                    </button>
+                  </div>
+                  <p className="text-[12px] text-muted mt-1.5">New areas start as “We handle”. Remember to click Save practice areas.</p>
                 </div>
 
                 <div className="mb-8">
