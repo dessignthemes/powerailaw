@@ -282,9 +282,31 @@ export default function RecordsPage() {
   return (
     <div className="px-10 py-10">
       <div className="flex items-center justify-between mb-1">
-        <h1 className="text-[28px] font-semibold">
-          Contacts <span className="text-muted font-normal text-[18px]">/ {loaded ? counts.all : "–"}</span>
-        </h1>
+        <div className="flex items-center gap-5 flex-wrap min-w-0">
+          <h1 className="text-[28px] font-semibold whitespace-nowrap">
+            Contacts <span className="text-muted font-normal text-[18px]">/ {loaded ? counts.all : "–"}</span>
+          </h1>
+          {/* Search right next to the title, so it's easy to find. */}
+          <div className="relative w-full sm:w-[380px] bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
+            <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+            <input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setLimit(PAGE);
+              }}
+              onKeyDown={(e) => e.key === "Escape" && setQuery("")}
+              placeholder="Search contacts: name, email, phone, company…"
+              aria-label="Find a contact"
+              className="w-full border border-[#E9E7E4] bg-white rounded-full pl-10 pr-9 py-2 text-[14px] outline-none focus:border-[#D1CDC6] placeholder:text-muted "
+            />
+            {query && (
+              <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-ink">
+                <X size={14} strokeWidth={1.75} />
+              </button>
+            )}
+          </div>
+        </div>
         <div className="relative flex items-center gap-2">
           {/* Conflict check for a prospect (the results are on the Conflict Checks page). */}
           <button onClick={() => setConflictOpen(true)} className={pageBtnB}>
@@ -420,25 +442,6 @@ export default function RecordsPage() {
             </GenericDropdown>
           </div>
         )}
-        <div className="relative w-full sm:w-80 bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
-          <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-          <input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setLimit(PAGE);
-            }}
-            onKeyDown={(e) => e.key === "Escape" && setQuery("")}
-            placeholder="Find a contact..."
-            aria-label="Find a contact"
-            className="w-full border border-[#E9E7E4] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#D1CDC6] placeholder:text-muted "
-          />
-          {query && (
-            <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-ink">
-              <X size={14} strokeWidth={1.75} />
-            </button>
-          )}
-        </div>
         </div>
       </div>
 
