@@ -55,11 +55,42 @@ async function all<T>(q: (from: number, to: number) => PromiseLike<{ data: unkno
   return out;
 }
 
-export async function practiceReport(orgId: string, period: Period, today: string) {
+// "REP-2026-3707" → { prefix: "REP", year: "2026" }.
+export function numberParts(n: string | null | undefined): { prefix: string; year: string } | null {
+  const m = (n ?? "").toUpperCase().match(/^([A-Z][A-Z0-9]{0,7})-(\d{4})-\d+$/);
+  return m ? { prefix: m[1], year: m[2] } : null;
+}
+// Filter by the matter number: its prefix (REP, RES, EP…) and/or its year.
+export type NumberFilter = { prefixes: string[]; year: string | null };
+// ?prefix=REP,RES&year=2026 — only matters with those prefixes / that year in their number.
+export function numberFilter(u: URLSearchParams): NumberFilter {
+  const prefixes = (u.get("prefix") ?? "").toUpperCase().split(",").map((x) => x.trim()).filter((x) => /^[A-Z][A-Z0-9]{0,7}$/.test(x)).slice(0, 20);
+  const year = u.get("year");
+  return { prefixes, year: year && /^\d{4}$/.test(year) ? year : null };
+}
+
+
+export async function practiceReport(orgId: string, period: Period, today: string, filter: NumberFilter = { prefixes: [], year: null }) {
   const db = createAdminClient();
-  const matters = await all<MatterRow>((a, b) =>
+  const everyMatter = await all<MatterRow>((a, b) =>
     db.from("matters").select("id, category, status, created_at, value, billing_type, hourly_rate, matter_number, description").eq("org_id", orgId).range(a, b)
   );
+  // The prefixes and years there are (for the filter lists), with how many matters each.
+  const prefixCount = new Map<string, number>();
+  const numberYears = new Map<string, number>();
+  for (const m of everyMatter) {
+    const p = numberParts(m.matter_number);
+    if (!p) continue;
+    prefixCount.set(p.prefix, (prefixCount.get(p.prefix) ?? 0) + 1);
+    numberYears.set(p.year, (numberYears.get(p.year) ?? 0) + 1);
+  }
+  const filtering = filter.prefixes.length > 0 || !!filter.year;
+  const matters = !filtering
+    ? everyMatter
+    : everyMatter.filter((m) => {
+        const p = numberParts(m.matter_number);
+        return !!p && (!filter.prefixes.length || filter.prefixes.includes(p.prefix)) && (!filter.year || p.year === filter.year);
+      });
   const byId = new Map(matters.map((m) => [m.id, m]));
 
   // Time (billable only) and the books (optional: missing tables just mean no data yet).
@@ -136,6 +167,7 @@ export async function practiceReport(orgId: string, period: Period, today: strin
   let billableValue = 0;
   for (const t of time) {
     if (!t.billable) continue;
+    if (filtering && !(t.matter_id && byId.has(t.matter_id))) continue;
     const m = t.matter_id ? byId.get(t.matter_id) : undefined;
     const c = cat(catOf(m?.category ?? null));
     const flat = m?.billing_type === "Flat fee";
@@ -153,6 +185,7 @@ export async function practiceReport(orgId: string, period: Period, today: strin
   let expenses = 0;
   for (const t of books) {
     if (t.account === "trust" || t.kind === "transfer") continue;
+    if (filtering && !(t.matter_id && byId.has(t.matter_id))) continue; // filtered: only money linked to those matters
     const amt = Number(t.amount) || 0;
     const mo = monthOf(t.txn_date);
     const row = money.get(mo) ?? { income: 0, expenses: 0 };
@@ -178,6 +211,9 @@ export async function practiceReport(orgId: string, period: Period, today: strin
   const categories = [...cats.values()].sort((a, b) => b.total - a.total || a.category.localeCompare(b.category));
   return {
     period,
+    filter,
+    prefixes: [...prefixCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([prefix, count]) => ({ prefix, count })),
+    numberYears: [...numberYears.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([year, count]) => ({ year, count })),
     totals: {
       matters: matters.length,
       current: matters.filter((m) => m.status !== "Closed").length,

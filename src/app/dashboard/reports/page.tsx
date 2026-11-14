@@ -276,16 +276,18 @@ function RelTable({ rows, empty, person }: { rows: RelRow[]; empty: string; pers
   );
 }
 
-function Relationships({ from, to, periodLabel }: { from: string | null; to: string | null; periodLabel: string }) {
+function Relationships({ from, to, periodLabel, prefixes = [], numYear = "" }: { from: string | null; to: string | null; periodLabel: string; prefixes?: string[]; numYear?: string }) {
   const [data, setData] = useState<{ key: string; r: RelReport } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
-  const key = `${from}|${to}|${tick}`;
+  const key = `${from}|${to}|${tick}|${prefixes.join(",")}|${numYear}`;
   useEffect(() => {
     let live = true;
     const qs = new URLSearchParams();
     if (from) qs.set("from", from);
     if (to) qs.set("to", to);
+    if (prefixes.length) qs.set("prefix", prefixes.join(","));
+    if (numYear) qs.set("year", numYear);
     fetch(`/api/reports/relationships?${qs}`)
       .then(async (res) => {
         const d = await res.json().catch(() => ({}));
@@ -297,7 +299,7 @@ function Relationships({ from, to, periodLabel }: { from: string | null; to: str
     return () => {
       live = false;
     };
-  }, [key, from, to]);
+  }, [key, from, to, prefixes, numYear]);
   const r = data?.key === key ? data.r : null;
   // Link every matter's Details to Contacts (for matters filled in before this existed).
   const [linking, setLinking] = useState<{ done: number; total: number } | null>(null);
@@ -410,13 +412,19 @@ export default function ReportsPage() {
   const [data, setData] = useState<{ key: string; report: PracticeReport } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const range = useMemo(() => rangeFor(period), [period]);
-  const key = `${range.from}|${range.to}`;
+  // Matter number filter: prefixes (REP, RES…) and the year in the number.
+  const [prefixes, setPrefixes] = useState<string[]>([]);
+  const [numYear, setNumYear] = useState<string>("");
+  const filterQs = `${prefixes.join(",")}|${numYear}`;
+  const key = `${range.from}|${range.to}|${filterQs}`;
 
   useEffect(() => {
     let live = true;
     const qs = new URLSearchParams({ today: iso(new Date()) });
     if (range.from) qs.set("from", range.from);
     if (range.to) qs.set("to", range.to);
+    if (prefixes.length) qs.set("prefix", prefixes.join(","));
+    if (numYear) qs.set("year", numYear);
     fetch(`/api/reports?${qs}`)
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
@@ -432,9 +440,12 @@ export default function ReportsPage() {
     return () => {
       live = false;
     };
-  }, [key, range.from, range.to]);
+  }, [key, range.from, range.to, prefixes, numYear]);
 
   const r = data?.key === key ? data.report : null;
+  // The filter lists come from the last report loaded (kept while a new one loads).
+  const options = { prefixes: data?.report?.prefixes ?? [], numberYears: data?.report?.numberYears ?? [] };
+  const filterLabel = [prefixes.join(", "), numYear].filter(Boolean).join(" · ");
   const periodLabel = PERIODS.find((p) => p.key === period)!.label.toLowerCase();
   const areas = r ? r.categories.map((c) => c.category) : [];
   const mix = r ? r.categories.filter((c) => c.current > 0).map((c) => ({ name: c.category, value: c.current })).sort((a, b) => b.value - a.value) : [];
@@ -466,7 +477,61 @@ export default function ReportsPage() {
           </button>
         ))}
       </div>
-      <div className="hidden print:block text-[13px] text-muted mb-4">Period: {PERIODS.find((p) => p.key === period)!.label}</div>
+      {/* Matter number: prefix (REP, RES, EP…) and the year in the number (REP-2026-…). */}
+      {options.prefixes.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap -mt-5 mb-8 print:hidden">
+          <span className="text-[12.5px] text-muted mr-1">Matter number:</span>
+          <button onClick={() => setPrefixes([])} className={!prefixes.length ? pageBtnOpenB : pageBtnB}>
+            All prefixes
+          </button>
+          {options.prefixes.map((p) => {
+            const on = prefixes.includes(p.prefix);
+            return (
+              <button
+                key={p.prefix}
+                onClick={() => setPrefixes((list) => (on ? list.filter((x) => x !== p.prefix) : [...list, p.prefix]))}
+                aria-pressed={on}
+                title={`${p.count} matters numbered ${p.prefix}-…`}
+                className={on ? pageBtnOpenB : pageBtnB}
+              >
+                {p.prefix} <span className="text-muted font-normal">{p.count}</span>
+              </button>
+            );
+          })}
+          <select
+            value={numYear}
+            onChange={(e) => {
+              setNumYear(e.target.value);
+              // A year in the number covers matters opened before LawPower too: show all time.
+              if (e.target.value) setPeriod("all");
+            }}
+            aria-label="Year in the matter number"
+            className="ml-1 bg-white border border-line rounded-full px-3 py-1.5 text-[13px] font-medium outline-none"
+          >
+            <option value="">All years</option>
+            {options.numberYears.map((y) => (
+              <option key={y.year} value={y.year}>
+                {y.year} ({y.count})
+              </option>
+            ))}
+          </select>
+          {(prefixes.length > 0 || numYear) && (
+            <button
+              onClick={() => {
+                setPrefixes([]);
+                setNumYear("");
+              }}
+              className="text-[12.5px] text-muted underline underline-offset-2 hover:text-ink ml-1"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+      <div className="hidden print:block text-[13px] text-muted mb-4">
+        Period: {PERIODS.find((p) => p.key === period)!.label}
+        {filterLabel ? ` · Matters: ${filterLabel}` : ""}
+      </div>
 
       {error ? (
         <div className="rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-4 py-3 text-[13.5px]">{error}</div>
@@ -575,7 +640,7 @@ export default function ReportsPage() {
           </div>
 
           {/* ── Relationships ── */}
-          <Relationships from={range.from} to={range.to} periodLabel={periodLabel} />
+          <Relationships from={range.from} to={range.to} periodLabel={periodLabel} prefixes={prefixes} numYear={numYear} />
 
           {r.totals.imported > 0 && (
             <p className="text-[12.5px] text-muted flex gap-2 items-start">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getCurrentOrgId, NoWorkspaceError } from "@/lib/data/org";
 import { relationshipsReport } from "@/lib/reports/relationships";
+import { numberFilter } from "@/lib/reports/practice";
 import { syncDetailsWithContacts } from "@/lib/contacts/detailsSync";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
     const u = new URL(request.url).searchParams;
     const from = u.get("from");
     const to = u.get("to");
-    const report = await relationshipsReport(await getCurrentOrgId(), { from: from && DATE.test(from) ? from : null, to: to && DATE.test(to) ? to : null });
+    const report = await relationshipsReport(await getCurrentOrgId(), { from: from && DATE.test(from) ? from : null, to: to && DATE.test(to) ? to : null }, numberFilter(u));
     return NextResponse.json(report, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (error instanceof NoWorkspaceError) return NextResponse.json({ error: error.message }, { status: error.status });

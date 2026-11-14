@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getCurrentOrgId, NoWorkspaceError } from "@/lib/data/org";
-import { practiceReport } from "@/lib/reports/practice";
+import { practiceReport, numberFilter } from "@/lib/reports/practice";
 
 export const dynamic = "force-dynamic";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-// GET ?from=YYYY-MM-DD&to=YYYY-MM-DD&today=YYYY-MM-DD — the practice overview for Reports.
+
+// GET ?from=YYYY-MM-DD&to=YYYY-MM-DD&today=YYYY-MM-DD&prefix=REP,RES&year=2026 — the practice overview for Reports.
 export async function GET(request: Request) {
   try {
     const user = await getSessionUser();
@@ -19,7 +20,8 @@ export async function GET(request: Request) {
     const report = await practiceReport(
       await getCurrentOrgId(),
       { from: from && DATE.test(from) ? from : null, to: to && DATE.test(to) ? to : null },
-      today && DATE.test(today) ? today : new Date().toISOString().slice(0, 10)
+      today && DATE.test(today) ? today : new Date().toISOString().slice(0, 10),
+      numberFilter(u)
     );
     return NextResponse.json(report, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

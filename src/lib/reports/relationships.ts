@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { numberParts, type NumberFilter } from "@/lib/reports/practice";
 
 // "Where the business comes from": for each real estate office, realtor, lender,
 // law firm / attorney, title company and referral source, how many of the firm's
@@ -23,7 +24,7 @@ export type RelationshipsReport = {
   referralTypes: { name: string; value: number }[]; // Attorney, Realtor, Past client…
 };
 
-type MatterRow = { id: string; status: string; created_at: string; details?: Record<string, { value?: string }> | null };
+type MatterRow = { id: string; status: string; created_at: string; matter_number?: string | null; details?: Record<string, { value?: string }> | null };
 type LinkRow = { matter_id: string; contact_id: string | null; role: string };
 type ContactRow = { id: string; kind: string; name: string; company: string | null; employer_id?: string | null; vendor_type?: string | null };
 
@@ -39,11 +40,15 @@ async function all<T>(build: (from: number, to: number) => PromiseLike<{ data: u
   return out;
 }
 
-export async function relationshipsReport(orgId: string, range: { from: string | null; to: string | null }): Promise<RelationshipsReport> {
+export async function relationshipsReport(orgId: string, range: { from: string | null; to: string | null }, filter: NumberFilter = { prefixes: [], year: null }): Promise<RelationshipsReport> {
   const matters = (
     await all<MatterRow>((a, b) => db().from("matters").select("*").eq("org_id", orgId).order("id").range(a, b))
   ).filter((m) => {
     const day = (m.created_at ?? "").slice(0, 10);
+    if (filter.prefixes.length || filter.year) {
+      const p = numberParts(m.matter_number);
+      if (!p || (filter.prefixes.length && !filter.prefixes.includes(p.prefix)) || (filter.year && p.year !== filter.year)) return false;
+    }
     return (!range.from || day >= range.from) && (!range.to || day <= range.to);
   });
   const inPeriod = new Map(matters.map((m) => [m.id, m]));
