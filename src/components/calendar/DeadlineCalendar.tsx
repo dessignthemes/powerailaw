@@ -123,11 +123,11 @@ export default function DeadlineCalendar({ matterId, compact = false }: { matter
             <button
               key={k}
               onClick={() => setPicked(k)}
-              className={`text-left rounded-lg border px-1.5 py-1 ${compact ? "min-h-[54px]" : "min-h-[84px]"} transition-colors ${
+              className={`flex flex-col items-stretch justify-start text-left rounded-lg border px-1.5 py-1 ${compact ? "min-h-[54px]" : "min-h-[84px]"} transition-colors ${
                 k === picked ? "border-[#C4C0B8] bg-[#F3F2F0]" : "border-[#EBEAE7] hover:bg-[#FAFAF9]"
               } ${other ? "opacity-45" : ""}`}
             >
-              <span className={`text-[12px] font-medium inline-flex items-center justify-center ${k === today ? "w-5 h-5 rounded-full bg-[#1b191a] text-white" : ""}`}>{d.getDate()}</span>
+              <span className={`self-start text-[12px] font-medium inline-flex items-center justify-center ${k === today ? "w-5 h-5 rounded-full bg-[#1b191a] text-white" : ""}`}>{d.getDate()}</span>
               <span className="flex flex-col gap-0.5 mt-0.5">
                 {list.slice(0, perCell).map((i) => (
                   <span key={i.id} className={`flex items-center gap-1 text-[11px] leading-tight truncate ${i.done ? "line-through text-muted" : ""}`} title={`${KIND[i.kind].label}: ${i.title}${i.matterNumber ? ` · ${i.matterNumber}` : ""}`}>
