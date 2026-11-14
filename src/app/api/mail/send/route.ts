@@ -3,6 +3,7 @@ import { requireUserOrg } from "@/lib/data/documents";
 import { sendFromMailbox, parseAddresses, SendError } from "@/lib/mail/sendMail";
 import { parseProvider, mailErrorResponse } from "@/lib/mail/api";
 import { signatureForSending } from "@/lib/mail/signature";
+import { maybeRemember } from "@/lib/data/mailFollowups";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -24,7 +25,9 @@ export async function POST(request: Request) {
     // The signature always comes from the person's saved settings, never from the page.
     const signature = b.signature === true ? await signatureForSending(user.id) : null;
     const r = await sendFromMailbox(orgId, user.id, { to, cc, subject, text, ...(signature ? { signature } : {}), ...(replyId ? { reply: { messageId: replyId } } : forwardId ? { forward: { messageId: forwardId } } : {}) }, { prefer: parseProvider(b.provider ?? null), kind: replyId ? "reply_by_user" : forwardId ? "forward_by_user" : "sent_by_user" });
-    return NextResponse.json({ ok: true, ...r });
+    // Asked the recipient for something ("Please get back to me…")? Remind me the next business day.
+    const followUp = await maybeRemember({ orgId, userId: user.id, provider: r.provider, to, subject, text });
+    return NextResponse.json({ ok: true, ...r, followUp });
   } catch (e) {
     if (e instanceof SendError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.status });
     return mailErrorResponse("POST /api/mail/send", e);

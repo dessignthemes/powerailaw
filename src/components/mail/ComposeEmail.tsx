@@ -53,6 +53,9 @@ export default function ComposeEmail({
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sent, setSent] = useState<string | null>(null);
+  // The email asked for something: a follow-up reminder was set for the next business day.
+  const [followUp, setFollowUp] = useState<{ id: string; remindOn: string } | null>(null);
+  const [followUpOff, setFollowUpOff] = useState(false);
   useEffect(() => {
     let live = true;
     fetch("/api/mail/status")
@@ -102,8 +105,9 @@ export default function ComposeEmail({
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? "The email couldn't be sent. Please try again.");
       setSent(d.from ?? "your mailbox");
+      if (d.followUp?.id) setFollowUp(d.followUp);
       onSent?.();
-      setTimeout(() => onOpened?.(), 1400);
+      setTimeout(() => onOpened?.(), d.followUp?.id ? 4500 : 1400);
     } catch (e) {
       setSendError((e as Error).message);
     } finally {
@@ -210,8 +214,33 @@ export default function ComposeEmail({
             </div>
           )}
           {sent ? (
-            <div className="flex items-center gap-2 rounded-xl bg-[#E7F6EE] text-[#155C3A] px-4 py-3 text-[13.5px]">
-              <CheckCircle2 size={16} /> Sent from {sent}. It&apos;s in your Sent folder.
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 rounded-xl bg-[#E7F6EE] text-[#155C3A] px-4 py-3 text-[13.5px]">
+                <CheckCircle2 size={16} /> Sent from {sent}. It&apos;s in your Sent folder.
+              </div>
+              {followUp && (
+                <div className="flex items-center gap-2 flex-wrap rounded-xl bg-[#F3F2F0] px-4 py-2.5 text-[13px]">
+                  {followUpOff ? (
+                    <span className="text-muted">No follow-up reminder for this email.</span>
+                  ) : (
+                    <>
+                      <span>
+                        You asked for something, so you&apos;ll be reminded to follow up on{" "}
+                        <b>{new Date(`${followUp.remindOn}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</b> (unless they reply first).
+                      </span>
+                      <button
+                        onClick={() => {
+                          setFollowUpOff(true);
+                          void fetch("/api/mail/followups", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: followUp.id, action: "dismiss" }) });
+                        }}
+                        className="underline underline-offset-2 text-muted hover:text-ink"
+                      >
+                        Don&apos;t remind me
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           ) : canSendHere ? (
             <>

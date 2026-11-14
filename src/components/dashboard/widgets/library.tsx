@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ListChecks, Flag, ChevronRight, Calendar, Activity, BarChart3, ArrowUpRight, Lock, AlarmClock, CheckCircle2, Circle, UserX, Users, Folder, Layers, PieChart,
-  History, UserRound, Hourglass, CalendarClock, Timer, UserPlus, Phone, Receipt, Sparkles, Clock3, StickyNote, Zap, Search, ArrowUp, Inbox, Funnel,
+  History, UserRound, Hourglass, CalendarClock, Timer, UserPlus, Phone, Receipt, Sparkles, Clock3, StickyNote, Zap, Search, ArrowUp, Inbox, Funnel, MailCheck, Check,
 } from "lucide-react";
 import TeamProgress from "@/components/dashboard/TeamProgress";
 import ScrollHint from "@/components/ScrollHint";
@@ -741,6 +741,113 @@ function DueTodayCount({ d }: { d: DashData }) {
   );
 }
 
+// Email reminder for follow-up: emails you sent that asked for something
+// ("Please get back to me…"), due the next business day, until they reply.
+type FollowUpItem = { id: string; toEmail: string; subject: string; reason: string; sentAt: string; remindOn: string; status: "open" | "done" | "replied" | "dismissed" };
+function FollowUps({ d }: { d: DashData }) {
+  const small = useSmall();
+  const [items, setItems] = useState<FollowUpItem[] | null>(null);
+  const [setup, setSetup] = useState(false);
+  useEffect(() => {
+    let live = true;
+    const load = () =>
+      fetch("/api/mail/followups")
+        .then((r) => (r.ok ? r.json() : { items: [] }))
+        .then((x) => {
+          if (!live) return;
+          setItems((x.items ?? []) as FollowUpItem[]);
+          setSetup(!!x.setupRequired);
+        })
+        .catch(() => live && setItems([]));
+    void load();
+    const t = setInterval(load, 10 * 60_000); // replies close them by themselves
+    return () => {
+      live = false;
+      clearInterval(t);
+    };
+  }, []);
+  async function act(id: string, action: "done" | "snooze" | "reopen") {
+    setItems((list) => (list ?? []).map((i) => (i.id === id ? { ...i, status: action === "done" ? "done" : "open" } : i)));
+    const r = await fetch("/api/mail/followups", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action }) }).catch(() => null);
+    const x = r && r.ok ? await r.json().catch(() => null) : null;
+    if (x?.item) setItems((list) => (list ?? []).map((i) => (i.id === id ? x.item : i)));
+  }
+  if (!items) return <div className="text-[14px] text-muted m-auto">Loading…</div>;
+  if (setup) return <Empty icon={MailCheck} title="Needs a quick setup" sub="Run migration 0070 in Supabase to turn on follow-up reminders." />;
+  const today = d.todayStr;
+  const open = items.filter((i) => i.status === "open");
+  const due = open.filter((i) => i.remindOn <= today);
+  const later = open.filter((i) => i.remindOn > today);
+  const closed = items.filter((i) => i.status === "replied" || i.status === "done");
+  const day = (ymd: string) => new Date(`${ymd}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const who = (to: string) => to.split(",")[0].trim();
+  const row = (i: FollowUpItem) => (
+    <div key={i.id} className="group/fu flex items-start gap-2 px-1.5 py-1.5 rounded-lg hover:bg-[#F3F2F0]">
+      <button
+        onClick={() => void act(i.id, i.status === "open" ? "done" : "reopen")}
+        aria-label={i.status === "open" ? "Mark followed up" : "Open again"}
+        title={i.status === "open" ? "Followed up: tick it off" : "Open it again"}
+        className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${i.status === "open" ? "border-[#C9C6BF] hover:border-[#2F9E5A]" : "bg-[#2F9E5A] border-[#2F9E5A] text-white"}`}
+      >
+        {i.status !== "open" && <Check size={10} strokeWidth={3} />}
+      </button>
+      <span className="flex-1 min-w-0">
+        <span className={`block truncate ${small ? "text-[12.5px]" : "text-[13.5px]"} font-medium ${i.status !== "open" ? "text-muted line-through" : ""}`}>{i.subject || "(no subject)"}</span>
+        <span className="block truncate text-[11.5px] text-muted">
+          {i.status === "replied" ? <span className="text-[#1F7A4D] font-medium">Replied · </span> : null}
+          {who(i.toEmail)} · sent {day(i.sentAt.slice(0, 10))}
+        </span>
+        {!small && i.status === "open" && <span className="block truncate text-[11.5px] text-muted italic">“{i.reason}”</span>}
+      </span>
+      {i.status === "open" && (
+        <button onClick={() => void act(i.id, "snooze")} title="Remind me the next business day" className="text-[11.5px] text-muted hover:text-ink px-1.5 py-0.5 rounded-md hover:bg-white flex-shrink-0 opacity-0 group-hover/fu:opacity-100 focus:opacity-100">
+          Tomorrow
+        </button>
+      )}
+    </div>
+  );
+  const head = (label: string, n: number, red?: boolean) => (
+    <div className={`px-1.5 pt-2 pb-1 font-mono text-[10.5px] uppercase tracking-wider ${red ? "text-[#B42318]" : "text-muted"}`}>
+      {label} · {n}
+    </div>
+  );
+  return (
+    <div className="flex flex-col min-h-0 flex-1">
+      <div className={`${small ? "text-[16px]" : "text-[22px]"} leading-tight font-display font-semibold`}>
+        {due.length ? `${due.length} to follow up` : open.length ? "Nothing due today" : "All caught up"}
+      </div>
+      <div className="text-[12.5px] text-muted mb-1">Emails you sent asking for something, until they reply.</div>
+      {items.length === 0 ? (
+        <Empty icon={MailCheck} title="No reminders" sub="Send an email from LawPower that asks for something (“Please get back to me…”) and it shows up here the next business day." />
+      ) : (
+        <div className="flex flex-col min-h-0 flex-1 overflow-y-auto -mx-1">
+          {due.length > 0 && (
+            <>
+              {head("Follow up today", due.length, true)}
+              {due.map(row)}
+            </>
+          )}
+          {later.length > 0 && (
+            <>
+              {head(`Coming up · ${day(later[0].remindOn)}`, later.length)}
+              {later.map(row)}
+            </>
+          )}
+          {closed.length > 0 && (
+            <>
+              {head("Replied or done", closed.length)}
+              {closed.map(row)}
+            </>
+          )}
+        </div>
+      )}
+      <Link href="/dashboard/inbox" className="mt-2 text-[12.5px] font-medium text-muted hover:text-ink flex items-center gap-1 self-start">
+        Open Inbox <ArrowUpRight size={12} />
+      </Link>
+    </div>
+  );
+}
+
 function Note() {
   const [v, setV] = useState("");
   useEffect(() => {
@@ -846,6 +953,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: "search", name: "Search", desc: "Search matters, contacts, documents, tasks and more.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Search, body: () => <button onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, metaKey: true }))} className="mt-auto flex items-center gap-2 bg-[#F3F2F0] border border-[#E9E7E4] rounded-full px-4 py-2.5 text-[13.5px] text-muted text-left hover:bg-[#EFEEEB]"><Search size={14} /> Search everything… <kbd className="ml-auto text-[11px] bg-card-alt rounded px-1.5">Ctrl K</kbd></button> },
   { id: "shortcuts", name: "Shortcuts", desc: "One click to the things you start most.", category: "AI and tools", sizes: ["m", "w"], size: "m", icon: Zap, body: () => <Shortcuts /> },
   { id: "clock", name: "Clock", desc: "The time, with a face you can read at a glance. The face grows with the widget.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: Clock3, title: () => <LiveTime />, body: () => <ClockFace /> },
+  { id: "followUps", name: "Email reminder for follow-up", desc: "Emails you sent that asked for something (“Please get back to me…”): a reminder the next business day, until they reply.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: MailCheck, title: () => "Email reminder for follow-up", body: (d) => <FollowUps d={d} /> },
   { id: "note", name: "Note", desc: "A sticky note that stays on this computer.", category: "AI and tools", sizes: ["s", "m", "l"], size: "s", icon: StickyNote, tone: "bg-[#F4EDCF]", inner: "bg-[#FFFAE6]", body: () => <Note /> },
 ];
 
