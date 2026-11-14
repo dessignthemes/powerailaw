@@ -15,6 +15,7 @@ import {
 import { argsHash } from "@/lib/ai/safety";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { calendarEvents, searchMail, readMail } from "@/lib/ai/workspaceTools";
+import { findMatters } from "@/lib/ai/matterTools";
 
 // ── Schemas ───────────────────────────────────────────────────────────────
 
@@ -54,6 +55,17 @@ export const schemas = {
     .object({
       title: z.string().trim().min(1).max(150),
       content: z.string().min(1).max(60000).describe("The full draft text. Plain text with blank lines between paragraphs."),
+    })
+    .strict(),
+  findMatters: z
+    .object({
+      practiceArea: z.string().max(80).optional().describe("Practice area, e.g. Real Estate, Probate, Estate Planning (matches the matter's category, or a prefix)"),
+      prefix: z.string().max(10).optional().describe("Matter number prefix, e.g. REP (purchase), RES (sale), EP"),
+      status: z.string().max(30).optional().describe("open (not closed), closed, or a status like Active, Lead"),
+      openedFrom: isoDate.optional().describe("Opened on or after, YYYY-MM-DD"),
+      openedTo: isoDate.optional().describe("Opened on or before, YYYY-MM-DD"),
+      search: z.string().max(100).optional().describe("Words in the title, number or client name"),
+      limit: z.number().int().min(1).max(100).optional().describe("How many matters to list (default 25); the counts always cover all of them"),
     })
     .strict(),
   listCalendarEvents: z
@@ -102,6 +114,8 @@ const descriptions: Record<ToolName, string> = {
     "Propose creating a task (linked to the current matter if there is one). This does NOT create anything: the user sees a preview and must click Confirm. Only call when the user asked for it.",
   saveDocumentDraft:
     "Propose saving a draft document to the current matter's Documents as a PDF labelled as a draft for attorney review. Does NOT save anything until the user confirms. Matter conversations only.",
+  findMatters:
+    "Read-only. Count and list the firm's matters (all of them, in any conversation) by practice area, number prefix (REP, RES…), status, words, and when they were opened. Returns the total, counts by practice area / prefix / status, and a list with number, title, client, status and opened date. Opened = the earliest of the first document on the matter, its Open date, and when it was created in LawPower. Use it for questions like \"how many real estate matters did we open in October\".",
   listCalendarEvents:
     "Read-only. List events on the signed-in user's own connected calendar (Outlook or Google) between two dates, at most about two months. Times are in the firm's time zone.",
   searchEmail:
@@ -259,6 +273,10 @@ export async function runTool(t: ToolContext, name: string, rawInput: unknown): 
         proposal_id: pending.id,
         note: "Nothing has been created. The user now sees a preview with Confirm and Cancel. Tell them to review and confirm; do not say it was created.",
       });
+    }
+
+    case "findMatters": {
+      return ok(await findMatters(t.ctx.orgId, input as Parameters<typeof findMatters>[1]));
     }
 
     case "listCalendarEvents": {
