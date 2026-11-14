@@ -4,7 +4,7 @@ import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import MoreIntegrations from "@/components/settings/MoreIntegrations";
+import MoreIntegrations, { AlreadyConnected, type MailConn } from "@/components/settings/MoreIntegrations";
 import { ContactSupportForm } from "@/components/ContactSupportModal";
 import { SUPPORT_EMAIL } from "@/components/LegalPage";
 import {
@@ -357,13 +357,24 @@ export type SettingsTabKey = (typeof navItems)[number]["key"];
 export default function IntegrationsModal({
   onClose,
   initialTab = "integrations",
+  justConnected,
 }: {
   onClose: () => void;
   initialTab?: SettingsTabKey;
+  justConnected?: string | null; // "microsoft" | "google": came back from connecting it
 }) {
   const { meEmail } = useWorkspaceData();
   const [active, setActive] = useState<SettingsTabKey>(initialTab);
   const [drilled, setDrilled] = useState<ConnectorKey | null>(null);
+  // Mailboxes connected for this person (Google / Microsoft): shown under Already connected.
+  const [mail, setMail] = useState<MailConn[] | null>(null);
+  useEffect(() => {
+    fetch("/api/mail/status")
+      .then((r) => (r.ok ? r.json() : { connections: [] }))
+      .then((d) => setMail((d.connections ?? []) as MailConn[]))
+      .catch(() => setMail([]));
+  }, []);
+  const mailConn = (k: string) => mail?.find((c) => c.provider === k) ?? null;
 
   // Firm details come from the signed-in person's own workspace; a new
   // account starts with these empty.
@@ -1459,6 +1470,15 @@ export default function IntegrationsModal({
               <>
                 <h2 className="text-[26px] font-semibold mt-3 mb-1.5">{drilledConnector.name}</h2>
                 <p className="text-[14px] text-muted mb-7">{drilledConnector.desc}.</p>
+                {drilled && mailConn(drilled) && (
+                  <div className={`rounded-xl px-4 py-3 mb-5 text-[13.5px] ${mailConn(drilled)!.status === "ok" ? "bg-[#E8F6EE] text-[#1F7A4D]" : "bg-[#FFF4E5] text-[#8A4B14]"}`}>
+                    {mailConn(drilled)!.status === "ok" ? (
+                      <>✓ Connected{mailConn(drilled)!.email ? ` as ${mailConn(drilled)!.email}` : ""}. Use the buttons below only to reconnect or to add a permission.</>
+                    ) : (
+                      <>Connected{mailConn(drilled)!.email ? ` as ${mailConn(drilled)!.email}` : ""}, but it needs to be reconnected. Click Connect all.</>
+                    )}
+                  </div>
+                )}
 
                 <div className="border-t border-dashed border-line pt-5 mb-2 flex items-center justify-between gap-4 flex-wrap">
                   <div>
@@ -1468,7 +1488,7 @@ export default function IntegrationsModal({
                     </p>
                   </div>
                   <Link
-                    href={`/connect?provider=${drilled}&next=/dashboard/inbox`}
+                    href={`/connect?provider=${drilled}&next=${encodeURIComponent(`/dashboard?settings=integrations&connected=${drilled}`)}`}
                     className="flex items-center gap-1.5 bg-btn text-ink px-4 py-2.5 rounded-full text-[13.5px] font-medium hover:bg-btn-hover transition-colors flex-shrink-0"
                   >
                     <Link2 size={13} strokeWidth={1.75} /> Connect all
@@ -1483,7 +1503,7 @@ export default function IntegrationsModal({
                         <div className="text-[12.5px] text-muted max-w-[520px]">{row.desc}</div>
                       </div>
                       <Link
-                        href={`/connect?provider=${drilled}&next=/dashboard/inbox`}
+                        href={`/connect?provider=${drilled}&next=${encodeURIComponent(`/dashboard?settings=integrations&connected=${drilled}`)}`}
                         className="flex items-center gap-1.5 bg-btn text-ink px-4 py-2 rounded-full text-[13px] font-medium hover:bg-btn-hover transition-colors flex-shrink-0"
                       >
                         <Link2 size={12} strokeWidth={1.75} /> Connect
@@ -1525,8 +1545,14 @@ export default function IntegrationsModal({
                   </div>
                 </div>
 
+                {justConnected && mailConn(justConnected) && (
+                  <div className="rounded-xl bg-[#E8F6EE] text-[#1F7A4D] px-4 py-3 mb-5 text-[13.5px] font-medium">
+                    ✓ {justConnected === "google" ? "Google Workspace" : "Microsoft 365"} is connected{mailConn(justConnected)!.email ? ` as ${mailConn(justConnected)!.email}` : ""}.
+                  </div>
+                )}
+                <AlreadyConnected mail={mail} onOpen={(k) => setDrilled(k)} />
                 <div className="flex flex-col gap-3">
-                  {connectors.map((c) =>
+                  {connectors.filter((c) => !(mail && (c.key === "google" || c.key === "microsoft") && mailConn(c.key))).map((c) =>
                     c.drillDown ? (
                       <button
                         key={c.key}

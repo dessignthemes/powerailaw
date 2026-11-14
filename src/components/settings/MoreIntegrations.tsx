@@ -1,11 +1,67 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Check, ChevronDown, ExternalLink, FileSignature, Printer, Calculator, Tablet, HardDrive, Cloud, Box } from "lucide-react";
+import { Loader2, Check, ChevronDown, ExternalLink, FileSignature, Printer, Calculator, Tablet, HardDrive, Cloud, Box, Phone, Mic, Mail, ChevronRight } from "lucide-react";
 
 // Settings → Integrations, below Google / Microsoft / AI assistants: files
 // (Google Drive, OneDrive, Dropbox), e-signature and fax (Dropbox Sign, Dropbox
 // Fax), accounting (QuickBooks) and devices (reMarkable).
+
+export type MailConn = { provider: string; email: string | null; status: "ok" | "reconnect" | "missing_scope" };
+
+// "Already connected": everything connected, in one place at the top, so it
+// isn't connected again. (Google / Microsoft are per person; Dropbox Sign / Fax firm-wide.)
+export function AlreadyConnected({ mail, onOpen }: { mail: MailConn[] | null; onOpen: (key: "google" | "microsoft") => void }) {
+  const [s, setS] = useState<Status | null>(null);
+  useEffect(() => {
+    fetch("/api/integrations")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: Status | null) => d && setS(d))
+      .catch(() => undefined);
+  }, []);
+  const rows: { key: string; icon: React.ReactNode; name: string; who: string | null; warn?: boolean; open?: () => void }[] = [];
+  for (const m of mail ?? []) {
+    if (m.provider !== "google" && m.provider !== "microsoft") continue;
+    rows.push({
+      key: m.provider,
+      icon: <Mail size={16} strokeWidth={1.75} />,
+      name: m.provider === "google" ? "Google Workspace (Gmail, Drive, Calendar)" : "Microsoft 365 (Outlook, OneDrive, Calendar)",
+      who: m.email,
+      warn: m.status !== "ok",
+      open: () => onOpen(m.provider as "google" | "microsoft"),
+    });
+  }
+  if (s?.dropbox.connected) rows.push({ key: "dropbox", icon: <Box size={16} strokeWidth={1.75} />, name: "Dropbox", who: s.dropbox.email ?? null });
+  for (const i of s?.items ?? []) {
+    if (i.provider === "dropbox_sign") rows.push({ key: i.provider, icon: <FileSignature size={16} strokeWidth={1.75} />, name: "Dropbox Sign", who: i.meta.email ?? null });
+    if (i.provider === "dropbox_fax") rows.push({ key: i.provider, icon: <Printer size={16} strokeWidth={1.75} />, name: "Dropbox Fax", who: i.meta.email ?? null });
+  }
+  if (!rows.length) return null;
+  return (
+    <div className="mb-7">
+      <div className="text-[11.5px] font-semibold uppercase tracking-wide text-muted mb-2 px-1">Already connected</div>
+      <div className="flex flex-col gap-2">
+        {rows.map((r) => (
+          <div key={r.key} onClick={r.open} className={`flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E8F6EE]/60 border border-[#CFE8D8] ${r.open ? "cursor-pointer hover:bg-[#E8F6EE]" : ""}`}>
+            <div className="w-9 h-9 rounded-lg bg-white/80 flex items-center justify-center flex-shrink-0">{r.icon}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[14px] font-semibold truncate">{r.name}</div>
+              {r.who && <div className="text-[12.5px] text-muted truncate">{r.who}</div>}
+            </div>
+            {r.warn ? (
+              <span className="px-2.5 py-1 rounded-full text-[12px] font-medium bg-[#FFF4E5] text-[#8A4B14]">Needs reconnecting</span>
+            ) : (
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-medium bg-white text-[#155C3A]">
+                <Check size={12} /> Connected
+              </span>
+            )}
+            {r.open && <ChevronRight size={15} className="text-muted" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type Status = {
   items: { provider: string; meta: { email?: string | null }; connectedAt: string }[];
@@ -126,7 +182,7 @@ export default function MoreIntegrations({ onOpen }: { onOpen: (key: "google" | 
       <div className="flex flex-col gap-3">
         <Row icon={<HardDrive size={16} strokeWidth={1.75} />} name="Google Drive" desc="Part of Google Workspace: connect Google once and Drive comes with it." right={<button onClick={() => onOpen("google")} className={btn}>Open</button>} />
         <Row icon={<Cloud size={16} strokeWidth={1.75} />} name="OneDrive" desc="Part of Microsoft 365: connect Microsoft once and OneDrive comes with it." right={<button onClick={() => onOpen("microsoft")} className={btn}>Open</button>} />
-        <Row
+        {!s?.dropbox.connected && <Row
           icon={<Box size={16} strokeWidth={1.75} />}
           name="Dropbox"
           desc="Browse your Dropbox and file documents to matters. Each person connects their own."
@@ -147,12 +203,12 @@ export default function MoreIntegrations({ onOpen }: { onOpen: (key: "google" | 
           onToggle={s && !s.dropbox.configured ? () => toggle("dropbox") : undefined}
         >
           <div className="bg-white/70 rounded-xl p-3.5 text-muted">LawPower&apos;s Dropbox app is waiting for Dropbox&apos;s production approval. Once it&apos;s approved, the Connect button appears here.</div>
-        </Row>
+        </Row>}
       </div>
 
       {heading("E-signature and fax")}
       <div className="flex flex-col gap-3">
-        <Row icon={<FileSignature size={16} strokeWidth={1.75} />} name="Dropbox Sign" desc="Connect the firm's Dropbox Sign account for sending documents for e-signature." right={keyed("dropbox_sign")} open={open === "dropbox_sign"} onToggle={conn("dropbox_sign") ? undefined : () => toggle("dropbox_sign")}>
+        {!conn("dropbox_sign") && <Row icon={<FileSignature size={16} strokeWidth={1.75} />} name="Dropbox Sign" desc="Connect the firm's Dropbox Sign account for sending documents for e-signature." right={keyed("dropbox_sign")} open={open === "dropbox_sign"} onToggle={conn("dropbox_sign") ? undefined : () => toggle("dropbox_sign")}>
           <KeyForm
             provider="dropbox_sign"
             label="Dropbox Sign"
@@ -164,8 +220,8 @@ export default function MoreIntegrations({ onOpen }: { onOpen: (key: "google" | 
               </>
             }
           />
-        </Row>
-        <Row icon={<Printer size={16} strokeWidth={1.75} />} name="Dropbox Fax" desc="Connect the firm's Dropbox Fax line for faxing documents from LawPower." right={keyed("dropbox_fax")} open={open === "dropbox_fax"} onToggle={conn("dropbox_fax") ? undefined : () => toggle("dropbox_fax")}>
+        </Row>}
+        {!conn("dropbox_fax") && <Row icon={<Printer size={16} strokeWidth={1.75} />} name="Dropbox Fax" desc="Connect the firm's Dropbox Fax line for faxing documents from LawPower." right={keyed("dropbox_fax")} open={open === "dropbox_fax"} onToggle={conn("dropbox_fax") ? undefined : () => toggle("dropbox_fax")}>
           <KeyForm
             provider="dropbox_fax"
             label="Dropbox Fax"
@@ -177,6 +233,38 @@ export default function MoreIntegrations({ onOpen }: { onOpen: (key: "google" | 
               </>
             }
           />
+        </Row>}
+      </div>
+
+      {heading("Phone and meetings")}
+      <div className="flex flex-col gap-3">
+        <Row
+          icon={<Phone size={16} strokeWidth={1.75} />}
+          name="RingCentral"
+          desc="Calls, voicemails, call recordings, texts and faxes from the firm's RingCentral, filed to the matching client and matter."
+          right={pill("Setup needed")}
+          open={open === "rc"}
+          onToggle={() => toggle("rc")}
+        >
+          <div className="bg-white/70 rounded-xl p-3.5 text-muted">
+            RingCentral has an open connection for other apps (its developer platform). To connect it, LawPower needs its own RingCentral app: a free account at{" "}
+            <a href="https://developers.ringcentral.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-ink inline-flex items-center gap-0.5">
+              developers.ringcentral.com <ExternalLink size={11} />
+            </a>
+            , then its two keys added to LawPower. After that, each person signs in with RingCentral once, and the call log, recordings and texts can be matched to clients by phone number and shown in the matter&apos;s Activities.
+          </div>
+        </Row>
+        <Row
+          icon={<Mic size={16} strokeWidth={1.75} />}
+          name="Plaud"
+          desc="Meeting and call recordings from your Plaud recorder: transcripts and summaries on the matter."
+          right={pill("How it works")}
+          open={open === "plaud"}
+          onToggle={() => toggle("plaud")}
+        >
+          <div className="bg-white/70 rounded-xl p-3.5 text-muted">
+            Plaud doesn&apos;t offer an open connection for other apps (as far as we know). Its app can share a recording&apos;s <b className="text-ink">transcript or summary</b> as a file or by email: save it and add it to the matter&apos;s Documents (or forward the email to your inbox and save it from there), and the AI reads it with the matter&apos;s other documents for key dates and details. If Plaud opens a connection later, it can be added here.
+          </div>
         </Row>
       </div>
 
