@@ -652,6 +652,47 @@ export default function ReportsPage() {
             </div>
           </div>
 
+          {/* ── Not proceeding ── */}
+          {r.notProceeding && (
+            <div className="mb-10">
+              <h2 className="text-[18px] font-semibold mb-1">Not proceeding</h2>
+              <p className="text-[13px] text-muted mb-4">Matters set to Not proceeding {periodLabel}, and why (the reason given when the status was changed).</p>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+                <Stat label="Not proceeding" value={r.notProceeding.total.toLocaleString()} note={`of ${r.totals.newInPeriod.toLocaleString()} new matters ${periodLabel}`} />
+                <Card title="By month" className="xl:col-span-2">
+                  {r.notProceeding.total ? (
+                    <Bars rows={r.notProceeding.byMonth.map((m) => ({ name: monthLabel(m.month, true), value: m.count }))} colorBy={false} />
+                  ) : (
+                    <Empty text="No matters set to Not proceeding in this period." />
+                  )}
+                </Card>
+                <Card title="Reasons">
+                  {r.notProceeding.reasons.length ? <Bars rows={r.notProceeding.reasons} colorBy={false} /> : <Empty text="No reasons recorded." />}
+                </Card>
+                <Card title="Matters" className="xl:col-span-2">
+                  {r.notProceeding.list.length ? (
+                    <div className="flex flex-col divide-y divide-[#EEECE8]">
+                      {r.notProceeding.list.map((m) => (
+                        <div key={m.id} className="py-2 flex items-start gap-3 text-[13px]">
+                          <span className="text-muted w-[86px] flex-shrink-0">{new Date(`${m.date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                          <span className="flex-1 min-w-0">
+                            <Link href={`/dashboard/matters/${m.id}`} className="font-medium hover:underline">
+                              {m.number ? `${m.number} · ` : ""}
+                              {m.title}
+                            </Link>
+                            <span className="block text-[12px] text-muted">{m.reason || "No reason given"} · {m.category}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Empty text="None in this period." />
+                  )}
+                </Card>
+              </div>
+            </div>
+          )}
+
           {/* ── Relationships ── */}
           <Relationships from={range.from} to={range.to} periodLabel={periodLabel} prefixes={prefixes} numYear={numYear} />
 

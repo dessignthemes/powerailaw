@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import NotProceedingReason from "@/components/matters/NotProceedingReason";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import type { CustomFilter } from "@/lib/tasks/customFilters";
 import { KEY_DATES_CHANGED_EVENT } from "@/lib/matters/keyDates";
 import type { Client, ClientStatus } from "@/components/NewClientModal";
@@ -19,7 +20,7 @@ type WorkspaceDataContextValue = {
   mattersLoaded: boolean;
   addMatter: (matter: Matter) => void;
   addMatterAsync: (matter: Matter) => Promise<Matter>;
-  updateMatter: (matter: Matter) => void;
+  updateMatter: (matter: Matter, opts?: { skipReason?: boolean }) => void;
   deleteMatters: (ids: string[]) => void;
   bulkSetMatterStatus: (ids: string[], status: MatterStatus) => void;
 
@@ -79,6 +80,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const [boardsError, setBoardsError] = useState<string | null>(null);
 
   // Re-fetch shared data (e.g. after the AI Agent creates a client or task).
+  const mattersRef = useRef<Matter[]>([]);
   const refreshAll = useCallback(() => {
     fetch("/api/clients").then((r) => r.json()).then((d) => d.clients && setClients(d.clients)).catch(() => {});
     fetch("/api/matters").then((r) => r.json()).then((d) => d.matters && setMatters(d.matters)).catch(() => {});
@@ -239,6 +241,11 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         .then((data) => {
           if (data.task) setTasks((ts) => ts.map((t) => (t.id === task.id ? data.task : t)));
           if (data.task?.keyDatesSynced) keyDatesSynced(data.task.matterId);
+          // Ticking "File Completed" / "Not Proceeding" changed the matter's status.
+          if (data.task?.matterStatusChanged && data.task.matterId) {
+            const st = data.task.matterStatusChanged as Matter["status"];
+            setMatters((ms) => ms.map((m) => (m.id === data.task.matterId ? { ...m, status: st } : m)));
+          }
         })
         .catch((err) => {
           console.error("Failed to update task:", err);
@@ -355,7 +362,19 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     return data.matter as Matter;
   }, []);
 
-  const updateMatter = useCallback((matter: Matter) => {
+  useEffect(() => {
+    mattersRef.current = matters;
+  }, [matters]);
+  // Setting a matter to Not proceeding first asks why (optional): see the window below.
+  const [askReason, setAskReason] = useState<Matter | null>(null);
+  const updateMatter = useCallback((matter: Matter, opts?: { skipReason?: boolean }) => {
+    if (matter.status === "Not proceeding" && matter.notProceedingReason === undefined && !opts?.skipReason) {
+      const was = mattersRef.current.find((m) => m.id === matter.id);
+      if (was && was.status !== "Not proceeding") {
+        setAskReason(matter);
+        return;
+      }
+    }
     let previous: Matter | undefined;
     setMatters((ms) => {
       previous = ms.find((m) => m.id === matter.id);
@@ -370,13 +389,15 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       .then(({ ok, data }) => {
         if (ok && data.matter) {
           setMatters((ms) => ms.map((m) => (m.id === matter.id ? data.matter : m)));
+          // Closing / Not proceeding ticked the workflow card's steps: reload the tasks.
+          if (data.matter.tasksChanged) refreshAll();
         } else if (!ok) {
           if (previous) setMatters((ms) => ms.map((m) => (m.id === matter.id ? previous! : m)));
           alert(`The matter wasn't saved: ${data?.error ?? "please try again."}`);
         }
       })
       .catch((err) => console.error("Failed to update matter:", err));
-  }, []);
+  }, [refreshAll]);
 
   const deleteMatters = useCallback((ids: string[]) => {
     setMatters((ms) => ms.filter((m) => !ids.includes(m.id))); // optimistic
@@ -391,20 +412,34 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     (ids: string[], status: MatterStatus) => {
       const updatedAt = new Date().toISOString();
       setMatters((ms) => ms.map((m) => (ids.includes(m.id) ? { ...m, status, updatedAt } : m)));
-      ids.forEach((id) => {
-        const matter = matters.find((m) => m.id === id);
-        if (!matter) return;
-        fetch(`/api/matters/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...matter, status, updatedAt }),
-        }).catch((err) => console.error("Failed to update matter status:", err));
-      });
+      void Promise.all(
+        ids.map((id) => {
+          const matter = matters.find((m) => m.id === id);
+          if (!matter) return null;
+          return fetch(`/api/matters/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...matter, status, updatedAt }),
+          }).catch((err) => console.error("Failed to update matter status:", err));
+        })
+      ).then(() => refreshAll()); // workflow cards follow the new status
     },
-    [matters]
+    [matters, refreshAll]
   );
 
   return (
+    <>
+    {askReason && (
+      <NotProceedingReason
+        matter={askReason}
+        onCancel={() => setAskReason(null)}
+        onSave={(reason) => {
+          const m = askReason;
+          setAskReason(null);
+          updateMatter({ ...m, notProceedingReason: reason });
+        }}
+      />
+    )}
     <WorkspaceDataContext.Provider
       value={{
         clients,
@@ -446,6 +481,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </WorkspaceDataContext.Provider>
+    </>
   );
 }
 

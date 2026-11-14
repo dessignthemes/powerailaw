@@ -258,6 +258,7 @@ export default function KeyDatesCard({ api, onOpenDocuments }: { api: KeyDatesAp
           </div>
         )}
 
+        {matter && <MatterOutcome matter={matter} />}
         {(facts?.property || facts?.purchasePrice) && (
           <div className="text-[13px] text-muted">
             {[facts.property, facts.purchasePrice && `Price ${facts.purchasePrice}`, facts.buyers?.length && `Buyer: ${facts.buyers.join(", ")}`, facts.sellers?.length && `Seller: ${facts.sellers.join(", ")}`]
@@ -559,4 +560,24 @@ function FieldEditor({
       {!valid && <div className="text-[12px] text-[#B42318]">Give every field a name, or remove it.</div>}
     </div>
   );
+}
+
+// Closed / Not proceeding: shown on Key dates and the Workflow tab, the same as the status.
+export function MatterOutcome({ matter }: { matter: Matter }) {
+  const day = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null);
+  if (matter.status === "Closed")
+    return (
+      <div className="rounded-xl bg-[#E8F6EE] text-[#1F7A4D] px-3.5 py-2.5 text-[13px] font-medium">
+        ✓ Matter completed{day(matter.closedAt) ? ` · closed ${day(matter.closedAt)}` : ""}. The workflow is marked done.
+      </div>
+    );
+  if (matter.status === "Not proceeding")
+    return (
+      <div className="rounded-xl bg-[#FDECEC] text-[#9F1D1D] px-3.5 py-2.5 text-[13px]">
+        <b className="font-semibold">Not proceeding</b>
+        {day(matter.statusChangedAt) ? ` · since ${day(matter.statusChangedAt)}` : ""}
+        {matter.notProceedingReason ? <> · Reason: {matter.notProceedingReason}</> : null}
+      </div>
+    );
+  return null;
 }

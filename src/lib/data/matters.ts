@@ -40,6 +40,9 @@ type MatterRow = {
   matter_code?: string | null;
   matter_number?: string | null;
   matter_seq?: number | null;
+  not_proceeding_reason?: string | null;
+  closed_at?: string | null;
+  status_changed_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -58,6 +61,9 @@ function toMatter(row: MatterRow, emails?: Map<string, string>): Matter {
     value: row.value,
     billingType: row.billing_type,
     hourlyRate: row.hourly_rate,
+    notProceedingReason: row.not_proceeding_reason ?? null,
+    closedAt: row.closed_at ?? null,
+    statusChangedAt: row.status_changed_at ?? null,
     assignedTo: (row.assigned_to && emails?.get(row.assigned_to)) || null,
     privateNotes: row.private_notes ?? "",
     matterCode: row.matter_code ?? null,
@@ -242,7 +248,25 @@ export async function updateMatterRow(id: string, matter: Matter): Promise<Matte
   if ((code || matter.matterNumber) && missingNumberCols(error)) ({ data, error } = await run(fields));
 
   if (error) throw error;
+  // Status changes: when, why (Not proceeding), when it closed (migration 0072; skipped before it).
+  const prevStatus = (before as { status?: string } | null)?.status;
+  if (prevStatus && prevStatus !== matter.status) {
+    const now = new Date().toISOString();
+    const extra: Record<string, unknown> = { status_changed_at: now };
+    if (matter.status === "Closed") extra.closed_at = now;
+    if (matter.status === "Not proceeding") extra.not_proceeding_reason = (matter.notProceedingReason ?? "").trim().slice(0, 1000) || null;
+    const r2 = await run(extra);
+    if (!r2.error && r2.data) data = r2.data;
+  } else if (matter.status === "Not proceeding" && matter.notProceedingReason !== undefined) {
+    const r2 = await run({ not_proceeding_reason: (matter.notProceedingReason ?? "").trim().slice(0, 1000) || null });
+    if (!r2.error && r2.data) data = r2.data;
+  }
   const saved = toMatter(data as MatterRow, emails);
+  // Closing (or Not proceeding) updates the matter's workflow card too.
+  if (prevStatus && prevStatus !== matter.status) {
+    const { stepsFromStatus } = await import("@/lib/matters/statusSync");
+    (saved as Matter & { tasksChanged?: boolean }).tasksChanged = await stepsFromStatus(orgId, id, prevStatus, matter.status).catch(() => false);
+  }
   await notifyAssigned({
     orgId,
     actorId,

@@ -95,7 +95,7 @@ export async function reviewMatter(ctx: AiCtx, matterId: string, useAi: boolean)
   if (overdue.length) {
     add({ key: "overdue", severity: "high", title: `${overdue.length} overdue task${overdue.length === 1 ? "" : "s"}`, detail: overdue.slice(0, 4).map((t) => `${t.title} (due ${t.dueDate})`).join("; "), fix: { kind: "link", label: "Open Workflow", href: "/dashboard/task-board" } });
   }
-  if (dueDate && dueDate < today && status !== "Closed") {
+  if (dueDate && dueDate < today && status !== "Closed" && status !== "Not proceeding") {
     add({ key: "matter_overdue", severity: "high", title: "Matter due date has passed", detail: `The matter's due date (${dueDate}) is in the past but it isn't closed.`, fix: { kind: "link", label: "Update the matter", href } });
   }
   if (!dueDate && active) add({ key: "no_due", severity: "medium", title: "No deadline set", detail: "Active matter without a due date. Add the key deadline (closing, filing, hearing).", fix: { kind: "link", label: "Set a due date", href } });

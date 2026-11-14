@@ -49,7 +49,7 @@ export default function AiMatterPage() {
   const shown = useMemo(() => {
     const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
     return matters
-      .filter((m) => (status === "All" ? true : status === "Open" ? m.status !== "Closed" : m.status === status))
+      .filter((m) => (status === "All" ? true : status === "Open" ? !["Closed", "Not proceeding"].includes(m.status) : m.status === status))
       .filter((m) => words.every((w) => `${m.title} ${clientName(m.clientId)} ${m.category ?? ""} ${m.counterparty ?? ""}`.toLowerCase().includes(w)))
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     // eslint-disable-next-line react-hooks/exhaustive-deps

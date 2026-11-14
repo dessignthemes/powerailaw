@@ -374,7 +374,7 @@ export default function NewEventModal({
                       {matters
                         .filter((m) => {
                           const q = matterSearch.trim().toLowerCase();
-                          if (!q) return m.status !== "Closed";
+                          if (!q) return !["Closed", "Not proceeding"].includes(m.status);
                           const cl = m.clientId ? clients.find((c) => c.id === m.clientId) : null;
                           return `${m.matterNumber ?? ""} ${m.title} ${cl?.name ?? ""} ${cl?.email ?? ""}`.toLowerCase().includes(q);
                         })

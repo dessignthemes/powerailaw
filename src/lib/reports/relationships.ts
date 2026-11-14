@@ -122,7 +122,7 @@ export async function relationshipsReport(orgId: string, range: { from: string |
       .map(([id, set]) => {
         const c = contacts.get(id);
         const employer = c?.employer_id ? contacts.get(c.employer_id) : undefined;
-        const open = [...set].filter((mid) => inPeriod.get(mid)?.status !== "Closed").length;
+        const open = [...set].filter((mid) => !["Closed", "Not proceeding"].includes(inPeriod.get(mid)?.status ?? "")).length;
         const byPrefix: Record<string, number> = {};
         for (const mid of set) {
           const p = numberParts(inPeriod.get(mid)?.matter_number)?.prefix;

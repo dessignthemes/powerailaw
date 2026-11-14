@@ -55,7 +55,7 @@ function MatterPicker({ value, onChange }: { value: string; onChange: (id: strin
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const picked = matters.find((m) => m.id === value);
-  const list = matters.filter((m) => m.status !== "Closed").filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 30);
+  const list = matters.filter((m) => !["Closed", "Not proceeding"].includes(m.status)).filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 30);
   if (picked)
     return (
       <div className="flex items-center gap-2 border border-line rounded-lg px-3 py-2 bg-white">
@@ -127,7 +127,7 @@ function ClientNameInput({ value, onChange, onPick, placeholder }: { value: stri
       .sort((a, b) => Number(b.name.toLowerCase().startsWith(q)) - Number(a.name.toLowerCase().startsWith(q)) || a.name.localeCompare(b.name))
       .slice(0, 8);
   }, [clients, q]);
-  const openCount = (id: string) => matters.filter((m) => m.clientId === id && m.status !== "Closed").length;
+  const openCount = (id: string) => matters.filter((m) => m.clientId === id && !["Closed", "Not proceeding"].includes(m.status)).length;
   // Already showing a client's exact name (picked, or filled in from their phone): no list.
   const exact = list.some((c) => c.name.toLowerCase() === q);
   const pick = (c: Client) => {
@@ -207,7 +207,7 @@ function CallModal({ onClose, onSaved }: { onClose: () => void; onSaved: (msg: s
     : [];
   function choose(c: Client, keepPhone = false) {
     setClient(c);
-    const open = matters.filter((m) => m.clientId === c.id && m.status !== "Closed");
+    const open = matters.filter((m) => m.clientId === c.id && !["Closed", "Not proceeding"].includes(m.status));
     const one = open.length === 1 ? open[0].id : "";
     setAutoMatter(!!one && !f.matterId);
     setF((x) => ({ ...x, contactName: c.name, contactPhone: keepPhone && x.contactPhone ? x.contactPhone : c.phone || x.contactPhone, matterId: x.matterId || one }));

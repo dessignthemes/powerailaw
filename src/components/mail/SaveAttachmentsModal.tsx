@@ -51,7 +51,7 @@ export default function SaveAttachmentsModal({
   }, [busy, onClose]);
 
   const options = matters
-    .filter((m) => m.status !== "Closed")
+    .filter((m) => !["Closed", "Not proceeding"].includes(m.status))
     .filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase()))
     .slice(0, 40);
   const count = picked.filter(Boolean).length;

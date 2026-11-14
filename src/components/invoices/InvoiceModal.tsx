@@ -58,7 +58,7 @@ export default function InvoiceModal({
   const shownLines = loadedFor === matterId ? lines ?? [] : [];
   const total = shownLines.reduce((n, l) => n + Math.round(l.quantity * l.rate * 100) / 100, 0);
   const options = matters
-    .filter((m) => m.status !== "Closed" || m.id === matterId)
+    .filter((m) => !["Closed", "Not proceeding"].includes(m.status) || m.id === matterId)
     .filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase()))
     .slice(0, 40);
 

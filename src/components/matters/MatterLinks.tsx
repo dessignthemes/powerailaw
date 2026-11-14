@@ -33,7 +33,7 @@ export function LinkToMatterModal({
   const [error, setError] = useState<string | null>(null);
   const matter = matters.find((m) => m.id === matterId) ?? null;
   const options = matters
-    .filter((m) => m.status !== "Closed")
+    .filter((m) => !["Closed", "Not proceeding"].includes(m.status))
     .filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase()))
     .slice(0, 40);
 

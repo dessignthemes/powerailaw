@@ -148,7 +148,7 @@ function FileToMatter({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const list = matters
-    .filter((m) => m.status !== "Closed" || m.id === current?.id)
+    .filter((m) => !["Closed", "Not proceeding"].includes(m.status) || m.id === current?.id)
     .filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase()))
     .sort((a, b) => (b.matterSeq ?? 0) - (a.matterSeq ?? 0))
     .slice(0, 50);

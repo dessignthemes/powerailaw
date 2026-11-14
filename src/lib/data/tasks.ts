@@ -263,7 +263,14 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   const saved = toTask(data as TaskRow);
   const touched = task.checklist !== undefined || (before as { matter_id?: string | null } | null)?.matter_id !== saved.matterId;
   const withDates = touched ? await withKeyDates(orgId, saved, (before as { checklist?: unknown } | null)?.checklist ?? null) : saved;
-  const updated = await withStage(orgId, withDates, (before as { checklist?: unknown } | null)?.checklist ?? null);
+  const staged = await withStage(orgId, withDates, (before as { checklist?: unknown } | null)?.checklist ?? null);
+  // "File Completed" / "Not Proceeding" ticked: the matter's status follows.
+  let updated = staged;
+  if (touched) {
+    const { statusFromSteps } = await import("@/lib/matters/statusSync");
+    const st = await statusFromSteps(orgId, staged, (before as { checklist?: unknown } | null)?.checklist ?? null).catch(() => null);
+    if (st) updated = { ...staged, matterStatusChanged: st } as BoardTask;
+  }
   await notifyAssigned({
     orgId,
     actorId: userId,

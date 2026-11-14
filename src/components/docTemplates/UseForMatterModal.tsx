@@ -81,7 +81,7 @@ export default function UseForMatterModal({
     }
   }
 
-  const options = matters.filter((m) => m.status !== "Closed").filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 40);
+  const options = matters.filter((m) => !["Closed", "Not proceeding"].includes(m.status)).filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 40);
   const missing = fields.filter((f) => f.type !== "yes_no" && !values[f.key]?.trim()).length;
 
   return (

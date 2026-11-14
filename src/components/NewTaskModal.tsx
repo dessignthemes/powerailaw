@@ -48,6 +48,7 @@ export type BoardTask = {
   createdAt?: string;
   updatedAt?: string;
   keyDatesSynced?: boolean; // (from the server) the matter's key dates and its other tasks were updated too
+  matterStatusChanged?: string; // (from the server) ticking a step closed the matter (or set Not proceeding)
 };
 
 export type TaskComment = {

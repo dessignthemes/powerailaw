@@ -8,6 +8,7 @@ import { autoStatus, dueState, progress, type TaskChecklist } from "@/lib/checkl
 import type { BoardTask } from "@/components/NewTaskModal";
 import type { Matter } from "@/components/NewMatterModal";
 import { frameOuter, frameInner, frameTitle, pageBtnB } from "@/lib/ui";
+import { MatterOutcome } from "@/components/matters/KeyDatesCard";
 
 // The matter's timeline: its workflow card (the same one on the task board),
 // step by step. Ticking a step here ticks it on the board card and moves the
@@ -71,6 +72,7 @@ export default function MatterTimeline({ matter, workflowTaskId, onCreated }: { 
   }
   return (
     <div className="flex flex-col gap-5">
+      <MatterOutcome matter={matter} />
       {flows.map((t) => (
         <Flow key={t.id} task={t} boardName={boards.find((b) => b.id === t.boardId)?.name ?? null} onChange={updateTask} />
       ))}

@@ -21,8 +21,7 @@ import {
   TriangleAlert,
   DollarSign,
   Link2,
-  Search,
-} from "lucide-react";
+  Search, XCircle } from "lucide-react";
 import { GenericDropdown } from "@/components/NewTaskModal";
 import NewClientModal, { Client, getInitials, getAvatarColor } from "@/components/NewClientModal";
 import PracticeAreaList from "@/components/matters/PracticeAreaList";
@@ -35,7 +34,7 @@ const sortName = (n: string) => n.replace(/^(mr|mrs|ms|miss|dr|prof|hon|rev)\.?\
 // Matter types shown first when creating a matter.
 const MAIN_TYPES: MatterCategory[] = ["Real Estate", "Litigation", "Estate Planning"];
 
-export type MatterStatus = "Lead" | "Consultation" | "Engaged" | "Active" | "Closed";
+export type MatterStatus = "Lead" | "Consultation" | "Engaged" | "Active" | "Closed" | "Not proceeding";
 export type MatterCategory = "None" | PracticeArea;
 export type BillingType = "Hourly" | "Flat fee";
 
@@ -59,6 +58,9 @@ export type Matter = {
   matterCode?: string | null;
   matterNumber?: string | null;
   matterSeq?: number | null;
+  notProceedingReason?: string | null; // why the client didn't go ahead (optional)
+  closedAt?: string | null; // when it was closed
+  statusChangedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -73,7 +75,7 @@ export function matterLabel(m: Pick<Matter, "title" | "matterNumber">): string {
   return m.matterNumber ? `${m.matterNumber} · ${m.title}` : m.title;
 }
 
-export const matterStatusOrder: MatterStatus[] = ["Lead", "Consultation", "Engaged", "Active", "Closed"];
+export const matterStatusOrder: MatterStatus[] = ["Lead", "Consultation", "Engaged", "Active", "Closed", "Not proceeding"];
 
 export const matterStatusMeta: Record<MatterStatus, { icon: typeof Circle; color: string }> = {
   Lead: { icon: CircleDashed, color: "text-muted" },
@@ -81,6 +83,7 @@ export const matterStatusMeta: Record<MatterStatus, { icon: typeof Circle; color
   Engaged: { icon: CircleDot, color: "text-amber-500" },
   Active: { icon: Disc, color: "text-amber-700" },
   Closed: { icon: CheckCircle2, color: "text-green-600" },
+  "Not proceeding": { icon: XCircle, color: "text-[#B42318]" },
 };
 
 export const matterCategories: MatterCategory[] = ["None", ...PRACTICE_AREAS_SORTED];

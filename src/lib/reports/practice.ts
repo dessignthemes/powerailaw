@@ -17,6 +17,10 @@ type MatterRow = {
   hourly_rate: number | null;
   matter_number: string | null;
   description: string | null;
+  title?: string;
+  updated_at?: string;
+  not_proceeding_reason?: string | null;
+  status_changed_at?: string | null;
 };
 
 export const OTHER = "Other / not set";
@@ -73,7 +77,7 @@ export function numberFilter(u: URLSearchParams): NumberFilter {
 export async function practiceReport(orgId: string, period: Period, today: string, filter: NumberFilter = { prefixes: [], year: null }) {
   const db = createAdminClient();
   const everyMatter = await all<MatterRow>((a, b) =>
-    db.from("matters").select("id, category, status, created_at, value, billing_type, hourly_rate, matter_number, description").eq("org_id", orgId).range(a, b)
+    db.from("matters").select("*").eq("org_id", orgId).range(a, b)
   );
   // The prefixes and years there are (for the filter lists), with how many matters each.
   const prefixCount = new Map<string, number>();
@@ -216,13 +220,36 @@ export async function practiceReport(orgId: string, period: Period, today: strin
     numberYears: [...numberYears.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([year, count]) => ({ year, count })),
     totals: {
       matters: matters.length,
-      current: matters.filter((m) => m.status !== "Closed").length,
+      current: matters.filter((m) => m.status !== "Closed" && m.status !== "Not proceeding").length,
       closed: matters.filter((m) => m.status === "Closed").length,
       newInPeriod,
       imported,
     },
     categories,
-    statuses: ["Lead", "Consultation", "Engaged", "Active", "Closed"].map((s) => ({ status: s, count: statusCount.get(s) ?? 0 })),
+    statuses: ["Lead", "Consultation", "Engaged", "Active", "Closed", "Not proceeding"].map((s) => ({ status: s, count: statusCount.get(s) ?? 0 })),
+    notProceeding: (() => {
+      // Matters that didn't go ahead, in the period (by when they were set to Not proceeding).
+      const np = matters
+        .filter((m) => m.status === "Not proceeding")
+        .map((m) => ({ m, day: (m.status_changed_at ?? m.updated_at ?? m.created_at).slice(0, 10) }))
+        .filter((x) => inPeriod(x.day, period));
+      const reasons = new Map<string, number>();
+      for (const { m } of np) {
+        const r = (m.not_proceeding_reason ?? "").trim() || "No reason given";
+        reasons.set(r, (reasons.get(r) ?? 0) + 1);
+      }
+      const byMonth = new Map<string, number>();
+      for (const { day } of np) byMonth.set(monthOf(day), (byMonth.get(monthOf(day)) ?? 0) + 1);
+      return {
+        total: np.length,
+        byMonth: months.map((mo) => ({ month: mo, count: byMonth.get(mo) ?? 0 })),
+        reasons: [...reasons.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value })),
+        list: np
+          .sort((a, b) => b.day.localeCompare(a.day))
+          .slice(0, 50)
+          .map(({ m, day }) => ({ id: m.id, number: m.matter_number, title: m.title ?? "", category: catOf(m.category), date: day, reason: m.not_proceeding_reason ?? "" })),
+      };
+    })(),
     byYear: [...yearCount.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([year, count]) => ({ year, count })),
     intakeByMonth: months.map((mo) => ({ month: mo, byCategory: Object.fromEntries(intake.get(mo) ?? []), count: [...(intake.get(mo)?.values() ?? [])].reduce((a, b) => a + b, 0) })),
     finance: {

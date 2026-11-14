@@ -22,7 +22,7 @@ export default function MatterChip({ value, onChange, locked = false }: { value:
   const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const clientName = (id: string | null) => (id ? clients.find((c) => c.id === id)?.name ?? "" : "");
   const list = matters
-    .filter((m) => (words.length ? words.every((w) => `${m.matterNumber ?? ""} ${m.title} ${clientName(m.clientId)}`.toLowerCase().includes(w)) : m.status !== "Closed"))
+    .filter((m) => (words.length ? words.every((w) => `${m.matterNumber ?? ""} ${m.title} ${clientName(m.clientId)}`.toLowerCase().includes(w)) : !["Closed", "Not proceeding"].includes(m.status)))
     .sort((a, b) => Number(a.status === "Closed") - Number(b.status === "Closed") || (b.matterNumber ?? "").localeCompare(a.matterNumber ?? ""))
     .slice(0, 50);
   return (

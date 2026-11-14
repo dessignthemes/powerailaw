@@ -1124,7 +1124,7 @@ function MattersView({
   const [linking, setLinking] = useState(false);
   const [linkKey, setLinkKey] = useState(0);
   if (!clientId) return <SaveFirst what="matters" />;
-  const shown = matters.filter((m) => archived || m.status !== "Closed");
+  const shown = matters.filter((m) => archived || !["Closed", "Not proceeding"].includes(m.status));
   return (
     <div>
       <div className="flex items-center justify-between mb-4">

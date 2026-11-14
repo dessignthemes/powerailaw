@@ -87,8 +87,8 @@ export async function findMatters(
     .filter(({ m, o }) => {
       if (area && !(m.category ?? "").toLowerCase().includes(area) && prefixOf(m).toLowerCase() !== area) return false;
       if (prefix && prefixOf(m) !== prefix) return false;
-      if (status === "open" && m.status === "Closed") return false;
-      if (status === "closed" && m.status !== "Closed") return false;
+      if (status === "open" && (m.status === "Closed" || m.status === "Not proceeding")) return false;
+      if (status === "closed" && !["Closed", "Not proceeding"].includes(m.status)) return false;
       if (status && !["open", "closed", "any", "all"].includes(status) && m.status.toLowerCase() !== status) return false;
       if ((input.openedFrom || input.openedTo) && !o.date) return false;
       if (input.openedFrom && o.date! < input.openedFrom) return false;
