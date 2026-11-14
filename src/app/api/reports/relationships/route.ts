@@ -43,10 +43,12 @@ export async function POST(request: Request) {
       .order("id")
       .range(offset, offset + 14);
     if (error) return NextResponse.json({ error: "Matter details aren't set up yet." }, { status: 503 });
-    const sum = { created: 0, matched: 0, linked: 0 };
+    const sum = { created: 0, matched: 0, linked: 0, checked: 0, withPeople: 0 };
     for (const m of (data ?? []) as { id: string }[]) {
       const r = await syncDetailsWithContacts(orgId, user.id, m.id).catch(() => null);
+      sum.checked++;
       if (!r) continue;
+      if (r.people > 0) sum.withPeople++;
       sum.created += r.created;
       sum.matched += r.matched;
       sum.linked += r.linked;

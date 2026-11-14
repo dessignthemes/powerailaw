@@ -173,11 +173,11 @@ async function isClientRecord(orgId: string, name: string) {
 const partyKind = (name: string) =>
   /^estate of\b|\bestate$/i.test(name) ? "estate" : /\btrust\b/i.test(name) ? "trust" : /\b(llc|inc|corp|corporation|company|l\.?p\.?|bank|association)\b/i.test(name) ? "company" : "person";
 
-export type SyncResult = { created: number; matched: number; linked: number; filled: number };
+export type SyncResult = { created: number; matched: number; linked: number; filled: number; people: number }; // people = names/companies found in Details
 
 // keys: only the groups these Details fields belong to (all groups when left out).
 export async function syncDetailsWithContacts(orgId: string, userId: string | null, matterId: string, keys?: string[]): Promise<SyncResult> {
-  const res: SyncResult = { created: 0, matched: 0, linked: 0, filled: 0 };
+  const res: SyncResult = { created: 0, matched: 0, linked: 0, filled: 0, people: 0 };
   const { data: m } = await db().from("matters").select("*").eq("id", matterId).eq("org_id", orgId).maybeSingle();
   const matter = m as { details?: unknown; matter_code?: string | null; category?: string | null } | null;
   if (!matter || !("details" in matter)) return res;
@@ -203,6 +203,7 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
         const email = val(`${g.prefix}Email`).toLowerCase();
         const phone = val(`${g.prefix}Phone`);
         if (!firmName && !personName) continue;
+        res.people++;
         let company = firmName ? await findCompany(orgId, firmName) : null;
         if (company) res.matched++;
         else if (firmName) {
@@ -244,6 +245,7 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
       } else if (g.kind === "company") {
         const name = val(g.key);
         if (!name) continue;
+        res.people++;
         let company = await findCompany(orgId, name);
         if (company) res.matched++;
         else {
@@ -260,6 +262,7 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
         // "Robert Klag, Alex Quinonez" → two people; "Smith and Sons LLC" stays one company.
         const names = (partyKind(all) === "person" ? all.split(/,|;|\band\b|&/i) : [all]).map((x) => x.trim()).filter((x) => x.length > 1);
         if (!names.length) continue;
+        res.people += names.length;
         const one = names.length === 1;
         const email = val(`${g.prefix}Email`).toLowerCase();
         const phone = val(`${g.prefix}Phone`);

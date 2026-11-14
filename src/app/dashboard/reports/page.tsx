@@ -301,26 +301,36 @@ function Relationships({ from, to, periodLabel }: { from: string | null; to: str
   const r = data?.key === key ? data.r : null;
   // Link every matter's Details to Contacts (for matters filled in before this existed).
   const [linking, setLinking] = useState<{ done: number; total: number } | null>(null);
-  const [linkNote, setLinkNote] = useState<string | null>(null);
+  const [linkNote, setLinkNote] = useState<{ ok: boolean; text: string } | null>(null);
   async function linkAll() {
     setLinkNote(null);
     let offset = 0;
-    const sum = { created: 0, linked: 0 };
+    const sum = { created: 0, linked: 0, matched: 0, checked: 0, withPeople: 0 };
     try {
       for (let i = 0; i < 200; i++) {
         const res = await fetch("/api/reports/relationships", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ offset }) });
         const d = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(d?.error ?? "Linking stopped part-way. Click the button again to carry on.");
-        sum.created += d.created ?? 0;
-        sum.linked += d.linked ?? 0;
+        for (const k of Object.keys(sum) as (keyof typeof sum)[]) sum[k] += d[k] ?? 0;
         offset = d.next;
         setLinking({ done: d.next, total: d.total });
         if (d.done) break;
       }
-      setLinkNote(`Done: ${sum.linked.toLocaleString()} links made, ${sum.created.toLocaleString()} new contact cards added.`);
+      const empty = sum.checked - sum.withPeople;
+      setLinkNote({
+        ok: true,
+        text:
+          `Checked ${sum.checked.toLocaleString()} matters. ` +
+          (sum.withPeople
+            ? `${sum.withPeople.toLocaleString()} had people or companies in their Details: ${sum.linked.toLocaleString()} new links, ${sum.matched.toLocaleString()} found in Contacts, ${sum.created.toLocaleString()} new contact cards. `
+            : "") +
+          (empty
+            ? `${empty.toLocaleString()} have nothing in their Details yet (realtors, attorneys, lender, title company, Referred by…), so there was nothing to link. Open a matter's Details and use Fill from documents, or type them in; they link to Contacts straight away.`
+            : ""),
+      });
       setTick((t) => t + 1); // count again
     } catch (e) {
-      setLinkNote((e as Error).message);
+      setLinkNote({ ok: false, text: (e as Error).message });
     } finally {
       setLinking(null);
     }
@@ -334,7 +344,12 @@ function Relationships({ from, to, periodLabel }: { from: string | null; to: str
           {linking ? `Linking matters… ${linking.done} of ${linking.total}` : "Link all matters to Contacts"}
         </button>
       </div>
-      {linkNote && <div className="mb-3 rounded-xl bg-[#E8F6EE] text-[#1F7A4D] px-3 py-2 text-[12.5px]">{linkNote}</div>}
+      {linkNote && (
+        <div className={`mb-3 rounded-xl px-3 py-2 text-[13px] flex items-start gap-3 ${linkNote.ok ? "bg-[#E8F6EE] text-[#1F7A4D]" : "bg-[#FDECEC] text-[#9F1D1D]"}`}>
+          <span className="flex-1">{linkNote.text}</span>
+          <button onClick={() => setLinkNote(null)} className="underline underline-offset-2 flex-shrink-0">OK</button>
+        </div>
+      )}
       <p className="text-[13px] text-muted mb-4">
         Matters opened {periodLabel} by the offices, realtors, lenders, attorneys and referral sources on them. People and companies are counted when they&apos;re
         linked to the matter from its Details (or Related contacts).
