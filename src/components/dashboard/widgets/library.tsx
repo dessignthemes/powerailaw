@@ -1,11 +1,13 @@
 "use client";
 
+import DeadlineCalendar from "@/components/calendar/DeadlineCalendar";
+import { ACTIVITY_ICON, type ActivityItem } from "@/components/matters/MatterActivity";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ListChecks, Flag, ChevronRight, Calendar, Activity, BarChart3, ArrowUpRight, Lock, AlarmClock, CheckCircle2, Circle, UserX, Users, Folder, Layers, PieChart,
-  History, UserRound, Hourglass, CalendarClock, Timer, UserPlus, Phone, Receipt, Sparkles, Clock3, StickyNote, Zap, Search, ArrowUp, Inbox, Funnel, MailCheck, Check,
+  ListChecks, Flag, ChevronRight, Calendar, Activity, BarChart3, ArrowUpRight, AlarmClock, CheckCircle2, Circle, UserX, Users, Folder, Layers, PieChart,
+  History, UserRound, Hourglass, CalendarDays, CalendarClock, Timer, UserPlus, Phone, Receipt, Sparkles, Clock3, StickyNote, Zap, Search, ArrowUp, Inbox, Funnel, MailCheck, Check,
 } from "lucide-react";
 import TeamProgress from "@/components/dashboard/TeamProgress";
 import ScrollHint from "@/components/ScrollHint";
@@ -281,25 +283,51 @@ function Events({ d }: { d: DashData }) {
   );
 }
 
+// Recent activity: what everyone in the firm did (tasks, steps, documents, time,
+// emails, status changes). The same items as each matter's Activities tab:
+// clicking one opens it there, highlighted.
 function RecentActivity({ d }: { d: DashData }) {
-  if (!d.recent.length) return <Empty icon={Activity} title="No activity yet" />;
+  const router = useRouter();
+  const [items, setItems] = useState<ActivityItem[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    const load = () =>
+      fetch("/api/activity?limit=40")
+        .then((r) => (r.ok ? r.json() : { items: [] }))
+        .then((x) => live && setItems((x.items ?? []) as ActivityItem[]))
+        .catch(() => live && setItems([]));
+    void load();
+    const t = setInterval(load, 5 * 60_000);
+    return () => {
+      live = false;
+      clearInterval(t);
+    };
+  }, [d.allTasks.length]);
+  if (!items) return <div className="text-[14px] text-muted m-auto">Loading…</div>;
+  if (!items.length) return <Empty icon={Activity} title="No activity yet" />;
+  const open = (i: ActivityItem) => {
+    if (i.matterId) router.push(`/dashboard/matters/${i.matterId}?tab=activities&a=${encodeURIComponent(i.id)}`);
+    else if (i.taskId) {
+      const t = d.allTasks.find((x) => x.id === i.taskId);
+      if (t) d.openTask(t);
+    }
+  };
   return (
     <div className="-mx-4 -my-2 divide-y divide-[#F1F0ED] min-h-0 flex-1 scroll-on-hover">
-      {d.recent.map((t) => {
-        const created = !t.updatedAt || !t.createdAt || Math.abs(new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime()) < 2000;
-        const verb = created ? "Created" : t.status === "done" ? "Completed" : "Updated";
+      {items.map((i) => {
+        const Icon = ACTIVITY_ICON[i.kind];
         return (
-          <div key={t.id} onClick={() => d.openTask(t)} className="flex items-center justify-between gap-3 px-4 py-2 cursor-pointer hover:bg-chip/40 transition-colors">
-            <div className="text-[13.5px] truncate">
-              <span className="text-muted">{verb} task</span>{" "}
-              <span className="font-medium">
-                {t.isPrivate && <Lock size={12} strokeWidth={2.25} className="inline -mt-0.5 mr-1 text-muted" aria-label="Private" />}
-                {t.title}
-              </span>
+          <div key={i.id} onClick={() => open(i)} className="flex items-center justify-between gap-3 px-4 py-2 cursor-pointer hover:bg-chip/40 transition-colors" title={i.matterId ? "Open in the matter's Activities" : undefined}>
+            <div className="flex items-center gap-2 min-w-0">
+              <Icon size={13} strokeWidth={1.75} className="text-muted flex-shrink-0" />
+              <div className="text-[13.5px] truncate">
+                <span className="text-muted">{i.verb}</span> {i.subject && <span className="font-medium">{i.subject}</span>}
+                {i.matterNumber && <span className="text-muted"> · {i.matterNumber}</span>}
+              </div>
             </div>
             <span className="flex items-center gap-2 flex-shrink-0">
-              <span className="mono text-[11.5px] text-muted">{timeAgo((t.updatedAt ?? t.createdAt)!)}</span>
-              <MemberAvatar userId={created ? t.createdBy : t.updatedBy ?? t.createdBy} label={created ? "Created by" : `${verb} by`} />
+              <span className="mono text-[11.5px] text-muted">{timeAgo(i.at)}</span>
+              {i.actorId ? <MemberAvatar userId={i.actorId} label="By" /> : <span className="w-[26px]" />}
             </span>
           </div>
         );
@@ -913,7 +941,8 @@ export const WIDGETS: WidgetDef[] = [
   { id: "due", name: "Due today", desc: "Tasks due today (or this week / month), by board.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: ListChecks, title: (d) => d.dueLabel, action: (d) => viewAll(`/dashboard/task-board?due=${d.range}`, "View all tasks"), body: (d, size) => <DueCard d={d} small={size === "s"} /> },
   { id: "priority", name: "Due by priority", desc: "High, medium and low priority tasks due. Click one to filter the Tasks widget.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: Flag, title: (d) => `${d.dueLabel} by priority`, body: (d, size) => <PriorityCard d={d} small={size === "s"} /> },
   { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open Workflow"), body: (d) => <TasksList d={d} /> },
-  { id: "activity", name: "Recent activity", desc: "Tasks created, updated and completed, newest first.", category: "Tasks", sizes: ["m", "l", "xl"], size: "m", icon: Activity, body: (d) => <RecentActivity d={d} /> },
+  { id: "firmCalendar", name: "Firm calendar", desc: "The whole firm's key dates, workflow steps and tasks due, on a month calendar (the same for everyone). Click a day to see what's due.", category: "Calendar", sizes: ["l", "w", "xl"], size: "l", icon: CalendarDays, title: () => "Firm calendar", body: (_d, size) => <DeadlineCalendar compact={size === "l"} /> },
+  { id: "activity", name: "Recent activity", desc: "What everyone in the firm did: tasks, workflow steps, documents, time, emails and status changes. Click one to open it in its matter's Activities.", category: "Tasks", sizes: ["m", "l", "xl"], size: "m", icon: Activity, body: (d) => <RecentActivity d={d} /> },
   { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: BarChart3, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" hideLabel onPick={(email) => d.setScope(email)} /> },
   { id: "myTasksScoped", name: "My tasks", desc: "Always your own tasks (even when View Team Tasks shows someone else): overdue first, then due today / this week / month, then no due date.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: UserRound, title: (d) => `My tasks · ${d.rangeWord}`, body: (d) => <ScopedTasks d={d} /> },
   { id: "teamTasks", name: "Team tasks", desc: "Always the whole team's open tasks, with who each one belongs to: overdue first, then due today / this week / month.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: Users, title: (d) => `Team tasks · ${d.rangeWord}`, body: (d) => <ScopedTasks d={d} team /> },

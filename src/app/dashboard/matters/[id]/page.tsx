@@ -1,5 +1,7 @@
 "use client";
 
+import DeadlineCalendar from "@/components/calendar/DeadlineCalendar";
+import MatterActivity from "@/components/matters/MatterActivity";
 import MatterTimeline from "@/components/matters/MatterTimeline";
 import PracticeAreaList from "@/components/matters/PracticeAreaList";
 import { PRACTICE_AREAS_SORTED } from "@/lib/matters/practiceAreas";
@@ -71,7 +73,9 @@ export default function MatterDetailPage() {
   const matter = matters.find((m) => m.id === params.id) ?? null;
 
   // ?tab=emails etc. opens that tab (e.g. from a client portal message alert).
-  const tabParam = useSearchParams().get("tab");
+  const search = useSearchParams();
+  const tabParam = search.get("tab");
+  const activityParam = search.get("a"); // an activity to highlight (opened from the Dashboard)
   // Old links (?tab=tasks / ?tab=timeline) open the Workflow tab, which took both over.
   const wanted = tabParam === "tasks" || tabParam === "timeline" ? "workflow" : tabParam;
   const [activeTab, setActiveTab] = useState<TabKey>(() => (tabs.some((t) => t.key === wanted) ? (wanted as TabKey) : "overview"));
@@ -399,6 +403,17 @@ export default function MatterDetailPage() {
             cash={isCashDeal(keyDates.data?.state)}
           />
         </div>
+      ) : activeTab === "calendar" ? (
+        // The matter's key dates, workflow steps and tasks on a month calendar.
+        <div className="border border-line rounded-2xl p-4 bg-white">
+          <DeadlineCalendar matterId={matter.id} />
+        </div>
+      ) : activeTab === "activities" ? (
+        <MatterActivity
+          matterId={matter.id}
+          highlight={activityParam}
+          onOpen={(i) => setActiveTab(i.documentId ? "documents" : i.taskId ? "workflow" : i.kind === "keydates" || i.kind === "status" ? "overview" : "activities")}
+        />
       ) : activeTab !== "overview" ? (
         <div className="border border-line rounded-2xl min-h-[240px] flex items-center justify-center text-[14px] text-muted">
           {tabs.find((t) => t.key === activeTab)?.label} coming soon.
