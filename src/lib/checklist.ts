@@ -488,3 +488,63 @@ export function autoStatus(
   }
   return target && target !== current ? target : null;
 }
+
+// ── Workflow stage → board column ───────────────────────────────────────────
+// A matter's workflow card sits in the board column for the first step that
+// isn't done yet (steps ticked early don't skip ahead). Each step is matched to
+// a column by what it's about; the step's own text wins over its section title.
+const STAGE_RULES: { step: RegExp; column: RegExp }[] = [
+  { step: /record|disburs|post.?closing|final policy|close file|file complete|not proceeding/i, column: /post/i },
+  { step: /attorney review (concluded|completed)|contract signed|in attorney review/i, column: /attorney review/i },
+  { step: /engag|intake|retainer|service agreement|fee received|review letter|consult/i, column: /intake|engag|consult/i },
+  { step: /inspect|deposit|escrow|contingency (date )?letter/i, column: /inspect/i },
+  { step: /mortgage|apprais|title|survey|commitment|lender|insurance/i, column: /mortgage|title|financ/i },
+  { step: /closing disclosure|commission|cleared to close|binder|certificate of occupancy|smoke|water|sewer|walk.?through|final read|closing prep/i, column: /closing prep|preparation|pre.?closing/i },
+  { step: /closing|settlement/i, column: /closing prep|preparation|^closing$/i },
+];
+export type StageColumn = { id: string; title: string };
+function columnForStep(text: string, section: string, columns: StageColumn[]): StageColumn | null {
+  for (const subject of [text, section]) {
+    for (const r of STAGE_RULES) {
+      if (!r.step.test(subject)) continue;
+      const col = columns.find((c) => r.column.test(c.title.trim()));
+      if (col) return col;
+    }
+  }
+  return null;
+}
+// The column a workflow card belongs in now: a board column, or null when
+// nothing matches (the card stays where it is). It's the column for the first
+// step not done yet, but never earlier than a column already reached by the
+// steps before it (the card only moves forward). Every step done → at least the
+// board's "Closing" column.
+export function stageColumn(c: TaskChecklist | null | undefined, columns: StageColumn[]): StageColumn | null {
+  if (!c || !columns.length) return null;
+  const idx = (col: StageColumn | null) => (col ? columns.findIndex((x) => x.id === col.id) : -1);
+  // floor = the furthest column reached by sections that are fully done.
+  let floor = -1;
+  for (const s of c.sections) {
+    const at = s.items.map((i) => idx(columnForStep(i.text, s.title, columns)));
+    const open = s.items.findIndex((i) => !i.done && !i.na);
+    if (open < 0) {
+      floor = Math.max(floor, ...at);
+      continue;
+    }
+    const best = Math.max(floor, at[open]);
+    return best >= 0 ? columns[best] : null;
+  }
+  const closing = columns.findIndex((col) => /^closing$/i.test(col.title.trim()));
+  const best = Math.max(floor, closing);
+  return best >= 0 ? columns[best] : null;
+}
+// Whether any step was ticked or unticked between two versions of a checklist.
+export function stepsChanged(before: TaskChecklist | null | undefined, after: TaskChecklist | null | undefined): boolean {
+  const was = new Map<string, string>();
+  for (const s of before?.sections ?? []) for (const i of s.items) was.set(i.id, `${i.done}|${!!i.na}`);
+  let n = 0;
+  for (const s of after?.sections ?? []) for (const i of s.items) {
+    n++;
+    if (was.get(i.id) !== `${i.done}|${!!i.na}`) return true;
+  }
+  return n !== was.size;
+}

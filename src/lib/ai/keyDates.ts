@@ -6,7 +6,7 @@ import { getProvider, aiConfig, dailyLimitMessage } from "@/lib/ai/provider";
 import type { ContentBlock } from "@/lib/ai/provider/types";
 import { getMatterContext, ensureVersionIndexed, usageToday, type AiCtx } from "@/lib/ai/store";
 import { firmTimezone, todayIn } from "@/lib/ai/workspaceTools";
-import { cleanChecklist, dueDateOf, setMortgageNa } from "@/lib/checklist";
+import { cleanChecklist, dueDateOf, setMortgageNa, applyTemplate, nextStep, stageColumn, type StageColumn } from "@/lib/checklist";
 import { DOCUMENTS_BUCKET, newStoragePath, createDocumentFromUpload, addVersionFromUpload, AccessError } from "@/lib/data/documents";
 import { templatesAllowed } from "@/lib/clients/templates";
 import { buildContingencyLetter, letterValues, type LetterClient } from "@/lib/matters/contingencyLetter";
@@ -27,6 +27,7 @@ import {
   resolveDates,
   anchorDates,
   isRealEstate,
+  isCashDeal,
   usDate,
   type KeyDate,
   type KeyDateField,
@@ -483,7 +484,96 @@ async function letterClient(orgId: string, clientId: string | null): Promise<Let
 }
 
 // Creates (or updates, as a new version) the Contingency Dates Letter once attorney review has concluded.
+// After the dates are worked out: the contingency letter, then the matter's
+// workflow card (both once attorney review has concluded).
 export async function maybeCreateLetter(ctx: AiCtx, m: MatterRow, state: KeyDatesState, force = false): Promise<KeyDatesState> {
+  const next = await createLetterIfDue(ctx, m, state, force);
+  return maybeCreateWorkflow(ctx, m, next).catch((e) => {
+    console.error("Creating the workflow failed:", e);
+    return next;
+  });
+}
+
+// The matter's workflow (timeline): once attorney review has concluded, the
+// firm's workflow template for the matter type (REP, RES…) is added as a card on
+// the matter type's board, with the key dates filled in and the steps already
+// known ticked. Done once per matter (state.workflow); if someone deletes the
+// card it isn't made again (it can be made from the matter's Timeline tab).
+export async function maybeCreateWorkflow(ctx: AiCtx, m: MatterRow, state: KeyDatesState, force = false): Promise<KeyDatesState> {
+  const ar = state.dates.attorneyReviewCompleted?.date;
+  if (!force && (state.workflow || !isYmd(ar) || !isRealEstate({ category: m.category, matterCode: m.matter_code }))) return state;
+  const code = (m.matter_code ?? "").toUpperCase();
+  // Already has a workflow card (made by hand from the Tasks tab, say)? Just remember it.
+  const { data: existing } = await db().from("tasks").select("id, checklist").eq("org_id", ctx.orgId).eq("matter_id", m.id);
+  const has = ((existing ?? []) as { id: string; checklist: unknown }[]).find((t) => (cleanChecklist(t.checklist)?.sections.length ?? 0) > 0);
+  if (has && !force) {
+    const next = { ...state, workflow: { taskId: has.id, createdAt: new Date().toISOString() } };
+    await saveState(ctx, m.id, next);
+    return next;
+  }
+  const { listTemplates } = await import("@/lib/data/taskTemplates");
+  const templates = await listTemplates();
+  const fits = templates.filter((t) => code && (t.matterCodes ?? []).includes(code));
+  const template = fits.find((t) => !t.example) ?? fits[0];
+  if (!template) return state;
+  // The matter type's board (REP, RES…) and its columns.
+  const { data: boards } = await db().from("task_boards").select("id, name").eq("org_id", ctx.orgId);
+  const { boardForMatter } = await import("@/lib/matters/boards");
+  const boardId = boardForMatter((boards ?? []) as { id: string; name: string }[], { matterCode: m.matter_code, category: m.category });
+  const { data: cols } = boardId
+    ? await db().from("board_columns").select("id, title, position").eq("org_id", ctx.orgId).eq("board_id", boardId).is("status", null).order("position")
+    : { data: [] };
+  // Steps with key dates; the events already known (contract signed, attorney review, the letter) ticked.
+  const fields = await matterFields(ctx, m.id).catch(() => []);
+  const dates = anchorDates(state.dates, fields);
+  let checklist = applyTemplate(null, template);
+  if (isCashDeal(state)) checklist = setMortgageNa(checklist, true);
+  const anchors = new Set(checklist.sections.flatMap((s) => s.items.map((i) => i.anchor).filter(Boolean)));
+  const filled = Object.fromEntries(Object.entries(dates).filter(([k]) => anchors.has(k)));
+  const now = new Date().toISOString();
+  const known = (text: string) =>
+    (/contract signed/i.test(text) && isYmd(state.dates.contractSigned?.date)) ||
+    (/attorney review (concluded|completed)/i.test(text) && isYmd(ar)) ||
+    (/contingency (date )?letter/i.test(text) && !!state.letter);
+  checklist = {
+    ...checklist,
+    ...(Object.keys(filled).length ? { dates: filled } : {}),
+    sections: checklist.sections.map((s) => ({ ...s, items: s.items.map((i) => (known(i.text) ? { ...i, done: true, doneAt: now } : i)) })),
+  };
+  const column = stageColumn(checklist, (cols ?? []) as StageColumn[]);
+  const number = m.matter_number ?? null;
+  const { createTaskRow } = await import("@/lib/data/tasks");
+  const { data: mrow } = await db().from("matters").select("*").eq("id", m.id).maybeSingle();
+  const assignedTo = (mrow as { assigned_to?: string | null } | null)?.assigned_to ?? null;
+  let assignee: string | null = null;
+  if (assignedTo) {
+    const { data: p } = await db().from("profiles").select("email").eq("id", assignedTo).maybeSingle();
+    assignee = (p as { email?: string | null } | null)?.email ?? null;
+  }
+  const task = await createTaskRow(
+    {
+      id: crypto.randomUUID(),
+      title: number ? `${m.title}: ${number}` : m.title,
+      description: `${template.name}, added automatically when attorney review concluded.`,
+      status: "inprogress",
+      priority: "Medium",
+      assignee,
+      dueDate: nextStep(checklist)?.due ?? null,
+      comments: [],
+      boardId,
+      columnId: column?.id ?? null,
+      matterId: m.id,
+      checklist,
+      createdAt: now,
+    } as never,
+    ctx.userId
+  );
+  const next = { ...state, workflow: { taskId: task.id, createdAt: now } };
+  await saveState(ctx, m.id, next);
+  return next;
+}
+
+async function createLetterIfDue(ctx: AiCtx, m: MatterRow, state: KeyDatesState, force = false): Promise<KeyDatesState> {
   const ar = state.dates.attorneyReviewCompleted?.date;
   if (!templatesAllowed(ctx.email)) {
     if (force) throw new KeyDatesError(400, "The letter template isn't set up for your firm yet.");
@@ -656,6 +746,15 @@ export async function saveManualDates(ctx: AiCtx, matterId: string, changes: Rec
   await saveState(ctx, matterId, state);
   const { fingerprint } = await inputDocuments(ctx, matterId, state);
   return { state, stale: !!state.fingerprint && state.fingerprint !== fingerprint, ran: false };
+}
+
+// The Timeline tab's "Create timeline" button: makes the workflow card now (even
+// before attorney review concluded, or again after it was deleted).
+export async function createWorkflowNow(ctx: AiCtx, matterId: string): Promise<KeyDatesResult> {
+  const m = await loadMatter(ctx, matterId);
+  const state = await maybeCreateWorkflow(ctx, m, { ...stateOf(m), workflow: null }, true);
+  if (!state.workflow) throw new KeyDatesError(400, "There's no workflow template for this matter type yet. Add one in Templates (with the matter type, e.g. REP) and try again.");
+  return { state, stale: false, ran: false };
 }
 
 export async function createLetterNow(ctx: AiCtx, matterId: string): Promise<KeyDatesResult> {

@@ -1,5 +1,5 @@
 import "server-only";
-import { cleanChecklist } from "@/lib/checklist";
+import { cleanChecklist, stageColumn, stepsChanged, type StageColumn } from "@/lib/checklist";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { boardInOrg } from "@/lib/data/boards";
@@ -166,6 +166,30 @@ async function withKeyDates(orgId: string, task: BoardTask, beforeChecklist: unk
   }
 }
 
+// A workflow card follows its steps across the board: after steps are ticked,
+// it moves to the column for the first step not done yet (see stageColumn).
+// Moving it by hand is always allowed (it only moves again when steps change),
+// and "Move automatically" off on the card stops it.
+async function withStage(orgId: string, task: BoardTask, beforeChecklist: unknown): Promise<BoardTask> {
+  try {
+    const c = task.checklist;
+    if (!task.boardId || !c || c.auto === false || !stepsChanged(cleanChecklist(beforeChecklist), c)) return task;
+    const { data } = await createAdminClient()
+      .from("board_columns")
+      .select("id, title, position")
+      .eq("org_id", orgId)
+      .eq("board_id", task.boardId)
+      .is("status", null)
+      .order("position");
+    const target = stageColumn(c, (data ?? []) as StageColumn[]);
+    if (!target || target.id === task.columnId) return task;
+    const { error } = await createAdminClient().from("tasks").update({ column_id: target.id }).eq("id", task.id).eq("org_id", orgId);
+    return error ? task : { ...task, columnId: target.id };
+  } catch {
+    return task;
+  }
+}
+
 export async function createTaskRow(task: BoardTask, userId: string | null): Promise<BoardTask> {
   const supabase = createAdminClient();
   const orgId = await getCurrentOrgId();
@@ -238,7 +262,8 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   // Only when the checklist was part of this change (dates edited, steps added, matter linked).
   const saved = toTask(data as TaskRow);
   const touched = task.checklist !== undefined || (before as { matter_id?: string | null } | null)?.matter_id !== saved.matterId;
-  const updated = touched ? await withKeyDates(orgId, saved, (before as { checklist?: unknown } | null)?.checklist ?? null) : saved;
+  const withDates = touched ? await withKeyDates(orgId, saved, (before as { checklist?: unknown } | null)?.checklist ?? null) : saved;
+  const updated = await withStage(orgId, withDates, (before as { checklist?: unknown } | null)?.checklist ?? null);
   await notifyAssigned({
     orgId,
     actorId: userId,

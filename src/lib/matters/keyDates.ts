@@ -71,6 +71,7 @@ export type KeyDatesState = {
   extractedAt?: string;
   runningSince?: string | null;
   letter?: { documentId: string; fingerprint: string; generatedAt: string; version: number; missing?: string[] } | null;
+  workflow?: { taskId: string; createdAt: string } | null; // the workflow card made for the matter (once)
 };
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;

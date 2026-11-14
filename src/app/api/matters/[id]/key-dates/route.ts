@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAiCtx } from "@/lib/ai/store";
-import { getKeyDates, refreshKeyDates, saveManualDates, createLetterNow, resetKeyDates, matterFields, saveMatterFields, fieldLibrary, forgetLibraryField, KeyDatesError } from "@/lib/ai/keyDates";
+import { getKeyDates, refreshKeyDates, saveManualDates, createLetterNow, createWorkflowNow, resetKeyDates, matterFields, saveMatterFields, fieldLibrary, forgetLibraryField, KeyDatesError } from "@/lib/ai/keyDates";
 import type { AiCtx } from "@/lib/ai/store";
 
 // Every answer also carries the fields this matter shows.
@@ -51,6 +51,8 @@ export async function POST(request: Request, { params }: P) {
     const ctx = await getAiCtx();
     if (body.action === "refresh") return NextResponse.json(await withFields(ctx, id, await refreshKeyDates(ctx, id)));
     if (body.action === "letter") return NextResponse.json(await withFields(ctx, id, await createLetterNow(ctx, id)));
+    // { action: "workflow" } make the matter's workflow card (timeline) now
+    if (body.action === "workflow") return NextResponse.json(await withFields(ctx, id, await createWorkflowNow(ctx, id)));
     if (body.action === "reset") return NextResponse.json(await withFields(ctx, id, await resetKeyDates(ctx, id)));
     if (body.action === "save" && body.dates && typeof body.dates === "object") {
       return NextResponse.json(await withFields(ctx, id, await saveManualDates(ctx, id, body.dates as Record<string, unknown>)));

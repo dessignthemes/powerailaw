@@ -1,5 +1,6 @@
 "use client";
 
+import MatterTimeline from "@/components/matters/MatterTimeline";
 import PracticeAreaList from "@/components/matters/PracticeAreaList";
 import { PRACTICE_AREAS_SORTED } from "@/lib/matters/practiceAreas";
 import MatterNumberEdit from "@/components/matters/MatterNumberEdit";
@@ -393,6 +394,8 @@ export default function MatterDetailPage() {
           keyDates={anchorDates(keyDates.data?.state.dates ?? {}, keyDates.data?.fields ?? [])}
           cash={isCashDeal(keyDates.data?.state)}
         />
+      ) : activeTab === "timeline" ? (
+        <MatterTimeline matter={matter} workflowTaskId={keyDates.data?.state.workflow?.taskId ?? null} />
       ) : activeTab !== "overview" ? (
         <div className="border border-line rounded-2xl min-h-[240px] flex items-center justify-center text-[14px] text-muted">
           {tabs.find((t) => t.key === activeTab)?.label} coming soon.
