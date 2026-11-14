@@ -21,7 +21,6 @@ import {
   ChevronRight,
   LayoutGrid,
   ListChecks,
-  CalendarRange,
   Calendar,
   FileText,
   Mail,
@@ -53,8 +52,7 @@ import { statusMeta as taskStatusMeta } from "@/components/NewTaskModal";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutGrid },
-  { key: "tasks", label: "Tasks", icon: ListChecks },
-  { key: "timeline", label: "Timeline", icon: CalendarRange },
+  { key: "workflow", label: "Workflow", icon: ListChecks },
   { key: "calendar", label: "Calendar", icon: Calendar },
   { key: "documents", label: "Documents", icon: FileText },
   { key: "emails", label: "Emails", icon: Mail },
@@ -74,7 +72,9 @@ export default function MatterDetailPage() {
 
   // ?tab=emails etc. opens that tab (e.g. from a client portal message alert).
   const tabParam = useSearchParams().get("tab");
-  const [activeTab, setActiveTab] = useState<TabKey>(() => (tabs.some((t) => t.key === tabParam) ? (tabParam as TabKey) : "overview"));
+  // Old links (?tab=tasks / ?tab=timeline) open the Workflow tab, which took both over.
+  const wanted = tabParam === "tasks" || tabParam === "timeline" ? "workflow" : tabParam;
+  const [activeTab, setActiveTab] = useState<TabKey>(() => (tabs.some((t) => t.key === wanted) ? (wanted as TabKey) : "overview"));
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -387,15 +387,18 @@ export default function MatterDetailPage() {
         </>
       ) : activeTab === "emails" ? (
         <MatterEmails matter={matter} client={client} />
-      ) : activeTab === "tasks" ? (
-        <MatterTasks
-          matter={matter}
-          clientName={client?.name ?? null}
-          keyDates={anchorDates(keyDates.data?.state.dates ?? {}, keyDates.data?.fields ?? [])}
-          cash={isCashDeal(keyDates.data?.state)}
-        />
-      ) : activeTab === "timeline" ? (
-        <MatterTimeline matter={matter} workflowTaskId={keyDates.data?.state.workflow?.taskId ?? null} />
+      ) : activeTab === "workflow" ? (
+        // Workflow = the matter's workflow, open and visual (the same card as on the
+        // Workflow board), then every task on the matter.
+        <div className="flex flex-col gap-6">
+          <MatterTimeline matter={matter} workflowTaskId={keyDates.data?.state.workflow?.taskId ?? null} />
+          <MatterTasks
+            matter={matter}
+            clientName={client?.name ?? null}
+            keyDates={anchorDates(keyDates.data?.state.dates ?? {}, keyDates.data?.fields ?? [])}
+            cash={isCashDeal(keyDates.data?.state)}
+          />
+        </div>
       ) : activeTab !== "overview" ? (
         <div className="border border-line rounded-2xl min-h-[240px] flex items-center justify-center text-[14px] text-muted">
           {tabs.find((t) => t.key === activeTab)?.label} coming soon.
@@ -509,7 +512,7 @@ export default function MatterDetailPage() {
               <div className="flex items-center gap-2 bg-card-alt px-4 py-3">
                 <ClipboardList size={14} strokeWidth={1.75} className="text-muted" />
                 <span className="text-[14px] font-semibold">Open tasks</span>
-                <button onClick={() => setActiveTab("tasks")} className="ml-auto text-[12.5px] font-medium text-muted hover:text-ink">
+                <button onClick={() => setActiveTab("workflow")} className="ml-auto text-[12.5px] font-medium text-muted hover:text-ink">
                   {openTasks.length ? "View all" : "Add from template"}
                 </button>
               </div>
@@ -525,7 +528,7 @@ export default function MatterDetailPage() {
                     return (
                       <button
                         key={t.id}
-                        onClick={() => setActiveTab("tasks")}
+                        onClick={() => setActiveTab("workflow")}
                         className="flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-card-alt text-left"
                       >
                         <S.icon size={14} strokeWidth={2} className={S.color} />

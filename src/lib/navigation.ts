@@ -55,7 +55,7 @@ export const workspaceLinks: NavLink[] = [
   { label: "Inbox", href: "/dashboard/inbox", icon: Inbox },
   { label: "Calendar", href: "/dashboard/calendar", icon: Calendar },
   { label: "Task Folder", href: "/dashboard/task-folder", icon: ListChecks },
-  { label: "Task Board", href: "/dashboard/task-board", icon: BarChart3 },
+  { label: "Workflow", href: "/dashboard/task-board", icon: BarChart3 },
 ];
 
 export const navSections: NavSection[] = [

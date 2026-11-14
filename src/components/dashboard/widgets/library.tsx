@@ -776,7 +776,7 @@ function Shortcuts() {
     ["AI Agent", "/dashboard/agent", Sparkles],
     ["New matter", "/dashboard/matters?new=1", Folder],
     ["New client", "/dashboard/client-intake", UserPlus],
-    ["Task board", "/dashboard/task-board", ListChecks],
+    ["Workflow", "/dashboard/task-board", ListChecks],
     ["Inbox", "/dashboard/inbox", Inbox],
     ["Calendar", "/dashboard/calendar", Calendar],
   ];
@@ -805,7 +805,7 @@ export const WIDGETS: WidgetDef[] = [
   // Tasks
   { id: "due", name: "Due today", desc: "Tasks due today (or this week / month), by board.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: ListChecks, title: (d) => d.dueLabel, action: (d) => viewAll(`/dashboard/task-board?due=${d.range}`, "View all tasks"), body: (d, size) => <DueCard d={d} small={size === "s"} /> },
   { id: "priority", name: "Due by priority", desc: "High, medium and low priority tasks due. Click one to filter the Tasks widget.", category: "Tasks", sizes: ["s", "m", "l"], size: "s", icon: Flag, title: (d) => `${d.dueLabel} by priority`, body: (d, size) => <PriorityCard d={d} small={size === "s"} /> },
-  { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open task board"), body: (d) => <TasksList d={d} /> },
+  { id: "tasks", name: "Tasks", desc: "The tasks due, and those with no due date. Tick one off right here.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: ListChecks, action: () => viewAll("/dashboard/task-board", "Open Workflow"), body: (d) => <TasksList d={d} /> },
   { id: "activity", name: "Recent activity", desc: "Tasks created, updated and completed, newest first.", category: "Tasks", sizes: ["m", "l", "xl"], size: "m", icon: Activity, body: (d) => <RecentActivity d={d} /> },
   { id: "teamProgress", name: "Team progress", desc: "Each person's tasks: completed on time, completed, open and overdue.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "m", icon: BarChart3, body: (d) => <TeamProgress tasks={d.allTasks} members={d.teamMembers} className="h-full min-h-0 scroll-on-hover" hideLabel onPick={(email) => d.setScope(email)} /> },
   { id: "myTasksScoped", name: "My tasks", desc: "Always your own tasks (even when View Team Tasks shows someone else): overdue first, then due today / this week / month, then no due date.", category: "Tasks", sizes: ["m", "l", "w", "xl"], size: "l", icon: UserRound, title: (d) => `My tasks · ${d.rangeWord}`, body: (d) => <ScopedTasks d={d} /> },

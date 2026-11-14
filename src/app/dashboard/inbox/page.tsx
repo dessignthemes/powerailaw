@@ -743,7 +743,7 @@ export default function InboxPage() {
             // A task from an email filed to a matter belongs to that matter.
             addTask(taskFrom.matter ? { ...task, matterId: taskFrom.matter.id } : task);
             setTaskFrom(null);
-            setActionNote(`Task created: "${task.title}". It's on the Task Board.`);
+            setActionNote(`Task created: "${task.title}". It's on the Workflow board.`);
           }}
         />
       )}

@@ -93,7 +93,7 @@ export async function reviewMatter(ctx: AiCtx, matterId: string, useAi: boolean)
     if (!m.client.phone) add({ key: "client_phone", severity: "low", title: "Client has no phone number", detail: `${m.client.name} has no phone number on file.`, fix: { kind: "link", label: "Open client card", href: `/dashboard/client-intake?card=${m.client.id}` } });
   }
   if (overdue.length) {
-    add({ key: "overdue", severity: "high", title: `${overdue.length} overdue task${overdue.length === 1 ? "" : "s"}`, detail: overdue.slice(0, 4).map((t) => `${t.title} (due ${t.dueDate})`).join("; "), fix: { kind: "link", label: "Open Task Board", href: "/dashboard/task-board" } });
+    add({ key: "overdue", severity: "high", title: `${overdue.length} overdue task${overdue.length === 1 ? "" : "s"}`, detail: overdue.slice(0, 4).map((t) => `${t.title} (due ${t.dueDate})`).join("; "), fix: { kind: "link", label: "Open Workflow", href: "/dashboard/task-board" } });
   }
   if (dueDate && dueDate < today && status !== "Closed") {
     add({ key: "matter_overdue", severity: "high", title: "Matter due date has passed", detail: `The matter's due date (${dueDate}) is in the past but it isn't closed.`, fix: { kind: "link", label: "Update the matter", href } });

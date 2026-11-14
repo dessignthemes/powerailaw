@@ -87,7 +87,7 @@ export default function MatterTasks({
             <b>{notice.title}</b> was added to {boardName(notice.boardId)}.
           </span>
           <Link href={boardHref(notice.boardId)} className="font-medium underline underline-offset-2 flex items-center gap-1">
-            Open Task Board <ArrowRight size={13} strokeWidth={1.75} />
+            Open Workflow <ArrowRight size={13} strokeWidth={1.75} />
           </Link>
           <button onClick={() => setNotice(null)} aria-label="Dismiss" className="ml-auto text-muted hover:text-ink">
             <X size={14} strokeWidth={1.75} />
@@ -131,7 +131,7 @@ export default function MatterTasks({
             <ListChecks size={20} strokeWidth={1.5} className="text-muted" />
             <div className="text-[13.5px] font-medium">No tasks on this matter yet</div>
             <div className="text-[12.5px] text-muted max-w-[420px]">
-              Use <b>Add from template</b> to create a task with the full checklist. It shows up on the Task Board, linked to this matter.
+              Use <b>Add from template</b> to create a task with the full checklist. It shows up on the Workflow board, linked to this matter.
             </div>
           </div>
         ) : (

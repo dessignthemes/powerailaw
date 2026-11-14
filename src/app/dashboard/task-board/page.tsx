@@ -745,7 +745,7 @@ function TaskBoard({
             <h2 className="text-[19px] font-semibold mb-1">{boardDialog.mode === "new" ? "New sub board" : "Rename board"}</h2>
             <p className="text-[13px] text-muted mb-4">
               {boardDialog.mode === "new"
-                ? "Sub boards appear under Task Board in the sidebar, for example “Email Tasks” or “Real Estate”."
+                ? "Sub boards appear under Workflow in the sidebar, for example “Email Tasks” or “Real Estate”."
                 : "Everyone in your workspace sees the new name."}
             </p>
             <input

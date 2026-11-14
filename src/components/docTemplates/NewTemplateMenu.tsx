@@ -50,7 +50,7 @@ export default function NewTemplateMenu({ label = "Add template" }: { label?: st
                 ["ai", <Sparkles key="a" size={14} />, "Create with AI", "Describe it; the AI drafts it"],
                 ["paste", <ClipboardPaste key="p" size={14} />, "Paste text", "From a document or email"],
                 ["blank", <FileText key="b" size={14} />, "Start blank", "Write it yourself"],
-                ["workflow", <ListChecks key="w" size={14} />, "Workflow checklist", "Steps for a task (Task Board)"],
+                ["workflow", <ListChecks key="w" size={14} />, "Workflow checklist", "Steps for a task (Workflow board)"],
               ] as [string, React.ReactNode, string, string][]
             ).map(([k, icon, l, sub]) => (
               <button key={k} role="menuitem" onClick={() => choose(k)} className="w-full text-left flex items-start gap-2.5 px-3 py-2 rounded-xl hover:bg-[#F3F2F0]">

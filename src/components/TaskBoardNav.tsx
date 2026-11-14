@@ -73,7 +73,7 @@ export default function TaskBoardNav() {
         className={`${item(false)} w-full px-3 py-[6px] text-left`}
       >
         <BarChart3 size={15} strokeWidth={1.75} className="flex-shrink-0" />
-        <span className="flex-1">Task Board</span>
+        <span className="flex-1">Workflow</span>
         {open ? <ChevronDown size={14} className="text-muted" /> : <ChevronRight size={14} className="text-muted" />}
       </button>
 

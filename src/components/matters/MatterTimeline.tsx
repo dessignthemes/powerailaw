@@ -30,7 +30,7 @@ export default function MatterTimeline({ matter, workflowTaskId, onCreated }: { 
     try {
       const res = await fetch(`/api/matters/${matter.id}/key-dates`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "workflow" }) });
       const d = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(d?.error ?? "The timeline couldn't be created. Please try again.");
+      if (!res.ok) throw new Error(d?.error ?? "The workflow couldn't be created. Please try again.");
       refreshAll();
       onCreated?.();
     } catch (e) {
@@ -43,7 +43,7 @@ export default function MatterTimeline({ matter, workflowTaskId, onCreated }: { 
   if (!tasksLoaded) {
     return (
       <div className="flex items-center gap-2 text-[14px] text-muted py-10 justify-center">
-        <Loader2 size={15} className="animate-spin" /> Loading the timeline…
+        <Loader2 size={15} className="animate-spin" /> Loading the workflow…
       </div>
     );
   }
@@ -52,17 +52,17 @@ export default function MatterTimeline({ matter, workflowTaskId, onCreated }: { 
       <div className={frameOuter}>
         <div className="px-3 pt-2.5 pb-2.5">
           <span className={frameTitle}>
-            <GitBranch size={13} /> Timeline
+            <GitBranch size={13} /> Workflow
           </span>
         </div>
         <div className={`${frameInner} p-8 text-center`}>
-          <div className="text-[15px] font-semibold mb-1">No timeline yet</div>
+          <div className="text-[15px] font-semibold mb-1">No workflow yet</div>
           <p className="text-[13.5px] text-muted max-w-[520px] mx-auto mb-4">
-            It&apos;s made automatically from the firm&apos;s workflow template once attorney review concludes and the key dates are in. It&apos;s the same card as on the task board, so the two stay in step.
+            It&apos;s made automatically from the firm&apos;s workflow template once attorney review concludes and the key dates are in. It&apos;s the same card as on the Workflow board, so the two stay in step.
           </p>
           <button onClick={() => void create()} disabled={creating} className={`${pageBtnB} mx-auto disabled:opacity-60`}>
             {creating ? <Loader2 size={14} className="animate-spin" /> : <GitBranch size={14} />}
-            {creating ? "Creating…" : "Create timeline now"}
+            {creating ? "Creating…" : "Create workflow now"}
           </button>
           {error && <div className="mt-3 text-[13px] text-[#B42318]">{error}</div>}
         </div>
@@ -118,18 +118,18 @@ function Flow({ task, boardName, onChange }: { task: BoardTask; boardName: strin
     <div className={frameOuter}>
       <div className="flex items-center gap-3 flex-wrap px-3 pt-2.5 pb-2.5">
         <span className={frameTitle}>
-          <GitBranch size={13} /> Timeline · {(c.templates ?? []).join(", ") || task.title}
+          <GitBranch size={13} /> Workflow · {(c.templates ?? []).join(", ") || task.title}
         </span>
         <span className="ml-auto flex items-center gap-2 flex-wrap text-[12.5px]">
           <span className="text-muted">
-            On {boardName ?? "the task board"}: <b className="text-ink font-medium">{columnName}</b>
+            On {boardName ?? "the Workflow board"}: <b className="text-ink font-medium">{columnName}</b>
           </span>
           <label className="flex items-center gap-1.5 text-muted cursor-pointer" title="Ticking steps moves the card to the column for the next step. You can still drag it on the board.">
             <input type="checkbox" checked={c.auto !== false} onChange={(e) => save({ ...c, auto: e.target.checked ? undefined : false })} className="accent-[#1b191a]" />
             Move automatically
           </label>
           <Link href={`/dashboard/task-board?board=${task.boardId ?? "general"}`} className="flex items-center gap-1 font-medium underline underline-offset-2">
-            Open task board <ArrowUpRight size={13} />
+            Open Workflow board <ArrowUpRight size={13} />
           </Link>
         </span>
       </div>

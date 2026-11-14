@@ -276,7 +276,7 @@ export default function TaskDetailModal({
       >
         <div className="flex items-center justify-between px-7 pt-6 pb-2">
           <div className="flex items-center gap-2 text-[13.5px] text-muted font-medium">
-            <span className="bg-card-alt px-2.5 py-1 rounded-full">Task board</span>
+            <span className="bg-card-alt px-2.5 py-1 rounded-full">Workflow</span>
             <span>›</span>
             {matter && (
               <>

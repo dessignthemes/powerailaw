@@ -472,7 +472,7 @@ export default function CommunicationsPage() {
     setReload((r) => r + 1);
   }
   async function remove(c: Comm) {
-    if (!confirm("Delete this call log? A call-back task it created stays on the Task Board.")) return;
+    if (!confirm("Delete this call log? A call-back task it created stays on the Workflow board.")) return;
     await fetch(`/api/communications/${c.id}`, { method: "DELETE" });
     setReload((r) => r + 1);
   }

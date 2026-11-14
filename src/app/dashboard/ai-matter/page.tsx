@@ -92,7 +92,7 @@ export default function AiMatterPage() {
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? "The tasks couldn't be created.");
       setCreated((s) => new Set([...s, ...items.map((i) => i.key)]));
-      setNotice(`Created ${d.created} task${d.created === 1 ? "" : "s"} on this matter. They're on the Task Board and the matter page.`);
+      setNotice(`Created ${d.created} task${d.created === 1 ? "" : "s"} on this matter. They're on the Workflow board and the matter page.`);
       refreshAll();
     } catch (e) {
       setError((e as Error).message);

@@ -501,13 +501,48 @@ export async function maybeCreateLetter(ctx: AiCtx, m: MatterRow, state: KeyDate
 // card it isn't made again (it can be made from the matter's Timeline tab).
 export async function maybeCreateWorkflow(ctx: AiCtx, m: MatterRow, state: KeyDatesState, force = false): Promise<KeyDatesState> {
   const ar = state.dates.attorneyReviewCompleted?.date;
-  if (!force && (state.workflow || !isYmd(ar) || !isRealEstate({ category: m.category, matterCode: m.matter_code }))) return state;
+  if (!force && (state.workflow?.v === 2 || !isYmd(ar) || !isRealEstate({ category: m.category, matterCode: m.matter_code }))) return state;
   const code = (m.matter_code ?? "").toUpperCase();
   // Already has a workflow card (made by hand from the Tasks tab, say)? Just remember it.
   const { data: existing } = await db().from("tasks").select("id, checklist").eq("org_id", ctx.orgId).eq("matter_id", m.id);
   const has = ((existing ?? []) as { id: string; checklist: unknown }[]).find((t) => (cleanChecklist(t.checklist)?.sections.length ?? 0) > 0);
+  const nowIso = new Date().toISOString();
+  const knownStep = (text: string) =>
+    (/contract signed/i.test(text) && isYmd(state.dates.contractSigned?.date)) ||
+    (/attorney review (concluded|completed)/i.test(text) && isYmd(ar)) ||
+    (/contingency (date )?letter/i.test(text) && !!state.letter);
   if (has && !force) {
-    const next = { ...state, workflow: { taskId: has.id, createdAt: new Date().toISOString() } };
+    // Tick the steps already known on it, and put it in the right column.
+    const c = cleanChecklist(has.checklist);
+    if (c) {
+      let changed = false;
+      const ticked = {
+        ...c,
+        sections: c.sections.map((sec) => ({
+          ...sec,
+          items: sec.items.map((i) => {
+            if (i.done || i.na || !knownStep(i.text)) return i;
+            changed = true;
+            return { ...i, done: true, doneAt: nowIso };
+          }),
+        })),
+      };
+      if (changed) {
+        const { data: trow } = await db().from("tasks").select("board_id, status").eq("id", has.id).eq("org_id", ctx.orgId).maybeSingle();
+        const bId = (trow as { board_id?: string | null } | null)?.board_id ?? null;
+        const { data: bcols } = bId
+          ? await db().from("board_columns").select("id, title, position").eq("org_id", ctx.orgId).eq("board_id", bId).is("status", null).order("position")
+          : { data: [] };
+        const col = ticked.auto === false ? null : stageColumn(ticked, (bcols ?? []) as StageColumn[]);
+        const st = (trow as { status?: string } | null)?.status;
+        await db()
+          .from("tasks")
+          .update({ checklist: ticked, ...(col ? { column_id: col.id } : {}), ...(st === "todo" ? { status: "inprogress" } : {}), updated_at: nowIso })
+          .eq("id", has.id)
+          .eq("org_id", ctx.orgId);
+      }
+    }
+    const next = { ...state, workflow: { taskId: has.id, createdAt: nowIso, v: 2 } };
     await saveState(ctx, m.id, next);
     return next;
   }
@@ -530,11 +565,8 @@ export async function maybeCreateWorkflow(ctx: AiCtx, m: MatterRow, state: KeyDa
   if (isCashDeal(state)) checklist = setMortgageNa(checklist, true);
   const anchors = new Set(checklist.sections.flatMap((s) => s.items.map((i) => i.anchor).filter(Boolean)));
   const filled = Object.fromEntries(Object.entries(dates).filter(([k]) => anchors.has(k)));
-  const now = new Date().toISOString();
-  const known = (text: string) =>
-    (/contract signed/i.test(text) && isYmd(state.dates.contractSigned?.date)) ||
-    (/attorney review (concluded|completed)/i.test(text) && isYmd(ar)) ||
-    (/contingency (date )?letter/i.test(text) && !!state.letter);
+  const now = nowIso;
+  const known = knownStep;
   checklist = {
     ...checklist,
     ...(Object.keys(filled).length ? { dates: filled } : {}),
@@ -568,7 +600,7 @@ export async function maybeCreateWorkflow(ctx: AiCtx, m: MatterRow, state: KeyDa
     } as never,
     ctx.userId
   );
-  const next = { ...state, workflow: { taskId: task.id, createdAt: now } };
+  const next = { ...state, workflow: { taskId: task.id, createdAt: now, v: 2 } };
   await saveState(ctx, m.id, next);
   return next;
 }

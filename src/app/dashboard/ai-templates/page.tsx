@@ -170,7 +170,7 @@ export default function AiTemplatesPage() {
           ["ai", <Sparkles key="a" size={14} />, "Create with AI", "Describe it; the AI drafts it"],
           ["paste", <ClipboardPaste key="p" size={14} />, "Paste text", "From a document or email"],
           ["blank", <FileText key="b" size={14} />, "Start blank", "Write it yourself"],
-          ["workflow", <ListChecks key="w" size={14} />, "Workflow checklist", "Steps for a task (Task Board)"],
+          ["workflow", <ListChecks key="w" size={14} />, "Workflow checklist", "Steps for a task (Workflow board)"],
         ] as [string, React.ReactNode, string, string][]
       ).map(([k, icon, label, sub]) => (
         <button
@@ -244,7 +244,7 @@ export default function AiTemplatesPage() {
           <h1 className="text-[28px] font-semibold">AI Templates</h1>
           <p className="text-[14.5px] text-muted mt-1 max-w-[760px]">
             All your templates in one place. <b>Document templates</b> (deeds, letters, agreements): create one with AI, from pasted text, from a Word or PDF, or from scratch, then fill it
-            for a matter and get a Word document. <b>Workflow checklists</b>: the step-by-step lists you add to tasks on the Task Board.
+            for a matter and get a Word document. <b>Workflow checklists</b>: the step-by-step lists you add to tasks on the Workflow board.
           </p>
         </div>
         <div className="relative">
@@ -303,7 +303,7 @@ export default function AiTemplatesPage() {
           <div className="text-[11.5px] font-semibold uppercase tracking-wide text-muted mb-1.5 mt-5 flex items-center gap-1.5">
             <ListChecks size={12} /> Workflow checklists{workflows ? ` (${wfList.length})` : ""}
           </div>
-          <p className="text-[12px] text-muted mb-2">Step-by-step checklists for tasks on the Task Board.</p>
+          <p className="text-[12px] text-muted mb-2">Step-by-step checklists for tasks on the Workflow board.</p>
           {workflows === null ? (
             <div className="text-[13px] text-muted flex items-center gap-2 py-2">
               <Loader2 size={13} className="animate-spin" /> Loading…

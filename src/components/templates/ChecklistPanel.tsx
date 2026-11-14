@@ -84,7 +84,7 @@ export function ChecklistPicker({
             {error && <div className="px-3 py-2 text-[12.5px] text-[#8A4B14]">{error}</div>}
             {templates && templates.length === 0 && !error && (
               <div className="px-3 py-2 text-[12.5px] text-muted">
-                No templates yet. Create one with the <b>Templates</b> button on the Task Board.
+                No templates yet. Create one with the <b>Templates</b> button on the Workflow board.
               </div>
             )}
             {templates && templates.length > 0 && list.length === 0 && <div className="px-3 py-2 text-[12.5px] text-muted">No templates match “{q.trim()}”.</div>}
