@@ -170,6 +170,72 @@ async function isClientRecord(orgId: string, name: string) {
   return ((data ?? []) as { name: string }[]).some((c) => normPerson(c.name) === target || normCompany(c.name) === normCompany(name));
 }
 
+// "Mr. Joseph Zambardi & Mrs. Brenna Zambardi" ≈ "Joseph Zambardi, Brenna Zambardi": the same set of name words.
+function nameWords(s: string): string {
+  return [
+    ...new Set(
+      normPerson(s.replace(/&|\band\b|,|;/gi, " "))
+        .split(" ")
+        .filter((w) => w.length >= 2 && w !== "and")
+    ),
+  ]
+    .sort()
+    .join(" ");
+}
+
+// The matter's client from its Details: an existing client card with the same
+// name(s); else a contact card with the same name(s) becomes a client card; else
+// a new client card from the Details. Only when the matter has no client yet.
+// Returns "matched" (already the matter's client), "linked" (set on the matter),
+// "created" (new client card), or null when the matter already has another client.
+async function assignClient(
+  orgId: string,
+  matterId: string,
+  names: string,
+  v: { email: string | null; phone: string | null; address: string | null; kind: string }
+): Promise<"matched" | "linked" | "created" | null> {
+  const key = nameWords(names);
+  if (!key) return null;
+  const { data: m } = await db().from("matters").select("client_id").eq("id", matterId).eq("org_id", orgId).maybeSingle();
+  const current = (m as { client_id?: string | null } | null)?.client_id ?? null;
+  const word = key.split(" ").sort((a, b) => b.length - a.length)[0];
+  const { data: cl } = await db().from("clients").select("id, name").eq("org_id", orgId).ilike("name", `%${word}%`).limit(200);
+  const clients = ((cl ?? []) as { id: string; name: string }[]).filter((c) => nameWords(c.name) === key);
+  if (current) return clients.some((c) => c.id === current) ? "matched" : null; // never replace a client someone chose
+  const set = async (clientId: string) => {
+    await db().from("matters").update({ client_id: clientId }).eq("id", matterId).eq("org_id", orgId);
+  };
+  if (clients.length === 1) {
+    await set(clients[0].id);
+    return "linked";
+  }
+  if (clients.length > 1) return null; // two client cards with the same name: let a person pick
+  // A contact card with the same name(s) (e.g. from the Cards import) → a client card from it.
+  const { data: ct } = await db().from("contacts").select("*").eq("org_id", orgId).ilike("name", `%${word}%`).limit(200);
+  const contacts = ((ct ?? []) as ContactRow[]).filter((c) => nameWords(c.name) === key);
+  const from = contacts.length === 1 ? contacts[0] : null;
+  if (contacts.length > 1) return null;
+  const type = (from ? from.kind : v.kind) === "person" ? "Individual" : "Legal entity";
+  const { data: made, error } = await db()
+    .from("clients")
+    .insert({
+      id: crypto.randomUUID(),
+      org_id: orgId,
+      name: from?.name ?? names.trim().slice(0, 200),
+      description: from ? "Made from the contact card when the matter's details were filled in." : "Added from the matter's details.",
+      status: "Active",
+      type,
+      email: from?.email || v.email,
+      phone: (from ? firstPhone(from) : null) || v.phone,
+      address: from?.address || v.address,
+    })
+    .select("id")
+    .single();
+  if (error || !made) return null;
+  await set((made as { id: string }).id);
+  return "created";
+}
+
 const partyKind = (name: string) =>
   /^estate of\b|\bestate$/i.test(name) ? "estate" : /\btrust\b/i.test(name) ? "trust" : /\b(llc|inc|corp|corporation|company|l\.?p\.?|bank|association)\b/i.test(name) ? "company" : "person";
 
@@ -267,6 +333,17 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
         const email = val(`${g.prefix}Email`).toLowerCase();
         const phone = val(`${g.prefix}Phone`);
         const address = val(`${g.prefix}Address`);
+        // Our client: the matter's Client (at the top, next to Status) is set to the
+        // matching client card, made from a matching contact card if needed.
+        if (ours) {
+          const done = await assignClient(orgId, matterId, all, { email: isEmail(email) ? email : null, phone: phone || null, address: address || null, kind: partyKind(all) });
+          if (done) {
+            if (done === "created") res.created++;
+            else res.matched++;
+            res.linked += done === "linked" || done === "created" ? 1 : 0;
+            continue;
+          }
+        }
         for (const name of names.slice(0, 6)) {
           const kind = partyKind(name);
           // Our client may already be a client record (Client Intake): use that, don't add a second card.

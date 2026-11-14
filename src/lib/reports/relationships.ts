@@ -9,7 +9,7 @@ import { numberParts, type NumberFilter } from "@/lib/reports/practice";
 
 const db = () => createAdminClient();
 
-export type RelRow = { id: string; name: string; company: string; deals: number; open: number };
+export type RelRow = { id: string; name: string; company: string; deals: number; open: number; byPrefix: Record<string, number> }; // byPrefix: REP (purchases), RES (sales)…
 export type RelationshipsReport = {
   matters: number; // matters in the period
   linkedMatters: number; // of those, with at least one linked contact
@@ -123,7 +123,12 @@ export async function relationshipsReport(orgId: string, range: { from: string |
         const c = contacts.get(id);
         const employer = c?.employer_id ? contacts.get(c.employer_id) : undefined;
         const open = [...set].filter((mid) => inPeriod.get(mid)?.status !== "Closed").length;
-        return { id, name: c?.name ?? "Unknown", company: c?.kind === "person" ? employer?.name ?? c?.company ?? "" : "", deals: set.size, open };
+        const byPrefix: Record<string, number> = {};
+        for (const mid of set) {
+          const p = numberParts(inPeriod.get(mid)?.matter_number)?.prefix;
+          if (p) byPrefix[p] = (byPrefix[p] ?? 0) + 1;
+        }
+        return { id, name: c?.name ?? "Unknown", company: c?.kind === "person" ? employer?.name ?? c?.company ?? "" : "", deals: set.size, open, byPrefix };
       })
       .sort((a, b) => b.deals - a.deals || a.name.localeCompare(b.name))
       .slice(0, 50);

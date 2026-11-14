@@ -13,15 +13,19 @@ import PreviewText from "@/components/docTemplates/PreviewText";
 export default function UseForMatterModal({
   template,
   matters,
+  initialMatterId,
+  onCreated,
   onClose,
 }: {
   template: { id?: string; name: string; body: string; fields: TemplateField[]; format?: "text" | "docx" };
   matters: Matter[];
+  initialMatterId?: string; // opened from a matter: that matter is already chosen
+  onCreated?: () => void;
   onClose: () => void;
 }) {
   const keys = keysInBody(template.body);
   const fields = keys.map((k) => template.fields.find((f) => f.key === k) ?? { key: k, label: k });
-  const [matterId, setMatterId] = useState("");
+  const [matterId, setMatterId] = useState(initialMatterId ?? "");
   const [q, setQ] = useState("");
   // Defaults from the template maker fill in first.
   const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries(template.fields.filter((f) => f.default).map((f) => [f.key, f.default!])));
@@ -69,6 +73,7 @@ export default function UseForMatterModal({
       }).then(readJson);
       setDone(d);
       if (!saveToMatter) downloadBase64(d.base64, d.fileName);
+      else onCreated?.();
     } catch (e) {
       setError((e as Error).message);
     } finally {

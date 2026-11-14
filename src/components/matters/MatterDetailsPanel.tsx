@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, ClipboardList, Loader2, Sparkles, FileSearch, Contact, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { layoutFor, estimateToClose, money, REFERRAL_TYPES, type DetailField, type MatterDetails } from "@/lib/matters/details";
 import type { Matter } from "@/components/NewMatterModal";
 import type { KeyDatesApi } from "@/components/matters/KeyDatesCard";
@@ -48,6 +49,7 @@ type Linked = { targetId: string; kind: "contact" | "client"; name: string; role
 // Parties, property and contract figures for the matter type (purchase: our client
 // is the buyer; sale: the seller). Filled from documents by the AI, editable by hand.
 export default function MatterDetailsPanel({ matter, keyDates, wide = false }: { matter: Matter; keyDates: KeyDatesApi; wide?: boolean }) {
+  const { refreshAll } = useWorkspaceData();
   const { layout } = layoutFor(matter);
   const router = useRouter();
   const [details, setDetails] = useState<MatterDetails | null>(null);
@@ -83,9 +85,14 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
 
   async function saveMany(values: Record<string, string>) {
     try {
-      setDetails(await call(`/api/matters/${matter.id}/details`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ values }) }));
+      const res = await fetch(`/api/matters/${matter.id}/details`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ values }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d?.error ?? "Something went wrong. Please try again.");
+      setDetails((d.details ?? {}) as MatterDetails);
       setError(null);
       setLinkTick((t) => t + 1); // the save also links people to Contacts
+      // Our client was linked or made: the matter's Client (next to Status) changed.
+      if (d.contacts && (d.contacts.created || d.contacts.linked)) refreshAll();
     } catch (e) {
       setError((e as Error).message);
     }
@@ -127,6 +134,7 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? "Something went wrong. Please try again.");
       setDetails(d.details ?? {});
+      refreshAll(); // the matter's Client may have been set
       const r = d.contacts as { created: number; matched: number; linked: number; filled: number };
       const parts = [
         r.matched ? `${r.matched} found in Contacts` : "",

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getAiCtx } from "@/lib/ai/store";
-import { generateTemplate, templateFromText, editTemplate, fillFromMatter, AiTemplateError } from "@/lib/ai/docTemplates";
+import { generateTemplate, templateFromText, editTemplate, fillFromMatter, draftForMatter, AiTemplateError } from "@/lib/ai/docTemplates";
 import { cleanFields } from "@/lib/docTemplates/format";
 import { failTemplate } from "@/lib/docTemplates/api";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-// POST { action: "generate" | "from_text" | "edit" | "fill", ... } — the AI side of AI Templates.
+// POST { action: "generate" | "from_text" | "edit" | "fill" | "draft", ... } — the AI side of AI Templates.
 export async function POST(request: Request) {
   try {
     const ctx = await getAiCtx();
@@ -24,6 +24,12 @@ export async function POST(request: Request) {
         const matterId = str(b.matterId);
         if (!/^[0-9a-f-]{36}$/i.test(matterId)) throw new AiTemplateError("Pick a matter first.");
         return NextResponse.json(await fillFromMatter(ctx, { body: str(b.body), fields: cleanFields(b.fields), matterId }));
+      }
+      case "draft": {
+        // A finished document for one matter (Create document → Write it with AI).
+        const matterId = str(b.matterId);
+        if (!/^[0-9a-f-]{36}$/i.test(matterId)) throw new AiTemplateError("Pick a matter first.");
+        return NextResponse.json(await draftForMatter(ctx, { instruction: str(b.instruction), matterId }));
       }
       default:
         throw new AiTemplateError("Unknown action.");

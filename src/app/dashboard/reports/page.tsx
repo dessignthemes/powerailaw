@@ -223,7 +223,7 @@ function Empty({ text }: { text: string }) {
 }
 
 // ── Where the business comes from ───────────────────────────────────────────
-type RelRow = { id: string; name: string; company: string; deals: number; open: number };
+type RelRow = { id: string; name: string; company: string; deals: number; open: number; byPrefix?: Record<string, number> };
 type RelReport = {
   matters: number;
   linkedMatters: number;
@@ -242,25 +242,38 @@ function RelTable({ rows, empty, person }: { rows: RelRow[]; empty: string; pers
   const [all, setAll] = useState(false);
   if (!rows.length) return <Empty text={empty} />;
   const shown = all ? rows : rows.slice(0, 10);
+  // Purchases (REP) and sales (RES) side by side, when there are any.
+  const split = (["REP", "RES"] as const).filter((p) => rows.some((r) => (r.byPrefix?.[p] ?? 0) > 0));
+  const label: Record<string, string> = { REP: "Purchases", RES: "Sales" };
   return (
     <div>
       <table className="w-full text-[13px]">
         <thead>
           <tr className="text-left text-muted text-[12px]">
             <th className="font-medium py-1.5 pr-3">Name</th>
+            {split.map((p) => (
+              <th key={p} className="font-medium py-1.5 px-2 text-right" title={`Matters numbered ${p}-…`}>
+                {label[p]}
+              </th>
+            ))}
             <th className="font-medium py-1.5 px-2 text-right">Matters</th>
             <th className="font-medium py-1.5 pl-2 text-right">Open</th>
           </tr>
         </thead>
         <tbody>
           {shown.map((r) => (
-            <tr key={r.id} className="border-t border-[#EBEAE7]">
+            <tr key={r.id} className="border-t border-[#E6EAF1]">
               <td className="py-2 pr-3 min-w-0">
                 <Link href={`/dashboard/records?contact=${r.id}`} className="hover:underline font-medium">
                   {r.name}
                 </Link>
                 {person && r.company && <div className="text-[11.5px] text-muted truncate">{r.company}</div>}
               </td>
+              {split.map((p) => (
+                <td key={p} className="py-2 px-2 text-right tabular-nums">
+                  {r.byPrefix?.[p] ?? 0}
+                </td>
+              ))}
               <td className="py-2 px-2 text-right tabular-nums font-medium">{r.deals}</td>
               <td className="py-2 pl-2 text-right tabular-nums text-muted">{r.open}</td>
             </tr>

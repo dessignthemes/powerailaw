@@ -30,7 +30,9 @@ import {
   FolderPlus,
   FolderInput,
   Pencil,
+  FilePlus2,
 } from "lucide-react";
+import CreateDocumentModal from "@/components/documents/CreateDocumentModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { initialsFor } from "@/lib/initials";
 import SelectBox from "@/components/SelectBox";
@@ -142,6 +144,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
   const [expanded, setExpanded] = useState<string | null>(null);
   const [adding, setAdding] = useState(openAdd);
   const [busy, setBusy] = useState<string | null>(null); // doc id with an action running
+  const [creating, setCreating] = useState(false); // Create document window
   // Folders (and subfolders) on a matter's Documents tab.
   type DocFolder = { id: string; parentId: string | null; name: string };
   const [folders, setFolders] = useState<DocFolder[]>([]);
@@ -451,6 +454,9 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
           <div className="ml-auto flex items-center gap-2">
             <button onClick={() => void newFolder()} className={pageBtnB} title={foldersSetup ? "Folders need a quick database update (migration 0071)" : undefined}>
               <FolderPlus size={14} /> New folder
+            </button>
+            <button onClick={() => setCreating(true)} className={pageBtnB} title="From a template, blank, or written by AI (AI Templates)">
+              <FilePlus2 size={14} /> Create document
             </button>
             {addButton}
           </div>
@@ -852,6 +858,14 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
           folderId={folderAt}
           folderName={folderAt ? folders.find((f) => f.id === folderAt)?.name ?? null : null}
           onClose={() => setAdding(false)}
+        />
+      )}
+      {creating && fixedMatterId && matters.find((m) => m.id === fixedMatterId) && (
+        <CreateDocumentModal
+          matter={matters.find((m) => m.id === fixedMatterId)!}
+          matters={matters}
+          onClose={() => setCreating(false)}
+          onCreated={() => void reload()}
         />
       )}
       {preview && (
