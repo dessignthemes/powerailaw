@@ -34,6 +34,7 @@ export type MatterDocument = {
   title: string;
   createdAt: string;
   updatedAt: string;
+  folderId: string | null; // the folder it's in (null = top level)
   versions: DocumentVersion[]; // newest first
 };
 
@@ -88,6 +89,21 @@ export async function hasFileDates(): Promise<boolean> {
   const { error } = await createAdminClient().from("document_versions").select("file_modified_at").limit(1);
   if (!error) fileDatesReady = true;
   return fileDatesReady;
+}
+
+// A folder that belongs to this matter (so a document can't be put in another matter's folder).
+async function folderOnMatter(orgId: string, matterId: string, folderId: string) {
+  const { data } = await createAdminClient().from("document_folders").select("id").eq("id", folderId).eq("org_id", orgId).eq("matter_id", matterId).maybeSingle();
+  return !!data;
+}
+
+// Whether migration 0071 (document folders) has been run.
+let foldersReady = false;
+export async function hasFolders(): Promise<boolean> {
+  if (foldersReady) return true;
+  const { error } = await createAdminClient().from("documents").select("folder_id").limit(1);
+  if (!error) foldersReady = true;
+  return foldersReady;
 }
 
 // A file date the browser sent: a real time, not in the future, not before 1990.
@@ -252,6 +268,7 @@ type DocRow = {
   created_at: string;
   updated_at: string;
   matters: { title: string } | null;
+  folder_id?: string | null;
   document_versions: VersionRow[];
 };
 
@@ -263,6 +280,7 @@ function toDocument(row: DocRow): MatterDocument {
     title: row.title,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    folderId: row.folder_id ?? null,
     versions: [...(row.document_versions ?? [])]
       .sort((a, b) => b.version_number - a.version_number)
       .map(toVersion),
@@ -274,7 +292,7 @@ const VERSION_FIELDS = "id, version_number, size_bytes, page_count, has_form_fie
 async function docSelect() {
   let fields = (await hasFileTypes()) ? `${VERSION_FIELDS}, file_type` : VERSION_FIELDS;
   if (await hasFileDates()) fields += ", file_modified_at";
-  return `id, matter_id, title, created_at, updated_at, matters(title), document_versions(${fields})`;
+  return `id, matter_id, title, created_at, updated_at, ${(await hasFolders()) ? "folder_id, " : ""}matters(title), document_versions(${fields})`;
 }
 
 export async function listDocuments(orgId: string, matterId?: string): Promise<MatterDocument[]> {
@@ -309,6 +327,7 @@ export async function createDocumentFromUpload(opts: {
   path: string;
   note?: string;
   fileModifiedAt?: string | null;
+  folderId?: string | null;
 }): Promise<MatterDocument> {
   const type = assertPathBelongs(opts.path, opts.orgId, opts.matterId);
   const supabase = createAdminClient();
@@ -328,6 +347,7 @@ export async function createDocumentFromUpload(opts: {
       matter_id: opts.matterId,
       title: opts.title.trim().slice(0, 200) || nameWithExtension("Untitled", type),
       created_by: opts.userId,
+      ...(opts.folderId && (await hasFolders()) && (await folderOnMatter(opts.orgId, opts.matterId, opts.folderId)) ? { folder_id: opts.folderId } : {}),
     })
     .select("id")
     .single();

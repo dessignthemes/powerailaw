@@ -26,6 +26,10 @@ import {
   FileSignature,
   Copy,
   Plus,
+  Folder,
+  FolderPlus,
+  FolderInput,
+  Pencil,
 } from "lucide-react";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { initialsFor } from "@/lib/initials";
@@ -138,6 +142,122 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
   const [expanded, setExpanded] = useState<string | null>(null);
   const [adding, setAdding] = useState(openAdd);
   const [busy, setBusy] = useState<string | null>(null); // doc id with an action running
+  // Folders (and subfolders) on a matter's Documents tab.
+  type DocFolder = { id: string; parentId: string | null; name: string };
+  const [folders, setFolders] = useState<DocFolder[]>([]);
+  const [foldersSetup, setFoldersSetup] = useState(false);
+  const [folderAt, setFolderAt] = useState<string | null>(null); // the open folder (null = top level)
+  const [folderTick, setFolderTick] = useState(0);
+  const [dragDoc, setDragDoc] = useState<string | null>(null);
+  const [dropOn, setDropOn] = useState<string | null>(null); // folder id, or "root"
+  const [moveOpen, setMoveOpen] = useState<string | null>(null); // doc id with the Move menu open
+  useEffect(() => {
+    if (!fixedMatterId) return;
+    let live = true;
+    fetch(`/api/documents/folders?matter=${fixedMatterId}`)
+      .then((r) => (r.ok ? r.json() : { folders: [] }))
+      .then((d) => {
+        if (!live) return;
+        setFolders((d.folders ?? []) as DocFolder[]);
+        setFoldersSetup(!!d.setupRequired);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [fixedMatterId, folderTick]);
+  const folderPath = (id: string | null): DocFolder[] => {
+    const out: DocFolder[] = [];
+    for (let cur = id ? folders.find((f) => f.id === id) : undefined; cur; cur = cur.parentId ? folders.find((f) => f.id === cur!.parentId) : undefined) out.unshift(cur);
+    return out;
+  };
+  const inFolder = (id: string | null) => {
+    const ids = new Set([id]);
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const f of folders) {
+        if (f.parentId === null || !ids.has(f.parentId) || ids.has(f.id)) continue;
+        ids.add(f.id);
+        grew = true;
+      }
+    }
+    return docs.filter((d) => ids.has(d.folderId ?? null)).length;
+  };
+  async function folderCall(url: string, method: string, body?: unknown) {
+    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d?.error ?? "That didn't work. Please try again.");
+    return d;
+  }
+  async function newFolder() {
+    const name = window.prompt(folderAt ? `New folder inside “${folders.find((f) => f.id === folderAt)?.name}”` : "New folder name");
+    if (!name?.trim() || !fixedMatterId) return;
+    try {
+      await folderCall("/api/documents/folders", "POST", { matterId: fixedMatterId, parentId: folderAt, name });
+      setFolderTick((t) => t + 1);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  async function renameFolder(f: DocFolder) {
+    const name = window.prompt("Rename folder", f.name);
+    if (!name?.trim() || name.trim() === f.name) return;
+    try {
+      await folderCall(`/api/documents/folders/${f.id}`, "PATCH", { name });
+      setFolderTick((t) => t + 1);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  async function removeFolder(f: DocFolder) {
+    if (!window.confirm(`Delete the folder “${f.name}”? Nothing inside is deleted: its documents and subfolders move up one level.`)) return;
+    try {
+      await folderCall(`/api/documents/folders/${f.id}`, "DELETE");
+      setFolderTick((t) => t + 1);
+      void reload();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  async function moveDocTo(docId: string, folderId: string | null) {
+    setDocs((list) => list.map((d) => (d.id === docId ? { ...d, folderId } : d)));
+    setMoveOpen(null);
+    try {
+      await folderCall(`/api/documents/${docId}/folder`, "PATCH", { folderId });
+    } catch (e) {
+      setError((e as Error).message);
+      void reload();
+    }
+  }
+  async function moveFolderTo(id: string, parentId: string | null) {
+    try {
+      await folderCall(`/api/documents/folders/${id}`, "PATCH", { parentId });
+      setFolderTick((t) => t + 1);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  // Drop targets: a folder row, or a step in the folder path above the list.
+  const dropProps = (target: string | null) => ({
+    onDragOver: (e: React.DragEvent) => {
+      if (!dragDoc) return;
+      e.preventDefault();
+      setDropOn(target ?? "root");
+    },
+    onDragLeave: () => setDropOn((cur) => (cur === (target ?? "root") ? null : cur)),
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      const id = dragDoc;
+      setDragDoc(null);
+      setDropOn(null);
+      if (!id) return;
+      if (id.startsWith("folder:")) {
+        const fid = id.slice(7);
+        if (fid !== target) void moveFolderTo(fid, target);
+      } else void moveDocTo(id, target);
+    },
+  });
   const [converting, setConverting] = useState<{ doc: Doc; version: DocVersion } | null>(null);
   const versionInput = useRef<HTMLInputElement>(null);
   const versionTarget = useRef<Doc | null>(null);
@@ -189,7 +309,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
             : (k === "created" ? createdOf(a) : modifiedOf(a)).localeCompare(k === "created" ? createdOf(b) : modifiedOf(b));
       return sortBy.desc ? -r : r;
     });
-    if (!q) return sorted;
+    if (!q) return fixedMatterId && folders.length ? sorted.filter((d) => (d.folderId ?? null) === folderAt) : sorted;
     const words = q.split(/\s+/);
     return sorted.filter((d) => {
       const hay = [
@@ -202,7 +322,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
       return words.every((w) => hay.includes(w));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [docs, q, sortBy, teamMembers]);
+  }, [docs, q, sortBy, teamMembers, fixedMatterId, folders.length, folderAt]);
 
   async function download(v: DocVersion) {
     try {
@@ -327,7 +447,14 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
             }}
           />
         )}
-        {fixedMatterId && <div className="ml-auto">{addButton}</div>}
+        {fixedMatterId && (
+          <div className="ml-auto flex items-center gap-2">
+            <button onClick={() => void newFolder()} className={pageBtnB} title={foldersSetup ? "Folders need a quick database update (migration 0071)" : undefined}>
+              <FolderPlus size={14} /> New folder
+            </button>
+            {addButton}
+          </div>
+        )}
       </div>
 
       {error && (
@@ -357,21 +484,48 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
 
       <div className={frameOuter}>
         <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-2.5">
-          <span className={frameTitle}>
-            <FileText size={15} strokeWidth={1.75} />
-            Documents{loading ? "" : ` · ${shown.length}`}
-          </span>
+          {fixedMatterId && !q && (folders.length > 0 || folderAt) ? (
+            // The folder path: click a step to go back up (documents can be dropped on it too).
+            <span className="flex items-center gap-1 flex-wrap min-w-0 text-[13px]">
+              <button
+                onClick={() => setFolderAt(null)}
+                {...dropProps(null)}
+                className={`${frameTitle} hover:text-ink rounded-md px-1 -mx-1 ${dropOn === "root" ? "bg-[#E8F6EE] text-ink" : ""}`}
+              >
+                <FileText size={15} strokeWidth={1.75} />
+                Documents
+              </button>
+              {folderPath(folderAt).map((f, i, arr) => (
+                <span key={f.id} className="flex items-center gap-1">
+                  <ChevronRight size={13} className="text-muted" />
+                  <button
+                    onClick={() => setFolderAt(f.id)}
+                    {...dropProps(f.id)}
+                    className={`rounded-md px-1.5 py-0.5 ${i === arr.length - 1 ? "font-semibold text-ink" : "text-muted hover:text-ink"} ${dropOn === f.id ? "bg-[#E8F6EE]" : ""}`}
+                  >
+                    {f.name}
+                  </button>
+                </span>
+              ))}
+              {!loading && <span className="text-muted ml-1">· {shown.length}</span>}
+            </span>
+          ) : (
+            <span className={frameTitle}>
+              <FileText size={15} strokeWidth={1.75} />
+              Documents{loading ? "" : ` · ${shown.length}`}
+            </span>
+          )}
         </div>
         {loading ? (
           <div className={`${frameInner} py-14 text-center text-[14px] text-muted`}>Loading documents…</div>
-        ) : docs.length === 0 ? (
+        ) : docs.length === 0 && folders.length === 0 ? (
           <div className={`${frameInner} py-14 text-center flex flex-col items-center`}>
             <FileText size={22} strokeWidth={1.5} className="text-muted mx-auto mb-3" />
             <div className="text-[14.5px] font-medium">No documents {matterId ? "on this matter " : ""}yet</div>
             <div className="text-[13px] text-muted mt-1 mb-5">{ACCEPTED_SUMMARY}.</div>
             {addButton}
           </div>
-        ) : shown.length === 0 ? (
+        ) : q && shown.length === 0 ? (
           <div className={`${frameInner} py-14 text-center`}>
             <div className="text-[14.5px] font-medium">No documents match “{query.trim()}”</div>
             <button onClick={() => setQuery("")} className={`${beigeBtn} mx-auto mt-4`}>
@@ -404,13 +558,58 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
               ))}
               <span className="w-8" />
             </div>
+            {/* Folders inside the open folder. */}
+            {fixedMatterId &&
+              !q &&
+              folders
+                .filter((f) => f.parentId === folderAt)
+                .map((f) => (
+                  <div
+                    key={f.id}
+                    draggable
+                    onDragStart={() => setDragDoc(`folder:${f.id}`)}
+                    onDragEnd={() => (setDragDoc(null), setDropOn(null))}
+                    {...dropProps(f.id)}
+                    className={`group/folder flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-colors cursor-pointer ${
+                      dropOn === f.id ? "bg-[#E8F6EE] border-[#B9D6B2]" : "bg-[#FCFCFC] border-[#EBEAE7] hover:bg-[#F1F0EE]"
+                    }`}
+                    onClick={() => setFolderAt(f.id)}
+                  >
+                    <span className="w-4" />
+                    <Folder size={17} strokeWidth={1.75} className="text-[#B08B3E] flex-shrink-0" />
+                    <span className="text-[14px] font-medium truncate">{f.name}</span>
+                    <span className="text-[12px] text-muted">
+                      {inFolder(f.id)} {inFolder(f.id) === 1 ? "document" : "documents"}
+                      {folders.some((x) => x.parentId === f.id) ? ` · ${folders.filter((x) => x.parentId === f.id).length} folders` : ""}
+                    </span>
+                    <span className="ml-auto flex items-center gap-1 opacity-0 group-hover/folder:opacity-100 focus-within:opacity-100">
+                      <button onClick={(e) => (e.stopPropagation(), void renameFolder(f))} className="w-7 h-7 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-white" title="Rename" aria-label={`Rename ${f.name}`}>
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={(e) => (e.stopPropagation(), void removeFolder(f))} className="w-7 h-7 rounded-full flex items-center justify-center text-muted hover:text-[#B42318] hover:bg-white" title="Delete folder (keeps what's inside)" aria-label={`Delete ${f.name}`}>
+                        <Trash2 size={13} />
+                      </button>
+                    </span>
+                  </div>
+                ))}
+            {fixedMatterId && !q && shown.length === 0 && !folders.some((f) => f.parentId === folderAt) && (
+              <div className="py-10 text-center text-[13.5px] text-muted">
+                This folder is empty. Drag documents here, or use Add document to add files straight into it.
+              </div>
+            )}
             {shown.map((d) => {
               const latest = d.versions[0];
               const type = typeOf(latest);
               const open = expanded === d.id;
               const working = busy === d.id;
               return (
-                <div key={d.id} className={`rounded-xl border transition-colors ${open ? "bg-[#F1F0EE] border-[#E6E4E0]" : "bg-[#FCFCFC] border-[#EBEAE7] hover:bg-[#F1F0EE]"}`}>
+                <div
+                  key={d.id}
+                  draggable={!!fixedMatterId && folders.length > 0}
+                  onDragStart={() => setDragDoc(d.id)}
+                  onDragEnd={() => (setDragDoc(null), setDropOn(null))}
+                  className={`rounded-xl border transition-colors ${open ? "bg-[#F1F0EE] border-[#E6E4E0]" : "bg-[#FCFCFC] border-[#EBEAE7] hover:bg-[#F1F0EE]"} ${dragDoc === d.id ? "opacity-60" : ""}`}
+                >
                   <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
                     <button
                       onClick={() => setExpanded(open ? null : d.id)}
@@ -434,6 +633,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                       </div>
                       <div className="text-[12.5px] text-muted">
                         {!fixedMatterId && <>{d.matterTitle ?? "Matter"}, </>}
+                        {fixedMatterId && q && d.folderId && <>in {folderPath(d.folderId).map((x) => x.name).join(" / ")}, </>}
                         version {latest?.versionNumber ?? 1} of {d.versions.length}, saved {latest ? formatWhen(latest.createdAt) : ""}
                         {latest?.createdByEmail ? ` by ${nameOf(latest.createdByEmail)}` : ""}
                       </div>
@@ -467,6 +667,34 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                       <button onClick={() => download(latest)} className={beigeBtn}>
                         <Download size={13} strokeWidth={2} /> Download
                       </button>
+                    )}
+                    {fixedMatterId && folders.length > 0 && (
+                      <span className="relative">
+                        <button onClick={() => setMoveOpen(moveOpen === d.id ? null : d.id)} className={beigeBtn} title="Move to a folder">
+                          <FolderInput size={13} strokeWidth={2} /> Move
+                        </button>
+                        {moveOpen === d.id && (
+                          <>
+                            <div className="fixed inset-0 z-30" onClick={() => setMoveOpen(null)} />
+                            <div className="absolute right-0 top-full mt-1 z-40 min-w-[220px] max-h-[300px] overflow-y-auto bg-white rounded-xl border border-[#E8E6E2] p-1.5">
+                              <button onClick={() => void moveDocTo(d.id, null)} className="w-full text-left px-3 py-1.5 rounded-lg text-[13px] hover:bg-[#F3F2F0] flex items-center justify-between gap-2">
+                                Documents (top level) {(d.folderId ?? null) === null && <Check size={13} />}
+                              </button>
+                              {[...folders]
+                                .map((f) => ({ f, path: folderPath(f.id).map((x) => x.name).join(" / ") }))
+                                .sort((a, b) => a.path.localeCompare(b.path))
+                                .map(({ f, path }) => (
+                                  <button key={f.id} onClick={() => void moveDocTo(d.id, f.id)} className="w-full text-left px-3 py-1.5 rounded-lg text-[13px] hover:bg-[#F3F2F0] flex items-center justify-between gap-2">
+                                    <span className="flex items-center gap-1.5 truncate">
+                                      <Folder size={13} className="text-[#B08B3E] flex-shrink-0" /> {path}
+                                    </span>
+                                    {d.folderId === f.id && <Check size={13} />}
+                                  </button>
+                                ))}
+                            </div>
+                          </>
+                        )}
+                      </span>
                     )}
                     {(() => {
                       const by = latest?.createdByEmail ?? null;
@@ -618,6 +846,8 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
           mattersLoaded={mattersLoaded}
           fixedMatterId={fixedMatterId}
           initialMatterId={matterFilter}
+          folderId={folderAt}
+          folderName={folderAt ? folders.find((f) => f.id === folderAt)?.name ?? null : null}
           onClose={() => setAdding(false)}
         />
       )}
@@ -689,12 +919,16 @@ function AddDocumentModal({
   mattersLoaded,
   fixedMatterId,
   initialMatterId,
+  folderId,
+  folderName,
   onClose,
 }: {
   matters: { id: string; title: string }[];
   mattersLoaded: boolean;
   fixedMatterId?: string;
   initialMatterId: string;
+  folderId?: string | null; // the folder open in the Documents tab (uploads go in it)
+  folderName?: string | null;
   onClose: () => void;
 }) {
   const [matterId, setMatterId] = useState(fixedMatterId ?? initialMatterId);
@@ -725,7 +959,7 @@ function AddDocumentModal({
       return;
     }
     const title = matters.find((m) => m.id === matterId)?.title ?? "Matter";
-    enqueueUploads(matterId, title, files.filter((p) => p.status !== "done").map((p) => p.file));
+    enqueueUploads(matterId, title, files.filter((p) => p.status !== "done").map((p) => p.file), fixedMatterId ? folderId ?? null : null);
     onClose();
   }
 
@@ -737,7 +971,9 @@ function AddDocumentModal({
         <div className="flex items-start justify-between mb-5">
           <div>
             <h2 className="text-[20px] font-semibold">Add documents</h2>
-            <p className="text-[13px] text-muted mt-0.5">{ACCEPTED_SUMMARY}.</p>
+            <p className="text-[13px] text-muted mt-0.5">
+              {ACCEPTED_SUMMARY}.{fixedMatterId && folderName ? <> They go into the folder <b className="text-ink font-medium">{folderName}</b>.</> : null}
+            </p>
           </div>
           <button onClick={onClose} disabled={running} className="text-muted hover:text-ink disabled:opacity-40" aria-label="Close">
             <X size={18} strokeWidth={1.75} />

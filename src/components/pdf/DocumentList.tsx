@@ -33,6 +33,7 @@ export type Doc = {
   title: string;
   createdAt: string;
   updatedAt: string;
+  folderId?: string | null; // the matter folder it's in (null = top level)
   versions: DocVersion[];
 };
 

@@ -15,6 +15,7 @@ export type UploadItem = {
   file: File;
   matterId: string;
   matterTitle: string;
+  folderId?: string | null; // the matter folder it goes into
   status: "waiting" | "uploading" | "done" | "error";
   error?: string;
 };
@@ -35,8 +36,8 @@ export function subscribeUploads(l: () => void) {
 }
 export const getUploads = () => items;
 
-export function enqueueUploads(matterId: string, matterTitle: string, files: File[]) {
-  for (const file of files) items.push({ id: crypto.randomUUID(), file, matterId, matterTitle, status: "waiting" });
+export function enqueueUploads(matterId: string, matterTitle: string, files: File[], folderId?: string | null) {
+  for (const file of files) items.push({ id: crypto.randomUUID(), file, matterId, matterTitle, folderId: folderId ?? null, status: "waiting" });
   emit();
   pump();
 }
@@ -73,7 +74,7 @@ async function run(id: string) {
   const item = items.find((x) => x.id === id);
   if (!item) return;
   try {
-    await uploadAnyDocument(item.matterId, item.file);
+    await uploadAnyDocument(item.matterId, item.file, item.folderId);
     items = items.map((x) => (x.id === id ? { ...x, status: "done" } : x));
     notifyDocsChanged(item.matterId);
   } catch (e) {

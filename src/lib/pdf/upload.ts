@@ -114,13 +114,13 @@ async function precheckAny(file: File) {
   return { type, bytes };
 }
 
-export async function uploadAnyDocument(matterId: string, file: File) {
+export async function uploadAnyDocument(matterId: string, file: File, folderId?: string | null) {
   const { type, bytes } = await precheckAny(file);
   const path = await uploadBytes(bytes, { matterId }, file.name, FILE_TYPES[type].mime);
   const { document } = await fetch("/api/documents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ matterId, title: file.name, path, fileModifiedAt: fileDate(file) }),
+    body: JSON.stringify({ matterId, title: file.name, path, fileModifiedAt: fileDate(file), folderId: folderId ?? null }),
   }).then(readJson);
   return document;
 }

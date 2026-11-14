@@ -25,11 +25,12 @@ export async function GET(request: Request) {
 // POST /api/documents { matterId, title, path, fileModifiedAt? } — finalize a new upload
 export async function POST(request: Request) {
   try {
-    const { matterId, title, path, fileModifiedAt } = (await request.json()) as {
+    const { matterId, title, path, fileModifiedAt, folderId } = (await request.json()) as {
       matterId: string;
       title: string;
       path: string;
       fileModifiedAt?: string | null;
+      folderId?: string | null;
     };
     const ctx = await requireMatterAccess(matterId);
     const document = await createDocumentFromUpload({
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
       title,
       path,
       fileModifiedAt,
+      folderId: typeof folderId === "string" ? folderId : null,
     });
     return NextResponse.json({ document }, { status: 201 });
   } catch (error) {
