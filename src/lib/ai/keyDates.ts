@@ -167,7 +167,7 @@ How to decide:
 2. The contract is the basis for every date and figure. Change a term ONLY if it was modified during the attorney review process by an attorney review letter, rider or addendum. Apply those documents in date order: for any term modified more than once, the LAST in time letter / rider / addendum controls. A later letter that accepts, rejects or replaces an earlier proposal must be followed as written. Terms nobody modified stay exactly as the contract states them.
 3. Attorney review is completed on the date the last attorney review letter was accepted or attorney review was declared concluded. If no review letters were sent, it ends 3 business days after the contract was fully signed (give that as a rule).
    A <document> tag may carry fileModified="YYYY-MM-DD": the day the file was last saved on the firm's computer before it was uploaded (its "Date modified"). When the last attorney review letter had to be initialled, signed or accepted and returned (it shows initials, a signature or acceptance added to it) and no date is written beside that acceptance, attorney review was concluded on that document's fileModified day, if it is later than the date printed on the letter. Say so in that date's quote (e.g. "initialled and returned; file modified 10/30/2026"). Never use fileModified to move a date earlier, and never for a contract or document whose signatures are dated.
-4. For a date stated as a period ("within 10 days after completion of attorney review"), give the rule (days, businessDays, from) and leave date null unless an exact calendar date is written. "Business days" = businessDays true.
+4. For a date stated as a period ("within 10 days after completion of attorney review"), give the rule (days, businessDays, from) and leave date null unless an exact calendar date is written. "Business days" = businessDays true. (LawPower counts deposit periods from the end of attorney review and skips bank holidays itself; just report the rule as written.)
 5. Documents are handed over in the order they were added (oldest first), but each document's own date decides its place. Some are scanned pages (attached as PDFs or images): read them fully, including handwritten or typed entries in blanks, ticked checkboxes (e.g. whether there is a mortgage contingency), and the dates beside signatures.
 6. Never invent a date. If something is unclear, leave it null and say why in notes.
 
@@ -559,6 +559,16 @@ export async function getKeyDates(ctx: AiCtx, matterId: string, auto: boolean): 
   const linked = await linkTasksByNumber(ctx, matterId).catch(() => 0);
   if (linked > 0) await applyDatesToTasks(ctx, matterId, stateOf(m)).catch(() => 0);
   let state = stateOf(m);
+  // Dates saved before a calculation rule changed (bank holidays, deposits from the
+  // end of attorney review) are worked out again; no AI is used for this.
+  if (state.dates && Object.keys(state.dates).length) {
+    const again = resolveDates(state.dates);
+    if (JSON.stringify(again) !== JSON.stringify(state.dates)) {
+      state = { ...state, dates: again };
+      await saveState(ctx, matterId, state).catch(() => undefined);
+      await applyDatesToTasks(ctx, matterId, state).catch(() => 0);
+    }
+  }
   const { docs, fingerprint } = await inputDocuments(ctx, matterId, state);
   const stale = docs.length > 0 && state.fingerprint !== fingerprint;
   const running = state.runningSince && Date.now() - Date.parse(state.runningSince) < 150_000;

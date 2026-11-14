@@ -35,7 +35,7 @@ export const isDateKey = (k: unknown): k is string => isField(k) || isCustomKey(
 export type KeyDate = {
   date: string | null; // YYYY-MM-DD (explicit, or worked out from the rule)
   days?: number | null; // rule: this many days ...
-  businessDays?: boolean; // ... counting only Mon–Fri
+  businessDays?: boolean; // ... counting only business days (Mon–Fri, not bank holidays)
   from?: KeyDateField | null; // ... after this other date
   source?: string | null; // document title it came from
   sourceDate?: string | null; // that document's date
@@ -76,21 +76,74 @@ export type KeyDatesState = {
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 export const isYmd = (v: unknown): v is string => typeof v === "string" && YMD.test(v);
 
+// US bank holidays (when banks and most offices are closed), on the day they're
+// observed: a Saturday holiday moves to Friday, a Sunday one to Monday.
+const holidayCache = new Map<number, Set<string>>();
+function bankHolidays(year: number): Set<string> {
+  const hit = holidayCache.get(year);
+  if (hit) return hit;
+  const ymd = (dt: Date) => dt.toISOString().slice(0, 10);
+  const fixed = (m: number, d: number) => {
+    const dt = new Date(Date.UTC(year, m - 1, d));
+    const wd = dt.getUTCDay();
+    if (wd === 6) dt.setUTCDate(dt.getUTCDate() - 1);
+    if (wd === 0) dt.setUTCDate(dt.getUTCDate() + 1);
+    return ymd(dt);
+  };
+  // nth weekday (0 = Sunday … 6 = Saturday) of a month; n = -1 for the last one.
+  const nth = (m: number, weekday: number, n: number) => {
+    if (n > 0) {
+      const dt = new Date(Date.UTC(year, m - 1, 1));
+      while (dt.getUTCDay() !== weekday) dt.setUTCDate(dt.getUTCDate() + 1);
+      dt.setUTCDate(dt.getUTCDate() + 7 * (n - 1));
+      return ymd(dt);
+    }
+    const dt = new Date(Date.UTC(year, m, 0));
+    while (dt.getUTCDay() !== weekday) dt.setUTCDate(dt.getUTCDate() - 1);
+    return ymd(dt);
+  };
+  const set = new Set([
+    fixed(1, 1), // New Year's Day
+    nth(1, 1, 3), // Martin Luther King Jr. Day
+    nth(2, 1, 3), // Presidents' Day
+    nth(5, 1, -1), // Memorial Day
+    fixed(6, 19), // Juneteenth
+    fixed(7, 4), // Independence Day
+    nth(9, 1, 1), // Labor Day
+    nth(10, 1, 2), // Columbus Day
+    fixed(11, 11), // Veterans Day
+    nth(11, 4, 4), // Thanksgiving
+    fixed(12, 25), // Christmas
+  ]);
+  holidayCache.set(year, set);
+  return set;
+}
+export const isBusinessDay = (ymd: string) => {
+  const dt = new Date(`${ymd}T00:00:00Z`);
+  const wd = dt.getUTCDay();
+  return wd !== 0 && wd !== 6 && !bankHolidays(dt.getUTCFullYear()).has(ymd);
+};
+
 function addDays(ymd: string, days: number, business: boolean): string {
   const [y, m, d] = ymd.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
   if (!business) dt.setUTCDate(dt.getUTCDate() + days);
   else {
+    // Business days skip weekends and bank holidays (e.g. Veterans Day, Thanksgiving).
     let left = Math.abs(days);
     const step = days < 0 ? -1 : 1;
     while (left > 0) {
       dt.setUTCDate(dt.getUTCDate() + step);
-      const wd = dt.getUTCDay();
-      if (wd !== 0 && wd !== 6) left--;
+      if (isBusinessDay(dt.toISOString().slice(0, 10))) left--;
     }
   }
   return dt.toISOString().slice(0, 10);
 }
+
+// Deposits: a New Jersey contract isn't binding until attorney review is over,
+// so a deposit period the contract counts from signing is counted from the day
+// attorney review concluded (the firm's practice).
+const DEPOSITS = ["initialDeposit", "secondDeposit"];
 
 // Works out every rule-based date from the dates it depends on.
 // Explicit and hand-entered dates are kept as they are.
@@ -98,6 +151,10 @@ export function resolveDates(dates: KeyDatesState["dates"]): KeyDatesState["date
   const out: KeyDatesState["dates"] = {};
   const keys = Object.keys(dates).filter((k) => dates[k] && isDateKey(k));
   for (const k of keys) out[k] = { ...dates[k]! };
+  for (const k of DEPOSITS) {
+    const d = out[k];
+    if (d && !d.manual && d.from === "contractSigned" && typeof d.days === "number" && out.attorneyReviewCompleted) d.from = "attorneyReviewCompleted";
+  }
   for (let pass = 0; pass < keys.length; pass++) {
     for (const k of keys) {
       const d = out[k];
