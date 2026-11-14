@@ -580,7 +580,10 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                     <span className="text-[14px] font-medium truncate">{f.name}</span>
                     <span className="text-[12px] text-muted">
                       {inFolder(f.id)} {inFolder(f.id) === 1 ? "document" : "documents"}
-                      {folders.some((x) => x.parentId === f.id) ? ` · ${folders.filter((x) => x.parentId === f.id).length} folders` : ""}
+                      {(() => {
+                        const n = folders.filter((x) => x.parentId === f.id).length;
+                        return n ? ` · ${n} ${n === 1 ? "folder" : "folders"}` : "";
+                      })()}
                     </span>
                     <span className="ml-auto flex items-center gap-1 opacity-0 group-hover/folder:opacity-100 focus-within:opacity-100">
                       <button onClick={(e) => (e.stopPropagation(), void renameFolder(f))} className="w-7 h-7 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-white" title="Rename" aria-label={`Rename ${f.name}`}>
