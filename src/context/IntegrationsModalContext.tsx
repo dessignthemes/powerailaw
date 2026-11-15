@@ -23,7 +23,7 @@ export function IntegrationsModalProvider({ children }: { children: ReactNode })
     u.searchParams.delete("connected");
     window.history.replaceState(null, "", u.pathname + (u.search || ""));
     const t = setTimeout(() => {
-      setJustConnected(c === "google" || c === "microsoft" ? c : null);
+      setJustConnected(c === "google" || c === "microsoft" || c === "ringcentral" ? c : null);
       setInitialTab("integrations");
       setOpen(true);
     }, 0);

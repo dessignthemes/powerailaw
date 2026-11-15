@@ -25,14 +25,12 @@ import {
   ListChecks,
   Calendar,
   FileText,
-  Mail,
   Users,
   Activity,
   StickyNote,
   Link2,
   ClipboardList,
-  CalendarDays,
-} from "lucide-react";
+  CalendarDays, MessagesSquare } from "lucide-react";
 import NewMatterModal, {
   Matter,
   BillingType,
@@ -57,7 +55,7 @@ const tabs = [
   { key: "workflow", label: "Workflow", icon: ListChecks },
   { key: "calendar", label: "Calendar", icon: Calendar },
   { key: "documents", label: "Documents", icon: FileText },
-  { key: "emails", label: "Emails", icon: Mail },
+  { key: "emails", label: "Communication", icon: MessagesSquare },
   { key: "parties", label: "Details", icon: Users },
   { key: "activities", label: "Activities", icon: Activity },
 ] as const;

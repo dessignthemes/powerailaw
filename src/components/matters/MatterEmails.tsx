@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Mail, MessageSquare, ArrowDownLeft, ArrowUpRight, Loader2, RefreshCw, X, ExternalLink, Trash2, Paperclip, Forward } from "lucide-react";
-import { smsLink } from "@/lib/mail/matterTag";
 import { numberOf, type Matter } from "@/components/NewMatterModal";
 import type { Client } from "@/components/NewClientModal";
 import SecureMessages from "@/components/matters/SecureMessages";
@@ -132,15 +131,13 @@ export default function MatterEmails({ matter, client }: { matter: Matter; clien
   return (
     <div className="flex flex-col gap-4">
       <SecureMessages matter={matter} client={client} />
+      {/* 2. Emails */}
       <div className="flex flex-wrap items-center gap-2 mt-2">
-        <div className="text-[15px] font-semibold mr-auto">
-          Emails &amp; texts{matter.matterNumber ? <span className="text-muted font-medium"> · {matter.matterNumber}</span> : null}
+        <div className="text-[15px] font-semibold mr-auto flex items-center gap-2">
+          <Mail size={15} strokeWidth={1.75} className="text-muted" /> Emails{matter.matterNumber ? <span className="text-muted font-medium"> · {matter.matterNumber}</span> : null}
         </div>
         <button onClick={() => setCompose("email")} className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors">
           <Mail size={14} strokeWidth={1.75} /> New email
-        </button>
-        <button onClick={() => setCompose("sms")} className="flex items-center gap-1.5 bg-chip hover:bg-btn px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors">
-          <MessageSquare size={14} strokeWidth={1.75} /> Text message
         </button>
         <button
           onClick={() => void sync()}
@@ -155,49 +152,40 @@ export default function MatterEmails({ matter, client }: { matter: Matter; clien
       {error && <div className="rounded-xl bg-[#FDF1E7] text-[#8A4B14] px-4 py-3 text-[13px]">{error}</div>}
       {syncNote && !error && <div className="text-[12.5px] text-muted">{syncNote}</div>}
 
-      <div className="rounded-2xl overflow-hidden border border-line">
-        {list === null ? (
-          <div className="p-6 text-[13px] text-muted flex items-center gap-2">
-            <Loader2 size={14} className="animate-spin" /> Loading…
-          </div>
-        ) : list.length === 0 ? (
-          <div className="p-8 flex flex-col items-center text-center gap-2">
+      <MessageList
+        list={list ? list.filter((m) => m.channel !== "sms") : null}
+        onOpen={(m) => void openMsg(m)}
+        empty={
+          <>
             <Mail size={20} strokeWidth={1.5} className="text-muted" />
-            <div className="text-[13.5px] font-medium">No emails or texts on this matter yet</div>
+            <div className="text-[13.5px] font-medium">No emails on this matter yet</div>
             <div className="text-[12.5px] text-muted max-w-[460px]">
               Use <b>New email</b> here (the matter number goes in the subject, so replies are filed automatically), or file any email to this matter from the Inbox.
             </div>
-          </div>
-        ) : (
-          list.map((m, i) => {
-            const Icon = m.channel === "sms" ? MessageSquare : Mail;
-            const Dir = m.direction === "out" ? ArrowUpRight : ArrowDownLeft;
-            const who = m.channel === "sms" ? m.phone ?? "Text" : m.direction === "out" ? `To: ${m.to || "—"}` : m.fromName || m.fromEmail;
-            return (
-              <button
-                key={m.id}
-                onClick={() => void openMsg(m)}
-                className={`w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-card-alt transition-colors ${i ? "border-t border-line" : ""}`}
-              >
-                <span className="relative mt-0.5 flex-shrink-0">
-                  <Icon size={16} strokeWidth={1.75} className="text-muted" />
-                  <Dir size={11} strokeWidth={2.25} className={`absolute -right-1.5 -bottom-1 ${m.direction === "out" ? "text-[#3B82F6]" : "text-green-600"}`} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-medium truncate">{who}</span>
-                    {m.hasAttachments && <Paperclip size={12} className="text-muted flex-shrink-0" />}
-                    <span className="ml-auto text-[12px] text-muted flex-shrink-0">{when(m.sentAt)}</span>
-                  </span>
-                  {m.subject && <span className="block text-[13px] truncate">{m.subject}</span>}
-                  <span className="block text-[12.5px] text-muted truncate">{m.snippet}</span>
-                </span>
-                <span className="hidden sm:inline text-[11px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 flex-shrink-0 mt-0.5">{SOURCE[m.source]}</span>
-              </button>
-            );
-          })
-        )}
+          </>
+        }
+      />
+
+      {/* 3. Text messages */}
+      <div className="flex flex-wrap items-center gap-2 mt-4">
+        <div className="text-[15px] font-semibold mr-auto flex items-center gap-2">
+          <MessageSquare size={15} strokeWidth={1.75} className="text-muted" /> Text messages
+        </div>
+        <button onClick={() => setCompose("sms")} className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-3.5 py-2 rounded-full text-[13px] font-medium transition-colors">
+          <MessageSquare size={14} strokeWidth={1.75} /> Text message
+        </button>
       </div>
+      <MessageList
+        list={list ? list.filter((m) => m.channel === "sms") : null}
+        onOpen={(m) => void openMsg(m)}
+        empty={
+          <>
+            <MessageSquare size={20} strokeWidth={1.5} className="text-muted" />
+            <div className="text-[13.5px] font-medium">No texts on this matter yet</div>
+            <div className="text-[12.5px] text-muted max-w-[460px]">Texts sent from here with RingCentral are saved automatically. Texts from your phone can be logged with Text message.</div>
+          </>
+        }
+      />
 
       {open && (
         <MessageView
@@ -322,8 +310,33 @@ function TextComposer({ matter, client, onClose, onLogged }: { matter: Matter; c
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  // RingCentral: texts go out from the person's RingCentral number.
+  const [rc, setRc] = useState<{ configured: boolean; connected: boolean; fromNumber?: string | null } | null>(null);
+  useEffect(() => {
+    fetch("/api/ringcentral")
+      .then((r) => (r.ok ? r.json() : { configured: false, connected: false }))
+      .then(setRc)
+      .catch(() => setRc({ configured: false, connected: false }));
+  }, []);
 
-  async function log(openApp: boolean) {
+  async function sendRc() {
+    if (!body.trim()) return setError("Type the message first.");
+    setBusy(true);
+    setError(null);
+    try {
+      const d = await getJson<{ messages: Msg[] | null }>("/api/ringcentral/sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ matterId: matter.id, to: phone, text: body }),
+      });
+      onLogged(d.messages ?? []);
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(false);
+    }
+  }
+  async function log() {
     if (!body.trim()) return setError("Type the message first.");
     setBusy(true);
     setError(null);
@@ -333,12 +346,21 @@ function TextComposer({ matter, client, onClose, onLogged }: { matter: Matter; c
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channel: "sms", direction, phone, body }),
       });
-      if (openApp && phone.trim()) window.location.assign(smsLink(phone, body));
       onLogged(d.messages);
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
     }
+  }
+  // Without RingCentral connected: copy the text and open RingCentral in a new tab.
+  async function copyAndOpen() {
+    try {
+      await navigator.clipboard.writeText(body);
+      setCopied(true);
+    } catch {
+      /* clipboard blocked: the text is still in the box */
+    }
+    window.open("https://app.ringcentral.com/", "_blank", "noopener");
   }
 
   return (
@@ -361,25 +383,77 @@ function TextComposer({ matter, client, onClose, onLogged }: { matter: Matter; c
         </label>
         {error && <div className="text-[13px] text-[#B42318]">{error}</div>}
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          {direction === "out" ? (
-            <>
-              <button onClick={() => void log(true)} disabled={busy} className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium">
-                <MessageSquare size={13} /> Open in Messages &amp; log it
-              </button>
-              <button onClick={() => void log(false)} disabled={busy} className="bg-chip hover:bg-btn disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium">
-                Just log it
-              </button>
-            </>
-          ) : (
-            <button onClick={() => void log(false)} disabled={busy} className="bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium">
+          {direction === "in" ? (
+            <button onClick={() => void log()} disabled={busy} className="bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium">
               Save to matter
             </button>
+          ) : rc?.connected ? (
+            <button onClick={() => void sendRc()} disabled={busy || !phone.trim()} className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium">
+              {busy ? <Loader2 size={13} className="animate-spin" /> : <MessageSquare size={13} />} Send with RingCentral
+            </button>
+          ) : rc?.configured ? (
+            <a href="/api/ringcentral/connect" className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover px-4 py-2 rounded-full text-[13.5px] font-medium">
+              Connect RingCentral to send
+            </a>
+          ) : (
+            <>
+              <button onClick={() => void copyAndOpen()} disabled={!body.trim()} className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium">
+                <MessageSquare size={13} /> {copied ? "Copied, RingCentral opened" : "Copy text & open RingCentral"}
+              </button>
+              <button onClick={() => void log()} disabled={busy} className="bg-chip hover:bg-btn disabled:opacity-50 px-4 py-2 rounded-full text-[13.5px] font-medium">
+                Save to matter
+              </button>
+            </>
           )}
         </div>
         <div className="text-[12px] text-muted">
-          Texts go from your own phone (Messages opens with the text ready). Replies by text aren&apos;t picked up automatically; log them here.
+          {direction === "in"
+            ? "Saves a text you received to this matter."
+            : rc?.connected
+              ? `Sent from your RingCentral number${rc.fromNumber ? ` (${rc.fromNumber})` : ""} and saved to this matter.`
+              : rc?.configured
+                ? "Sign in with RingCentral once, then texts go out from your RingCentral number and are saved here."
+                : "RingCentral isn't connected to LawPower yet: copy the text, paste it in RingCentral (it opens in a new tab), then click Save to matter."}
         </div>
       </div>
     </Modal>
+  );
+}
+
+function MessageList({ list, onOpen, empty }: { list: Msg[] | null; onOpen: (m: Msg) => void; empty: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl overflow-hidden border border-line">
+      {list === null ? (
+        <div className="p-6 text-[13px] text-muted flex items-center gap-2">
+          <Loader2 size={14} className="animate-spin" /> Loading…
+        </div>
+      ) : list.length === 0 ? (
+        <div className="p-8 flex flex-col items-center text-center gap-2">{empty}</div>
+      ) : (
+        list.map((m, i) => {
+          const Icon = m.channel === "sms" ? MessageSquare : Mail;
+          const Dir = m.direction === "out" ? ArrowUpRight : ArrowDownLeft;
+          const who = m.channel === "sms" ? m.phone ?? "Text" : m.direction === "out" ? `To: ${m.to || "—"}` : m.fromName || m.fromEmail;
+          return (
+            <button key={m.id} onClick={() => onOpen(m)} className={`w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-card-alt transition-colors ${i ? "border-t border-line" : ""}`}>
+              <span className="relative mt-0.5 flex-shrink-0">
+                <Icon size={16} strokeWidth={1.75} className="text-muted" />
+                <Dir size={11} strokeWidth={2.25} className={`absolute -right-1.5 -bottom-1 ${m.direction === "out" ? "text-[#3B82F6]" : "text-green-600"}`} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2">
+                  <span className="text-[13.5px] font-medium truncate">{who}</span>
+                  {m.hasAttachments && <Paperclip size={12} className="text-muted flex-shrink-0" />}
+                  <span className="ml-auto text-[12px] text-muted flex-shrink-0">{when(m.sentAt)}</span>
+                </span>
+                {m.subject && <span className="block text-[13px] truncate">{m.subject}</span>}
+                <span className="block text-[12.5px] text-muted truncate">{m.snippet}</span>
+              </span>
+              <span className="hidden sm:inline text-[11px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 flex-shrink-0 mt-0.5">{SOURCE[m.source]}</span>
+            </button>
+          );
+        })
+      )}
+    </div>
   );
 }

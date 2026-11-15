@@ -1545,6 +1545,9 @@ export default function IntegrationsModal({
                   </div>
                 </div>
 
+                {justConnected === "ringcentral" && (
+                  <div className="rounded-xl bg-[#E8F6EE] text-[#1F7A4D] px-4 py-3 mb-5 text-[13.5px] font-medium">✓ RingCentral is connected. Texts from a matter&apos;s Communication tab now go out from your RingCentral number.</div>
+                )}
                 {justConnected && mailConn(justConnected) && (
                   <div className="rounded-xl bg-[#E8F6EE] text-[#1F7A4D] px-4 py-3 mb-5 text-[13.5px] font-medium">
                     ✓ {justConnected === "google" ? "Google Workspace" : "Microsoft 365"} is connected{mailConn(justConnected)!.email ? ` as ${mailConn(justConnected)!.email}` : ""}.

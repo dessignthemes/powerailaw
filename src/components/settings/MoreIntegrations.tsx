@@ -13,10 +13,15 @@ export type MailConn = { provider: string; email: string | null; status: "ok" | 
 // isn't connected again. (Google / Microsoft are per person; Dropbox Sign / Fax firm-wide.)
 export function AlreadyConnected({ mail, onOpen }: { mail: MailConn[] | null; onOpen: (key: "google" | "microsoft") => void }) {
   const [s, setS] = useState<Status | null>(null);
+  const [rc, setRc] = useState<RcStatus | null>(null);
   useEffect(() => {
     fetch("/api/integrations")
       .then((r) => (r.ok ? r.json() : null))
       .then((d: Status | null) => d && setS(d))
+      .catch(() => undefined);
+    fetch("/api/ringcentral")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: RcStatus | null) => d && setRc(d))
       .catch(() => undefined);
   }, []);
   const rows: { key: string; icon: React.ReactNode; name: string; who: string | null; warn?: boolean; open?: () => void }[] = [];
@@ -36,6 +41,7 @@ export function AlreadyConnected({ mail, onOpen }: { mail: MailConn[] | null; on
     if (i.provider === "dropbox_sign") rows.push({ key: i.provider, icon: <FileSignature size={16} strokeWidth={1.75} />, name: "Dropbox Sign", who: i.meta.email ?? null });
     if (i.provider === "dropbox_fax") rows.push({ key: i.provider, icon: <Printer size={16} strokeWidth={1.75} />, name: "Dropbox Fax", who: i.meta.email ?? null });
   }
+  if (rc?.connected) rows.push({ key: "ringcentral", icon: <Phone size={16} strokeWidth={1.75} />, name: "RingCentral (texts)", who: [rc.account, rc.fromNumber].filter(Boolean).join(" · ") || null });
   if (!rows.length) return null;
   return (
     <div className="mb-7">
@@ -62,6 +68,8 @@ export function AlreadyConnected({ mail, onOpen }: { mail: MailConn[] | null; on
     </div>
   );
 }
+
+type RcStatus = { configured: boolean; connected: boolean; fromNumber?: string | null; account?: string | null };
 
 type Status = {
   items: { provider: string; meta: { email?: string | null }; connectedAt: string }[];
@@ -147,6 +155,13 @@ export default function MoreIntegrations({ onOpen }: { onOpen: (key: "google" | 
     fetch("/api/integrations")
       .then((r) => (r.ok ? r.json() : null))
       .then((d: Status | null) => d && setS(d))
+      .catch(() => undefined);
+  }, [reload]);
+  const [rc, setRc] = useState<RcStatus | null>(null);
+  useEffect(() => {
+    fetch("/api/ringcentral")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: RcStatus | null) => d && setRc(d))
       .catch(() => undefined);
   }, [reload]);
   const conn = (p: string) => s?.items.find((i) => i.provider === p);
@@ -238,22 +253,47 @@ export default function MoreIntegrations({ onOpen }: { onOpen: (key: "google" | 
 
       {heading("Phone and meetings")}
       <div className="flex flex-col gap-3">
-        <Row
-          icon={<Phone size={16} strokeWidth={1.75} />}
-          name="RingCentral"
-          desc="Calls, voicemails, call recordings, texts and faxes from the firm's RingCentral, filed to the matching client and matter."
-          right={pill("Setup needed")}
-          open={open === "rc"}
-          onToggle={() => toggle("rc")}
-        >
-          <div className="bg-white/70 rounded-xl p-3.5 text-muted">
-            RingCentral has an open connection for other apps (its developer platform). To connect it, LawPower needs its own RingCentral app: a free account at{" "}
-            <a href="https://developers.ringcentral.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-ink inline-flex items-center gap-0.5">
-              developers.ringcentral.com <ExternalLink size={11} />
-            </a>
-            , then its two keys added to LawPower. After that, each person signs in with RingCentral once, and the call log, recordings and texts can be matched to clients by phone number and shown in the matter&apos;s Activities.
+        {!rc?.connected && (
+          <Row
+            icon={<Phone size={16} strokeWidth={1.75} />}
+            name="RingCentral"
+            desc="Send texts to clients from a matter, from your RingCentral number; they're saved to the matter. Each person connects their own."
+            right={
+              rc?.configured ? (
+                <a href="/api/ringcentral/connect" className={btn}>
+                  Connect
+                </a>
+              ) : (
+                pill("Setup needed")
+              )
+            }
+            open={open === "rc"}
+            onToggle={rc?.configured ? undefined : () => toggle("rc")}
+          >
+            <div className="bg-white/70 rounded-xl p-3.5 text-muted">
+              LawPower is ready for RingCentral; it needs LawPower&apos;s own RingCentral app keys once. In{" "}
+              <a href="https://developers.ringcentral.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-ink inline-flex items-center gap-0.5">
+                developers.ringcentral.com <ExternalLink size={11} />
+              </a>{" "}
+              create an app (REST API, 3-legged OAuth, server-side web app) with the <b className="text-ink">SMS</b> and <b className="text-ink">Read Accounts</b> permissions and the redirect address <b className="text-ink">https://lawpower.ai/api/ringcentral/callback</b>, then add its Client ID and Client Secret to LawPower&apos;s server settings. After that, a Connect button appears here.
+            </div>
+          </Row>
+        )}
+        {rc?.connected && (
+          <div className="flex items-center gap-2 px-4 py-2 text-[12.5px] text-muted">
+            RingCentral is connected{rc.fromNumber ? ` (texts go from ${rc.fromNumber})` : ""}.
+            <button
+              onClick={async () => {
+                if (!confirm("Disconnect RingCentral? Texts will no longer send from LawPower.")) return;
+                await fetch("/api/ringcentral", { method: "DELETE" });
+                setReload((r) => r + 1);
+              }}
+              className="underline underline-offset-2 hover:text-ink"
+            >
+              Disconnect
+            </button>
           </div>
-        </Row>
+        )}
         <Row
           icon={<Mic size={16} strokeWidth={1.75} />}
           name="Plaud"
