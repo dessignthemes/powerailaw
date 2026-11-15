@@ -572,17 +572,27 @@ export default function InboxPage() {
     setMsgLoading(true);
     getJson<{ message: MailMessage }>(`/api/mail/messages/${encodeURIComponent(m.id)}?provider=${provider}`)
       .then((d) => {
+        // Opening doesn't mark it read (only replying, forwarding or Mark as read does).
         setMessage(d.message);
-        rememberOpened(provider, m.id);
-        setMessages((list) => list.map((x) => (x.id === m.id ? { ...x, unread: false } : x)));
-        // Opening an unread message lowers the folder's unread count here too.
-        if (m.unread) {
-          const current = folderId ?? folders.find((f) => f.kind === "inbox")?.id;
-          setFolders((fs) => fs.map((f) => (f.id === current ? { ...f, unread: Math.max(0, f.unread - 1) } : f)));
-        }
       })
       .catch((e: Error) => setMsgError(e.message))
       .finally(() => setMsgLoading(false));
+  }
+
+  // Mark an email read: in Outlook / Gmail (or in this browser for a read-only connection),
+  // the list and the folder's unread count.
+  async function markReadNow(id: string) {
+    if (!provider) return false;
+    const r = await fetch(`/api/mail/messages/${encodeURIComponent(id)}/mark`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider, unread: false }) }).catch(() => null);
+    if (!r || !r.ok) return false;
+    rememberOpened(provider, id);
+    const was = messages.find((x) => x.id === id)?.unread;
+    setMessages((list) => list.map((x) => (x.id === id ? { ...x, unread: false } : x)));
+    if (was) {
+      const current = folderId ?? folders.find((f) => f.kind === "inbox")?.id;
+      setFolders((fs) => fs.map((f) => (f.id === current ? { ...f, unread: Math.max(0, f.unread - 1) } : f)));
+    }
+    return true;
   }
 
   function switchProvider(p: MailProvider) {
@@ -703,6 +713,7 @@ export default function InboxPage() {
               providers={(conns ?? []).map((c) => c.provider)}
               replyMessage={provider ? { provider, id: message.id } : null}
               footnote="Your reply goes into the same conversation, with the original email underneath."
+              onSent={() => void markReadNow(message.id)}
               onClose={() => setComposing(null)}
               onOpened={() => setComposing(null)}
             />
@@ -718,6 +729,7 @@ export default function InboxPage() {
             providers={(conns ?? []).map((c) => c.provider)}
             forwardOriginal={fwd && message.webLink && provider ? { provider, url: message.webLink } : null}
             forwardMessage={fwd && provider ? { provider, id: message.id } : null}
+            onSent={fwd ? () => void markReadNow(message.id) : undefined}
             onClose={() => setComposing(null)}
             onOpened={() => setComposing(null)}
           />
@@ -1149,6 +1161,14 @@ export default function InboxPage() {
                           >
                             <Flag size={12} className={flagged ? "fill-current" : ""} /> {flagged ? "Flagged as important" : "Flag as important"}
                           </button>
+                          {summary?.unread ? (
+                          <button
+                            onClick={() => void markReadNow(message.id)}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors"
+                          >
+                            <MailIcon size={12} /> Mark as read
+                          </button>
+                          ) : (
                           <button
                             onClick={async () => {
                               if (!(await mark({ unread: true }))) return;
@@ -1163,6 +1183,7 @@ export default function InboxPage() {
                           >
                             <MailIcon size={12} /> Mark as unread
                           </button>
+                          )}
                           {message.webLink && (
                         <a
                           href={message.webLink}
