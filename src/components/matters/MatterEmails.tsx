@@ -212,6 +212,7 @@ export default function MatterEmails({ matter, client }: { matter: Matter; clien
       )}
       {(compose === "email" || forwarding) && (
         <ComposeEmail
+          matterId={matter.id}
           title={forwarding ? "Forward email" : "New email"}
           initialTo={forwarding ? "" : client?.email ?? ""}
           initialSubject={forwarding ? fwdSubject(forwarding.subject || "(no subject)") : matter.title}

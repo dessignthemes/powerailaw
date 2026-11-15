@@ -23,6 +23,7 @@ export class SendError extends Error {
 export type OutgoingMessage = {
   to: string[];
   cc?: string[];
+  bcc?: string[]; // blind copies (not shown to the other recipients)
   subject: string;
   text: string; // plain text (always)
   html?: string; // optional rich version
@@ -90,7 +91,7 @@ async function sendOutlook(token: string, m: OutgoingMessage) {
   if (m.reply) {
     // Outlook's own reply: same conversation, original quoted underneath.
     const id = encodeURIComponent(m.reply.messageId);
-    await graph(token, `/me/messages/${id}/reply`, { comment: m.html ?? textToHtml(m.text), message: { toRecipients: rcpt(m.to), ...(m.cc?.length ? { ccRecipients: rcpt(m.cc) } : {}) } });
+    await graph(token, `/me/messages/${id}/reply`, { comment: m.html ?? textToHtml(m.text), message: { toRecipients: rcpt(m.to), ...(m.cc?.length ? { ccRecipients: rcpt(m.cc) } : {}), ...(m.bcc?.length ? { bccRecipients: rcpt(m.bcc) } : {}) } });
     return;
   }
   if (m.forward) {
@@ -98,12 +99,12 @@ async function sendOutlook(token: string, m: OutgoingMessage) {
     // written above the copied "Forwarded message" block goes with it.
     const id = encodeURIComponent(m.forward.messageId);
     const note = m.text.split(/-{6,} Forwarded message -{6,}/)[0].trim();
-    await graph(token, `/me/messages/${id}/forward`, { comment: m.forwardComment ?? textToHtml(note), toRecipients: rcpt(m.to), ...(m.cc?.length ? { message: { ccRecipients: rcpt(m.cc) } } : {}) });
+    await graph(token, `/me/messages/${id}/forward`, { comment: m.forwardComment ?? textToHtml(note), toRecipients: rcpt(m.to), ...(m.cc?.length || m.bcc?.length ? { message: { ...(m.cc?.length ? { ccRecipients: rcpt(m.cc) } : {}), ...(m.bcc?.length ? { bccRecipients: rcpt(m.bcc) } : {}) } } : {}) });
     return;
   }
   const attachments = (m.attachments ?? []).map((a) => ({ "@odata.type": "#microsoft.graph.fileAttachment", name: a.name, contentType: a.mime, contentBytes: Buffer.from(a.bytes).toString("base64") }));
   await graph(token, "/me/sendMail", {
-    message: { subject: m.subject, body: { contentType: "HTML", content: m.html ?? textToHtml(m.text) }, toRecipients: rcpt(m.to), ccRecipients: rcpt(m.cc), ...(attachments.length ? { attachments } : {}) },
+    message: { subject: m.subject, body: { contentType: "HTML", content: m.html ?? textToHtml(m.text) }, toRecipients: rcpt(m.to), ccRecipients: rcpt(m.cc), ...(m.bcc?.length ? { bccRecipients: rcpt(m.bcc) } : {}), ...(attachments.length ? { attachments } : {}) },
     saveToSentItems: true,
   });
 }
@@ -117,6 +118,7 @@ function mime(m: OutgoingMessage & { from?: string; inReplyTo?: string; referenc
   const head = [
     `To: ${m.to.join(", ")}`,
     ...(m.cc?.length ? [`Cc: ${m.cc.join(", ")}`] : []),
+    ...(m.bcc?.length ? [`Bcc: ${m.bcc.join(", ")}`] : []), // Gmail removes this line before delivering
     `Subject: ${encWord(m.subject)}`,
     ...(m.inReplyTo ? [`In-Reply-To: ${m.inReplyTo}`, `References: ${[m.references, m.inReplyTo].filter(Boolean).join(" ")}`] : []),
     "MIME-Version: 1.0",

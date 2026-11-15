@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import RecipientField, { type Recipient } from "@/components/mail/RecipientField";
 import { X, Send, Info, ExternalLink, Loader2, CheckCircle2 } from "lucide-react";
 import { subjectWithTag, composeLinks } from "@/lib/mail/matterTag";
 import { signatureText } from "@/lib/mail/signatureHtml";
@@ -21,6 +22,7 @@ export default function ComposeEmail({
   initialSubject = "",
   initialBody = "",
   matterNumber,
+  matterId,
   providers,
   forwardOriginal,
   forwardMessage,
@@ -35,6 +37,7 @@ export default function ComposeEmail({
   initialSubject?: string;
   initialBody?: string;
   matterNumber?: string | null; // added to the subject, so replies are filed to the matter
+  matterId?: string | null; // the people on this matter (and the firm's staff) to pick To / Cc / Bcc from
   providers: Provider[]; // connected mailboxes (empty: offer both)
   forwardOriginal?: { provider: Provider; url: string } | null; // open the original to forward it with attachments
   forwardMessage?: { provider: Provider; id: string } | null; // forward it from LawPower (attachments included)
@@ -46,7 +49,20 @@ export default function ComposeEmail({
 }) {
   const [to, setTo] = useState(initialTo);
   const [cc, setCc] = useState("");
-  const [showCc, setShowCc] = useState(false);
+  const [bcc, setBcc] = useState("");
+  // People to pick from: on this matter, and the firm's staff.
+  const [people, setPeople] = useState<{ matter: Recipient[]; staff: Recipient[] } | null>(null);
+  useEffect(() => {
+    if (!matterId) return;
+    let live = true;
+    fetch(`/api/matters/${matterId}/recipients`)
+      .then((r) => (r.ok ? r.json() : { matter: [], staff: [] }))
+      .then((d) => live && setPeople({ matter: d.matter ?? [], staff: d.staff ?? [] }))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [matterId]);
   // Mailboxes that can send from LawPower.
   const [senders, setSenders] = useState<{ provider: Provider; email: string | null }[] | null>(null);
   const [from, setFrom] = useState<Provider | null>(null);
@@ -100,7 +116,7 @@ export default function ComposeEmail({
       const res = await fetch("/api/mail/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: from, to, cc, subject: finalSubject, body, signature: withSig && !!signature, forwardMessageId: nativeForward ? forwardMessage!.id : undefined, replyMessageId: nativeReply ? replyMessage!.id : undefined }),
+        body: JSON.stringify({ provider: from, to, cc, bcc, subject: finalSubject, body, signature: withSig && !!signature, forwardMessageId: nativeForward ? forwardMessage!.id : undefined, replyMessageId: nativeReply ? replyMessage!.id : undefined }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? "The email couldn't be sent. Please try again.");
@@ -151,21 +167,12 @@ export default function ComposeEmail({
           </button>
         </div>
         <div className="px-6 pb-5 flex flex-col gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-[12.5px] font-semibold text-muted">To</span>
-            <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="name@example.com (several: separate with commas)" className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none" />
-            {!showCc && canSendHere && (
-              <button type="button" onClick={() => setShowCc(true)} className="self-start text-[12px] text-muted underline underline-offset-2 hover:text-ink">
-                Add Cc
-              </button>
-            )}
-          </label>
-          {showCc && (
-            <label className="flex flex-col gap-1">
-              <span className="text-[12.5px] font-semibold text-muted">Cc</span>
-              <input value={cc} onChange={(e) => setCc(e.target.value)} placeholder="name@example.com" className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none" />
-            </label>
-          )}
+          {/* To, Cc and Bcc, each with the matter's people (and the firm's staff) to pick from. */}
+          <div className="flex flex-col gap-2">
+            <RecipientField label="To" value={to} onChange={setTo} people={people} placeholder={people ? "Pick from the list, or type an address" : "name@example.com (several: separate with commas)"} />
+            <RecipientField label="Cc" value={cc} onChange={setCc} people={people} placeholder={people ? "Pick from the list, or type an address" : "name@example.com"} />
+            <RecipientField label="Bcc" value={bcc} onChange={setBcc} people={people} placeholder={people ? "Pick from the list, or type an address" : "name@example.com"} />
+          </div>
           <label className="flex flex-col gap-1">
             <span className="text-[12.5px] font-semibold text-muted">Subject</span>
             <input value={subject} onChange={(e) => setSubject(e.target.value)} className="bg-white border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none" />
