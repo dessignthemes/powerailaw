@@ -3,7 +3,7 @@ import { requireUserOrg, AccessError } from "@/lib/data/documents";
 import { getDetails, saveDetails, DetailsError } from "@/lib/data/matterDetails";
 import { getAiCtx } from "@/lib/ai/store";
 import { updateLetterAfterDetails } from "@/lib/ai/keyDates";
-import { syncDetailsWithContacts } from "@/lib/contacts/detailsSync";
+import { syncDetailsWithContacts, ensureClient } from "@/lib/contacts/detailsSync";
 
 export const dynamic = "force-dynamic";
 type P = { params: Promise<{ id: string }> };
@@ -20,7 +20,9 @@ export async function GET(_r: Request, { params }: P) {
     const { orgId } = await requireUserOrg();
     const { id } = await params;
     if (!validId(id)) return NextResponse.json({ error: "Matter not found." }, { status: 404 });
-    return NextResponse.json({ details: await getDetails(orgId, id) });
+    // No client on the matter yet? Set it from the Details (matching client or contact card).
+    const clientAssigned = await ensureClient(orgId, id).catch(() => false);
+    return NextResponse.json({ details: await getDetails(orgId, id), clientAssigned });
   } catch (error) {
     return fail("GET /api/matters/[id]/details", error);
   }

@@ -8,12 +8,6 @@ import { layoutFor, estimateToClose, money, REFERRAL_TYPES, type DetailField, ty
 import type { Matter } from "@/components/NewMatterModal";
 import type { KeyDatesApi } from "@/components/matters/KeyDatesCard";
 
-async function call(url: string, init?: RequestInit): Promise<MatterDetails> {
-  const res = await fetch(url, init);
-  const d = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(d?.error ?? "Something went wrong. Please try again.");
-  return (d.details ?? {}) as MatterDetails;
-}
 
 const asMoney = (v: string) => {
   const n = Number(v.replace(/[^\d.]/g, ""));
@@ -61,13 +55,19 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
   // Loaded again after the documents are read (the AI fills empty fields).
   useEffect(() => {
     let live = true;
-    call(`/api/matters/${matter.id}/details`)
+    fetch(`/api/matters/${matter.id}/details`)
+      .then(async (res) => {
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d?.error ?? "Something went wrong. Please try again.");
+        if (d.clientAssigned) refreshAll(); // the matter's Client was just set from its Details
+        return (d.details ?? {}) as MatterDetails;
+      })
       .then((d) => live && (setDetails(d), setError(null)))
       .catch((e: Error) => live && (setError(e.message), setDetails({})));
     return () => {
       live = false;
     };
-  }, [matter.id, extractedAt, matter.clientId]);
+  }, [matter.id, extractedAt, matter.clientId, refreshAll]);
 
   // Who from Contacts is on this matter (to show "In Contacts" on each section).
   const [linked, setLinked] = useState<Linked[]>([]);

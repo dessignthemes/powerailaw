@@ -209,12 +209,30 @@ async function assignClient(
     await set(clients[0].id);
     return "linked";
   }
-  if (clients.length > 1) return null; // two client cards with the same name: let a person pick
+  if (clients.length > 1) {
+    // Two client cards with the same name: the one with the same email, else let a person pick.
+    const { data: rows } = await db().from("clients").select("id, email").in("id", clients.map((c) => c.id));
+    const same = v.email ? ((rows ?? []) as { id: string; email: string | null }[]).filter((r) => (r.email ?? "").toLowerCase() === v.email!.toLowerCase()) : [];
+    if (same.length !== 1) return null;
+    await set(same[0].id);
+    return "linked";
+  }
   // A contact card with the same name(s) (e.g. from the Cards import) → a client card from it.
   const { data: ct } = await db().from("contacts").select("*").eq("org_id", orgId).ilike("name", `%${word}%`).limit(200);
-  const contacts = ((ct ?? []) as ContactRow[]).filter((c) => nameWords(c.name) === key);
-  const from = contacts.length === 1 ? contacts[0] : null;
-  if (contacts.length > 1) return null;
+  const contacts = ((ct ?? []) as (ContactRow & { category?: string | null; created_at?: string })[]).filter((c) => nameWords(c.name) === key);
+  // Several cards with the same name (e.g. one from the Cards import and one made from these
+  // Details): the one with the same email, else the one on this matter, else a Client card.
+  let from: ContactRow | null = contacts.length === 1 ? contacts[0] : null;
+  if (contacts.length > 1) {
+    const byEmail = v.email ? contacts.filter((c) => (c.email ?? "").toLowerCase() === v.email!.toLowerCase()) : [];
+    const { data: onMatter } = await db().from("matter_contacts").select("contact_id").eq("org_id", orgId).eq("matter_id", matterId);
+    const linkedIds = new Set(((onMatter ?? []) as { contact_id: string | null }[]).map((r) => r.contact_id));
+    from =
+      byEmail[0] ??
+      contacts.find((c) => linkedIds.has(c.id)) ??
+      contacts.find((c) => c.category === "client") ??
+      [...contacts].sort((a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? ""))[0];
+  }
   const type = (from ? from.kind : v.kind) === "person" ? "Individual" : "Legal entity";
   const { data: made, error } = await db()
     .from("clients")
@@ -392,4 +410,25 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
     if (res.filled) await db().from("matters").update({ details: now }).eq("id", matterId).eq("org_id", orgId);
   }
   return res;
+}
+
+// The matter's client from its Details, when it has none yet (no AI; runs when the
+// matter's Details are opened, so older matters get theirs too). True when set.
+export async function ensureClient(orgId: string, matterId: string): Promise<boolean> {
+  const { data: m } = await db().from("matters").select("*").eq("id", matterId).eq("org_id", orgId).maybeSingle();
+  const matter = m as { client_id?: string | null; details?: unknown; matter_code?: string | null; category?: string | null } | null;
+  if (!matter || matter.client_id || !("details" in matter)) return false;
+  const details = cleanDetails(matter.details);
+  const { side } = layoutFor({ matterCode: matter.matter_code, category: matter.category });
+  const prefix = side ?? "client";
+  const names = details[`${prefix}Names`]?.value?.trim();
+  if (!names) return false;
+  const email = details[`${prefix}Email`]?.value?.trim() ?? "";
+  const done = await assignClient(orgId, matterId, names, {
+    email: isEmail(email) ? email.toLowerCase() : null,
+    phone: details[`${prefix}Phone`]?.value?.trim() || null,
+    address: details[`${prefix}Address`]?.value?.trim() || null,
+    kind: partyKind(names),
+  });
+  return done === "linked" || done === "created";
 }
