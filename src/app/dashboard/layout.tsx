@@ -5,6 +5,7 @@ import UpdateBanner from "@/components/UpdateBanner";
 import NotificationBell from "@/components/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
 import GlobalSearch from "@/components/GlobalSearch";
+import AskDonna from "@/components/AskDonna";
 import BackgroundUploads from "@/components/documents/BackgroundUploads";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="px-10 pt-6 flex items-center justify-between gap-4">
               {/* Page switcher hidden for now; restore: <PageSwitcher /> */}
               <GlobalSearch />
+              <AskDonna />
               {/* A page's own buttons go here (HeaderActions). */}
               <div id="page-header-actions" className="flex-1 min-w-0 flex items-center gap-2 flex-wrap" />
               {/* Right side, in the widget style: a page's own controls (HeaderActions side="right") and the alerts bell. */}

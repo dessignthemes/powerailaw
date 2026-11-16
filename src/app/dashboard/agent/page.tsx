@@ -112,10 +112,20 @@ function Agent() {
 
   const [input, setInput] = useState("");
   // From the Dashboard's "Ask the AI Agent" widget: the question is filled in, ready to send.
+  // From "Ask Donna" in the top bar (&send=1, &matter=…): the matter is chosen and the question sent.
+  const [autoSend, setAutoSend] = useState<{ matter: string | null } | null>(null);
   useEffect(() => {
     const t = setTimeout(() => {
-      const q = new URLSearchParams(window.location.search).get("q");
-      if (q) setInput(q.slice(0, 4000));
+      const p = new URLSearchParams(window.location.search);
+      const q = p.get("q");
+      if (!q) return;
+      setInput(q.slice(0, 4000));
+      if (p.get("send") === "1") {
+        const m = p.get("matter");
+        const matter = m && /^[0-9a-f-]{36}$/i.test(m) ? m : null;
+        setMatterId(matter);
+        setAutoSend({ matter });
+      }
     }, 0);
     return () => clearTimeout(t);
   }, []);
@@ -129,6 +139,15 @@ function Agent() {
   const [height, setHeight] = useState<number | null>(null);
 
   const matter = matters.find((m) => m.id === matterId) ?? null;
+  useEffect(() => {
+    if (!autoSend || autoSend.matter !== matterId || !input.trim()) return;
+    const t = setTimeout(() => {
+      setAutoSend(null);
+      void send();
+      window.history.replaceState(null, "", "/dashboard/agent");
+    }, 0);
+    return () => clearTimeout(t);
+  }, [autoSend, matterId, input]); // eslint-disable-line react-hooks/exhaustive-deps
   const uploading = files.some((f) => f.status === "uploading" || f.status === "processing");
 
   // Fill the viewport under the dashboard header.

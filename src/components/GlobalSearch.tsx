@@ -140,13 +140,12 @@ export default function GlobalSearch() {
       {/* Same look as the widgets: a soft tinted frame around a white field. */}
       <button
         onClick={() => setOpen(true)}
-        className="group block bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 min-w-0 w-[380px] max-w-full transition-shadow"
-        aria-label="Search"
+        className="group block bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 min-w-0 w-[260px] max-w-full transition-shadow"
+        aria-label="Search" title="Search matters, contacts, documents… (Ctrl K)"
       >
         <span className="flex items-center gap-2 bg-white border border-[#E9E7E4] rounded-full pl-3.5 pr-1.5 py-1.5 text-[13.5px] text-muted ">
           <Search size={15} strokeWidth={1.75} className="flex-shrink-0" />
-          <span className="flex-1 text-left truncate">Search matters, contacts, documents…</span>
-          <kbd className="hidden sm:inline text-[11px] font-medium bg-[#F3F2F0] border border-[#E9E7E4] rounded-md px-1.5 py-0.5 text-muted">Ctrl K</kbd>
+          <span className="flex-1 text-left truncate">Search…</span>
         </span>
       </button>
 
