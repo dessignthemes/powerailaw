@@ -52,7 +52,7 @@ export default function MatterInfoCard({ matterId }: { matterId: string }) {
   if (!ready || !info) return null;
   const input = "w-full bg-white border border-line rounded-lg px-2.5 py-1.5 text-[13px] outline-none focus:border-btn-ring";
   const label = "text-[12px] text-muted mb-0.5 block";
-  const person = (key: "originatingAttorney" | "responsibleStaff", name: string) => (
+  const person = (key: "originatingAttorney" | "responsibleStaff" | "personActing", name: string) => (
     <label>
       <span className={label}>{name}</span>
       <select value={info[key] ?? ""} onChange={(e) => void save({ [key]: e.target.value || null })} className={input}>
@@ -97,7 +97,8 @@ export default function MatterInfoCard({ matterId }: { matterId: string }) {
       {error && <div className="mx-4 mt-3 rounded-lg bg-[#FDECEC] text-[#9F1D1D] px-3 py-2 text-[12.5px]">{error}</div>}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 p-4">
         {person("originatingAttorney", "Originating attorney")}
-        {person("responsibleStaff", "Responsible staff")}
+        {person("personActing", "Person acting")}
+        {person("responsibleStaff", "Person assisting")}
         {text("clientReference", "Client reference number")}
         {text("location", "Location")}
         {date("openDate", "Open date")}

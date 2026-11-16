@@ -8,7 +8,7 @@ import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 export default function AssigneeOptions({ value, onPick }: { value: string | null; onPick: (email: string | null) => void }) {
   const { teamMembers, meEmail } = useWorkspaceData();
   const [q, setQ] = useState("");
-  const list = teamMembers.filter((m) => !q.trim() || m.email.toLowerCase().includes(q.trim().toLowerCase()));
+  const list = teamMembers.filter((m) => !q.trim() || `${m.fullName ?? ""} ${m.email}`.toLowerCase().includes(q.trim().toLowerCase()));
   return (
     <>
       <div className="p-1.5">
@@ -36,11 +36,12 @@ export default function AssigneeOptions({ value, onPick }: { value: string | nul
           className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
         >
           <span className="w-6 h-6 rounded-full bg-card-alt border border-line text-muted flex items-center justify-center text-[11px] flex-shrink-0">
-            {m.email.charAt(0).toUpperCase()}
+            {(m.fullName || m.email).charAt(0).toUpperCase()}
           </span>
           <span className="truncate flex-1 text-left">
-            {m.email}
+            {m.fullName || m.email}
             {m.email === meEmail && <span className="text-muted font-normal"> (you)</span>}
+            {m.fullName && <span className="block text-[11.5px] text-muted font-normal truncate">{m.email}</span>}
           </span>
           {value === m.email && <Check size={14} />}
         </button>

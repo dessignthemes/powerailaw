@@ -1,5 +1,6 @@
 "use client";
 
+import MatterStaffRows from "@/components/matters/MatterStaffRows";
 import DeadlineCalendar from "@/components/calendar/DeadlineCalendar";
 import MatterActivity from "@/components/matters/MatterActivity";
 import MatterTimeline from "@/components/matters/MatterTimeline";
@@ -65,7 +66,7 @@ type TabKey = (typeof tabs)[number]["key"];
 export default function MatterDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { matters, mattersLoaded, clients, tasks, updateMatter, deleteMatters, refreshAll } = useWorkspaceData();
+  const { matters, mattersLoaded, clients, tasks, updateMatter, deleteMatters, refreshAll, teamMembers } = useWorkspaceData();
   const [invoiceKey, setInvoiceKey] = useState(0);
 
   const matter = matters.find((m) => m.id === params.id) ?? null;
@@ -193,7 +194,7 @@ export default function MatterDetailPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-3 mb-8 max-w-[900px]">
         <div className="flex items-center gap-3">
-          <span className="w-[110px] text-[13.5px] text-muted flex-shrink-0">Status</span>
+          <span className="w-[130px] text-[13.5px] text-muted flex-shrink-0">Status</span>
           <GenericDropdown
             open={statusOpen}
             setOpen={setStatusOpen}
@@ -227,7 +228,7 @@ export default function MatterDetailPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="w-[110px] text-[13.5px] text-muted flex-shrink-0">Client</span>
+          <span className="w-[130px] text-[13.5px] text-muted flex-shrink-0">Client</span>
           <GenericDropdown
             open={clientOpen}
             setOpen={setClientOpen}
@@ -298,7 +299,7 @@ export default function MatterDetailPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="w-[110px] text-[13.5px] text-muted flex-shrink-0">Category</span>
+          <span className="w-[130px] text-[13.5px] text-muted flex-shrink-0">Category</span>
           <GenericDropdown
             open={categoryOpen}
             setOpen={setCategoryOpen}
@@ -317,11 +318,11 @@ export default function MatterDetailPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="w-[110px] text-[13.5px] text-muted flex-shrink-0">Assigned to</span>
+          <span className="w-[130px] text-[13.5px] text-muted flex-shrink-0">Assigned to</span>
           <GenericDropdown
             open={assignedOpen}
             setOpen={setAssignedOpen}
-            trigger={<>{matter.assignedTo ?? "Unassigned"}</>}
+            trigger={<>{matter.assignedTo ? teamMembers.find((m) => m.email.toLowerCase() === matter.assignedTo!.toLowerCase())?.fullName || matter.assignedTo : "Unassigned"}</>}
           >
             <AssigneeOptions
               value={matter.assignedTo}
@@ -332,9 +333,11 @@ export default function MatterDetailPage() {
             />
           </GenericDropdown>
         </div>
+        {/* Person acting, Person assisting and Originating attorney, by name. */}
+        <MatterStaffRows matterId={matter.id} />
 
         <div className="flex items-center gap-3">
-          <span className="w-[110px] text-[13.5px] text-muted flex-shrink-0">Due date</span>
+          <span className="w-[130px] text-[13.5px] text-muted flex-shrink-0">Due date</span>
           <GenericDropdown
             open={dateOpen}
             setOpen={setDateOpen}

@@ -7,7 +7,8 @@ import { getCurrentOrgId } from "@/lib/data/org";
 // works before the migration is run.
 export type MatterInfo = {
   originatingAttorney: string | null; // profile id
-  responsibleStaff: string | null; // profile id
+  responsibleStaff: string | null; // profile id: the person assisting (paralegal, secretary…)
+  personActing: string | null; // profile id: usually a junior associate (migration 0075)
   clientReference: string;
   location: string;
   openDate: string | null;
@@ -25,13 +26,16 @@ export class MatterInfoError extends Error {
 }
 
 const COLS = "originating_attorney, responsible_staff, client_reference, location, open_date, pending_date, closed_date, sol_date, sol_satisfied, trust_minimum";
+const COLS_ACTING = `${COLS}, person_acting`;
+const noActing = (e: { message?: string; code?: string } | null) => !!e && /person_acting/.test(e.message ?? "");
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const missing = (e: { message?: string; code?: string } | null) => !!e && (e.code === "42703" || e.code === "PGRST204" || /originating_attorney|responsible_staff|client_reference|sol_date|trust_minimum|open_date/.test(e.message ?? ""));
 
-type Row = { originating_attorney: string | null; responsible_staff: string | null; client_reference: string | null; location: string | null; open_date: string | null; pending_date: string | null; closed_date: string | null; sol_date: string | null; sol_satisfied: boolean | null; trust_minimum: number | null };
+type Row = { person_acting?: string | null; originating_attorney: string | null; responsible_staff: string | null; client_reference: string | null; location: string | null; open_date: string | null; pending_date: string | null; closed_date: string | null; sol_date: string | null; sol_satisfied: boolean | null; trust_minimum: number | null };
 const toInfo = (r: Row): MatterInfo => ({
   originatingAttorney: r.originating_attorney,
   responsibleStaff: r.responsible_staff,
+  personActing: r.person_acting ?? null,
   clientReference: r.client_reference ?? "",
   location: r.location ?? "",
   openDate: r.open_date,
@@ -44,7 +48,8 @@ const toInfo = (r: Row): MatterInfo => ({
 
 export async function getMatterInfo(id: string): Promise<{ info: MatterInfo | null; ready: boolean }> {
   const orgId = await getCurrentOrgId();
-  const { data, error } = await createAdminClient().from("matters").select(COLS).eq("org_id", orgId).eq("id", id).maybeSingle();
+  let { data, error } = await createAdminClient().from("matters").select(COLS_ACTING).eq("org_id", orgId).eq("id", id).maybeSingle();
+  if (noActing(error)) ({ data, error } = await createAdminClient().from("matters").select(COLS).eq("org_id", orgId).eq("id", id).maybeSingle());
   if (error) {
     if (missing(error)) return { info: null, ready: false };
     throw error;
@@ -67,6 +72,7 @@ export async function saveMatterInfo(id: string, b: Record<string, unknown>): Pr
   const date = (v: unknown) => (v === null || v === "" ? null : typeof v === "string" && DATE.test(v) ? v : (() => { throw new MatterInfoError(400, "Check the dates."); })());
   if ("originatingAttorney" in b) patch.originating_attorney = await person(b.originatingAttorney);
   if ("responsibleStaff" in b) patch.responsible_staff = await person(b.responsibleStaff);
+  if ("personActing" in b) patch.person_acting = await person(b.personActing);
   if ("clientReference" in b) patch.client_reference = String(b.clientReference ?? "").trim().slice(0, 100);
   if ("location" in b) patch.location = String(b.location ?? "").trim().slice(0, 200);
   for (const [k, col] of [["openDate", "open_date"], ["pendingDate", "pending_date"], ["closedDate", "closed_date"], ["solDate", "sol_date"]] as const) if (k in b) patch[col] = date(b[k]);
@@ -76,7 +82,11 @@ export async function saveMatterInfo(id: string, b: Record<string, unknown>): Pr
     if (n !== null && (!Number.isFinite(n) || n < 0)) throw new MatterInfoError(400, "Check the trust minimum.");
     patch.trust_minimum = n;
   }
-  const { data, error } = await s.from("matters").update(patch).eq("org_id", orgId).eq("id", id).select(COLS).maybeSingle();
+  let { data, error } = await s.from("matters").update(patch).eq("org_id", orgId).eq("id", id).select(COLS_ACTING).maybeSingle();
+  if (noActing(error)) {
+    if ("person_acting" in patch) throw new MatterInfoError(503, "Person acting needs a database update first (migration 0075).");
+    ({ data, error } = await s.from("matters").update(patch).eq("org_id", orgId).eq("id", id).select(COLS).maybeSingle());
+  }
   if (error) {
     if (missing(error)) throw new MatterInfoError(503, "These matter details need a database update first (migration 0063).");
     throw error;

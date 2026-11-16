@@ -53,7 +53,8 @@ export default function MatterCreateWindow({
   // Matter details
   const [responsible, setResponsible] = useState<string>(meEmail ?? ""); // email (the matter's "Assigned to")
   const [originating, setOriginating] = useState<string>(""); // profile id
-  const [staff, setStaff] = useState<string>(""); // profile id
+  const [staff, setStaff] = useState<string>(""); // profile id: person assisting
+  const [acting, setActing] = useState<string>(""); // profile id: person acting
   const [clientRef, setClientRef] = useState("");
   const [location, setLocation] = useState("");
   const [openDate, setOpenDate] = useState(today());
@@ -138,8 +139,8 @@ export default function MatterCreateWindow({
     }
 
     // Matter details (needs migration 0063).
-    const info = { originatingAttorney: originating || null, responsibleStaff: staff || null, clientReference: clientRef, location, openDate: openDate || null, pendingDate: pendingDate || null, closedDate: closedDate || null, solDate: solDate || null, solSatisfied, trustMinimum: trustMin === "" ? null : Number(trustMin) };
-    const anyInfo = originating || staff || clientRef.trim() || location.trim() || openDate || pendingDate || closedDate || solDate || trustMin;
+    const info = { originatingAttorney: originating || null, responsibleStaff: staff || null, ...(acting ? { personActing: acting } : {}), clientReference: clientRef, location, openDate: openDate || null, pendingDate: pendingDate || null, closedDate: closedDate || null, solDate: solDate || null, solSatisfied, trustMinimum: trustMin === "" ? null : Number(trustMin) };
+    const anyInfo = originating || staff || acting || clientRef.trim() || location.trim() || openDate || pendingDate || closedDate || solDate || trustMin;
     if (anyInfo) {
       setBusy("Saving the matter details…");
       const r = await fetch(`/api/matters/${saved.id}/info`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(info) }).catch(() => null);
@@ -316,17 +317,22 @@ export default function MatterCreateWindow({
               <section data-section="details" className={card}>
                 {title("Matter details")}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-                  <label>
-                    <span className={label}>Responsible attorney</span>
-                    {personSelect(responsible, setResponsible, true, "Responsible attorney")}
-                  </label>
+                  {/* Staff: in a small firm these can all be the same person. */}
                   <label>
                     <span className={label}>Originating attorney</span>
                     {personSelect(originating, setOriginating, false, "Originating attorney")}
                   </label>
                   <label>
-                    <span className={label}>Responsible staff</span>
-                    {personSelect(staff, setStaff, false, "Responsible staff")}
+                    <span className={label}>Person responsible (assigned to)</span>
+                    {personSelect(responsible, setResponsible, true, "Person responsible")}
+                  </label>
+                  <label>
+                    <span className={label}>Person acting</span>
+                    {personSelect(acting, setActing, false, "Person acting")}
+                  </label>
+                  <label>
+                    <span className={label}>Person assisting</span>
+                    {personSelect(staff, setStaff, false, "Person assisting")}
                   </label>
                   <label>
                     <span className={label}>Client reference number</span>
