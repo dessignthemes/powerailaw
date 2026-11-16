@@ -51,7 +51,10 @@ export default function AskDonna() {
   }
 
   return (
-    <div ref={box} className="relative flex-shrink-0">
+    <>
+    {/* The page dims behind the box, like Search. */}
+    {open && <div className="fixed inset-0 z-[64] bg-black/25" aria-hidden />}
+    <div ref={box} className={`relative flex-shrink-0 ${open ? "z-[65]" : ""}`}>
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
@@ -120,5 +123,6 @@ export default function AskDonna() {
         </div>
       )}
     </div>
+    </>
   );
 }
