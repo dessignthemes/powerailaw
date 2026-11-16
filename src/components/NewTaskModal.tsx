@@ -6,6 +6,7 @@ import type { WaitingOn } from "@/lib/tasks/waitingOn";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import MatterChip from "@/components/tasks/MatterChip";
 import { boardForMatter } from "@/lib/matters/boards";
+import TaskAttachments, { timeLabel } from "@/components/tasks/TaskAttachments";
 import { useLayoutEffect, useRef, useState } from "react";
 import {
   X,
@@ -17,8 +18,7 @@ import {
   CheckCircle2,
   Flag,
   User,
-  Folder,
-  CalendarDays, Lock, LockOpen, LayoutGrid } from "lucide-react";
+  CalendarDays, Lock, LockOpen, LayoutGrid, Paperclip } from "lucide-react";
 
 export type TaskStatus = "todo" | "inprogress" | "waiting" | "done";
 export type TaskPriority = "Low" | "Medium" | "High";
@@ -36,6 +36,8 @@ export type BoardTask = {
   assignedBy?: string | null; // email of the person who assigned / offered it
   isPrivate?: boolean; // only the creator and the assignee see it
   dueDate: string | null;
+  dueTime?: string | null; // "15:30" on the due date (optional)
+  attachments?: TaskAttachment[]; // documents attached to the task
   comments?: TaskComment[];
   boardId?: string | null; // null/undefined = main Task Board
   matterId?: string | null; // the matter this task belongs to, if any
@@ -50,6 +52,9 @@ export type BoardTask = {
   keyDatesSynced?: boolean; // (from the server) the matter's key dates and its other tasks were updated too
   matterStatusChanged?: string; // (from the server) ticking a step closed the matter (or set Not proceeding)
 };
+
+// A document attached to a task (a document on the matter's Documents).
+export type TaskAttachment = { documentId: string; versionId: string; name: string; fileType?: string };
 
 export type TaskComment = {
   id: string;
@@ -223,6 +228,8 @@ export default function NewTaskModal({
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
+  const [dueTime, setDueTime] = useState<string | null>(null); // optional time on the due date
+  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
 
   const StatusIcon = statusMeta[status].icon;
 
@@ -238,6 +245,8 @@ export default function NewTaskModal({
       offeredTo: assignees.length > 1 ? assignees : [],
       assignedBy: assignees.length ? meEmail : null,
       dueDate,
+      ...(dueDate && dueTime ? { dueTime } : {}),
+      ...(attachments.length ? { attachments } : {}),
       isPrivate,
       matterId,
       ...(initialBoardId !== undefined ? { boardId } : {}),
@@ -312,10 +321,6 @@ export default function NewTaskModal({
               );
             })}
           </GenericDropdown>
-
-          <div className="flex items-center gap-1.5 bg-card-alt px-3 py-1.5 rounded-full text-[13px] font-medium text-muted">
-            <Folder size={13} strokeWidth={1.75} /> Matter
-          </div>
 
           <GenericDropdown
             open={priorityOpen}
@@ -417,10 +422,11 @@ export default function NewTaskModal({
               <>
                 <CalendarDays size={13} strokeWidth={1.75} />
                 {dueDate ?? "Due date"}
+                {dueDate && dueTime ? ` · ${timeLabel(dueTime)}` : ""}
               </>
             }
           >
-            <div className="p-2">
+            <div className="p-2 flex flex-col gap-2 min-w-[220px]">
               <input
                 type="date"
                 value={dueDate ?? ""}
@@ -429,8 +435,32 @@ export default function NewTaskModal({
                 }}
                 className="w-full bg-card-alt rounded-lg px-3 py-2 text-[13.5px] outline-none"
               />
+              {/* An optional time it's due on that day. */}
+              <label className="flex items-center gap-2 text-[12.5px] text-muted">
+                Time
+                <input
+                  type="time"
+                  value={dueTime ?? ""}
+                  disabled={!dueDate}
+                  onChange={(e) => setDueTime(e.target.value || null)}
+                  className="flex-1 bg-card-alt rounded-lg px-3 py-2 text-[13.5px] text-ink outline-none disabled:opacity-50"
+                />
+                {dueTime && (
+                  <button type="button" onClick={() => setDueTime(null)} className="underline underline-offset-2">
+                    Clear
+                  </button>
+                )}
+              </label>
             </div>
           </GenericDropdown>
+        </div>
+
+        {/* Documents for the assignee. */}
+        <div className="px-7 pb-5">
+          <div className="text-[12.5px] font-semibold text-muted mb-2 flex items-center gap-1.5">
+            <Paperclip size={13} /> Attachments
+          </div>
+          <TaskAttachments matterId={matterId} value={attachments} onChange={setAttachments} compact />
         </div>
 
         <div className="flex items-center justify-end px-7 py-5 border-t border-line">

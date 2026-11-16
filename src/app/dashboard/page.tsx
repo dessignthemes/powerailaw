@@ -1,5 +1,6 @@
 "use client";
 
+import { timeLabel } from "@/components/tasks/TaskAttachments";
 import { useEffect, useMemo, useState } from "react";
 import PriorityDot from "@/components/PriorityDot";
 import WidgetBoard, { AddWidgetModal } from "@/components/dashboard/widgets/WidgetBoard";
@@ -206,6 +207,9 @@ export default function DashboardHome() {
             <span className="text-[11.5px] font-semibold bg-[#FDECEC] text-[#B42318] rounded-md px-1.5 py-0.5 flex-shrink-0">
               Overdue · {new Date(`${t.dueDate}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
+          )}
+          {!done && t.dueTime && t.dueDate === todayStr && (
+            <span className="text-[11.5px] font-medium bg-[#F3F2F0] rounded-md px-1.5 py-0.5 flex-shrink-0">Due {timeLabel(t.dueTime)}</span>
           )}
           <span className="text-[11.5px] text-muted bg-card-alt rounded-md px-1.5 py-0.5 truncate max-w-[160px] hidden sm:inline">
             {boardName(t.boardId)}

@@ -17,6 +17,8 @@ type TaskRow = {
   priority: BoardTask["priority"];
   assignee: string | null;
   due_date: string | null;
+  due_time?: string | null;
+  attachments?: unknown;
   comments: TaskComment[] | null;
   board_id?: string | null;
   matter_id?: string | null;
@@ -34,6 +36,16 @@ type TaskRow = {
   updated_at: string;
 };
 
+// Attached documents: { documentId, versionId, name, fileType }, at most 30.
+function cleanAttachments(v: unknown): import("@/components/NewTaskModal").TaskAttachment[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((a): a is Record<string, unknown> => !!a && typeof a === "object")
+    .map((a) => ({ documentId: String(a.documentId ?? ""), versionId: String(a.versionId ?? ""), name: String(a.name ?? "Document").slice(0, 200), fileType: typeof a.fileType === "string" ? a.fileType.slice(0, 10) : undefined }))
+    .filter((a) => /^[0-9a-f-]{36}$/i.test(a.documentId) && /^[0-9a-f-]{36}$/i.test(a.versionId))
+    .slice(0, 30);
+}
+
 function toTask(row: TaskRow): BoardTask {
   return {
     id: row.id,
@@ -43,6 +55,8 @@ function toTask(row: TaskRow): BoardTask {
     priority: row.priority,
     assignee: row.assignee,
     dueDate: row.due_date,
+    dueTime: row.due_time ?? null,
+    attachments: cleanAttachments(row.attachments),
     comments: Array.isArray(row.comments) ? row.comments : [],
     boardId: row.board_id ?? null,
     matterId: row.matter_id ?? null,
@@ -69,6 +83,9 @@ function toColumns(task: BoardTask) {
     priority: task.priority,
     assignee: task.assignee,
     due_date: task.dueDate || null,
+    // A due time and attachments (migration 0074): only sent when set on the task.
+    ...(task.dueTime !== undefined ? { due_time: task.dueTime && /^[0-2]\d:[0-5]\d$/.test(task.dueTime) ? task.dueTime : null } : {}),
+    ...(task.attachments !== undefined ? { attachments: cleanAttachments(task.attachments) } : {}),
     comments: task.comments ?? [],
     // Only sent when the card has been arranged by hand.
     ...(typeof task.position === "number" && Number.isFinite(task.position) ? { position: task.position } : {}),

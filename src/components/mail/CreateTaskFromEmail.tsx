@@ -58,6 +58,7 @@ export default function CreateTaskFromEmail({
     }
   });
   const [due, setDue] = useState(todayYmd());
+  const [dueTime, setDueTime] = useState(""); // optional time on the due date
   const [priority, setPriority] = useState<TaskPriority>("Medium");
   const [link, setLink] = useState<string | null>(null);
   const [notes, setNotes] = useState(`${emailHeader(email)}\n\n${email.snippet}`);
@@ -106,6 +107,7 @@ export default function CreateTaskFromEmail({
         instructions: instructions.trim().slice(0, 5000),
         assignedBy: assignees.length ? meEmail : null,
         dueDate: due || null,
+        ...(due && dueTime ? { dueTime } : {}),
         comments: [],
         boardId,
       },
@@ -147,8 +149,11 @@ export default function CreateTaskFromEmail({
             </SelectBox>
           </div>
           <div>
-            <label className="block text-[12.5px] font-medium text-muted mb-1">Due date</label>
-            <input type="date" value={due} onChange={(e) => setDue(e.target.value)} className={field} />
+            <label className="block text-[12.5px] font-medium text-muted mb-1">Due date and time</label>
+            <div className="flex gap-2">
+              <input type="date" value={due} onChange={(e) => setDue(e.target.value)} className={`${field} flex-1 min-w-0`} />
+              <input type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} disabled={!due} aria-label="Due time (optional)" className={`${field} w-[130px] disabled:opacity-50`} />
+            </div>
           </div>
           <div>
             <label className="block text-[12.5px] font-medium text-muted mb-1">Priority</label>

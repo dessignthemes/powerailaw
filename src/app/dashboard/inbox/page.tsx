@@ -27,6 +27,7 @@ import {
   ChevronRight,
   FolderInput,
   Reply,
+  ReplyAll,
   Trash2,
 } from "lucide-react";
 import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/ComposeEmail";
@@ -250,7 +251,7 @@ function FileToMatter({
 export default function InboxPage() {
   const { teamMembers, boards, addTask, matters } = useWorkspaceData();
   // New email / forward (opens in the person's Gmail or Outlook) and "Turn into task".
-  const [composing, setComposing] = useState<"new" | "forward" | "reply" | null>(null);
+  const [composing, setComposing] = useState<"new" | "forward" | "reply" | "replyAll" | null>(null);
   const [taskFrom, setTaskFrom] = useState<MailSummary | null>(null);
   const [attMenu, setAttMenu] = useState<number | null>(null);
   // Conversations opened with the ▸ arrow in the list, and their emails (newest first).
@@ -702,13 +703,23 @@ export default function InboxPage() {
       {composing && (() => {
         const summary = message ? messages.find((x) => x.id === message.id) : null;
         const fwd = composing === "forward" && message;
-        const rep = composing === "reply" && message;
+        const rep = (composing === "reply" || composing === "replyAll") && message;
         if (rep) {
           const subj = message.subject || "(no subject)";
+          // Reply all: everyone else on the email (To and Cc), not me and not the sender twice.
+          const me = (conns ?? []).find((c) => c.provider === provider)?.email?.toLowerCase() ?? "";
+          const sender = (message.fromEmail ?? "").toLowerCase();
+          const others =
+            composing === "replyAll"
+              ? [...new Set(`${message.to ?? ""}, ${message.cc ?? ""}`.match(/[^\s<>,;"']+@[^\s<>,;"']+\.[^\s<>,;"']+/g) ?? [])]
+                  .map((e) => e.toLowerCase())
+                  .filter((e, i, all) => e !== me && e !== sender && all.indexOf(e) === i)
+              : [];
           return (
             <ComposeEmail
-              title="Reply"
+              title={composing === "replyAll" ? "Reply all" : "Reply"}
               initialTo={message.fromEmail ?? ""}
+              initialCc={others.join(", ")}
               initialSubject={/^re:/i.test(subj) ? subj : `Re: ${subj}`}
               providers={(conns ?? []).map((c) => c.provider)}
               replyMessage={provider ? { provider, id: message.id } : null}
@@ -1199,6 +1210,9 @@ export default function InboxPage() {
                           </button>
                           <button onClick={() => setComposing("reply")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors">
                             <Reply size={12} /> Reply
+                          </button>
+                          <button onClick={() => setComposing("replyAll")} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors">
+                            <ReplyAll size={12} /> Reply all
                           </button>
                           {!inTrash && (
                             <button

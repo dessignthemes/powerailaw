@@ -1,5 +1,6 @@
 "use client";
 
+import TaskAttachments, { timeLabel } from "@/components/tasks/TaskAttachments";
 import RichTextEditor, { descriptionText } from "@/components/RichTextEditor";
 import AssigneeMultiPicker from "@/components/tasks/AssigneeMultiPicker";
 import { useCallback, useState, useEffect, useRef } from "react";
@@ -40,6 +41,7 @@ import {
 } from "lucide-react";
 import {
   BoardTask,
+  type TaskAttachment,
   TaskComment,
   TaskStatus,
   TaskPriority,
@@ -70,6 +72,8 @@ export default function TaskDetailModal({
   const [priority, setPriority] = useState<TaskPriority>(task.priority);
   const [assignee, setAssignee] = useState<string | null>(task.assignee);
   const [dueDate, setDueDate] = useState<string | null>(task.dueDate);
+  const [dueTime, setDueTime] = useState<string | null>(task.dueTime ?? null);
+  const [attachments, setAttachments] = useState<TaskAttachment[]>(task.attachments ?? []);
 
   const [statusOpen, setStatusOpen] = useState(false);
   // Who the task is waiting on (Task Board filters "Waiting on lender" etc.).
@@ -260,7 +264,7 @@ export default function TaskDetailModal({
 
   function commit(patch: Partial<BoardTask>) {
     if (!(patch.title ?? title).trim()) return;
-    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, comments, checklist, waitingOn, instructions, boardId, offeredTo, isPrivate, ...patch });
+    onUpdate({ ...task, title, description, status, priority, assignee, dueDate, ...(task.dueTime !== undefined || dueTime ? { dueTime } : {}), ...(task.attachments !== undefined || attachments.length ? { attachments } : {}), comments, checklist, waitingOn, instructions, boardId, offeredTo, isPrivate, ...patch });
   }
 
   return (
@@ -611,20 +615,48 @@ export default function TaskDetailModal({
                 <>
                   <CalendarDays size={13} strokeWidth={1.75} />
                   {dueDate ?? "Due date"}
+                  {dueDate && dueTime ? ` · ${timeLabel(dueTime)}` : ""}
                 </>
               }
             >
-              <div className="p-2">
+              <div className="p-2 flex flex-col gap-2 min-w-[220px]">
                 <input
                   type="date"
                   value={dueDate ?? ""}
                   onChange={(e) => {
                     const v = e.target.value || null;
                     setDueDate(v);
-                    commit({ dueDate: v });
+                    commit({ dueDate: v, ...(v ? {} : { dueTime: null }) });
                   }}
                   className="w-full bg-card-alt rounded-lg px-3 py-2 text-[13.5px] outline-none"
                 />
+                {/* An optional time it's due on that day. */}
+                <label className="flex items-center gap-2 text-[12.5px] text-muted">
+                  Time
+                  <input
+                    type="time"
+                    value={dueTime ?? ""}
+                    disabled={!dueDate}
+                    onChange={(e) => {
+                      const v = e.target.value || null;
+                      setDueTime(v);
+                      commit({ dueTime: v });
+                    }}
+                    className="flex-1 bg-card-alt rounded-lg px-3 py-2 text-[13.5px] text-ink outline-none disabled:opacity-50"
+                  />
+                  {dueTime && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDueTime(null);
+                        commit({ dueTime: null });
+                      }}
+                      className="underline underline-offset-2"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </label>
               </div>
             </GenericDropdown>
           </div>
@@ -675,11 +707,17 @@ export default function TaskDetailModal({
                 </div>
               )
             )}
-            {tab !== "Comments" && (
-              <div className="text-[14px] text-muted text-center py-6">
-                Nothing here yet.
-              </div>
+            {tab === "Attachments" && (
+              <TaskAttachments
+                matterId={task.matterId ?? null}
+                value={attachments}
+                onChange={(next) => {
+                  setAttachments(next);
+                  commit({ attachments: next });
+                }}
+              />
             )}
+            {tab === "Contacts" && <div className="text-[14px] text-muted text-center py-6">Nothing here yet.</div>}
           </div>
         </div>
 

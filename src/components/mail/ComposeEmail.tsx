@@ -19,6 +19,7 @@ const MAX_LINK_BODY = 5000;
 export default function ComposeEmail({
   title = "New email",
   initialTo = "",
+  initialCc = "",
   initialSubject = "",
   initialBody = "",
   matterNumber,
@@ -34,6 +35,7 @@ export default function ComposeEmail({
 }: {
   title?: string;
   initialTo?: string;
+  initialCc?: string; // e.g. Reply all: everyone else who was on the email
   initialSubject?: string;
   initialBody?: string;
   matterNumber?: string | null; // added to the subject, so replies are filed to the matter
@@ -48,7 +50,7 @@ export default function ComposeEmail({
   onSent?: () => void;
 }) {
   const [to, setTo] = useState(initialTo);
-  const [cc, setCc] = useState("");
+  const [cc, setCc] = useState(initialCc);
   const [bcc, setBcc] = useState("");
   // People to pick from: on this matter, and the firm's staff.
   const [people, setPeople] = useState<{ matter: Recipient[]; staff: Recipient[] } | null>(null);
