@@ -215,15 +215,15 @@ export default function MattersPage() {
       </div>
       {mattersLoaded && matters.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap -mt-3 mb-6">
-        <div className="relative flex-1 min-w-[260px] max-w-[520px] bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
+        <div className="relative w-[320px] max-w-full flex-shrink-0 bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
-            placeholder="Search matters: number, client, title, other side…"
+            placeholder="Search matters: number, client, title…"
             aria-label="Search matters"
-            className="w-full bg-white border border-[#E9E7E4] rounded-full pl-10 pr-24 py-2 text-[14px] outline-none focus:border-[#D1CDC6] "
+            className={`w-full bg-white border border-[#E9E7E4] rounded-full pl-10 ${query ? "pr-24" : "pr-4"} py-1.5 text-[13.5px] outline-none focus:border-[#D1CDC6] placeholder:text-muted`}
           />
           {query && (
             <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[12.5px] text-muted">

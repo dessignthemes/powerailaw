@@ -628,9 +628,9 @@ function TxnTable(p: { txns: Txn[]; clientName: (id: string | null) => string; m
   return (
     <div>
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <div className="relative flex-1 min-w-[240px] max-w-[380px]">
-          <Search size={15} strokeWidth={1.75} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search vendor, client, category, amount" className="w-full border border-line bg-white rounded-full pl-10 pr-4 py-2 text-[13.5px] outline-none focus:border-ink" />
+        <div className="relative w-[320px] max-w-full flex-shrink-0 bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
+          <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search vendor, client, category, amount" className="w-full border border-[#E9E7E4] bg-white rounded-full pl-10 pr-4 py-1.5 text-[13.5px] outline-none focus:border-[#D1CDC6] placeholder:text-muted" />
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {[["all", "All"], ["income", "Income"], ["expense", "Expenses"], ["no_receipt", "Missing receipt"], ["trust", "Trust"], ["excluded", "Excluded"]].map(([k, l]) => (

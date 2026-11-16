@@ -287,7 +287,7 @@ export default function RecordsPage() {
             Contacts <span className="text-muted font-normal text-[18px]">/ {loaded ? counts.all : "–"}</span>
           </h1>
           {/* Search right next to the title, so it's easy to find. */}
-          <div className="relative w-full sm:w-[380px] bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
+          <div className="relative w-[320px] max-w-full flex-shrink-0 bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
             <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
             <input
               value={query}
@@ -296,9 +296,9 @@ export default function RecordsPage() {
                 setLimit(PAGE);
               }}
               onKeyDown={(e) => e.key === "Escape" && setQuery("")}
-              placeholder="Search contacts: name, email, phone, company…"
+              placeholder="Search contacts: name, email, phone…"
               aria-label="Find a contact"
-              className="w-full border border-[#E9E7E4] bg-white rounded-full pl-10 pr-9 py-2 text-[14px] outline-none focus:border-[#D1CDC6] placeholder:text-muted "
+              className="w-full border border-[#E9E7E4] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#D1CDC6] placeholder:text-muted "
             />
             {query && (
               <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-ink">

@@ -419,7 +419,7 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
       ) : null}
 
       <div className="flex items-center gap-3 mb-5 flex-wrap">
-        <div className="relative flex-1 min-w-[240px] max-w-[420px] bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
+        <div className="relative w-[320px] max-w-full flex-shrink-0 bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
           <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={query}

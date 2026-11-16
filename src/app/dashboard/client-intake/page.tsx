@@ -102,9 +102,9 @@ function ClientIntake() {
           {error && <div className="my-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13.5px] text-red-700">{error}</div>}
 
           <div className="flex items-center gap-3 mt-6 mb-5 flex-wrap">
-            <div className="relative flex-1 min-w-[240px] max-w-[420px]">
-              <Search size={15} strokeWidth={1.75} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, email or phone" aria-label="Search clients" className="w-full border border-line bg-white rounded-full pl-10 pr-9 py-2.5 text-[13.5px] outline-none focus:border-ink placeholder:text-muted" />
+            <div className="relative w-[320px] max-w-full flex-shrink-0 bg-[#F3F2F0] border border-[#E8E6E2] rounded-full p-1 ">
+              <Search size={15} strokeWidth={1.75} className="absolute left-[18px] top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, email or phone" aria-label="Search clients" className="w-full border border-[#E9E7E4] bg-white rounded-full pl-10 pr-9 py-1.5 text-[13.5px] outline-none focus:border-[#D1CDC6] placeholder:text-muted" />
               {q && <button onClick={() => setQ("")} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"><X size={14} /></button>}
             </div>
             <div className="flex gap-1.5">
