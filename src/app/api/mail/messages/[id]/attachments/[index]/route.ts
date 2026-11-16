@@ -34,7 +34,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const att = provider === "google" ? await getGmailAttachment(token, messageId, i) : await getOutlookAttachment(token, messageId, i);
     const mime = mimeFor(att.name, att.mimeType);
     const inline = INLINE.test(mime) && url.searchParams.get("download") !== "1";
-    const safeName = att.name.replace(/["\\\r\n]/g, "_").slice(0, 200) || "attachment";
+    // The plain filename must be plain ASCII (a curly ’ in "Elisa’s" broke downloads);
+    // the full name goes in filename* for browsers that read it.
+    const safeName = att.name.replace(/[^\x20-\x7E]/g, "_").replace(/["\\]/g, "_").slice(0, 200) || "attachment";
     return new NextResponse(Buffer.from(att.bytes), {
       headers: {
         "Content-Type": inline ? mime : "application/octet-stream",

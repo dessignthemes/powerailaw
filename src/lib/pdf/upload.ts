@@ -149,6 +149,17 @@ async function loadFonts() {
 
 // Draws a Word (.docx) version as PDF pages in the browser, only to look at it.
 // Nothing is saved and no new version is made.
+// A Word (.docx) file's bytes (e.g. an email attachment) drawn as PDF pages, only to look at.
+export async function wordBytesToPdf(bytes: Uint8Array, title: string): Promise<Uint8Array> {
+  const { docxToPdf } = await import("@/lib/pdf/docxToPdf");
+  const fonts = await loadFonts();
+  try {
+    return (await docxToPdf(bytes.slice().buffer, fonts, title)).pdf;
+  } catch {
+    throw new UploadError("This Word file couldn't be shown here. Use Download to open it in Word.");
+  }
+}
+
 export async function previewWordVersion(versionId: string, title: string): Promise<Uint8Array> {
   const { docxToPdf } = await import("@/lib/pdf/docxToPdf");
   const [bytes, fonts] = await Promise.all([fetchVersionBytes(versionId), loadFonts()]);

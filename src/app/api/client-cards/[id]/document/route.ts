@@ -33,7 +33,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return new Response(bytes as BodyInit, {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        // Plain ASCII in filename (names like "Stroiński" would break the header); the real name in filename*.
+        "Content-Disposition": `attachment; filename="${filename.replace(/[^\x20-\x7E]/g, "_").replace(/["\\]/g, "_")}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
         "Cache-Control": "private, no-store",
       },
     });

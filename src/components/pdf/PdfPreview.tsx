@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { X, Loader2, PenLine, Download, ZoomIn, ZoomOut, FileOutput } from "lucide-react";
 import PdfPages from "@/components/esign/PdfPages";
-import { fetchVersionBytes, previewWordVersion, versionDownloadUrl } from "@/lib/pdf/upload";
+import { fetchVersionBytes, previewWordVersion, versionDownloadUrl, wordBytesToPdf } from "@/lib/pdf/upload";
 
 // Read-only view of a PDF: every page, zoom, and quick links to edit or download.
 export default function PdfPreview({
@@ -19,7 +19,7 @@ export default function PdfPreview({
   documentId?: string;
   versionId?: string;
   // A PDF that isn't in Documents yet (e.g. an email attachment): where to read it and download it.
-  source?: { url: string; downloadUrl: string };
+  source?: { url: string; downloadUrl: string; word?: boolean }; // word: a .docx, drawn as pages
   title: string;
   subtitle?: string;
   // A Word file: shown as pages without converting or saving anything.
@@ -40,7 +40,8 @@ export default function PdfPreview({
             const d = await r.json().catch(() => ({}));
             throw new Error(d?.error ?? "");
           }
-          return new Uint8Array(await r.arrayBuffer());
+          const b = new Uint8Array(await r.arrayBuffer());
+          return source.word ? wordBytesToPdf(b, title) : b;
         })
       : word
         ? previewWordVersion(versionId ?? "", title)
@@ -96,7 +97,7 @@ export default function PdfPreview({
               {title}
             </div>
             {subtitle && <div className="text-[12.5px] text-muted truncate">{subtitle}</div>}
-            {word && <div className="text-[12px] text-muted truncate">Word preview. Spacing may differ slightly from Word. Nothing is converted or saved.</div>}
+            {(word || source?.word) && <div className="text-[12px] text-muted truncate">Word preview. Spacing may differ slightly from Word. Nothing is converted or saved.</div>}
           </div>
           <div className="flex items-center gap-1 bg-chip rounded-full p-0.5">
             <button onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} aria-label="Zoom out" className="w-8 h-8 rounded-full hover:bg-white flex items-center justify-center">

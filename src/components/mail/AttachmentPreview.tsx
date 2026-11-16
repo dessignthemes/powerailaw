@@ -8,9 +8,10 @@ import PdfPreview from "@/components/pdf/PdfPreview";
 type Att = { name: string; size: number; mimeType: string };
 
 // What the browser can show inside LawPower: PDFs, pictures and plain text.
-export function previewKind(a: Att): "pdf" | "image" | "text" | null {
+export function previewKind(a: Att): "pdf" | "word" | "image" | "text" | null {
   const ext = a.name.toLowerCase().split(".").pop() ?? "";
   if (ext === "pdf" || /pdf/i.test(a.mimeType)) return "pdf";
+  if (ext === "docx") return "word"; // drawn as pages in the browser (old .doc files can't be)
   if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext)) return "image";
   if (ext === "txt") return "text";
   return null;
@@ -40,7 +41,7 @@ export default function AttachmentPreview({
   // message instead of an error page inside the preview.
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const loading = !!kind && kind !== "pdf" && !blobUrl && !error;
+  const loading = !!kind && kind !== "pdf" && kind !== "word" && !blobUrl && !error;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -49,7 +50,7 @@ export default function AttachmentPreview({
   }, [onClose]);
 
   useEffect(() => {
-    if (!kind || kind === "pdf") return;
+    if (!kind || kind === "pdf" || kind === "word") return;
     let live = true;
     let made: string | null = null;
     fetch(src)
@@ -72,10 +73,10 @@ export default function AttachmentPreview({
   }, [src, kind]);
 
   // PDFs open in LawPower's own PDF viewer (the same as in Documents), which works in every browser.
-  if (kind === "pdf")
+  if (kind === "pdf" || kind === "word")
     return (
       <PdfPreview
-        source={{ url: src, downloadUrl: attachmentUrl(provider, messageId, index, true) }}
+        source={{ url: src, downloadUrl: attachmentUrl(provider, messageId, index, true), word: kind === "word" }}
         title={attachment.name}
         subtitle="Email attachment"
         onClose={onClose}
