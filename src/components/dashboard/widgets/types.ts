@@ -15,7 +15,10 @@ export const GRID_GAP = 20;
 export const MIN_COL = 230; // narrower than this and the grid drops a column
 export const MAX_COLS = 5;
 
-export type LayoutItem = { id: string; size: WidgetSize };
+// w / h: a size set by dragging the widget's corner, in half-columns / half-rows
+// (so a widget can be a quarter of a Small one). Without them, the size's span.
+export type LayoutItem = { id: string; size: WidgetSize; w?: number; h?: number };
+export const MAX_SPAN = 12;
 
 export type DashEvent = { id: string; provider: "google" | "microsoft"; title: string; start: string; end: string; allDay: boolean; location: string | null; link: string | null };
 export type RangeKey = "today" | "week" | "month";

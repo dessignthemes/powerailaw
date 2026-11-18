@@ -2,13 +2,33 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Minus, X, Search, Plus, Check, LayoutGrid } from "lucide-react";
+import { Minus, X, Search, Plus, Check, LayoutGrid, MoveDiagonal2 } from "lucide-react";
 import { WIDGETS, WIDGET, WidgetSizeContext } from "./library";
-import { SIZE_SPAN, GRID_GAP, MIN_COL, MAX_COLS, SIZE_LABEL, type DashData, type LayoutItem, type WidgetDef, type WidgetSize } from "./types";
+import { SIZE_SPAN, GRID_GAP, MIN_COL, MAX_COLS, MAX_SPAN, SIZE_LABEL, type DashData, type LayoutItem, type WidgetDef, type WidgetSize } from "./types";
 
 // The Dashboard's widgets. Normal view: just the widgets. Edit view
-// (Customize): drag to move, pick a size under each one, − to remove,
-// Add widget for the library.
+// (Customize): drag to move, pick a size under each one or drag the corner
+// to any size, − to remove, Add widget for the library.
+
+// The grid is laid out in half-columns and half-rows, so a widget dragged to
+// size can be as small as a quarter of a Small one. [half-columns, half-rows]:
+function spanOf(it: LayoutItem, size: WidgetSize): [number, number] {
+  if (it.w && it.h) return [it.w, it.h];
+  return [SIZE_SPAN[size][0] * 2, SIZE_SPAN[size][1] * 2];
+}
+// The size a widget's content is drawn at for a size dragged by hand (the
+// nearest one it supports, so it lays itself out sensibly).
+const AREA: Record<WidgetSize, number> = { s: 1, m: 2, l: 4, w: 4, xl: 8 };
+function contentSize(def: WidgetDef, it: LayoutItem): WidgetSize {
+  const preset = def.sizes.includes(it.size) ? it.size : def.size;
+  if (!it.w || !it.h) return preset;
+  const c = it.w / 2;
+  const r = it.h / 2;
+  const want: WidgetSize = c <= 1.5 && r <= 1.5 ? "s" : r <= 1.5 ? (c >= 3.5 ? "w" : "m") : c >= 3.5 ? "xl" : "l";
+  if (def.sizes.includes(want)) return want;
+  const fits = def.sizes.filter((x) => AREA[x] <= AREA[want]).sort((a, b) => AREA[b] - AREA[a]);
+  return fits[0] ?? def.sizes[0];
+}
 
 // The little size icons (like the Frix picker): dot, bar, square, wide, big.
 function SizeIcon({ size, on }: { size: WidgetSize; on: boolean }) {
@@ -229,15 +249,61 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per drag
   }, [drag?.id]);
 
+  // ── Resizing (Edit view): drag the corner; it snaps to half-columns / half-rows.
+  const [resize, setResize] = useState<{ id: string; w: number; h: number } | null>(null);
+  const resizeRef = useRef<{ id: string; w: number; h: number } | null>(null);
+  function startResize(e: React.PointerEvent, id: string) {
+    if (!editing || e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const el = els.current.get(id);
+    const gridEl = gridRef.current;
+    if (!el || !gridEl) return;
+    const r = el.getBoundingClientRect();
+    const fcols = grid.cols * 2;
+    const cellW = (gridEl.clientWidth - GRID_GAP * (fcols - 1)) / fcols;
+    const cellH = Math.max(40, (grid.size - GRID_GAP) / 2);
+    // Never smaller than about 150 px either way (narrow screens: two half-cells).
+    const least = (cell: number) => Math.max(1, Math.ceil((150 + GRID_GAP) / (cell + GRID_GAP)));
+    const snap = (len: number, cell: number, max: number) => Math.max(least(cell), Math.min(max, Math.round((len + GRID_GAP) / (cell + GRID_GAP))));
+    const move = (ev: PointerEvent) => {
+      const next = { id, w: snap(ev.clientX - r.left, cellW, fcols), h: snap(ev.clientY - r.top, cellH, MAX_SPAN) };
+      const cur = resizeRef.current;
+      if (cur && cur.w === next.w && cur.h === next.h) return;
+      resizeRef.current = next;
+      setResize(next);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      document.body.classList.remove("lp-dragging");
+      const fin = resizeRef.current;
+      resizeRef.current = null;
+      setResize(null);
+      if (fin) onChange(saved.map((x) => (x.id === id ? { ...x, w: Math.min(fin.w, MAX_SPAN), h: fin.h } : x)));
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    document.body.classList.add("lp-dragging");
+  }
+
   const dragDef = drag ? WIDGET(drag.id) : null;
   const dragItem = drag ? items.find((x) => x.id === drag.id) : null;
 
   return (
     <>
-      <div ref={gridRef} className="grid" style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`, gridAutoRows: `${grid.size}px`, gap: GRID_GAP }}>
+      <div
+        ref={gridRef}
+        className="grid"
+        style={{ gridTemplateColumns: `repeat(${grid.cols * 2}, minmax(0, 1fr))`, gridAutoRows: `${Math.max(40, (grid.size - GRID_GAP) / 2)}px`, gap: GRID_GAP, gridAutoFlow: "row dense" }}
+      >
         {items.map((it) => {
           const def = WIDGET(it.id)!;
-          const size = def.sizes.includes(it.size) ? it.size : def.size;
+          const live = resize?.id === it.id ? { ...it, w: resize.w, h: resize.h } : it;
+          const size = contentSize(def, live);
+          const [spanW, spanH] = spanOf(live, def.sizes.includes(it.size) ? it.size : def.size);
           const isDragged = drag?.id === it.id;
           return (
             <div
@@ -246,7 +312,7 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
                 if (el) els.current.set(it.id, el);
                 else els.current.delete(it.id);
               }}
-              style={{ gridColumn: `span ${Math.min(SIZE_SPAN[size][0], grid.cols)}`, gridRow: `span ${SIZE_SPAN[size][1]}`, touchAction: editing ? "none" : undefined }}
+              style={{ gridColumn: `span ${Math.min(spanW, grid.cols * 2)}`, gridRow: `span ${spanH}`, touchAction: editing ? "none" : undefined }}
               className={`relative min-w-0 ${editing ? (drag ? "cursor-grabbing" : "cursor-grab") : ""}`}
               onPointerDown={(e) => startDrag(e, it.id)}
             >
@@ -268,9 +334,25 @@ export default function WidgetBoard({ layout, onChange, editing, d }: { layout: 
                   >
                     <Minus size={14} strokeWidth={2.5} />
                   </button>
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
-                    <SizePicker dark sizes={def.sizes} value={size} onPick={(s) => onChange(saved.map((x) => (x.id === it.id ? { ...x, size: s } : x)))} />
+                  <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 z-10 ${spanW < 2 || spanH < 2 ? "hidden" : ""}`}>
+                    <SizePicker
+                      dark
+                      sizes={def.sizes}
+                      value={it.w && it.h ? ("" as WidgetSize) : size}
+                      onPick={(s) => onChange(saved.map((x) => (x.id === it.id ? { id: x.id, size: s } : x)))}
+                    />
                   </div>
+                  {/* Drag the corner to any size. */}
+                  <button
+                    type="button"
+                    aria-label={`Resize ${def.name}`}
+                    title="Drag to make it bigger or smaller"
+                    onPointerDown={(e) => startResize(e, it.id)}
+                    className="absolute -bottom-2 -right-2 z-10 w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center cursor-nwse-resize hover:scale-105 transition-transform"
+                  >
+                    <MoveDiagonal2 size={13} strokeWidth={2.5} />
+                  </button>
+
                 </>
               )}
             </div>

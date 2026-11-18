@@ -4,12 +4,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-// The person's Dashboard layout: [{ id, size }] in order. null = the default layout.
+// The person's Dashboard layout: [{ id, size, w?, h? }] in order. null = the default layout.
 const clean = (v: unknown) =>
   Array.isArray(v)
     ? v
         .slice(0, 60)
-        .map((x) => ({ id: String((x as { id?: unknown }).id ?? "").slice(0, 40), size: String((x as { size?: unknown }).size ?? "").slice(0, 4) }))
+        .map((x) => {
+          const o = x as { id?: unknown; size?: unknown; w?: unknown; h?: unknown };
+          // A size dragged by hand: half-columns / half-rows (1–12).
+          const span = (v: unknown) => (typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 12 ? v : undefined);
+          const w = span(o.w);
+          const h = span(o.h);
+          return { id: String(o.id ?? "").slice(0, 40), size: String(o.size ?? "").slice(0, 4), ...(w && h ? { w, h } : {}) };
+        })
         .filter((x) => /^[a-zA-Z][a-zA-Z0-9_]*$/.test(x.id) && /^(s|m|l|w|xl)$/.test(x.size))
     : null;
 
