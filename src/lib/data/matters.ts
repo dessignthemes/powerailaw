@@ -78,15 +78,22 @@ export async function listMatters(): Promise<Matter[]> {
   const supabase = createAdminClient();
   const orgId = await getCurrentOrgId();
 
-  const { data, error } = await supabase
-    .from("matters")
-    .select("*")
-    .eq("org_id", orgId)
-    .order("created_at", { ascending: true });
-
-  if (error) throw error;
+  // Page by page (Supabase returns at most 1000 rows at a time).
+  const rows: MatterRow[] = [];
+  for (let from = 0; from < 100_000; from += 1000) {
+    const { data, error } = await supabase
+      .from("matters")
+      .select("*")
+      .eq("org_id", orgId)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + 999);
+    if (error) throw error;
+    rows.push(...((data ?? []) as MatterRow[]));
+    if ((data ?? []).length < 1000) break;
+  }
   const emails = await teamEmails(orgId);
-  return (data as MatterRow[]).map((r) => toMatter(r, emails));
+  return rows.map((r) => toMatter(r, emails));
 }
 
 // The abbreviation sent from the browser (null = none). The number itself is

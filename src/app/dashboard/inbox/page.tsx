@@ -142,7 +142,7 @@ function FileToMatter({
   current: { id: string; number: string | null; title: string } | null;
   onChange: (m: { id: string; number: string | null; title: string } | null) => void;
 }) {
-  const { matters } = useWorkspaceData();
+  const { matters, refreshMatters } = useWorkspaceData();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -198,7 +198,10 @@ function FileToMatter({
         </span>
       ) : (
         <button
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => {
+            if (!open) refreshMatters(); // include matters made since the page opened
+            setOpen((o) => !o);
+          }}
           className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-chip border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors"
         >
           <Briefcase size={12} /> File to matter

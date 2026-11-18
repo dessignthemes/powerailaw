@@ -1,5 +1,7 @@
 "use client";
 
+import { useWorkspaceData } from "@/context/WorkspaceDataContext";
+
 import { useEffect, useState } from "react";
 import { X, Loader2, Paperclip, CheckCircle2 } from "lucide-react";
 import type { Matter } from "@/components/NewMatterModal";
@@ -43,6 +45,12 @@ export default function SaveAttachmentsModal({
   const [done, setDone] = useState<string | null>(null);
   const rename = mode === "rename";
   const matter = matters.find((m) => m.id === matterId) ?? null;
+
+  // A matter made a moment ago (e.g. in another tab) shows up too.
+  const { refreshMatters } = useWorkspaceData();
+  useEffect(() => {
+    refreshMatters();
+  }, [refreshMatters]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose();

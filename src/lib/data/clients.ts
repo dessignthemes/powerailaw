@@ -34,14 +34,22 @@ export async function listClients(): Promise<Client[]> {
   const supabase = createAdminClient();
   const orgId = await getCurrentOrgId();
 
-  const { data, error } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("org_id", orgId)
-    .order("created_at", { ascending: true });
-
-  if (error) throw error;
-  return (data as ClientRow[]).map(toClient);
+  // Supabase returns at most 1000 rows at a time: read page by page (firms have
+  // thousands of clients, e.g. after the Cards import).
+  const rows: ClientRow[] = [];
+  for (let from = 0; from < 100_000; from += 1000) {
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .eq("org_id", orgId)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + 999);
+    if (error) throw error;
+    rows.push(...((data ?? []) as ClientRow[]));
+    if ((data ?? []).length < 1000) break;
+  }
+  return rows.map(toClient);
 }
 
 export async function createClientRow(client: Client): Promise<Client> {

@@ -32,6 +32,7 @@ type WorkspaceDataContextValue = {
   updateTask: (task: BoardTask) => void;
   deleteTasks: (ids: string[]) => void;
   refreshAll: () => void;
+  refreshMatters: () => void; // matters only (e.g. one just made in another tab)
 
   // People in this workspace (for assignees) and the signed-in user.
   teamMembers: { id: string; email: string; fullName?: string | null; role: string }[];
@@ -81,6 +82,9 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
 
   // Re-fetch shared data (e.g. after the AI Agent creates a client or task).
   const mattersRef = useRef<Matter[]>([]);
+  const refreshMatters = useCallback(() => {
+    fetch("/api/matters").then((r) => r.json()).then((d) => d.matters && setMatters(d.matters)).catch(() => {});
+  }, []);
   const refreshAll = useCallback(() => {
     fetch("/api/clients").then((r) => r.json()).then((d) => d.clients && setClients(d.clients)).catch(() => {});
     fetch("/api/matters").then((r) => r.json()).then((d) => d.matters && setMatters(d.matters)).catch(() => {});
@@ -459,6 +463,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
         clients,
         clientsLoaded,
         addClient,
+        refreshMatters,
         updateClient,
         deleteClients,
         bulkSetClientStatus,

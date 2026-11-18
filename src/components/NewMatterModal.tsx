@@ -235,6 +235,56 @@ export default function NewMatterModal({
   const allClients = [...clients, ...extraClients.filter((x) => !clients.some((c) => c.id === x.id))];
   const selectedClient = allClients.find((c) => c.id === clientId) ?? null;
 
+  // People and companies in Contacts (e.g. from the Cards import) who don't have
+  // a client card yet: found while typing, and given a client card when picked.
+  const { refreshAll } = useWorkspaceData();
+  const [contactHits, setContactHits] = useState<{ id: string; kind: string; name: string; email: string | null; phone: string | null; category: string }[]>([]);
+  const [makingClient, setMakingClient] = useState<string | null>(null);
+  const contactTerm = clientOpen ? clientQ.trim() : "";
+  useEffect(() => {
+    if (contactTerm.length < 2) return;
+    let live = true;
+    const t = setTimeout(() => {
+      fetch(`/api/contacts/search?${new URLSearchParams({ q: contactTerm })}`)
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((d) => live && setContactHits(d.results ?? []))
+        .catch(() => undefined);
+    }, 250);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [contactTerm]);
+  async function pickContact(c: { id: string; kind: string; name: string; email: string | null; phone: string | null }) {
+    setMakingClient(c.id);
+    try {
+      const card: Client = {
+        id: crypto.randomUUID(),
+        name: c.name,
+        description: "Made from the contact card when a matter was opened.",
+        status: "Active",
+        type: c.kind === "person" ? "Individual" : "Legal entity",
+        email: c.email,
+        phone: c.phone,
+        address: null,
+        matterCount: 0,
+        updatedAt: new Date().toISOString(),
+      };
+      const res = await fetch("/api/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(card) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.client) throw new Error();
+      setExtraClients((list) => [...list, d.client as Client]);
+      setClientId((d.client as Client).id);
+      setClientOpen(false);
+      setClientQ("");
+      refreshAll();
+    } catch {
+      alert("The client card couldn't be made from this contact. Please try again, or use Add new client.");
+    } finally {
+      setMakingClient(null);
+    }
+  }
+
   const addNewClientBtn = (
     <button
       type="button"
@@ -499,8 +549,37 @@ export default function NewMatterModal({
                   {(() => {
                     const q = clientQ.trim().toLowerCase();
                     const list = allClients.filter((c) => !q || c.name.toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q)).sort((a, b) => sortName(a.name).localeCompare(sortName(b.name)));
-                    if (!list.length) return <div className="px-3 py-2.5 text-[13.5px] text-muted">No clients match “{clientQ.trim()}”.</div>;
-                    return list.map((c) => (
+                    // Contacts with the same name as a client card aren't offered again.
+                    const key = (n: string) => n.toLowerCase().replace(/\b(mr|mrs|ms|miss|dr)\.?\s+/g, "").replace(/[^a-z0-9ąćęłńóśźż ]+/g, " ").replace(/\s+/g, " ").trim();
+                    const cardNames = new Set(allClients.map((c) => key(c.name)));
+                    const fromContacts = q.length >= 2 ? contactHits.filter((h) => !cardNames.has(key(h.name)) && h.name.toLowerCase().includes(q.split(/\s+/)[0])) : [];
+                    const contactRows = fromContacts.length ? (
+                      <>
+                        <div className="px-3 pt-2 pb-1 text-[11px] font-mono uppercase tracking-[0.1em] text-muted">In Contacts (no client card yet)</div>
+                        {fromContacts.map((h) => (
+                          <button
+                            key={`ct-${h.id}`}
+                            onClick={() => void pickContact(h)}
+                            disabled={!!makingClient}
+                            title={`Make ${h.name} a client and pick them`}
+                            className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium hover:bg-chip transition-colors text-left disabled:opacity-60"
+                          >
+                            <span className="flex items-center gap-2 min-w-0">
+                              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0" style={{ backgroundColor: getAvatarColor(h.name), color: "#fff" }}>
+                                {getInitials(h.name)}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block truncate whitespace-nowrap">{h.name}</span>
+                                {h.email && <span className="block truncate text-[11.5px] text-muted font-normal">{h.email}</span>}
+                              </span>
+                            </span>
+                            <span className="text-[11.5px] text-muted flex-shrink-0">{makingClient === h.id ? "Adding…" : h.category === "client" ? "Client" : "Contact"}</span>
+                          </button>
+                        ))}
+                      </>
+                    ) : null;
+                    if (!list.length && !contactRows) return <div className="px-3 py-2.5 text-[13.5px] text-muted">No clients match “{clientQ.trim()}”.</div>;
+                    return <>{list.map((c) => (
                       <button
                         key={c.id}
                         onClick={() => {
@@ -522,7 +601,7 @@ export default function NewMatterModal({
                         </span>
                         {c.id === clientId && <Check size={14} strokeWidth={2} className="flex-shrink-0" />}
                       </button>
-                    ));
+                    ))}{contactRows}</>;
                   })()}
                 </div>
               </div>
