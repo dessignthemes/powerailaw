@@ -116,6 +116,28 @@ function Flow({ task, boardName, onChange }: { task: BoardTask; boardName: strin
     });
   }
 
+  // N/A: the step doesn't apply to this matter (cash deal, no survey ordered…):
+  // not counted, no due date. Click again to include it.
+  function toggleNa(sectionId: string, itemId: string) {
+    save({
+      ...c,
+      sections: c.sections.map((s) =>
+        s.id !== sectionId
+          ? s
+          : {
+              ...s,
+              items: s.items.map((i) => {
+                if (i.id !== itemId) return i;
+                if (!i.na) return { ...i, na: true, done: false, doneAt: null };
+                const { na: _drop, ...rest } = i;
+                void _drop;
+                return rest;
+              }),
+            }
+      ),
+    });
+  }
+
   return (
     <div className={frameOuter}>
       <div className="flex items-center gap-3 flex-wrap px-3 pt-2.5 pb-2.5">
@@ -163,7 +185,9 @@ function Flow({ task, boardName, onChange }: { task: BoardTask; boardName: strin
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-[14px] font-semibold">{s.title}</span>
                   {current && <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-[#1b191a] text-white">Now</span>}
-                  <span className="text-[12px] text-muted">{stageDone ? "Done" : `${s.items.length - open} of ${s.items.filter((i) => !i.na).length}`}</span>
+                  <span className="text-[12px] text-muted">
+                    {s.items.every((i) => i.na) ? "N/A" : stageDone ? "Done" : `${s.items.filter((i) => i.done && !i.na).length} of ${s.items.filter((i) => !i.na).length}`}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   {s.items.map((i) => {
@@ -172,26 +196,26 @@ function Flow({ task, boardName, onChange }: { task: BoardTask; boardName: strin
                     return (
                       <div
                         key={i.id}
-                        className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 ${isNext ? "bg-[#F3F2F0]" : "hover:bg-[#FAFAF9]"} ${i.na ? "opacity-50" : ""}`}
+                        className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 ${isNext ? "bg-[#F3F2F0]" : "hover:bg-[#FAFAF9]"}`}
                       >
                         <button
                           onClick={() => toggle(s.id, i.id)}
                           disabled={i.na}
                           aria-label={i.done ? `Mark “${i.text}” not done` : `Mark “${i.text}” done`}
-                          className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center flex-shrink-0 transition-colors ${
+                          className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center flex-shrink-0 transition-colors ${i.na ? "opacity-50 " : ""}${
                             i.done ? "bg-[#2F9E5A] border-[#2F9E5A] text-white" : "border-[#C9C6BF] hover:border-[#2F9E5A]"
                           }`}
                         >
                           {i.done ? <Check size={11} strokeWidth={3} /> : i.na ? <CircleDashed size={11} /> : null}
                         </button>
-                        <span className={`flex-1 min-w-0 truncate text-[13.5px] ${i.done ? "text-muted line-through" : ""}`}>{i.text}</span>
+                        <span className={`flex-1 min-w-0 truncate text-[13.5px] ${i.done || i.na ? "text-muted line-through" : ""}`}>{i.text}</span>
                         <span
                           className={`text-[12px] flex-shrink-0 ${
                             i.na ? "text-muted" : d.state === "overdue" ? "text-[#B42318] font-medium" : d.state === "today" ? "text-[#8A4B14] font-medium" : "text-muted"
                           }`}
                         >
                           {i.na
-                            ? "N/A"
+                            ? ""
                             : i.done
                               ? i.doneAt
                                 ? `Done ${usShort(i.doneAt.slice(0, 10))}`
@@ -202,6 +226,18 @@ function Flow({ task, boardName, onChange }: { task: BoardTask; boardName: strin
                                   ? `${i.anchor.replace(/ date$/i, "")} not set`
                                   : ""}
                         </span>
+                        {!i.done && (
+                          <button
+                            onClick={() => toggleNa(s.id, i.id)}
+                            title={i.na ? "Not applicable to this matter. Click to include it again." : "Mark as not applicable to this matter (e.g. no mortgage on a cash deal, no survey ordered)"}
+                            aria-pressed={!!i.na}
+                            className={`text-[11px] font-semibold rounded-md px-1.5 py-0.5 flex-shrink-0 border transition-colors ${
+                              i.na ? "bg-[#E7E5E1] border-[#C4C0B8] text-ink" : "bg-white border-[#E6E4E0] text-[#A6A39E] hover:text-ink hover:border-[#C4C0B8]"
+                            }`}
+                          >
+                            N/A
+                          </button>
+                        )}
                       </div>
                     );
                   })}

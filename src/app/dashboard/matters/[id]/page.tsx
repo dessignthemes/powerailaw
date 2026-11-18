@@ -9,6 +9,7 @@ import { PRACTICE_AREAS_SORTED } from "@/lib/matters/practiceAreas";
 import MatterNumberEdit from "@/components/matters/MatterNumberEdit";
 import MatterContactsCard from "@/components/matters/MatterContactsCard";
 import ClickAway from "@/components/ClickAway";
+import MergeDuplicatesModal from "@/components/records/MergeDuplicatesModal";
 import PortalButton from "@/components/clientCard/PortalButton";
 import InvoicesPanel from "@/components/invoices/InvoicesPanel";
 import { money as invMoney } from "@/components/invoices/shared";
@@ -18,6 +19,7 @@ import { useParams, useRouter , useSearchParams } from "next/navigation";
 import {
   Pencil,
   MoreHorizontal,
+  Merge,
   Trash2,
   Check,
   User,
@@ -80,6 +82,7 @@ export default function MatterDetailPage() {
   const [activeTab, setActiveTab] = useState<TabKey>(() => (tabs.some((t) => t.key === wanted) ? (wanted as TabKey) : "overview"));
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
@@ -175,7 +178,16 @@ export default function MatterDetailPage() {
             {menuOpen && (
               <>
                 <ClickAway onClose={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl p-1.5 w-[170px]">
+                <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-line rounded-2xl p-1.5 w-[220px]">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setMergeOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium hover:bg-chip transition-colors"
+                  >
+                    <Merge size={14} strokeWidth={1.75} /> Merge with a duplicate
+                  </button>
                   <button
                     onClick={() => {
                       deleteMatters([matter.id]);
@@ -573,6 +585,21 @@ export default function MatterDetailPage() {
         </div>
       )}
 
+      {mergeOpen && (
+        <MergeDuplicatesModal
+          clients={clients}
+          matters={matters}
+          initial={{ kind: "matters", id: matter.id }}
+          onClose={() => setMergeOpen(false)}
+          onMerged={(_kind, keepId, dropIds) => {
+            refreshAll();
+            if (dropIds.includes(matter.id)) {
+              setMergeOpen(false);
+              router.push(`/dashboard/matters/${keepId}`);
+            }
+          }}
+        />
+      )}
       {editModalOpen && (
         <NewMatterModal
           matter={matter}

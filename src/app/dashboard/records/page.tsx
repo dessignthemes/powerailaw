@@ -4,7 +4,7 @@ import ClickAway from "@/components/ClickAway";
 import { menuPanel, frameOuter, frameInner, frameTitle, pageBtnB, pageBtnOpenB } from "@/lib/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download, Plus, ShieldCheck, Landmark, ScrollText, Filter, Check } from "lucide-react";
+import { Search, X, ChevronDown, ChevronRight, CircleUser, Briefcase, User, Building2, Bookmark, Download, Plus, ShieldCheck, Merge, Landmark, ScrollText, Filter, Check } from "lucide-react";
 import { GenericDropdown } from "@/components/NewTaskModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { getInitials, getAvatarColor, formatUpdatedAt } from "@/components/NewClientModal";
@@ -13,6 +13,7 @@ import ContactModal from "@/components/records/ContactModal";
 import ImportContactsModal, { type ImportSource } from "@/components/records/ImportContactsModal";
 import CardsImportModal from "@/components/records/CardsImportModal";
 import RunConflictModal from "@/components/conflicts/RunConflictModal";
+import MergeDuplicatesModal from "@/components/records/MergeDuplicatesModal";
 import type { Contact, ContactInput, ContactKind } from "@/lib/records/contactTypes";
 
 type Kind = "client" | "matter" | "person" | "company" | "trust" | "estate";
@@ -75,7 +76,7 @@ const blackBtn = "bg-btn text-ink px-4 py-2 rounded-full text-[13.5px] font-medi
 
 export default function RecordsPage() {
   const router = useRouter();
-  const { clients, clientsLoaded, matters, mattersLoaded, addMatter } = useWorkspaceData();
+  const { clients, clientsLoaded, matters, mattersLoaded, addMatter, refreshAll } = useWorkspaceData();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactsLoaded, setContactsLoaded] = useState(false);
@@ -88,6 +89,7 @@ export default function RecordsPage() {
   const [typeOpen, setTypeOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [conflictOpen, setConflictOpen] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
 
   const [adding, setAdding] = useState<Kind | null>(null);
   const [importing, setImporting] = useState<ImportSource | null>(null);
@@ -311,6 +313,9 @@ export default function RecordsPage() {
           {/* Conflict check for a prospect (the results are on the Conflict Checks page). */}
           <button onClick={() => setConflictOpen(true)} className={pageBtnB}>
             <ShieldCheck size={14} /> Run conflict check
+          </button>
+          <button onClick={() => setMergeOpen(true)} className={pageBtnB}>
+            <Merge size={14} /> Merge duplicates
           </button>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
@@ -565,6 +570,19 @@ export default function RecordsPage() {
           />
         ))}
       {cardsImport && <CardsImportModal onClose={() => setCardsImport(false)} onImported={() => setReloadKey((k) => k + 1)} />}
+      {mergeOpen && (
+        <MergeDuplicatesModal
+          clients={clients}
+          matters={matters}
+          contacts={contactsLoaded ? contacts : undefined}
+          onClose={() => setMergeOpen(false)}
+          onMerged={(kind, _keep, dropIds) => {
+            if (kind === "contacts") setContacts((list) => list.filter((c) => !dropIds.includes(c.id)));
+            setReloadKey((k) => k + 1);
+            refreshAll();
+          }}
+        />
+      )}
       {importing && <ImportContactsModal source={importing} onClose={() => setImporting(null)} onImported={() => setReloadKey((k) => k + 1)} />}
       {conflictOpen && (
         <RunConflictModal

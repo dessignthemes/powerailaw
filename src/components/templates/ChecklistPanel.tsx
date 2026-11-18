@@ -316,15 +316,18 @@ export default function ChecklistPanel({
                           → {MOVE_LABEL[i.moveTo]}
                         </span>
                       )}
-                      <button
-                        onClick={() => update(s.id, (items) => items.map((x) => (x.id === i.id ? (x.na ? { ...x, na: undefined } : { ...x, na: true }) : x)))}
-                        title={i.na ? "Not applicable to this deal: click to include it again" : "Mark as not applicable to this deal"}
-                        className={`text-[11px] font-medium rounded-md px-1.5 py-0.5 flex-shrink-0 transition-opacity ${
-                          i.na ? "bg-chip text-ink" : "opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted hover:bg-chip"
-                        }`}
-                      >
-                        N/A
-                      </button>
+                      {!i.done && (
+                        <button
+                          onClick={() => update(s.id, (items) => items.map((x) => (x.id === i.id ? (x.na ? { ...x, na: undefined } : { ...x, na: true, done: false, doneAt: null }) : x)))}
+                          title={i.na ? "Not applicable to this deal: click to include it again" : "Mark as not applicable to this deal (e.g. no mortgage on a cash deal, no survey ordered)"}
+                          aria-pressed={!!i.na}
+                          className={`text-[11px] font-semibold rounded-md px-1.5 py-0.5 flex-shrink-0 border transition-colors ${
+                            i.na ? "bg-[#E7E5E1] border-[#C4C0B8] text-ink" : "bg-white border-[#E6E4E0] text-[#A6A39E] hover:text-ink hover:border-[#C4C0B8]"
+                          }`}
+                        >
+                          N/A
+                        </button>
+                      )}
                       {(() => {
                         const ds = dueState(i, checklist.dates);
                         if (ds.state === "none" || ds.state === "done") return null;
