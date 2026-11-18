@@ -6,6 +6,8 @@ import { numberOf, type Matter } from "@/components/NewMatterModal";
 import type { Client } from "@/components/NewClientModal";
 import SecureMessages from "@/components/matters/SecureMessages";
 import ComposeEmail, { forwardBody, fwdSubject } from "@/components/mail/ComposeEmail";
+import { matterEmailSubject } from "@/lib/mail/matterSubject";
+import type { MatterDetails } from "@/lib/matters/details";
 
 type Msg = {
   id: string;
@@ -58,6 +60,18 @@ export default function MatterEmails({ matter, client }: { matter: Matter; clien
   const [conns, setConns] = useState<Conn[]>([]);
   const awaitingReturn = useRef(false);
   const base = `/api/matters/${matter.id}/messages`;
+  // The deal's parties and address, for a new email's subject ("Buyer from Seller: address - number").
+  const [subjectDetails, setSubjectDetails] = useState<MatterDetails | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/matters/${matter.id}/details`)
+      .then((r) => (r.ok ? r.json() : { details: null }))
+      .then((d) => live && setSubjectDetails((d.details ?? null) as MatterDetails | null))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [matter.id, compose]);
 
   const sync = useCallback(async () => {
     setSyncing(true);
@@ -203,7 +217,7 @@ export default function MatterEmails({ matter, client }: { matter: Matter; clien
           matterId={matter.id}
           title={forwarding ? "Forward email" : "New email"}
           initialTo={forwarding ? "" : client?.email ?? ""}
-          initialSubject={forwarding ? fwdSubject(forwarding.subject || "(no subject)") : matter.title}
+          initialSubject={forwarding ? fwdSubject(forwarding.subject || "(no subject)") : matterEmailSubject(matter, numberOf(matter), subjectDetails, client?.name ?? null)}
           initialBody={
             forwarding
               ? forwardBody({ from: forwarding.fromName, fromEmail: forwarding.fromEmail, to: forwarding.to, date: forwarding.sentAt, subject: forwarding.subject, text: forwarding.bodyText ?? forwarding.snippet })

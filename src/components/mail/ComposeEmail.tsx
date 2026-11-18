@@ -6,6 +6,8 @@ import { X, Send, Info, ExternalLink, Loader2, CheckCircle2 } from "lucide-react
 import { subjectWithTag, composeLinks } from "@/lib/mail/matterTag";
 import { signatureText } from "@/lib/mail/signatureHtml";
 import SignaturePreview from "@/components/mail/SignaturePreview";
+import { uploadAnyDocument, UploadError } from "@/lib/pdf/upload";
+import EmailAttachments, { ATTACH_LIMIT, type Attached } from "@/components/mail/EmailAttachments";
 
 type Provider = "google" | "microsoft";
 
@@ -107,6 +109,31 @@ export default function ComposeEmail({
       live = false;
     };
   }, []);
+  // Documents from the matter going with the email (attached, or a portal link when too big).
+  const [attached, setAttached] = useState<Attached[]>([]);
+  const [asLink, setAsLink] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState(0);
+  // Files dragged in or chosen from the computer: saved to the matter's Documents, then attached.
+  async function uploadFiles(files: File[]) {
+    if (!matterId || !files.length) return;
+    setUploading(true);
+    setUploadError(null);
+    try {
+      for (const f of files) {
+        const doc = (await uploadAnyDocument(matterId, f)) as { id: string; title: string; versions?: { sizeBytes?: number }[] };
+        const a: Attached = { id: doc.id, title: doc.title, size: doc.versions?.[0]?.sizeBytes ?? f.size };
+        setAttached((list) => (list.some((x) => x.id === a.id) ? list : [...list, a]));
+      }
+      setUploaded((n) => n + 1);
+    } catch (e) {
+      setUploadError(e instanceof UploadError ? e.message : "The file couldn't be added. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+  const portalLink = asLink || attached.reduce((n, a) => n + a.size, 0) > ATTACH_LIMIT;
   const canSendHere = !!senders?.length;
   const nativeForward = !!forwardMessage && from === forwardMessage.provider;
   const nativeReply = !!replyMessage && from === replyMessage.provider;
@@ -118,7 +145,7 @@ export default function ComposeEmail({
       const res = await fetch("/api/mail/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: from, to, cc, bcc, subject: finalSubject, body, signature: withSig && !!signature, forwardMessageId: nativeForward ? forwardMessage!.id : undefined, replyMessageId: nativeReply ? replyMessage!.id : undefined }),
+        body: JSON.stringify({ provider: from, to, cc, bcc, subject: finalSubject, body, signature: withSig && !!signature, ...(attached.length && matterId ? { matterId, documentIds: attached.map((a) => a.id), asPortalLink: portalLink } : {}), forwardMessageId: nativeForward ? forwardMessage!.id : undefined, replyMessageId: nativeReply ? replyMessage!.id : undefined }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? "The email couldn't be sent. Please try again.");
@@ -161,7 +188,18 @@ export default function ComposeEmail({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title} className="bg-cream rounded-3xl w-full max-w-[640px] max-h-[90vh] overflow-y-auto">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        onDragOver={(e) => matterId && e.preventDefault()}
+        onDrop={(e) => {
+          if (!matterId) return;
+          e.preventDefault();
+          if (e.dataTransfer.files.length) void uploadFiles(Array.from(e.dataTransfer.files));
+        }}
+        role="dialog"
+        aria-label={title}
+        className="bg-cream rounded-3xl w-full max-w-[640px] max-h-[90vh] overflow-y-auto"
+      >
         <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <div className="text-[15px] font-semibold">{title}</div>
           <button onClick={onClose} aria-label="Close" className="text-muted hover:text-ink">
@@ -191,6 +229,12 @@ export default function ComposeEmail({
               <span className="text-[12px] text-[#8A4B14]">Long message: only the first part is carried over. Paste the rest in your mail app if needed.</span>
             )}
           </label>
+          {matterId && (
+            <EmailAttachments matterId={matterId} value={attached} onChange={setAttached} asLink={asLink} onAsLink={setAsLink} onUpload={(f) => void uploadFiles(f)} uploading={uploading} uploadError={uploadError} uploaded={uploaded} />
+          )}
+          {attached.length > 0 && !canSendHere && senders && (
+            <div className="text-[12px] text-[#8A4B14]">Attachments go along only when you click Send here; writing the email in Outlook or Gmail doesn&apos;t carry them.</div>
+          )}
           {signature && (
             <div className="flex flex-col gap-1.5">
               <label className="flex items-center gap-2 text-[12.5px] font-semibold text-muted cursor-pointer w-fit">
@@ -263,7 +307,7 @@ export default function ComposeEmail({
                     ))}
                   </select>
                 )}
-                <button onClick={() => void send()} disabled={sending || !to.trim() || !finalSubject} className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-5 py-2 rounded-full text-[13.5px] font-semibold">
+                <button onClick={() => void send()} disabled={sending || uploading || !to.trim() || !finalSubject} className="flex items-center gap-1.5 bg-btn hover:bg-btn-hover disabled:opacity-50 px-5 py-2 rounded-full text-[13.5px] font-semibold">
                   {sending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} {sending ? "Sending…" : "Send"}
                 </button>
                 <span className="text-[12px] text-muted">or</span>

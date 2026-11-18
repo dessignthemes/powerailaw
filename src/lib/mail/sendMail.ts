@@ -86,8 +86,54 @@ async function graph(token: string, path: string, body: unknown) {
   }
 }
 
+async function graphJson<T>(token: string, path: string, body: unknown): Promise<T> {
+  const res = await fetch(`https://graph.microsoft.com/v1.0${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const d = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
+    if (res.status === 401 || res.status === 403) throw new SendError("Outlook didn't allow sending. Reconnect Outlook once and allow “Send email”.", 403, "needs_permission");
+    throw new SendError(`Outlook couldn't send the email${d.error?.message ? `: ${d.error.message}` : "."}`, 502);
+  }
+  return (await res.json().catch(() => ({}))) as T;
+}
+
+// With files attached: a draft (new, reply or forward), the files added to it
+// (big ones in pieces, so there's no 4 MB limit), then sent.
+async function sendOutlookWithFiles(token: string, m: OutgoingMessage, rcpt: (l?: string[]) => { emailAddress: { address: string } }[]) {
+  const people = { toRecipients: rcpt(m.to), ...(m.cc?.length ? { ccRecipients: rcpt(m.cc) } : {}), ...(m.bcc?.length ? { bccRecipients: rcpt(m.bcc) } : {}) };
+  let draft: { id: string };
+  if (m.reply) draft = await graphJson(token, `/me/messages/${encodeURIComponent(m.reply.messageId)}/createReply`, { comment: m.html ?? textToHtml(m.text), message: people });
+  else if (m.forward) {
+    const note = m.text.split(/-{6,} Forwarded message -{6,}/)[0].trim();
+    draft = await graphJson(token, `/me/messages/${encodeURIComponent(m.forward.messageId)}/createForward`, { comment: m.forwardComment ?? textToHtml(note), message: people });
+  } else draft = await graphJson(token, "/me/messages", { subject: m.subject, body: { contentType: "HTML", content: m.html ?? textToHtml(m.text) }, ...people });
+  const id = encodeURIComponent(draft.id);
+  for (const a of m.attachments ?? []) {
+    if (a.bytes.length < 3 * 1024 * 1024) {
+      await graphJson(token, `/me/messages/${id}/attachments`, { "@odata.type": "#microsoft.graph.fileAttachment", name: a.name, contentType: a.mime, contentBytes: Buffer.from(a.bytes).toString("base64") });
+      continue;
+    }
+    const { uploadUrl } = await graphJson<{ uploadUrl: string }>(token, `/me/messages/${id}/attachments/createUploadSession`, { AttachmentItem: { attachmentType: "file", name: a.name, size: a.bytes.length, contentType: a.mime } });
+    const CHUNK = 320 * 1024 * 12; // pieces must be multiples of 320 KB
+    for (let start = 0; start < a.bytes.length; start += CHUNK) {
+      const piece = a.bytes.subarray(start, Math.min(start + CHUNK, a.bytes.length));
+      const res = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Length": String(piece.length), "Content-Range": `bytes ${start}-${start + piece.length - 1}/${a.bytes.length}` },
+        body: Buffer.from(piece),
+      });
+      if (!res.ok) throw new SendError(`Outlook couldn't take the attachment “${a.name}”. Please try again.`, 502);
+    }
+  }
+  await graph(token, `/me/messages/${id}/send`, {});
+}
+
 async function sendOutlook(token: string, m: OutgoingMessage) {
   const rcpt = (list: string[] = []) => list.map((address) => ({ emailAddress: { address } }));
+  if (m.attachments?.length) return sendOutlookWithFiles(token, m, rcpt);
   if (m.reply) {
     // Outlook's own reply: same conversation, original quoted underneath.
     const id = encodeURIComponent(m.reply.messageId);
