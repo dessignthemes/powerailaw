@@ -318,6 +318,21 @@ export async function getDocument(orgId: string, documentId: string): Promise<Ma
 
 // ── Mutations ─────────────────────────────────────────────────────────────
 
+// A new name for a document. A name typed without the file ending (".pdf")
+// keeps the old one, so the file still opens in the right program.
+export async function renameDocument(orgId: string, documentId: string, raw: string): Promise<string> {
+  const supabase = createAdminClient();
+  const { data: doc } = await supabase.from("documents").select("title").eq("org_id", orgId).eq("id", documentId).maybeSingle();
+  if (!doc) throw new AccessError(404, "Document not found.");
+  let title = raw.replace(/[\u0000-\u001f/\\]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 200);
+  if (!title) throw new AccessError(403, "Type a name for the document.");
+  const oldExt = (doc as { title: string }).title.match(/\.[a-z0-9]{2,5}$/i)?.[0] ?? "";
+  if (oldExt && !/\.[a-z0-9]{2,5}$/i.test(title)) title = `${title}${oldExt}`;
+  const { error } = await supabase.from("documents").update({ title, updated_at: new Date().toISOString() }).eq("org_id", orgId).eq("id", documentId);
+  if (error) throw error;
+  return title;
+}
+
 export async function createDocumentFromUpload(opts: {
   orgId: string;
   matterId: string;

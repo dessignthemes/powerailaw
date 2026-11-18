@@ -31,6 +31,7 @@ import {
   FolderInput,
   Pencil,
   FilePlus2,
+  Sparkles,
 } from "lucide-react";
 import CreateDocumentModal from "@/components/documents/CreateDocumentModal";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
@@ -137,6 +138,34 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
   const matterId = fixedMatterId ?? matterFilter;
 
   const [docs, setDocs] = useState<Doc[]>([]);
+  // Renaming a document: typed by hand, or suggested by the AI from its first page (then Save).
+  const [renaming, setRenaming] = useState<{ id: string; value: string; busy: "save" | "ai" | null; error: string | null } | null>(null);
+  async function saveName(d: Doc) {
+    if (!renaming || !renaming.value.trim()) return;
+    if (renaming.value.trim() === d.title) return setRenaming(null);
+    setRenaming({ ...renaming, busy: "save", error: null });
+    try {
+      const res = await fetch(`/api/documents/${d.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: renaming.value }) });
+      const body = (await res.json().catch(() => ({}))) as { title?: string; error?: string };
+      if (!res.ok || !body.title) throw new Error(body.error ?? "The name couldn't be saved. Please try again.");
+      setDocs((list) => list.map((x) => (x.id === d.id ? { ...x, title: body.title! } : x)));
+      setRenaming(null);
+    } catch (e) {
+      setRenaming((r) => (r ? { ...r, busy: null, error: (e as Error).message } : r));
+    }
+  }
+  async function aiName(d: Doc, start = false) {
+    const ext = d.title.match(/\.[a-z0-9]{2,5}$/i)?.[0] ?? "";
+    setRenaming((r) => ({ id: d.id, value: start || !r || r.id !== d.id ? d.title : r.value, busy: "ai", error: null }));
+    try {
+      const res = await fetch(`/api/documents/${d.id}/ai-name`, { method: "POST" });
+      const body = (await res.json().catch(() => ({}))) as { name?: string; error?: string };
+      if (!res.ok || !body.name) throw new Error(body.error ?? "The AI couldn't suggest a name. Please try again.");
+      setRenaming({ id: d.id, value: `${body.name}${ext}`, busy: null, error: null });
+    } catch (e) {
+      setRenaming((r) => (r ? { ...r, busy: null, error: (e as Error).message } : r));
+    }
+  }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -630,7 +659,41 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                     <TypeIcon type={type} />
                     <div className="flex-1 min-w-[220px]">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[14.5px] font-medium truncate">{d.title}</span>
+                        {renaming?.id === d.id ? (
+                          <span className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <input
+                              autoFocus
+                              value={renaming.value}
+                              onChange={(e) => setRenaming({ ...renaming, value: e.target.value })}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") void saveName(d);
+                                if (e.key === "Escape") setRenaming(null);
+                              }}
+                              disabled={!!renaming.busy}
+                              aria-label="Document name"
+                              className="flex-1 min-w-[180px] max-w-[520px] bg-white border border-[#C4C0B8] rounded-lg px-2.5 py-1 text-[14px] outline-none"
+                            />
+                            <button onClick={() => void aiName(d)} disabled={!!renaming.busy} title="Let the AI suggest a name from the first page" className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F3F2F0] hover:bg-[#E7E5E1] text-[12.5px] font-medium disabled:opacity-60 flex-shrink-0">
+                              {renaming.busy === "ai" ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} AI name
+                            </button>
+                            <button onClick={() => void saveName(d)} disabled={!!renaming.busy || !renaming.value.trim()} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-ink text-white text-[12.5px] font-medium disabled:opacity-60 flex-shrink-0">
+                              {renaming.busy === "save" ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Save
+                            </button>
+                            <button onClick={() => setRenaming(null)} disabled={!!renaming.busy} aria-label="Close" className="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-[#E7E5E1] flex-shrink-0">
+                              <X size={13} />
+                            </button>
+                          </span>
+                        ) : (
+                          <>
+                            <span className="text-[14.5px] font-medium truncate">{d.title}</span>
+                            <button onClick={() => setRenaming({ id: d.id, value: d.title, busy: null, error: null })} title="Rename" aria-label={`Rename ${d.title}`} className="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-[#E7E5E1] flex-shrink-0">
+                              <Pencil size={12} />
+                            </button>
+                            <button onClick={() => void aiName(d, true)} title="AI name: suggest a name from the first page (uses AI credits)" aria-label={`AI name for ${d.title}`} className="w-6 h-6 rounded-full flex items-center justify-center text-[#7C6CF2] hover:bg-[#EEEBFD] flex-shrink-0">
+                              <Sparkles size={12} />
+                            </button>
+                          </>
+                        )}
                         <TypeBadge type={type} />
                         {(() => {
                           const r = reqsFor(d.id).find((x) => x.status !== "cancelled");
@@ -640,6 +703,8 @@ export default function DocumentsLibrary({ matterId: fixedMatterId, openAdd = fa
                           return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11.5px] font-medium flex-shrink-0 ${cls}`}><FileSignature size={11} /> {label}</span>;
                         })()}
                       </div>
+                      {renaming?.id === d.id && renaming.error && <div className="text-[12.5px] text-[#B42318]">{renaming.error}</div>}
+                      {renaming?.id === d.id && renaming.busy === "ai" && <div className="text-[12.5px] text-muted">Reading the first page…</div>}
                       <div className="text-[12.5px] text-muted">
                         {!fixedMatterId && <>{d.matterTitle ?? "Matter"}, </>}
                         {fixedMatterId && q && d.folderId && <>in {folderPath(d.folderId).map((x) => x.name).join(" / ")}, </>}

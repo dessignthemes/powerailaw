@@ -251,6 +251,64 @@ function FileToMatter({
   );
 }
 
+// "File to matter" for several picked emails at once.
+function BulkFilePicker({ busy, onPick }: { busy: boolean; onPick: (m: { id: string; number: string | null; title: string }) => void }) {
+  const { matters, refreshMatters } = useWorkspaceData();
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const list = matters
+    .filter((m) => !["Closed", "Not proceeding"].includes(m.status))
+    .filter((m) => !q.trim() || `${m.matterNumber ?? ""} ${m.title}`.toLowerCase().includes(q.trim().toLowerCase()))
+    .sort((a, b) => (b.matterSeq ?? 0) - (a.matterSeq ?? 0))
+    .slice(0, 50);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => {
+          if (!open) refreshMatters();
+          setOpen((o) => !o);
+        }}
+        disabled={busy}
+        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-btn text-[12.5px] font-medium hover:bg-btn transition-colors disabled:opacity-60"
+      >
+        {busy ? <Loader2 size={12} className="animate-spin" /> : <Briefcase size={12} />} File to matter
+      </button>
+      {open && (
+        <>
+          <ClickAway onClose={() => setOpen(false)} />
+          <div className={`absolute left-0 top-[calc(100%+8px)] z-50 ${menuPanel} w-[320px]`}>
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Matter number or name"
+              className="w-full bg-[#F3F2F0] border border-[#E9E7E4] rounded-lg px-3 py-2 text-[13px] outline-none mb-1 focus:border-[#D1CDC6]"
+            />
+            <div className="max-h-[300px] overflow-y-auto">
+              {list.length === 0 ? (
+                <div className="px-3 py-2.5 text-[13px] text-muted">No matching matters</div>
+              ) : (
+                list.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      setOpen(false);
+                      onPick({ id: m.id, number: m.matterNumber ?? null, title: m.title });
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#F3F2F0] text-[13px]"
+                  >
+                    <span className="font-semibold">{m.matterNumber ?? ""}</span> <span className="text-muted">{m.title}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function InboxPage() {
   const { teamMembers, boards, addTask, matters } = useWorkspaceData();
   // New email / forward (opens in the person's Gmail or Outlook) and "Turn into task".
@@ -415,6 +473,74 @@ export default function InboxPage() {
   }, [filtered, threaded]);
   const shown = groups ? [...groups.values()].map((g) => ({ ...g[0], unread: g.some((x) => x.unread), hasAttachments: g.some((x) => x.hasAttachments) })) : filtered;
   const countOf = (m: MailSummary) => (groups && m.threadId ? groups.get(`t:${m.threadId}`)?.length ?? 1 : 1);
+  // The emails a row stands for (a conversation row: every email of it listed here).
+  const idsOf = (m: MailSummary) => (groups && m.threadId ? (groups.get(`t:${m.threadId}`) ?? [m]).map((x) => x.id) : [m.id]);
+
+  // Several emails picked at once: Ctrl-click (⌘-click on a Mac) adds or removes
+  // one, Shift-click picks everything between. A plain click just opens an email.
+  const [picked, setPicked] = useState<Set<string>>(new Set()); // row ids
+  const anchor = useRef<string | null>(null);
+  function pickRow(m: MailSummary, e: { shiftKey: boolean }) {
+    setPicked((cur) => {
+      const next = new Set(cur);
+      // The email that's open counts as picked when the picking starts.
+      if (!next.size && selectedId && selectedId !== m.id) {
+        const openRow = shown.find((x) => inGroup(x, selectedId));
+        if (openRow) next.add(openRow.id);
+      }
+      if (e.shiftKey && anchor.current) {
+        const a = shown.findIndex((x) => x.id === anchor.current);
+        const b = shown.findIndex((x) => x.id === m.id);
+        if (a >= 0 && b >= 0) for (let i = Math.min(a, b); i <= Math.max(a, b); i++) next.add(shown[i].id);
+      } else if (next.has(m.id)) next.delete(m.id);
+      else next.add(m.id);
+      return next;
+    });
+    anchor.current = m.id;
+  }
+  const pickedRows = shown.filter((m) => picked.has(m.id));
+  const pickedIds = pickedRows.flatMap(idsOf);
+  const [bulkBusy, setBulkBusy] = useState<string | null>(null);
+  const [bulkNote, setBulkNote] = useState<string | null>(null);
+  async function bulkMark(unread: boolean) {
+    if (!provider) return;
+    setBulkBusy(unread ? "unread" : "read");
+    const ids = pickedIds;
+    let failed = 0;
+    for (const id of ids) {
+      const r = await fetch(`/api/mail/messages/${encodeURIComponent(id)}/mark`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider, unread }) }).catch(() => null);
+      if (r?.ok) {
+        if (unread) forgetOpened(provider, id);
+        else rememberOpened(provider, id);
+      } else failed++;
+    }
+    setMessages((list) => list.map((m) => (ids.includes(m.id) ? { ...m, unread } : m)));
+    setBulkNote(failed ? `${failed} couldn't be marked. Please try again.` : `Marked ${ids.length} as ${unread ? "unread" : "read"}.`);
+    setBulkBusy(null);
+    setPicked(new Set());
+  }
+  async function bulkFile(matter: { id: string; number: string | null; title: string }) {
+    if (!provider) return;
+    setBulkBusy("file");
+    const ids = pickedIds;
+    let failed = 0;
+    let added = 0;
+    for (const id of ids) {
+      const r = await fetch(`/api/mail/messages/${encodeURIComponent(id)}/matter`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider, matterId: matter.id }) }).catch(() => null);
+      if (!r?.ok) {
+        failed++;
+        continue;
+      }
+      const d = (await r.json().catch(() => ({}))) as { matter?: { attachments?: { added?: string[] } } };
+      added += d.matter?.attachments?.added?.length ?? 0;
+    }
+    setMessages((list) => list.map((m) => (ids.includes(m.id) && !failed ? { ...m, matter } : m)));
+    setBulkNote(
+      `Filed ${ids.length - failed} email${ids.length - failed === 1 ? "" : "s"} to ${matter.number ?? matter.title}${added ? `; ${added} attachment${added === 1 ? "" : "s"} added to its Documents` : ""}.${failed ? ` ${failed} couldn't be filed.` : ""}`
+    );
+    setBulkBusy(null);
+    setPicked(new Set());
+  }
   const inGroup = (m: MailSummary, id: string | null) => !!id && (m.id === id || (!!groups && !!m.threadId && !!groups.get(`t:${m.threadId}`)?.some((x) => x.id === id)));
 
   // Known before the first list loads: a syncing mailbox needs no browser memory of opened emails.
@@ -970,6 +1096,47 @@ export default function InboxPage() {
                 </button>
               </div>
             )}
+            {/* Several emails picked (Ctrl / ⌘-click, Shift-click): act on all of them. */}
+            {pickedRows.length > 0 && (
+              <div className="sticky top-[45px] z-10 m-3 mb-0 rounded-xl bg-[#E1E7F4] px-3 py-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-[13px] font-semibold mr-1">
+                  {pickedIds.length} email{pickedIds.length === 1 ? "" : "s"} selected
+                </span>
+                <BulkFilePicker busy={bulkBusy === "file"} onPick={(m) => void bulkFile(m)} />
+                <button onClick={() => void bulkMark(false)} disabled={!!bulkBusy} className="px-3 py-1 rounded-full bg-white border border-btn text-[12.5px] font-medium hover:bg-btn disabled:opacity-60">
+                  {bulkBusy === "read" ? "Marking…" : "Mark as read"}
+                </button>
+                <button onClick={() => void bulkMark(true)} disabled={!!bulkBusy} className="px-3 py-1 rounded-full bg-white border border-btn text-[12.5px] font-medium hover:bg-btn disabled:opacity-60">
+                  {bulkBusy === "unread" ? "Marking…" : "Mark as unread"}
+                </button>
+                {!inTrash && (
+                  <button
+                    onClick={() => {
+                      const ids = pickedIds;
+                      setPicked(new Set());
+                      setMessage(null);
+                      void moveEmails(trashFolder, ids);
+                    }}
+                    disabled={!!bulkBusy}
+                    className="px-3 py-1 rounded-full bg-[#FDECEC] text-[#B42318] text-[12.5px] font-medium hover:bg-[#FADADA] disabled:opacity-60"
+                  >
+                    Delete
+                  </button>
+                )}
+                <button onClick={() => setPicked(new Set())} className="ml-auto text-[12.5px] text-muted hover:text-ink underline underline-offset-2">
+                  Clear
+                </button>
+                <span className="basis-full text-[11.5px] text-muted">Drag them onto a folder to move them all. Filing adds each email&apos;s attachments to the matter&apos;s Documents.</span>
+              </div>
+            )}
+            {bulkNote && (
+              <div className="m-3 mb-0 flex items-center gap-2 rounded-xl bg-[#E8F6EE] text-[#1F7A4D] px-3.5 py-2 text-[13px]">
+                <span className="flex-1">{bulkNote}</span>
+                <button onClick={() => setBulkNote(null)} aria-label="Dismiss" className="hover:text-ink">
+                  <X size={13} />
+                </button>
+              </div>
+            )}
             {listError && !needsReconnect && (
               <div className="m-3 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[13px] text-red-700">{listError.message}</div>
             )}
@@ -1001,17 +1168,26 @@ export default function InboxPage() {
                         draggable
                         onDragStart={(e) => {
                           // A conversation row moves every email of it listed here.
-                          const ids = groups && m.threadId ? (groups.get(`t:${m.threadId}`) ?? [m]).map((x) => x.id) : [m.id];
+                          // Several picked: drag them all.
+                          const ids = picked.has(m.id) && pickedRows.length > 1 ? pickedIds : idsOf(m);
                           e.dataTransfer.setData(MAIL_DRAG_TYPE, JSON.stringify(ids));
                           e.dataTransfer.effectAllowed = "move";
                         }}
-                        onClick={() => {
+                        onClick={(e) => {
+                          if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                            e.preventDefault();
+                            pickRow(m, e);
+                            return;
+                          }
+                          setPicked(new Set());
+                          anchor.current = m.id;
                           open(m);
                           if (convo && !isOpen) toggleThread(m.threadId!);
                         }}
+                        onMouseDown={(e) => e.shiftKey && e.preventDefault()} // no text selection on Shift-click
                         onKeyDown={(e) => e.key === "Enter" && open(m)}
                         className={`relative w-full text-left pr-4 py-3 cursor-pointer transition-colors ${convo ? "pl-8" : "pl-4"} ${
-                          inGroup(m, selectedId) ? "bg-[#F1F0EE]" : "hover:bg-[#F3F2F0]"
+                          picked.has(m.id) ? "bg-[#DCE6F5]" : inGroup(m, selectedId) ? "bg-[#F1F0EE]" : "hover:bg-[#F3F2F0]"
                         } ${isOpen ? "border-l-[3px] border-[#2B6CB0]" : ""}`}
                       >
                         {convo && (
