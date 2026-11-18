@@ -396,7 +396,7 @@ export default function TaskDetailModal({
             onChange={setDescription}
             onBlur={(html) => commit({ description: html })}
             placeholder="Add more detail..."
-            className={`mb-2 ${expanded ? "h-[58vh]" : "h-[44vh]"} min-h-[180px]`}
+            className={`mb-2 min-h-[96px] ${expanded ? "max-h-[58vh]" : "max-h-[44vh]"}`}
           />
           {/* Links in the notes (e.g. "Open email: https://…") as clean buttons */}
           {(() => {
