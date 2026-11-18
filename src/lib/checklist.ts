@@ -548,3 +548,46 @@ export function stepsChanged(before: TaskChecklist | null | undefined, after: Ta
   }
   return n !== was.size;
 }
+
+// ── Saving without losing someone else's ticks ─────────────────────────────
+// A task is saved whole, so a tab opened earlier (or a colleague's screen)
+// could put back an old checklist and undo steps ticked elsewhere since. This
+// keeps only what THIS save changed (compared with what that screen had,
+// `base`) and takes everything else from the checklist as it is saved now
+// (`current`).
+type StepState = Pick<ChecklistItem, "done" | "doneAt" | "na">;
+const stateOf = (i: ChecklistItem | undefined): StepState | undefined => (i ? { done: i.done, doneAt: i.doneAt ?? null, na: !!i.na } : undefined);
+const sameState = (a: StepState | undefined, b: StepState | undefined) => !!a && !!b && a.done === b.done && a.na === b.na;
+const shape = (c: TaskChecklist) => c.sections.map((s) => `${s.id}:${s.title}:${s.items.map((i) => `${i.id}=${i.text}|${i.anchor ?? ""}|${i.days ?? ""}|${i.moveTo ?? ""}`).join(",")}`).join(";");
+
+export function mergeChecklist(current: TaskChecklist | null, base: TaskChecklist | null, incoming: TaskChecklist | null): TaskChecklist | null {
+  if (!incoming || !current || !base) return incoming;
+  const items = (c: TaskChecklist) => new Map(c.sections.flatMap((s) => s.items.map((i) => [i.id, i] as const)));
+  const cur = items(current);
+  const was = items(base);
+  // Steps added / removed / renamed in this save: its layout wins; otherwise
+  // the saved layout (so steps someone else added stay).
+  const layout = shape(incoming) !== shape(base) ? incoming : current;
+  const inc = items(incoming);
+  const sections = layout.sections.map((s) => ({
+    ...s,
+    items: s.items.map((i) => {
+      const mine = inc.get(i.id);
+      const theirs = cur.get(i.id);
+      const pick = mine && !sameState(stateOf(mine), stateOf(was.get(i.id))) ? mine : theirs ?? mine ?? i;
+      const { na: _na, ...rest } = i;
+      void _na;
+      return { ...rest, done: pick.done, doneAt: pick.doneAt ?? null, ...(pick.na ? { na: true } : {}) };
+    }),
+  }));
+  // Key dates: a date this save changed wins; the rest as saved now.
+  const keys = new Set([...Object.keys(current.dates ?? {}), ...Object.keys(base.dates ?? {}), ...Object.keys(incoming.dates ?? {})]);
+  const dates: Record<string, string> = {};
+  for (const k of keys) {
+    const v = (incoming.dates?.[k] ?? "") !== (base.dates?.[k] ?? "") ? incoming.dates?.[k] : current.dates?.[k];
+    if (v) dates[k] = v;
+  }
+  const { dates: _d, ...rest } = incoming;
+  void _d;
+  return { ...rest, sections, ...(Object.keys(dates).length ? { dates } : {}) };
+}

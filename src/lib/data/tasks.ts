@@ -1,5 +1,5 @@
 import "server-only";
-import { cleanChecklist, stageColumn, stepsChanged, type StageColumn } from "@/lib/checklist";
+import { cleanChecklist, mergeChecklist, stageColumn, stepsChanged, type StageColumn } from "@/lib/checklist";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOrgId } from "@/lib/data/org";
 import { boardInOrg } from "@/lib/data/boards";
@@ -248,9 +248,20 @@ export async function createTaskRow(task: BoardTask, userId: string | null): Pro
   return created;
 }
 
-export async function updateTaskRow(id: string, task: BoardTask, userId: string | null = null): Promise<BoardTask> {
+export async function updateTaskRow(id: string, incoming: BoardTask & { checklistBase?: unknown }, userId: string | null = null): Promise<BoardTask> {
   const supabase = createAdminClient();
   const orgId = await getCurrentOrgId();
+  // Who it was assigned to before (to alert only a newly assigned person).
+  const { data: before } = await supabase.from("tasks").select("*").eq("id", id).eq("org_id", orgId).maybeSingle();
+  if (before && !canSeeTask(before as TaskRow, await getSessionUser())) throw new TaskAccessError();
+
+  // Keep steps ticked elsewhere since this screen loaded: only this save's own
+  // changes to the checklist are applied (see mergeChecklist).
+  const { checklistBase, ...rest } = incoming;
+  const task: BoardTask =
+    checklistBase !== undefined && rest.checklist && before
+      ? { ...rest, checklist: mergeChecklist(cleanChecklist((before as { checklist?: unknown }).checklist), cleanChecklist(checklistBase), cleanChecklist(rest.checklist)) }
+      : rest;
 
   const base = await withColumn(
     orgId,
@@ -259,10 +270,6 @@ export async function updateTaskRow(id: string, task: BoardTask, userId: string 
   );
   const run = (fields: Record<string, unknown>) =>
     supabase.from("tasks").update(fields).eq("id", id).eq("org_id", orgId).select("*").single();
-  // Who it was assigned to before (to alert only a newly assigned person).
-  const { data: before } = await supabase.from("tasks").select("*").eq("id", id).eq("org_id", orgId).maybeSingle();
-  if (before && !canSeeTask(before as TaskRow, await getSessionUser())) throw new TaskAccessError();
-
   // Columns added by later migrations; if one isn't there yet, save without it.
   let fields: Record<string, unknown> = userId ? { ...base, updated_by: userId } : { ...base };
   let { data, error } = await run(fields);

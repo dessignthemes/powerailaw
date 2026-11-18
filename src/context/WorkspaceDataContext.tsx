@@ -87,6 +87,18 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     fetch("/api/tasks").then(readJson).then((d) => d.tasks && setTasks(d.tasks)).catch(() => {});
   }, []);
 
+  // Coming back to a tab left open a while: pick up what others changed since
+  // (ticked steps, moved cards), so this screen doesn't show old work.
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVisible = () => {
+      if (document.visibilityState === "hidden") hiddenAt = Date.now();
+      else if (hiddenAt && Date.now() - hiddenAt > 30_000) refreshAll();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refreshAll]);
+
   useEffect(() => {
     fetch("/api/clients")
       .then((res) => res.json())
@@ -235,7 +247,9 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
       fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(task),
+        // What this screen had before the change, so the server applies only this
+        // change and keeps steps ticked elsewhere in the meantime.
+        body: JSON.stringify({ ...task, checklistBase: previous ? (previous.checklist ?? null) : undefined }),
       })
         .then(readJson)
         .then((data) => {
