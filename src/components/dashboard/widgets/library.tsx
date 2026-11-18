@@ -655,8 +655,35 @@ function AskAi() {
 
 // An analog clock: white face, bold minute marks, numbers, black hands and a
 // thin gold second hand that sweeps smoothly; the time in digits below.
+// How big the clock face is inside its widget (% of the box): set with − / +
+// on the clock, kept on this computer (screens differ in size).
+const CLOCK_KEY = "lawpower.clock.face";
+const CLOCK_MIN = 30;
+const CLOCK_MAX = 90;
 function ClockFace() {
   const [label, setLabel] = useState<string | null>(null);
+  const [face, setFace] = useState(70);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        const n = Number(localStorage.getItem(CLOCK_KEY));
+        if (n >= CLOCK_MIN && n <= CLOCK_MAX) setFace(n);
+      } catch {
+        /* nothing saved here */
+      }
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
+  const changeFace = (step: number) =>
+    setFace((f) => {
+      const n = Math.max(CLOCK_MIN, Math.min(CLOCK_MAX, f + step));
+      try {
+        localStorage.setItem(CLOCK_KEY, String(n));
+      } catch {
+        /* private mode */
+      }
+      return n;
+    });
   const hourRef = useRef<SVGGElement>(null);
   const minRef = useRef<SVGGElement>(null);
   const secRef = useRef<SVGGElement>(null);
@@ -682,9 +709,9 @@ function ClockFace() {
     return () => cancelAnimationFrame(raf);
   }, []);
   return (
-    // The face takes about 70% of the widget, so it grows and shrinks with it (and stays round).
-    <div className="flex-1 min-h-0 w-full flex items-center justify-center">
-      <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" className="w-[70%] h-[70%]" aria-label={label ?? "Clock"}>
+    // The face takes a share of the widget (70% to start; − / + change it), so it stays round.
+    <div className="group/clock relative flex-1 min-h-0 w-full flex items-center justify-center">
+      <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" style={{ width: `${face}%`, height: `${face}%` }} aria-label={label ?? "Clock"}>
         <circle className="lp-clock-face" cx="100" cy="100" r="98" fill="#fff" />
         {[...Array(60)].map((_, i) => (
           <line key={i} x1="100" y1="5" x2="100" y2={i % 5 ? "12" : "17"} className="lp-clock-ink" stroke="#141414" strokeWidth={i % 5 ? 2.2 : 5} strokeLinecap="round" transform={`rotate(${i * 6} 100 100)`} />
@@ -709,6 +736,15 @@ function ClockFace() {
           <circle cx="100" cy="100" r="7.5" fill="#E2A43A" />
         </g>
       </svg>
+      {/* Make the face smaller or bigger (shows when you point at the clock). */}
+      <div className="absolute bottom-0 right-0 flex items-center gap-1 opacity-0 group-hover/clock:opacity-100 focus-within:opacity-100 transition-opacity">
+        <button onClick={() => changeFace(-10)} disabled={face <= CLOCK_MIN} aria-label="Smaller clock" title="Smaller clock" className="w-6 h-6 rounded-full bg-[#F3F2F0] hover:bg-[#E7E5E1] text-[15px] leading-none font-semibold disabled:opacity-40">
+          −
+        </button>
+        <button onClick={() => changeFace(10)} disabled={face >= CLOCK_MAX} aria-label="Bigger clock" title="Bigger clock" className="w-6 h-6 rounded-full bg-[#F3F2F0] hover:bg-[#E7E5E1] text-[15px] leading-none font-semibold disabled:opacity-40">
+          +
+        </button>
+      </div>
     </div>
   );
 }
