@@ -13,6 +13,11 @@ const contact = (prefix: string, who: string, firmLabel: string): DetailField[] 
   { key: `${prefix}Email`, label: "Email", kind: "email" },
   { key: `${prefix}Phone`, label: "Phone", kind: "phone" },
 ];
+// An attorney's office: the attorney plus paralegals / assistants on the file.
+const lawOffice = (prefix: string): DetailField[] => [
+  ...contact(prefix, "Attorney", "Law firm"),
+  { key: `${prefix}Staff`, label: "Paralegal / staff", kind: "names", placeholder: "Paralegals, assistants (separated by commas)" },
+];
 const party = (prefix: "buyer" | "seller", label: string): DetailField[] => [
   { key: `${prefix}Names`, label, kind: "names", placeholder: "Names, separated by commas" },
   { key: `${prefix}Email`, label: "Email", kind: "email" },
@@ -44,10 +49,30 @@ const CONTRACT: DetailSection = {
 };
 const CLOSING: DetailSection = {
   id: "closing",
-  title: "Settlement & lender",
+  title: "Settlement",
+  fields: [{ key: "settlementAgent", label: "Settlement agent" }],
+};
+// The lender, the loan officer and whoever else at the lender works the file.
+const LENDER: DetailSection = {
+  id: "lender",
+  title: "Lender",
   fields: [
-    { key: "settlementAgent", label: "Settlement agent" },
     { key: "lender", label: "Lender" },
+    { key: "loanOfficerName", label: "Loan officer" },
+    { key: "loanOfficerEmail", label: "Email", kind: "email" },
+    { key: "loanOfficerPhone", label: "Phone", kind: "phone" },
+    { key: "lenderTeam", label: "Processor / associates", kind: "names", placeholder: "Processor, assistants (separated by commas)" },
+  ],
+};
+const TITLE: DetailSection = {
+  id: "title",
+  title: "Title company",
+  fields: [
+    { key: "titleCompany", label: "Title company" },
+    { key: "titleContactName", label: "Title officer / closer" },
+    { key: "titleContactEmail", label: "Email", kind: "email" },
+    { key: "titleContactPhone", label: "Phone", kind: "phone" },
+    { key: "titleTeam", label: "Associates", kind: "names", placeholder: "Processors, assistants (separated by commas)" },
   ],
 };
 const MORE: DetailSection = {
@@ -56,7 +81,6 @@ const MORE: DetailSection = {
   fields: [
     { key: "inspector", label: "Inspector" },
     { key: "surveyor", label: "Surveyor" },
-    { key: "titleCompany", label: "Title company" },
   ],
 };
 
@@ -81,10 +105,12 @@ export const PURCHASE_LAYOUT: DetailSection[] = [
   REFERRAL,
   { id: "buyerAgent", title: "Buyer's realtor", fields: contact("buyerAgent", "Realtor", "Brokerage") },
   { id: "seller", title: "Seller", fields: party("seller", "Seller") },
-  { id: "sellerAttorney", title: "Seller's attorney", fields: contact("sellerAttorney", "Attorney", "Law firm") },
+  { id: "sellerAttorney", title: "Seller's attorney", fields: lawOffice("sellerAttorney") },
   { id: "listingAgent", title: "Seller's realtor (listing)", fields: contact("listingAgent", "Listing agent", "Brokerage") },
   PROPERTY,
   CONTRACT,
+  LENDER,
+  TITLE,
   CLOSING,
   MORE,
 ];
@@ -94,10 +120,12 @@ export const SALE_LAYOUT: DetailSection[] = [
   REFERRAL,
   { id: "listingAgent", title: "Seller's realtor (listing)", fields: contact("listingAgent", "Listing agent", "Brokerage") },
   { id: "buyer", title: "Buyer", fields: party("buyer", "Buyer") },
-  { id: "buyerAttorney", title: "Buyer's attorney", fields: contact("buyerAttorney", "Attorney", "Law firm") },
+  { id: "buyerAttorney", title: "Buyer's attorney", fields: lawOffice("buyerAttorney") },
   { id: "buyerAgent", title: "Buyer's realtor", fields: contact("buyerAgent", "Realtor", "Brokerage") },
   PROPERTY,
   CONTRACT,
+  LENDER,
+  TITLE,
   CLOSING,
   MORE,
 ];
@@ -105,7 +133,7 @@ export const SALE_LAYOUT: DetailSection[] = [
 const GENERAL_LAYOUT: DetailSection[] = [
   { id: "client", title: "Client", client: true, fields: [{ key: "clientNames", label: "Client", kind: "names" }, { key: "clientEmail", label: "Email", kind: "email" }, { key: "clientPhone", label: "Phone", kind: "phone" }] },
   REFERRAL,
-  { id: "other", title: "Other party", fields: [{ key: "otherNames", label: "Name", kind: "names" }, ...contact("otherAttorney", "Attorney", "Law firm")] },
+  { id: "other", title: "Other party", fields: [{ key: "otherNames", label: "Name", kind: "names" }, ...lawOffice("otherAttorney")] },
 ];
 
 export type Side = "buyer" | "seller" | null;

@@ -135,7 +135,7 @@ async function firmParties(orgId: string, excludeClientId: string | null) {
       for (const f of sec.fields) {
         const v = val(f.key);
         if (!v) continue;
-        const isName = f.kind === "names" || /(Name|Firm)$/.test(f.key) || /^(inspector|surveyor|titleCompany)$/.test(f.key);
+        const isName = f.kind === "names" || /(Name|Firm)$/.test(f.key) || /^(inspector|surveyor|titleCompany|lender|settlementAgent)$/.test(f.key);
         if (!isName || f.kind === "email" || f.kind === "phone" || f.kind === "money") continue;
         const side: Side = sec.client ? "client" : /^(buyer|seller|other)$/.test(sec.id) && f.kind === "names" ? "adverse" : "third_party";
         const role = f.kind === "names" ? sec.title : `${sec.title} — ${f.label}`;

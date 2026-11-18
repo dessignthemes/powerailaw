@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, ClipboardList, Loader2, Sparkles, FileSearch, Contact, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { normCompany, normPerson } from "@/lib/contacts/names";
+import type { Contact as ContactCard } from "@/lib/records/contactTypes";
 import { useWorkspaceData } from "@/context/WorkspaceDataContext";
 import { layoutFor, estimateToClose, money, REFERRAL_TYPES, type DetailField, type MatterDetails } from "@/lib/matters/details";
 import type { Matter } from "@/components/NewMatterModal";
@@ -19,31 +22,57 @@ type Suggest = "person" | "company" | "any";
 const COMPANY_KEYS = new Set(["titleCompany", "lender", "inspector", "surveyor", "settlementAgent"]);
 function suggestFor(key: string): Suggest | null {
   if (key.endsWith("Names")) return "any";
+  if (key.endsWith("Staff") || key.endsWith("Team")) return "person";
   if (key.endsWith("Name")) return "person";
   if (key.endsWith("Firm") || COMPANY_KEYS.has(key)) return "company";
   return null;
 }
+// Where a section's main person works (for the people in the Lender and Title company sections).
+const COMPANY_OF: Record<string, string> = { loanOfficer: "lender", titleContact: "titleCompany" };
+
+// Names in Details that are already in Contacts (or are client cards) become
+// links to their card: boxed when you point at them.
+type Known = { href: string; name: string; person: string; company: string };
+type NameLink = { text: string; href: string | null };
+function linksFor(value: string, f: DetailField, known: Known[]): NameLink[] | null {
+  const kind = suggestFor(f.key);
+  if (!kind || !value.trim() || !known.length) return null;
+  const pieces = f.kind === "names" ? value.split(/(,\s*)/) : [value];
+  let any = false;
+  const out = pieces.map((text) => {
+    if (/^,\s*$/.test(text) || !text.trim()) return { text, href: null };
+    const p = normPerson(text);
+    const c = normCompany(text);
+    const hit = known.find((k) => (kind !== "company" && p && k.person === p) || (kind !== "person" && c && k.company === c));
+    if (hit) any = true;
+    return { text, href: hit?.href ?? null };
+  });
+  return any ? out : null;
+}
+
 export type ContactHit = { id: string; kind: string; name: string; email: string | null; phone: string | null; company: string; category: string; type: string };
 // The role a section's people get on the matter's contacts (see detailsSync).
 const SECTION_ROLES: Record<string, RegExp> = {
   buyer: /^buyer( \(our client\))?$/i,
   seller: /^seller( \(our client\))?$/i,
   client: /^client$/i,
-  other: /^other (party|side's attorney)$/i,
+  other: /^other (party|side's attorney( \(staff\))?)$/i,
   referral: /^referred by$/i,
   buyerAgent: /^buyer's realtor$/i,
   listingAgent: /^listing agent$/i,
-  buyerAttorney: /^buyer's attorney$/i,
-  sellerAttorney: /^seller's attorney$/i,
-  closing: /^(lender|settlement agent)$/i,
-  more: /^(inspector|surveyor|title company)$/i,
+  buyerAttorney: /^buyer's attorney( \(staff\))?$/i,
+  sellerAttorney: /^seller's attorney( \(staff\))?$/i,
+  closing: /^settlement agent$/i,
+  lender: /^(lender|loan officer|lender's team)$/i,
+  title: /^(title company|title officer|title company team)$/i,
+  more: /^(inspector|surveyor)$/i,
 };
 type Linked = { targetId: string; kind: "contact" | "client"; name: string; role: string };
 
 // Parties, property and contract figures for the matter type (purchase: our client
 // is the buyer; sale: the seller). Filled from documents by the AI, editable by hand.
 export default function MatterDetailsPanel({ matter, keyDates, wide = false }: { matter: Matter; keyDates: KeyDatesApi; wide?: boolean }) {
-  const { refreshAll } = useWorkspaceData();
+  const { refreshAll, clients } = useWorkspaceData();
   const { layout } = layoutFor(matter);
   const router = useRouter();
   const [details, setDetails] = useState<MatterDetails | null>(null);
@@ -83,6 +112,29 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
     };
   }, [matter.id, linkTick, extractedAt]);
 
+  // Everyone in Contacts (and the client cards), to turn names here into links.
+  const [cards, setCards] = useState<ContactCard[]>([]);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/contacts")
+      .then((r) => (r.ok ? r.json() : { contacts: [] }))
+      .then((d) => live && setCards((d.contacts ?? []) as ContactCard[]))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [matter.id, linkTick]);
+  const known = useMemo<Known[]>(() => {
+    const out: Known[] = [];
+    for (const c of clients) out.push({ href: `/dashboard/client-intake?card=${c.id}`, name: c.name, person: normPerson(c.name), company: normCompany(c.name) });
+    for (const c of cards) {
+      const href = `/dashboard/records?contact=${c.id}`;
+      out.push({ href, name: c.name, person: c.kind === "person" ? normPerson(c.name) : "", company: c.kind === "person" ? "" : normCompany(c.name) });
+      if (c.kind !== "person" && c.shortName) out.push({ href, name: c.name, person: "", company: normCompany(c.shortName) });
+    }
+    return out.filter((k) => k.person || k.company);
+  }, [clients, cards]);
+
   async function saveMany(values: Record<string, string>) {
     try {
       const res = await fetch(`/api/matters/${matter.id}/details`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ values }) });
@@ -104,12 +156,12 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
     const d = details ?? {};
     const empty = (k: string) => !d[k]?.value;
     const values: Record<string, string> = {};
-    if (f.key.endsWith("Names")) {
+    if (f.kind === "names") {
       const parts = current.split(",").map((x) => x.trim()).filter(Boolean);
       parts.pop();
       values[f.key] = [...parts, c.name].join(", ");
       const prefix = f.key.slice(0, -5);
-      if (!parts.length) {
+      if (!parts.length && f.key.endsWith("Names")) {
         if (c.email && empty(`${prefix}Email`)) values[`${prefix}Email`] = c.email;
         if (c.phone && empty(`${prefix}Phone`)) values[`${prefix}Phone`] = c.phone;
       }
@@ -118,7 +170,9 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
       values[f.key] = c.name;
       if (c.email && empty(`${prefix}Email`)) values[`${prefix}Email`] = c.email;
       if (c.phone && empty(`${prefix}Phone`)) values[`${prefix}Phone`] = c.phone;
-      if (c.company && empty(`${prefix}Firm`)) values[`${prefix}Firm`] = c.company;
+      // The person's company goes in the section's company box (law firm, brokerage, lender, title company).
+      const firmKey = COMPANY_OF[prefix] ?? `${prefix}Firm`;
+      if (c.company && empty(firmKey) && layout.some((sec) => sec.fields.some((x) => x.key === firmKey))) values[firmKey] = c.company;
     } else values[f.key] = c.name;
     void saveMany(values);
   }
@@ -252,6 +306,7 @@ export default function MatterDetailsPanel({ matter, keyDates, wide = false }: {
                         }
                         onSave={(v) => void save(f.key, v)}
                         suggest={suggestFor(f.key)}
+                        links={details[f.key] ? linksFor(details[f.key].value, f, known) : null}
                         onPick={(c, current) => pick(f, c, current)}
                       />
                     ))}
@@ -281,8 +336,10 @@ function FieldRow({
   onSave,
   suggest,
   onPick,
+  links,
 }: {
   field: DetailField;
+  links?: NameLink[] | null;
   value?: { value: string; source?: string | null; manual?: boolean };
   hint?: string;
   onSave: (v: string) => void;
@@ -290,11 +347,13 @@ function FieldRow({
   onPick?: (c: ContactHit, current: string) => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
+  const [focused, setFocused] = useState(false);
   const shown = draft ?? value?.value ?? "";
+  const linking = !!links && !focused && draft === null;
   const fromDocs = value && !value.manual && value.source && value.source !== "Client record";
   // Contacts that match what's being typed (after a short pause).
   const [hits, setHits] = useState<ContactHit[]>([]);
-  const term = draft === null ? "" : field.key.endsWith("Names") ? draft.split(",").pop()!.trim() : draft.trim();
+  const term = draft === null ? "" : field.kind === "names" ? draft.split(",").pop()!.trim() : draft.trim();
   useEffect(() => {
     if (!suggest || term.length < 2) return;
     let live = true;
@@ -319,7 +378,7 @@ function FieldRow({
     if (v !== (value?.value ?? "")) onSave(v);
   }
   return (
-    <label className="grid grid-cols-[118px_1fr] items-center gap-2">
+    <label className="group/field grid grid-cols-[118px_1fr] items-center gap-2">
       <span className="text-[12px] text-muted truncate" title={field.label}>
         {field.label}
       </span>
@@ -327,7 +386,11 @@ function FieldRow({
         <input
           value={shown}
           onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            setFocused(false);
+            commit();
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
             if (e.key === "Escape") {
@@ -344,8 +407,29 @@ function FieldRow({
           data-lpignore="true"
           className={`w-full min-w-0 bg-white border border-line hover:border-[#CECAC3] focus:border-[#BFBAB0] rounded-lg px-2.5 py-1.5 text-[13px] outline-none placeholder:text-muted-light transition-colors ${
             fromDocs ? "pr-6" : ""
-          }`}
+          } ${linking ? "text-transparent" : ""}`}
         />
+        {linking && (
+          // The same text over the box, with names in Contacts as links (boxed when pointed at).
+          // Clicking anywhere else still edits the field.
+          <span className={`absolute inset-y-0 left-0 ${fromDocs ? "right-6" : "right-0"} flex items-center px-2.5 text-[13px] whitespace-pre overflow-hidden pointer-events-none`}>
+            {links!.map((l, i) =>
+              l.href ? (
+                <Link
+                  key={i}
+                  href={l.href}
+                  title="Open the contact card"
+                  onClick={(e) => e.stopPropagation()}
+                  className="pointer-events-auto -ml-[5px] px-1 rounded-md border border-transparent group-hover/field:border-[#C9C6BF] group-hover/field:bg-[#F3F2F0] hover:!border-[#9C978E] hover:underline underline-offset-2 transition-colors"
+                >
+                  {l.text}
+                </Link>
+              ) : (
+                <span key={i}>{l.text}</span>
+              )
+            )}
+          </span>
+        )}
         {field.key === "referralType" && (
           <datalist id="lp-referral-types">
             {REFERRAL_TYPES.map((t) => (

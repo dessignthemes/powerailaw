@@ -17,7 +17,9 @@ const db = () => createAdminClient();
 type Pro = { kind: "pro"; prefix: string; vendorType: string; role: string };
 type Company = { kind: "company"; key: string; vendorType: string; role: string };
 type Party = { kind: "party"; prefix: "buyer" | "seller" | "other" | "client"; role: string };
-type Group = Pro | Company | Party;
+// A company with a main contact person and others on the file (lender: loan officer + processor…).
+type Team = { kind: "team"; company: string; person: string; staff: string; vendorType: string; role: string; personRole: string; staffRole: string };
+type Group = Pro | Company | Party | Team;
 
 const GROUPS: Group[] = [
   { kind: "pro", prefix: "buyerAgent", vendorType: "Real estate agency", role: "Buyer's realtor" },
@@ -27,8 +29,8 @@ const GROUPS: Group[] = [
   { kind: "pro", prefix: "otherAttorney", vendorType: "Law firm", role: "Other side's attorney" },
   // Who referred the client (the type comes from the Source field).
   { kind: "pro", prefix: "referral", vendorType: "", role: "Referred by" },
-  { kind: "company", key: "titleCompany", vendorType: "Title company", role: "Title company" },
-  { kind: "company", key: "lender", vendorType: "Lender / bank", role: "Lender" },
+  { kind: "team", company: "titleCompany", person: "titleContact", staff: "titleTeam", vendorType: "Title company", role: "Title company", personRole: "Title officer", staffRole: "Title company team" },
+  { kind: "team", company: "lender", person: "loanOfficer", staff: "lenderTeam", vendorType: "Lender / bank", role: "Lender", personRole: "Loan officer", staffRole: "Lender's team" },
   { kind: "company", key: "inspector", vendorType: "Inspector", role: "Inspector" },
   { kind: "company", key: "surveyor", vendorType: "Surveyor", role: "Surveyor" },
   { kind: "company", key: "settlementAgent", vendorType: "Other vendor", role: "Settlement agent" },
@@ -51,38 +53,16 @@ function referralVendorType(source: string) {
 }
 
 const keysOf = (g: Group) =>
-  g.kind === "pro"
-    ? [`${g.prefix}Firm`, `${g.prefix}Name`, `${g.prefix}Email`, `${g.prefix}Phone`, ...(g.prefix === "referral" ? ["referralType"] : [])]
+  g.kind === "team"
+    ? [g.company, `${g.person}Name`, `${g.person}Email`, `${g.person}Phone`, g.staff]
+    : g.kind === "pro"
+    ? [`${g.prefix}Firm`, `${g.prefix}Name`, `${g.prefix}Email`, `${g.prefix}Phone`, `${g.prefix}Staff`, ...(g.prefix === "referral" ? ["referralType"] : [])]
     : g.kind === "company"
       ? [g.key]
       : [`${g.prefix}Names`, `${g.prefix}Email`, `${g.prefix}Phone`, `${g.prefix}Address`];
 
-// ── Name matching ────────────────────────────────────────────────────────────
-// "Law Offices of Edward V. Murachanian, LLC" ≈ "law office of edward murachanian"
-export function normCompany(s: string) {
-  return s
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9 ]+/g, " ")
-    .replace(/\boffices\b/g, "office")
-    .replace(/\b(the|llc|l l c|inc|incorporated|corp|corporation|co|company|pc|p c|pa|p a|llp|ltd|esq|esquire)\b/g, " ")
-    .replace(/\b[a-z]\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-// "Colleen Flynn Cyphers, Esq." ≈ "colleen flynn cyphers"; "Smith, John" ≈ "john smith"
-export function normPerson(s: string) {
-  let t = s.replace(/,?\s*(esq\.?|esquire|jr\.?|sr\.?|iii|ii)\s*$/i, "").trim();
-  const parts = t.split(",").map((x) => x.trim()).filter(Boolean);
-  if (parts.length === 2 && !/\s/.test(parts[0])) t = `${parts[1]} ${parts[0]}`; // "Last, First"
-  return t
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]+/g, " ")
-    .replace(/\b(mr|mrs|ms|miss|dr|esq)\b/g, " ")
-    .replace(/\b[a-z]\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+import { normCompany, normPerson } from "@/lib/contacts/names";
+export { normCompany, normPerson };
 const longestWord = (n: string) => n.split(" ").filter((w) => w.length >= 3).sort((a, b) => b.length - a.length)[0] ?? "";
 const firstPhone = (c: ContactRow) => c.phone || c.mobile || c.work_phone || c.home_phone || null;
 const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
@@ -254,6 +234,31 @@ async function assignClient(
   return "created";
 }
 
+// "Ann Lee, Bob Ray" → each found in Contacts (or added) as working at the company, and put on the matter.
+async function syncStaff(
+  orgId: string,
+  userId: string | null,
+  matterId: string,
+  names: string,
+  company: ContactRow | null,
+  v: { firm: string; role: string; category: string; vendorType: string },
+  res: SyncResult
+) {
+  const list = names.split(/,|;|&|\band\b/i).map((x) => x.trim()).filter((x) => x.length > 1).slice(0, 8);
+  for (const name of list) {
+    res.people++;
+    let p = await findPerson(orgId, name, null, company?.id ?? null);
+    if (p) {
+      res.matched++;
+      await fillContact(orgId, p, { employerId: company?.id ?? null });
+    } else {
+      p = await insertContact(orgId, userId, { kind: "person", name, role: v.role, company: v.firm, category: v.category, vendor_type: v.vendorType, employer_id: company?.id ?? null });
+      if (p) res.created++;
+    }
+    if (p && (await linkToMatter(orgId, userId, matterId, p.id, v.role))) res.linked++;
+  }
+}
+
 const partyKind = (name: string) =>
   /^estate of\b|\bestate$/i.test(name) ? "estate" : /\btrust\b/i.test(name) ? "trust" : /\b(llc|inc|corp|corporation|company|l\.?p\.?|bank|association)\b/i.test(name) ? "company" : "person";
 
@@ -326,6 +331,53 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
         }
         const link = person ?? company;
         if (link && (await linkToMatter(orgId, userId, matterId, link.id, g.role))) res.linked++;
+        const staff = val(`${g.prefix}Staff`);
+        if (staff) await syncStaff(orgId, userId, matterId, staff, company, { firm: firmName, role: `${g.role} (staff)`, category, vendorType }, res);
+      } else if (g.kind === "team") {
+        const name = val(g.company);
+        const personName = val(`${g.person}Name`);
+        const email = val(`${g.person}Email`).toLowerCase();
+        const phone = val(`${g.person}Phone`);
+        const staff = val(g.staff);
+        if (!name && !personName && !staff) continue;
+        let company: ContactRow | null = null;
+        if (name) {
+          res.people++;
+          company = await findCompany(orgId, name);
+          if (company) res.matched++;
+          else {
+            company = await insertContact(orgId, userId, { kind: "company", name, category: "vendor", vendor_type: g.vendorType });
+            if (company) res.created++;
+          }
+          if (company && (await linkToMatter(orgId, userId, matterId, company.id, g.role))) res.linked++;
+        }
+        if (personName) {
+          res.people++;
+          let person = await findPerson(orgId, personName, isEmail(email) ? email : null, company?.id ?? null);
+          if (person) {
+            res.matched++;
+            await fillContact(orgId, person, { email: isEmail(email) ? email : null, phone: phone || null, employerId: company?.id ?? null });
+          } else {
+            person = await insertContact(orgId, userId, {
+              kind: "person",
+              name: personName,
+              role: g.personRole,
+              company: name,
+              email: isEmail(email) ? email : null,
+              phone: phone || null,
+              category: "vendor",
+              vendor_type: g.vendorType,
+              employer_id: company?.id ?? null,
+            });
+            if (person) res.created++;
+          }
+          if (person) {
+            fill(`${g.person}Email`, person.email);
+            fill(`${g.person}Phone`, firstPhone(person));
+            if (await linkToMatter(orgId, userId, matterId, person.id, g.personRole)) res.linked++;
+          }
+        }
+        if (staff) await syncStaff(orgId, userId, matterId, staff, company, { firm: name, role: g.staffRole, category: "vendor", vendorType: g.vendorType }, res);
       } else if (g.kind === "company") {
         const name = val(g.key);
         if (!name) continue;
@@ -394,7 +446,7 @@ export async function syncDetailsWithContacts(orgId: string, userId: string | nu
         }
       }
     } catch (e) {
-      console.error(`Details → Contacts (${g.kind === "company" ? g.key : g.prefix}) failed:`, e);
+      console.error(`Details → Contacts (${g.kind === "company" ? g.key : g.kind === "team" ? g.company : g.prefix}) failed:`, e);
     }
   }
 
